@@ -175,8 +175,8 @@ ORSExtract <- R6::R6Class(
   classname = 'ORSExtract',
   public = list(
 
-    #' @field path Path to the extract. `Path` is not equal to `download_path` because the extract is copied
-    #' to docker/data after download.
+    #' @field path Relative path to the extract. `Path` is not equal to `download_path` because
+    #' the extract is copied to docker/data after download.
     path = NULL,
 
     #' @field place Name or coordinates of the place that is passed for the extract download.
@@ -204,7 +204,7 @@ ORSExtract <- R6::R6Class(
       }
     },
 
-    #' @description Downloads an OSM extract as pbf and moves it to the ORS data directory.
+    #' @description Downloads an OSM extract.
     #' @param place Character scalar, sf or sfc object or length-2 numeric vector to be passed to
     #' `osmextract::oe_match`. Represents a place that falls inside the coverage of defined extract
     #' regions of the providers listed in `osmextract::oe_providers`. The geographic scale can be
@@ -213,7 +213,8 @@ ORSExtract <- R6::R6Class(
     #' @param level Integer scalar. If an sf or sfc object or a numeric vector is passed to
     #' `place`, represents the hierarchical level of the extraxt to be matched. See details
     #' in `?osmextract::oe_match.
-    get_extract = function(place, download_path = tempdir(), level = NULL) {
+    get_extract = function(place, level = NULL) {
+      download_path <- 'docker/data'
       ok <- TRUE
       i <- 0
       providers <- suppressMessages({osmextract::oe_providers()$available_providers})
@@ -239,24 +240,23 @@ ORSExtract <- R6::R6Class(
       if(ok) {
         stop('All providers have been searched. Please download the extract manually.')
       }
-      file_occurences <- grepl(file_name, dir('docker/data'))
-      if(sum(file_occurences) > 0) {
+      file_occurences <- grepl(file_name, dir(download_path))
+      if(sum(file_occurences) == 1) {
         message('The extract already exists in the download path. Download will be skipped.')
-        path <- paste(download_path, dir(download_path)[file_occurences], sep ='\\') %>%
-          normalizePath(winslash = '/') # TODO: Discard download_path
+        path <- paste(download_path, dir(download_path)[file_occurences], sep ='/')
         message('Download path: %s' %>% sprintf(path))
       } else {
-        path <- osmextract::oe_download(place_match$url, provider = providers[i], quiet = TRUE) %>%
-          normalizePath(winslash = '/')
+        private$rm_old_extracts()
+        path <- osmextract::oe_download(place_match$url,
+                                        provider = providers[i],
+                                        download_directory = normalizePath(download_path, winslash = '/'),
+                                        quiet = TRUE)
         message('The extract was successfully downloaded to the following path: %s' %>% sprintf(path))
       }
       if(file.info(path)$size >= 6000000000) {
         warning('The OSM extract is very large. Make sure that you have enough working memory available.')
       }
-      # TODO: Private function to delete existing osm files upon moving in a new one?
-      # This would perhaps lower the garbage accumulation inside the data path
-      self$path <- relativePath(private$move_extract(path))
-      file.remove(path)
+      self$path <- download_path
       self$place <- place
       self$level <- level
       self$size <- file.info(path)$size * 0.000001
@@ -286,6 +286,17 @@ ORSExtract <- R6::R6Class(
       # Move extract to ./docker/data
       file.copy(extract_path, 'docker/data')
       paste('docker/data', file_name, sep = '/')
+    },
+    rm_old_extracts = function() {
+      path <- normalizePath('docker/data', winslash = '/')
+      extract_occurences <- dir(path) %>%
+        grepl('.pbf|.osm.gz|.osm.zip|.osm', .)
+      if(sum(extract_occurences) > 0) {
+        message('Removing old extracts...')
+        for(extract in dir(path)[extract_occurences]) {
+          file.remove(paste0('docker/data/', extract))
+        }
+      }
     }
   ),
   cloneable = FALSE
@@ -340,6 +351,7 @@ ORSConfig <- R6::R6Class(
         } else {
           file.copy('openrouteservice/src/main/resources/ors-config-sample.json',
                     'docker/data')
+          file.rename('docker/data/ors-config-sample.json', 'docker/data/ors-config.json')
           config <- jsonlite::read_json('docker/data/ors-config.json')
           self$path <- 'docker/data/ors-config.json'
         }
