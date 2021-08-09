@@ -1,0 +1,202 @@
+---
+title: "Installing and setting up the package"
+author: Jonas Lieth
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Installing and setting up the package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+# Introduction
+
+The main purpose of the package is to calculate the routing distances and durations from geo-referenced survey data or other geolocations to nearby points of interest (e.g. hospitals). To achieve this, the package provides two routing functions that are powered by OpenRouteService (ORS), and two functions to either extract OpenStreetMap elements or digest local location datasets. To enable the processing of large datasets, the package requires a local installation of the OpenRouteService backend. The setup can be done manually but is time-consuming and not very intuitive. The package provides an R6 class to set up the backend and manage it from within R.
+
+The package can be installed from GitLab:
+```{r, eval = FALSE}
+remotes::install_gitlab('liethjs/orsrouting')
+```
+... and loaded into the environment:
+```{r setup}
+library(ORSRouting)
+```
+
+
+# Setting up the service backend
+
+By default, ORS is queryable over the [official webserver](https://api.openrouteservice.org) given a valid API key. However, to not overburden the server, the Web API is [heavily restricted](https://openrouteservice.org/restrictions/). For the purpose of this package, these restrictions render the online usage unfeasible.
+
+Instead, the ORS backend can be installed locally via Docker. The R6 class `ORSInstance` controls both the installation and customization of the backend. The installation requires Docker, a raw OpenStreetMap extract (i.e., `.pbf` or `.osm`) of the required region, and the source code of OpenStreetMap. Of these, only [Docker needs to be installed beforehand](https://www.docker.com/products/docker-desktop).
+
+After installing Docker, a new ORS instance can be initialized. This will download the ORS GitHub repository if necessary and start the Docker daemon.
+```{r, eval = FALSE}
+ors <- ORSRouting::ORSInstance$new()
+ors
+#<ORSInstance>
+#  Public:
+#    config: ORSConfig, R6
+#    dir: openrouteservice-master
+#    docker: ORSDockerInterface, R6
+#    extract: ORSExtract, R6
+#    finalize: function ()
+#    get_config: function ()
+#    get_setup_settings: function (init_memory = NULL, max_memory = NULL)
+#    init_docker: function ()
+#    init_setup: function ()
+#    initialize: function (dir = NULL)
+#    set_ors_wd: function (dir = NULL)
+#    setup_settings: NULL
+#  Private:
+#    clone_ors_repo: function ()
+#    dir_download_url: https://github.com/GIScience/openrouteservice/archive/re ...
+#    wait: NULL
+```
+
+Generally, the workflow to install the ORS backup consists of four steps:
+
+- Set or get an extract
+- Adjust the configurations in ors-config.json
+- Change the default setup settings in docker-compose.yml
+- Build the image and start the container
+
+All of these steps can be done manually, however the method `$init_setup` is happy to take over steps 2-4.
+
+## Set or get an extract
+
+OpenStreetMap extracts contain all elements mapped by OSM contributors within a certain region. OpenRouteService is based on OSM and thus needs OSM data to generate routes. OSM data can be acquired with different tools. An overview of extract providers can be found [here](https://wiki.openstreetmap.org/wiki/Planet.osm#Country_and_area_extracts) and [here](https://wiki.openstreetmap.org/wiki/Downloading_data). The [official OSM website](https://www.openstreetmap.org/export) also supports extracting data by bounding boxes.
+
+Extracts are controlled by the class `ORSExtract` that can be accessed with `$extract`.
+Here, we can set an existing extract:
+```{r, eval = FALSE}
+path_to_extract <- paste(getwd(), 'osm_file.pbf', sep = '/')
+ors$extract$set_extract(path_to_extract)
+```
+
+If you don't have an extract, `$get_extract` provides a way to download extracts from large providers:
+```{r, eval = FALSE}
+ors$extract$get_extract('Cologne')
+# Trying different extract providers...
+# The extract koeln-regbez-latest.osm.pbf is 180 MB in size and will be downloaded from geofabrik.
+#
+# Should a different provider be tried? (Yes/No/Cancel) > No
+# The extract was successfully downloaded to the following path:
+# C:/Users/Username/AppData/Local/Temp/RtmpeKc6jD/geofabrik_koeln-regbez-latest.osm.pbf
+```
+
+The `$get_extract` method makes use of `osmextract::oe_match`. It searches different providers for extracts that match the input. The extract is downloaded to a temporary directory and instantly moved to the respective data path inside the ORS main directory. The OSM extract now rests inside the data path and is waiting to be processed.
+
+
+## Adjust the configurations in ors-config.json
+
+At this point, you can just run `$init_setup` and let R do the rest. When the function is done, the service should be ready to use. However, for certain use cases, it might be useful to change the configuration or setup settings.
+
+The ORS configurations are managed inside the file `ors-config.json` and can be accessed using `$config`. A new ORSConfig instance can be intialized using `$get_config`
+```{r, eval = FALSE}
+ors$config
+# <ORSConfig>
+#   Public:
+#     active_profiles: active binding
+#     initialize: function ()
+#     ors_config: list
+#     path: docker/data/ors-config-sample.json
+#     save_config: function ()
+#   Private:
+#     translate_profiles: function (profiles)
+```
+
+The most important setting to be changed are the active profiles. Profiles represent the means of transport that are supported by OpenRouteService (e.g. car, bike or walking). Activating a profile means approving it for graph building. Only profiles whose graphs have been built, can be used for routing. Profiles can be changed by assigning character vectors to the active binding `active_profiles`:
+```{r, eval = FALSE}
+ors$config$active_profiles <- c('car', 'bike-regular', 'walking')
+ors$config$ors_config$ors$services$routing$profiles$active
+# [[1]]
+# [1] "car"
+#
+# [[2]]
+# [1] "bike-regular"
+#
+# [[3]]
+# [1] "walking"
+```
+
+In the same way, all configurations can be changed under `$ors_config`:
+```{r, eval = FALSE}
+# Setting the maximum snapping radius to -1 removes the limit for coordinates to be snapped to a
+# nearby geometry edge. For coordinates that are far off from ways or streets, this is especially
+# useful
+ors$config$ors_config$ors$services$routing$profiles$default_params$maximum_snapping_radius <- -1
+```
+
+After changing any configurations, the changes have to be saved to the config file using `$save_config`.
+
+## Change the default setup settings in docker-compose.yml
+
+The Docker Compose file manages ports, the assignment of OSM files and config files, volumes, and settings for Tomcat and Java. Thus, the most important changes to be made to the Docker Compose file are assigning the extract and the config file, and allocating enough memory for building the profile graphs.
+
+The Docker Compose file can be read and accessed using `$setup_settings`. A new `ORSSetupSettings` can be initialized using `$get_setup_settings`.
+
+## Build the image and start the container
+
+The final step is to instruct Docker to build the image and start the container. As soon as the container is running, the service is being prepared. Depending on the size of the extract and the number of profiles, this can take between a few minutes and a few hours.
+
+Docker can be accessed and controlled using `$docker`. The environment `ORSDockerInterface` can be initialized with `$init_docker`. The function starts Docker and specifies the port that the local server should run on.
+```{r, eval = FALSE}
+ors$docker
+# <ORSDockerInterface>
+#   Public:
+#     container_exists: active binding
+#     container_running: active binding
+#     docker_running: active binding
+#     docker_running: active binding
+#     image_built: active binding
+#     image_down: function ()
+#     image_up: function ()
+#     initialize: function (port = 8080)
+#     service_ready: active binding
+#     start_container: function ()
+#     stop_container: function ()
+#   Private:
+#     .container_exists: function ()
+#     .container_running: function ()
+#     .docker_running: function ()
+#     .image_built: function ()
+#     .service_ready: function ()
+#     notify_when_ready: function (interval = 10, shutup = FALSE)
+#     port: 8080
+#     start_docker: function ()
+#     watch_for_error: function ()
+
+
+```
+
+`ORSDockerInterface` is divided into two functionalities: Checking the service status and controlling the image and container.
+```{r, eval = FALSE}
+data.frame(
+  status = c(
+    ors$docker$docker_running,
+    ors$docker$image_built,
+    ors$docker$container_exists,
+    ors$docker$container_running,
+    ors$docker$service_ready
+  ),
+  row.names = c(
+    'Is docker running?',
+    'Does the image exist?',
+    'Does the container exist?',
+    'Is the container running?',
+    'Is the service ready to use?'
+  )
+)
+#                              status
+# Is docker running?             TRUE
+# Does the image exist?         FALSE
+# Does the container exist?     FALSE
+# Is the container running?     FALSE
+# Is the service ready to use?  FALSE
+```

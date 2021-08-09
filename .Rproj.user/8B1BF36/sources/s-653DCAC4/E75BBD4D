@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1628508116366.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2293013441",
+    "id" : "E75BBD4D",
+    "lastKnownWriteTime" : 1628508170,
+    "last_content_update" : 1628508170533,
+    "path" : "~/GESIS/ORSRouting/R/utensils.R",
+    "project_path" : "R/utensils.R",
+    "properties" : {
+        "cursorPosition" : "142,1",
+        "scrollLine" : "80"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

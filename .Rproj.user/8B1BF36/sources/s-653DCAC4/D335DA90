@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1628335674984.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1481038851",
+    "id" : "D335DA90",
+    "lastKnownWriteTime" : 1628361997,
+    "last_content_update" : 1628361997,
+    "path" : "~/GESIS/ORSRouting/R/routing.R",
+    "project_path" : "R/routing.R",
+    "properties" : {
+        "cursorPosition" : "0,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
