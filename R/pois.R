@@ -4,13 +4,10 @@
 # Created on: 18.06.2021
 
 
-library(magrittr)
-source('R/utensils.R')
-
-
 #' Extract points of interest from OpenStreetMap
 #' @description Makes Overpass requests to extract points of interest in the proximity of the source
 #' dataset.
+#'
 #' @param source Source dataset that represents point coordinates that are to be routed
 #' from. The source dataset should be passed as a dataframe or plain nested list with
 #' each row representing a x/y or lon/lat coordinate pair.
@@ -20,7 +17,11 @@ source('R/utensils.R')
 #' @param crs Any object that is recognized by `sf::st_crs`. Coordinate reference system to determine
 #' the coordinate notation of the source dataset
 #' @returns List of dataframes that contain coordinate pairs of nearby points of interest
+#'
 #' @export
+#'
+#' @importFrom magrittr %>%
+#'
 #' @examples
 #' pois <- query.osm.pois(datensatz.a, key = 'amenity', value = 'hospital', radius = 5000)
 #' pois
@@ -63,6 +64,7 @@ get_osm_pois <- function(source, key, value, radius = 5000, crs = 4326) {
 
 #' Returns points of interest in the proximity of the source dataset. Unlike `get_osm_pois`,
 #' this function requires a local dataset of points of interest.
+#'
 #' @param source Source dataset that represents point coordinates that are to be routed
 #' from. The source dataset should be passed as a dataframe or plain nested list with
 #' each row representing a x/y or lon/lat coordinate pair.
@@ -79,7 +81,11 @@ get_osm_pois <- function(source, key, value, radius = 5000, crs = 4326) {
 #' both datasets share the same CRS.
 #' @returns List of dataframes with each dataframe containing all points of interest
 #' in a given type of proximity to the respective source point.
+#'
 #' @export
+#'
+#' @importFrom magrittr %>%
+#'
 #' @details The proximity can either be defined by the number of points to be selected, by a
 #' distance buffer or by both. If both measures are defined, the function will select points
 #' of interest within a certain radius first and will then select a given number of points

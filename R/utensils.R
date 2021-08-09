@@ -3,6 +3,7 @@
 # Created by: Jonas Lieth
 # Created on: 11.06.2021
 
+#' @importFrom magrittr %>%
 
 centroids_from_polygons <- function (polygons, as_sf = FALSE) {
   crs <- sf::st_crs(polygons)
@@ -22,6 +23,7 @@ centroids_from_polygons <- function (polygons, as_sf = FALSE) {
 
 }
 
+#' @importFrom magrittr %>%
 
 buffers_from_points <- function (points, radius, cap_style = 'ROUND', join_style = 'ROUND') {
   crs <- sf::st_crs(points)
@@ -31,6 +33,7 @@ buffers_from_points <- function (points, radius, cap_style = 'ROUND', join_style
     lonlat_to_utm(crs = crs, reverse = TRUE)
 }
 
+#' @importFrom magrittr %>%
 
 buffer_bbox_from_coordinates <- function (coordinates, radius, crs = 4326) {
   points <- coordinates %>%
@@ -52,6 +55,7 @@ buffer_bbox_from_coordinates <- function (coordinates, radius, crs = 4326) {
   return(buffer_bbox)
 }
 
+#' @importFrom magrittr %>%
 
 reformat_vectordata <- function (data, crs = 4326) {
   data %>%
@@ -67,6 +71,7 @@ swap_xy <- function(data) {
   return(data)
 }
 
+#' @importFrom magrittr %>%
 
 ctransform <- function(coordinates, from_crs, to_crs) {
   coordinates_sf <- sf::st_as_sf(coordinates, coords = c(1, 2), crs = from_crs)
@@ -76,6 +81,7 @@ ctransform <- function(coordinates, from_crs, to_crs) {
   return(transf_coordinates)
 }
 
+#' @importFrom magrittr %>%
 
 parse_proj4string <- function(proj4_string) {
   crs_props <- proj4_string %>%
@@ -89,6 +95,7 @@ parse_proj4string <- function(proj4_string) {
   return(crs_props)
 }
 
+#' @importFrom magrittr %>%
 
 lonlat_to_utm <- function(coordinates, crs = NULL, reverse = FALSE, zone = NULL) {
   sf_check <- is(coordinates, c('sf', 'sfc'))

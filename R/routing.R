@@ -5,10 +5,6 @@
 # Created on: 17.04.2021
 
 
-library(magrittr)
-source('R/utensils.R')
-
-
 # Testdatensatz A
 datensatz.a <- data.frame(
   lon = c(6.92632,7.00196,7.03162,6.99624,6.91885),
@@ -24,6 +20,7 @@ datensatz.b <- data.frame(
 
 #' Rowwise routing between two dataframes
 #' @description Calculates the routing distance between two datasets.
+#'
 #' @param source Source dataset that represents point coordinates that are to be routed
 #' from. The source dataset should be passed as a double nested dataframe or list with
 #' each row representing a x/y or lon/lat coordinate pair.
@@ -44,7 +41,11 @@ datensatz.b <- data.frame(
 #' OpenRouteService. Only necessary, if `local = FALSE`.
 #' @param geometry Specifies whether to return distance values or geometry features.
 #' @returns Dataframe with distances and travel durations between source and destination
+#'
 #' @export
+#'
+#' @importFrom magrittr %>%
+#'
 #' @examples
 #' route_lengths <- get_route_lengths(datensatz.a, datensatz.b, 'driving-car')
 #' route_lengths
@@ -133,6 +134,7 @@ query.ors <- function(source, destination, profile, url, units = 'm', api_key = 
 #' of each coordinate pair. This function is a wrapper around `get_route_lengths` that matches
 #' each coordinate pair to a list of points of interest and returns the route with the shortest
 #' distance.
+#'
 #' @param source Source dataset that represents point coordinates that are to be routed
 #' from. The source dataset should be passed as a double nested dataframe or list with
 #' each row representing a x/y or lon/lat coordinate pair.
@@ -148,7 +150,11 @@ query.ors <- function(source, destination, profile, url, units = 'm', api_key = 
 #' @param port Integer scalar. Port that the local server is running on.
 #' @returns Dataframe with distances, travel durations and the index number of the point of
 #' interest with the shortest distance to the respective place of the source dataset.
+#'
 #' @export
+#'
+#' @importFrom magrittr %>%
+#'
 #' @examples
 #' pois <- query.osm.pois(datensatz.a, key = 'amenity', value = 'hospital', radius = 5000)
 #' shortest_routes <- get_shortest_routes(datensatz.a, pois)

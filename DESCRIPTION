@@ -1,7 +1,7 @@
 Package: ORSRouting
 Type: Package
 Title: Bulk routing distance calculations using OpenRouteService
-Version: 1.0
+Version: 0.5.0
 Date: 2021-07-26
 Authors@R: person("Lieth", "Jonas", email = "Jonas.Lieth@gesis.org", 
                   role = c("aut", "cre"))

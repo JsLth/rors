@@ -3,12 +3,15 @@
 # Created by: Jonas Lieth
 # Created on: 29.07.2021
 
-library(magrittr)
+
 
 #' OpenRouteService backend control panel
 #' @description R6 class that acts as a setup wizard and control panel for the OpenRouteService backend service.
 #' The class facilitates the setup of the Docker container and allows making changes to the setup from within R.
 #' TODO: Interne Links zwischen den Docs
+#'
+#' @importFrom magrittr %>%
+#'
 #' @export
 
 ORSInstance <- R6::R6Class(
@@ -165,6 +168,8 @@ ORSInstance <- R6::R6Class(
 
 #' OpenRouteService OSM extract control panel
 #' @description R6 class to download, set or manage an OpenStreetMap extract
+#'
+#' @importFrom magrittr %>%
 
 ORSExtract <- R6::R6Class(
   classname = 'ORSExtract',
@@ -289,6 +294,8 @@ ORSExtract <- R6::R6Class(
 
 #' OpenRouteService configuration control panel
 #' @description R6 class that loads the ORS config file and can be used to change the ORS configurations
+#'
+#' @importFrom magrittr %>%
 
 ORSConfig <- R6::R6Class(
   classname = 'ORSConfig',
@@ -389,6 +396,8 @@ ORSConfig <- R6::R6Class(
 #' R6 Docker setup control panel
 #' @description R6 class that controls docker-compose.yml and Dockerfile. Provides an interface to easily allocate
 #' memory, switch graph building on or off and assign data.
+#'
+#' @importFrom magrittr %>%
 
 ORSSetupSettings <- R6::R6Class(
   classname = 'ORSSetupSettings',
@@ -602,6 +611,8 @@ ORSSetupSettings <- R6::R6Class(
 #' OpenRouteService Docker interface
 #' @description R6 class that interacts with the Docker daemon and is able to run basic commands
 #' on the openrouteservice:latest image and the ors-app container
+#'
+#' @importFrom magrittr %>%
 
 ORSDockerInterface <- R6::R6Class(
   classname = 'ORSDockerInterface',
