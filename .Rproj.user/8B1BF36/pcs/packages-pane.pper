@@ -1,7 +1,0 @@
-{
-    "installOptions" : {
-        "installDependencies" : true,
-        "installFromRepository" : false,
-        "libraryPath" : "C:/Users/Nonas/Documents/R/win-library/4.0"
-    }
-}
