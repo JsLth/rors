@@ -506,11 +506,10 @@ ORSSetupSettings <- R6::R6Class(
       } else {
         stop('Either pass a numeric or nothing.')
       }
-      if(requireNamespace('memuse', quietly = TRUE)) {
-        free_mem <- memuse::Sys.meminfo()$freeram@size
-        if(free_mem * 0.8 - max <= 0) {
-          warning('You are allocating more than your available memory. Consider lowering the allocated RAM.')
-        }
+      gc()
+      free_mem <- memuse::Sys.meminfo()$freeram@size
+      if(free_mem * 0.8 - max <= 0) {
+        warning('You are allocating more than your available memory. Consider lowering the allocated RAM.')
       }
       self$init_memory <- paste(as.character(init / 1000), 'GB')
       self$max_memory <- paste(as.character(max / 1000), 'GB')

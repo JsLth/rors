@@ -24,11 +24,12 @@ Imports:
     osmdata,
     purrr,
     R6,
-    sf
+    sf,
+    memuse
 Suggests: 
     rmarkdown,
     knitr,
-    memuse
+    ows4R
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
