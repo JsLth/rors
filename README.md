@@ -4,7 +4,13 @@ The main purpose of the package is to calculate the routing distances and durati
 
 # Installation
 
-The repository can be cloned and installed using a deploy token:
+If you have access to the GitLab repository, you can simply pull the package:
+
+```
+remotes::install_git('https://git.gesis.org/liethjs/orsrouting.git')
+```
+
+If you do not have access, use the following deploy token:
 
 ```
 remotes::install_git('https://gitlab+deploy-token-14:vQsKtxX75h2eg5oFjKNW@git.gesis.org/liethjs/orsrouting')
