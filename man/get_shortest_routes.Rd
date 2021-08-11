@@ -23,7 +23,7 @@ dataframes represents the x/y or lon/lat coordinate pairs of one point of intere
 
 \item{profiles}{Character vector or list. Means of transport as supported by OpenRouteService.
 For a list of active profiles, call \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}. For
-details on all profiles, refer to the \href{documentation}{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}.}
+details on all profiles, refer to the \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
 \item{proximity_type}{Type of proximity that the calculations should be based on. If
 \code{distance}, the shortest physical distance will be calculated and if \code{duration}, the shortest
