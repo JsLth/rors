@@ -87,8 +87,6 @@ be used.
 \if{latex}{\out{\hypertarget{method-stop_container}{}}}
 \subsection{Method \code{stop_container()}}{
 Stops the container.
-Searches the OpenRouteService logs for the keyword 'error' and returns their
-error messages.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$stop_container()}\if{html}{\out{</div>}}
 }

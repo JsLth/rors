@@ -4,13 +4,13 @@
 \alias{ORSSetupSettings}
 \title{R6 Docker setup control panel}
 \description{
-R6 class that controls docker-compose.yml and Dockerfile. Provides an interface to easily allocate
-memory, switch graph building on or off and assign data.
+R6 class that controls \code{docker-compose.yml} and \code{Dockerfile}. Provides an interface to
+easily allocate memory, switch graph building on or off and assign data.
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{compose}}{docker-compose.yml, parsed as a list. Blocks and items can be changed by assigning
+\item{\code{compose}}{\code{docker-compose.yml}, parsed as a list. Blocks and items can be changed by assigning
 values to them.}
 
 \item{\code{init_memory}}{Initial memory to be allocated to the docker container. The container will
@@ -48,8 +48,8 @@ graphs each time the image is rebuilt.}
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initializes the ORSSetupSettings class. Reads the docker-compose.yml, adjusts the Dockerfile
-and allocates memory.
+Initializes the \code{ORSSetupSettings} class. Reads the \code{docker-compose.yml}, adjusts the
+\code{Dockerfile} and allocates memory.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSSetupSettings$new(
   extract_name,
@@ -122,7 +122,7 @@ building is turned on.}
 \if{html}{\out{<a id="method-save_settings"></a>}}
 \if{latex}{\out{\hypertarget{method-save_settings}{}}}
 \subsection{Method \code{save_settings()}}{
-Saves the setup changes by overwriting docker-compose.yml with all changed fields.
+Saves the setup changes by overwriting \code{docker-compose.yml} with all changed fields.
 This should be run each time after changing any settings.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSSetupSettings$save_settings()}\if{html}{\out{</div>}}

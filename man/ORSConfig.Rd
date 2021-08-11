@@ -6,6 +6,15 @@
 \description{
 R6 class that loads the ORS config file and can be used to change the ORS configurations
 }
+\details{
+The argument \code{profiles} refrs to the supported modes of transport. Avoid passing all profiles
+as each profile has to be built seperately, which can strain memory extremely quickly. For a list of
+and details on the supported profiles, refer to the \link{OpenRouteService documentation}:
+https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html
+}
+\seealso{
+\link{ORSInstance}
+}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -36,7 +45,7 @@ vector, the field changes the active profiles in the config file.}
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initializes the ORSConfig class. Specifies the config path, copies the config files
+Initializes the \code{ORSConfig} class. Specifies the config path, copies the config files
 if necessary and reads them.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSConfig$new()}\if{html}{\out{</div>}}

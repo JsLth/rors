@@ -6,21 +6,44 @@
 \description{
 R6 class that acts as a setup wizard and control panel for the OpenRouteService backend service.
 The class facilitates the setup of the Docker container and allows making changes to the setup from within R.
-TODO: Interne Links zwischen den Docs
+}
+\details{
+The purpose of this class is to facilitate the OpenRouteService installation process.
+Alternatively, you can follow the official instructions from the \link{OpenRouteService documentation}:
+https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html. The developer
+team recently extended the installation guide considerably.
+The class has four sub classes. \code{\link{ORSExtract}} manages the OpenRouteService extract and is able to
+download \code{.pbf} files from different sources using the \code{osmextract} package. \code{\link{ORSConfig}} controls
+the configuration file (\code{ors-config.json}) which is also used to set active profiles.
+\code{\link{ORSSetupSettings}} can be used to make changes to the Docker setup, e.g. to allocate RAM, assign
+extracts or change the local server access. \code{\link{ORSDockerInterface}} provides a basic interface to Docker
+commands and can be used to check the status of the image, container and service. \code{\link{ORSSetupSettings}}
+should be initialized last as the Docker setup needs information on the extract and the number of
+profiles to assign the extract and estimate the required RAM to be allocated.
+If the setup keeps failing due to whatever reason, try resetting the docker path of the main directory
+(as specified in \verb{$dir}).
+If the setup fails due to an OutOfMemoryError, first check if you allocated enough memory. If it keeps
+failing, clear the available memory or restart the system. OpenRouteService recommends allocating a
+little more than twice the extract size. Make sure not to allocate more than your available memory.
+If you allocate more than 80\% of your free working memory, the function will stop. For details refer
+to the \link{system requirements of OpenRouteService}: https://giscience.github.io/openrouteservice/installation/System-Requirements.html
+}
+\seealso{
+\link{ORSExtract}, \link{ORSConfig}, \link{ORSDockerInterface}, \link{ORSSetupSettings}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{dir}}{ORS directory, either passed as a parameter or automatically set after
-calling \code{private$clone_ors_repo}}
+calling \verb{$clone_ors_repo}}
 
-\item{\code{extract}}{ORSExtract environment. See \code{?ORSRouting::ORSExtract}.}
+\item{\code{extract}}{\code{ORSExtract} environment. See \code{\link{ORSExtract}}.}
 
-\item{\code{config}}{ORSConfig environment. See \code{?ORSRouting::ORSConfig}.}
+\item{\code{config}}{\code{ORSConfig} environment. See \code{\link{ORSConfig}}.}
 
-\item{\code{docker}}{ORSDockerInterface environment. See \code{?ORSRouting::ORSDockerInterface}.}
+\item{\code{docker}}{\code{ORSDockerInterface} environment. See \code{\link{ORSDockerInterface}}.}
 
-\item{\code{setup_settings}}{ORSSetupSettings environment. See \code{?ORSRouting::ORSSetupSettings}.}
+\item{\code{setup_settings}}{\code{ORSSetupSettings} environment. See \code{\link{ORSSetupSettings}}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -40,7 +63,7 @@ calling \code{private$clone_ors_repo}}
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize ORSInstance as well as OSMExtract and ORSConfig and ORSDockerInterface
+Initialize \link{ORSInstance} as well as \link{OSMExtract} and \link{ORSConfig} and \link{ORSDockerInterface}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$new(dir = NULL)}\if{html}{\out{</div>}}
 }
@@ -49,7 +72,7 @@ Initialize ORSInstance as well as OSMExtract and ORSConfig and ORSDockerInterfac
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{dir}}{Custom ORS directory. If not specified, the directory will be downloaded
-from the official GitHub repository.}
+from the \link{official GitHub repository}: https://github.com/GIScience/openrouteservice.}
 }
 \if{html}{\out{</div>}}
 }
@@ -68,7 +91,7 @@ If necessary, stops the current ORS container when the class instance is removed
 \if{html}{\out{<a id="method-get_config"></a>}}
 \if{latex}{\out{\hypertarget{method-get_config}{}}}
 \subsection{Method \code{get_config()}}{
-Initializes ORSConfig as an environment field. Call this if the config path changes
+Initializes \code{\link{ORSConfig}} as an environment field. Call this if the config path changes
 (e.g. after the initial ORS setup).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$get_config()}\if{html}{\out{</div>}}
@@ -79,7 +102,7 @@ Initializes ORSConfig as an environment field. Call this if the config path chan
 \if{html}{\out{<a id="method-init_docker"></a>}}
 \if{latex}{\out{\hypertarget{method-init_docker}{}}}
 \subsection{Method \code{init_docker()}}{
-Initializes DockerInstance as an environment field. This method starts docker and
+Initializes \code{\link{DockerInstance}} as an environment field. This method starts docker and
 delivers and interface to interact with docker.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$init_docker()}\if{html}{\out{</div>}}
@@ -90,8 +113,8 @@ delivers and interface to interact with docker.
 \if{html}{\out{<a id="method-get_setup_settings"></a>}}
 \if{latex}{\out{\hypertarget{method-get_setup_settings}{}}}
 \subsection{Method \code{get_setup_settings()}}{
-Initializes ORSSetupSettings as an environment field and prepares the necessary
-changes to the Dockerfile and docker-compose.yml
+Initializes \code{\link{ORSSetupSettings}} as an environment field and prepares the necessary
+changes to the \code{Dockerfile} and \code{docker-compose.yml}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$get_setup_settings(init_memory = NULL, max_memory = NULL)}\if{html}{\out{</div>}}
 }
@@ -134,8 +157,18 @@ Changes the necessary settings and configurations for the first startup, builds 
 image and starts the container. This function should only be used when starting the service for
 the first time. Changes after that should preferably be made manually.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$init_setup()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$init_setup(wait = TRUE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{wait}}{Logical. If \code{TRUE}, the function will not stop running after the container is being
+started and will give out a notification as soon as the service is ready. If \code{FALSE}, the function
+will start the container and then stop. To check the server status, you can then call \verb{$server_ready}
+from the class \code{\link{ORSDockerInterface}}.}
+}
+\if{html}{\out{</div>}}
+}
 }
 }
