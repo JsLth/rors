@@ -10,7 +10,7 @@
 #' The class facilitates the setup of the Docker container and allows making changes to the setup from within R.
 #'
 #' @details The purpose of this class is to facilitate the OpenRouteService installation process.
-#' Alternatively, you can follow the official instructions from the \link{https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html}{OpenRouteService documentation}.
+#' Alternatively, you can follow the official instructions from the \href{https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html}{OpenRouteService documentation}.
 #' The developer team recently extended the installation guide considerably.
 #'
 #' The class has four sub classes. \code{\link{ORSExtract}} manages the OpenRouteService extract and is able to
@@ -342,8 +342,8 @@ ORSExtract <- R6::R6Class(
 #'
 #' @details The argument `profiles` refers to the supported modes of transport. Avoid passing all profiles
 #' as each profile has to be built seperately, which can strain memory extremely quickly. For a list of
-#' and details on the supported profiles, refer to the \link{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{OpenRouteService documentation}.
-#' For a details on each configuration in the config file, refer to the \link{https://giscience.github.io/openrouteservice/installation/Configuration.html}{documentation}.
+#' and details on the supported profiles, refer to the \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{OpenRouteService documentation}.
+#' For a details on each configuration in the config file, refer to the \href{https://giscience.github.io/openrouteservice/installation/Configuration.html}{config documentation}.
 #'
 #' @seealso \code{\link{ORSInstance}}
 #'

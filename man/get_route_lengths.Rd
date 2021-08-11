@@ -26,8 +26,9 @@ each row representing a x/y or lon/lat coordinate pair. Essentially both dataset
 have the same format.}
 
 \item{profile}{Character scalar. Means of transport as supported by OpenRouteService. For
-a list of active profiles, call \code{ORSInstance$config$active_profiles}. For details on all
-profiles, refer to the \link{documentation}{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}.}
+a list of active profiles, call \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}.
+For details on all profiles, refer to the
+\href{documentation}{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}.}
 
 \item{units}{Distance unit for distance calculations ('m', 'km' or 'mi', default: meters)}
 

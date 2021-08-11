@@ -2,8 +2,7 @@
 % Please edit documentation in R/pois.R
 \name{get_nearest_pois}
 \alias{get_nearest_pois}
-\title{Returns points of interest in the proximity of the source dataset. Unlike \code{\link{get_osm_pois}},
-this function requires a local dataset of points of interest.}
+\title{Find the nearest points of interest from a local dataset}
 \usage{
 get_nearest_pois(
   source,
@@ -38,8 +37,8 @@ List of dataframes with each dataframe containing all points of interest
 in a given type of proximity to the respective source point.
 }
 \description{
-Returns points of interest in the proximity of the source dataset. Unlike \code{\link{get_osm_pois}},
-this function requires a local dataset of points of interest.
+Returns points of interest in the proximity of the source dataset. Unlike
+\code{\link{get_osm_pois}}, this function requires a local dataset of points of interest.
 }
 \details{
 The proximity can either be defined by the number of points to be selected, by a

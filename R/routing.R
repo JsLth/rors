@@ -29,8 +29,9 @@ datensatz.b <- data.frame(
 #' each row representing a x/y or lon/lat coordinate pair. Essentially both datasets should
 #' have the same format.
 #' @param profile Character scalar. Means of transport as supported by OpenRouteService. For
-#' a list of active profiles, call `ORSInstance$config$active_profiles`. For details on all
-#' profiles, refer to the \link{documentation}{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}.
+#' a list of active profiles, call \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}.
+#' For details on all profiles, refer to the
+#' \href{documentation}{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}.
 #' @param units Distance unit for distance calculations ('m', 'km' or 'mi', default: meters)
 #' @param local Logical scalar. Specifies whether requests should be sent to the official web
 #' server of OpenRouteService or to the local Docker server set up by \code{\link{ORSInstance}}.
@@ -142,8 +143,8 @@ query.ors <- function(source, destination, profile, url, units = 'm', api_key = 
 #' to. Each list element matches a row in the source dataset and each element in one of the
 #' dataframes represents the x/y or lon/lat coordinate pairs of one point of interest.
 #' @param profiles Character vector or list. Means of transport as supported by OpenRouteService.
-#' For a list of active profiles, call \code{\link{ORSConfig}{ORSConfig$active_profiles}}. For
-#' details on all profiles, refer to the \link{documentation}{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}.
+#' For a list of active profiles, call \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}. For
+#' details on all profiles, refer to the \href{documentation}{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}.
 #' @param proximity_type Type of proximity that the calculations should be based on. If
 #' `distance`, the shortest physical distance will be calculated and if `duration`, the shortest
 #' temporal distance will be calculated.

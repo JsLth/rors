@@ -62,8 +62,9 @@ get_osm_pois <- function(source, key, value, radius = 5000, crs = 4326) {
 }
 
 
-#' Returns points of interest in the proximity of the source dataset. Unlike \code{\link{get_osm_pois}},
-#' this function requires a local dataset of points of interest.
+#' Find the nearest points of interest from a local dataset
+#' @description Returns points of interest in the proximity of the source dataset. Unlike
+#' \code{\link{get_osm_pois}}, this function requires a local dataset of points of interest.
 #'
 #' @param source Source dataset that represents point coordinates that are to be routed
 #' from. The source dataset should be passed as a dataframe or plain nested list with

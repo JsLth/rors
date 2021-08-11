@@ -9,7 +9,7 @@ The class facilitates the setup of the Docker container and allows making change
 }
 \details{
 The purpose of this class is to facilitate the OpenRouteService installation process.
-Alternatively, you can follow the official instructions from the \link{https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html}{OpenRouteService documentation}.
+Alternatively, you can follow the official instructions from the \href{https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html}{OpenRouteService documentation}.
 The developer team recently extended the installation guide considerably.
 
 The class has four sub classes. \code{\link{ORSExtract}} manages the OpenRouteService extract and is able to
