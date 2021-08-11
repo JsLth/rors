@@ -10,26 +10,28 @@
 #' The class facilitates the setup of the Docker container and allows making changes to the setup from within R.
 #'
 #' @details The purpose of this class is to facilitate the OpenRouteService installation process.
-#' Alternatively, you can follow the official instructions from the [OpenRouteService documentation]:
-#' https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html. The developer
-#' team recently extended the installation guide considerably.
-#' The class has four sub classes. [`ORSExtract`] manages the OpenRouteService extract and is able to
-#' download `.pbf` files from different sources using the `osmextract` package. [`ORSConfig`] controls
+#' Alternatively, you can follow the official instructions from the \link{https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html}{OpenRouteService documentation}.
+#' The developer team recently extended the installation guide considerably.
+#'
+#' The class has four sub classes. \code{\link{ORSExtract}} manages the OpenRouteService extract and is able to
+#' download `.pbf` files from different sources using the `osmextract` package. \code{\link{ORSConfig}} controls
 #' the configuration file (`ors-config.json`) which is also used to set active profiles.
-#' [`ORSSetupSettings`] can be used to make changes to the Docker setup, e.g. to allocate RAM, assign
-#' extracts or change the local server access. [`ORSDockerInterface`] provides a basic interface to Docker
-#' commands and can be used to check the status of the image, container and service. [`ORSSetupSettings`]
+#' \code{\link{ORSSetupSettings}} can be used to make changes to the Docker setup, e.g. to allocate RAM, assign
+#' extracts or change the local server access. \code{\link{ORSDockerInterface}} provides a basic interface to Docker
+#' commands and can be used to check the status of the image, container and service. \code{\link{ORSSetupSettings}}
 #' should be initialized last as the Docker setup needs information on the extract and the number of
 #' profiles to assign the extract and estimate the required RAM to be allocated.
+#'
 #' If the setup keeps failing due to whatever reason, try resetting the docker path of the main directory
-#' (as specified in `$dir`).
+#' (as specified in `$dir`), or just delete the directory and download it again to be safe.
+#'
 #' If the setup fails due to an OutOfMemoryError, first check if you allocated enough memory. If it keeps
 #' failing, clear the available memory or restart the system. OpenRouteService recommends allocating a
 #' little more than twice the extract size. Make sure not to allocate more than your available memory.
 #' If you allocate more than 80% of your free working memory, the function will stop. For details refer
-#' to the [system requirements of OpenRouteService]: https://giscience.github.io/openrouteservice/installation/System-Requirements.html
+#' to the \href{https://giscience.github.io/openrouteservice/installation/System-Requirements.html}{system requirements of OpenRouteService}
 #'
-#' @seealso [ORSExtract], [ORSConfig], [ORSDockerInterface], [ORSSetupSettings]
+#' @seealso \code{\link{ORSExtract}}, \code{\link{ORSConfig}}, \code{\link{ORSDockerInterface}}, \code{\link{ORSSSetupSettings}}
 #'
 #' @importFrom magrittr %>%
 #'
@@ -43,7 +45,8 @@ ORSInstance <- R6::R6Class(
     dir = NULL,
 
     #' @description
-    #' Initialize [ORSInstance] as well as [OSMExtract] and [ORSConfig] and [ORSDockerInterface]
+    #' Initialize \code{\link{ORSInstance}} as well as \code{\link{ORSExtract}} and \code{\link{ORSConfig}} and 
+    #' \code{\link{ORSDockerInterface}}
     #' @param dir Custom ORS directory. If not specified, the directory will be downloaded
     #' from the [official GitHub repository]: https://github.com/GIScience/openrouteservice.
     initialize = function(dir = NULL) {
@@ -72,25 +75,25 @@ ORSInstance <- R6::R6Class(
       }
     },
 
-    #' @field extract `ORSExtract` environment. See [`ORSExtract`].
+    #' @field extract `ORSExtract` environment. See \code{\link{ORSExtract}}.
     extract = NULL,
 
-    #' @field config `ORSConfig` environment. See [`ORSConfig`].
+    #' @field config `ORSConfig` environment. See \code{\link{ORSConfig}}.
     config = NULL,
 
     #' @description
-    #' Initializes [`ORSConfig`] as an environment field. Call this if the config path changes
+    #' Initializes \code{\link{ORSConfig}} as an environment field. Call this if the config path changes
     #' (e.g. after the initial ORS setup).
     get_config = function() {
       self$config <- ORSConfig$new()
     },
 
-    #' @field docker `ORSDockerInterface` environment. See [`ORSDockerInterface`].
+    #' @field docker `ORSDockerInterface` environment. See \code{\link{ORSDockerInterface}}.
     docker = NULL,
 
     #' @description
-    #' Initializes [`DockerInstance`] as an environment field. This method starts docker and
-    #' delivers and interface to interact with docker.
+    #' Initializes \code{\link{ORSDockerInterface}} as an environment field. This method starts docker 
+    #' and delivers and interface to interact with docker.
     init_docker = function() {
       if(!is.null(self$setup_ettings)) {
         port <- self$setup_settings$ors_config$services$`ors-app`$ports[1] %>%
@@ -104,11 +107,11 @@ ORSInstance <- R6::R6Class(
       self$docker <- ORSDockerInterface$new(port = port)
     },
 
-    #' @field setup_settings `ORSSetupSettings` environment. See [`ORSSetupSettings`].
+    #' @field setup_settings `ORSSetupSettings` environment. See \code{\link{ORSSetupSettings}}.
     setup_settings = NULL,
 
     #' @description
-    #' Initializes [`ORSSetupSettings`] as an environment field and prepares the necessary
+    #' Initializes \code{\link{ORSSetupSettings}} as an environment field and prepares the necessary
     #' changes to the `Dockerfile` and `docker-compose.yml`
     #' @param init_memory Initial memory to be allocated to the docker container.
     #' @param max_memory Maximum memory to be allocated to the docker container. The
@@ -161,7 +164,7 @@ ORSInstance <- R6::R6Class(
     #' @param wait Logical. If `TRUE`, the function will not stop running after the container is being
     #' started and will give out a notification as soon as the service is ready. If `FALSE`, the function
     #' will start the container and then stop. To check the server status, you can then call `$server_ready`
-    #' from the class [`ORSDockerInterface`].
+    #' from the class \code{\link{ORSDockerInterface}}.
     init_setup = function(wait = TRUE) {
       # TODO: Implement method and set to TRUE if setup is successful
     }
@@ -197,7 +200,7 @@ ORSInstance <- R6::R6Class(
 #' @details Note that the coverage of the OSM extract should include all necessary places that need to
 #' be processed. If a location is not covered by the extract, the service will respond with an error.
 #' If necessary, the OSM extract can be changed later by running `$assign_data(build = change)` in
-#' [`ORSSetupSettings`].
+#' \code{\link{ORSSetupSettings}}.
 #'
 #' @importFrom magrittr %>%
 
@@ -220,7 +223,7 @@ ORSExtract <- R6::R6Class(
     #' @field provider Provider of the extract size.
     provider = NULL,
 
-    #' @description Initializes `ORSExtract` and looks for an existing extract in data path.
+    #' @description Initializes \code{\link{ORSExtract}} and looks for an existing extract in data path.
     initialize = function() {
       osm_file_occurences <- dir('docker/data') %>%
         grepl('.pbf|.osm.gz|.osm.zip|.osm', .)
@@ -235,14 +238,14 @@ ORSExtract <- R6::R6Class(
 
     #' @description Downloads an OSM extract.
     #' @param place Character scalar, sf or sfc object or length-2 numeric vector to be passed to
-    #' `osmextract::oe_match`. Represents a place that falls inside the coverage of defined extract
-    #' regions of the providers listed in `osmextract::oe_providers`. The geographic scale can be
-    #' adjusted by changing the parameter `level`. See details in `?osmextract::oe_match`.
+    #' \code{\link[osmextract]{oe_match}}. Represents a place that falls inside the coverage of defined
+    #' extract regions of the providers listed in \code{\link[osmextract]{oe_providers}}. The geographic
+    #' scale can be adjusted by changing the parameter `level`. For details, refer to \code{\link[osmextract]{oe_match}}.
     #' @param level Integer scalar. If an sf or sfc object or a numeric vector is passed to
     #' `place`, represents the hierarchical level of the extraxt to be matched. See details
-    #' in `?osmextract::oe_match.
+    #' in \code{\link[osmextract]{oe_match}}.
     #' @details The extract is downloaded directly to docker/data. This will also be the directory
-    #' that is passed to the [`ORSSetupSettings`] to process the extract. This directory is not
+    #' that is passed to the \code{\link{ORSSetupSettings}} to process the extract. This directory is not
     #' mutable because Docker expects a relative path to its main directory.
     get_extract = function(place, level = NULL) {
       download_path <- 'docker/data'
@@ -337,12 +340,12 @@ ORSExtract <- R6::R6Class(
 #' OpenRouteService configuration control panel
 #' @description R6 class that loads the ORS config file and can be used to change the ORS configurations
 #'
-#' @details The argument `profiles` refrs to the supported modes of transport. Avoid passing all profiles
+#' @details The argument `profiles` refers to the supported modes of transport. Avoid passing all profiles
 #' as each profile has to be built seperately, which can strain memory extremely quickly. For a list of
-#' and details on the supported profiles, refer to the [OpenRouteService documentation]:
-#' https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html
+#' and details on the supported profiles, refer to the \link{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{OpenRouteService documentation}.
+#' For a details on each configuration in the config file, refer to the \link{https://giscience.github.io/openrouteservice/installation/Configuration.html}{documentation}.
 #'
-#' @seealso [ORSInstance]
+#' @seealso \code{\link{ORSInstance}}
 #'
 #' @importFrom magrittr %>%
 

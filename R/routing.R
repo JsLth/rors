@@ -30,12 +30,12 @@ datensatz.b <- data.frame(
 #' have the same format.
 #' @param profile Character scalar. Means of transport as supported by OpenRouteService. For
 #' a list of active profiles, call `ORSInstance$config$active_profiles`. For details on all
-#' profiles, visit https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html.
+#' profiles, refer to the \link{documentation}{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}.
 #' @param units Distance unit for distance calculations ('m', 'km' or 'mi', default: meters)
 #' @param local Logical scalar. Specifies whether requests should be sent to the official web
-#' server of OpenRouteService or to the local Docker server set up by `ORSInstance`. For the use
-#' with larger datasets, it is advised to setup a local service backend. To query the official
-#' web server, an API key has to be provided.
+#' server of OpenRouteService or to the local Docker server set up by \code{\link{ORSInstance}}.
+#' For the use with larger datasets, it is advised to setup a local service backend. To query the
+#' official web server, an API key has to be provided.
 #' @param port Integer scalar. Port that the local server is running on.
 #' @param api_key Character scalar. API key for the use of the official web server of
 #' OpenRouteService. Only necessary, if `local = FALSE`.
@@ -142,8 +142,8 @@ query.ors <- function(source, destination, profile, url, units = 'm', api_key = 
 #' to. Each list element matches a row in the source dataset and each element in one of the
 #' dataframes represents the x/y or lon/lat coordinate pairs of one point of interest.
 #' @param profiles Character vector or list. Means of transport as supported by OpenRouteService.
-#' For a list of active profiles, call `ORSInstance$config$active_profiles`. For details on all
-#' profiles, visit https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html.
+#' For a list of active profiles, call \code{\link{ORSConfig}{ORSConfig$active_profiles}}. For
+#' details on all profiles, refer to the \link{documentation}{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}.
 #' @param proximity_type Type of proximity that the calculations should be based on. If
 #' `distance`, the shortest physical distance will be calculated and if `duration`, the shortest
 #' temporal distance will be calculated.

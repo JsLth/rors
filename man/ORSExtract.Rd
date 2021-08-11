@@ -39,7 +39,7 @@ If necessary, the OSM extract can be changed later by running \verb{$assign_data
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initializes \code{ORSExtract} and looks for an existing extract in data path.
+Initializes \code{\link{ORSExtract}} and looks for an existing extract in data path.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSExtract$new()}\if{html}{\out{</div>}}
 }
@@ -58,13 +58,13 @@ Downloads an OSM extract.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{place}}{Character scalar, sf or sfc object or length-2 numeric vector to be passed to
-\code{osmextract::oe_match}. Represents a place that falls inside the coverage of defined extract
-regions of the providers listed in \code{osmextract::oe_providers}. The geographic scale can be
-adjusted by changing the parameter \code{level}. See details in \code{?osmextract::oe_match}.}
+\code{\link[osmextract]{oe_match}}. Represents a place that falls inside the coverage of defined
+extract regions of the providers listed in \code{\link[osmextract]{oe_providers}}. The geographic
+scale can be adjusted by changing the parameter \code{level}. For details, refer to \code{\link[osmextract]{oe_match}}.}
 
 \item{\code{level}}{Integer scalar. If an sf or sfc object or a numeric vector is passed to
 \code{place}, represents the hierarchical level of the extraxt to be matched. See details
-in `?osmextract::oe_match.}
+in \code{\link[osmextract]{oe_match}}.}
 }
 \if{html}{\out{</div>}}
 }

@@ -7,13 +7,13 @@
 R6 class that loads the ORS config file and can be used to change the ORS configurations
 }
 \details{
-The argument \code{profiles} refrs to the supported modes of transport. Avoid passing all profiles
+The argument \code{profiles} refers to the supported modes of transport. Avoid passing all profiles
 as each profile has to be built seperately, which can strain memory extremely quickly. For a list of
-and details on the supported profiles, refer to the \link{OpenRouteService documentation}:
-https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html
+and details on the supported profiles, refer to the \link{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{OpenRouteService documentation}.
+For a details on each configuration in the config file, refer to the \link{https://giscience.github.io/openrouteservice/installation/Configuration.html}{documentation}.
 }
 \seealso{
-\link{ORSInstance}
+\code{\link{ORSInstance}}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

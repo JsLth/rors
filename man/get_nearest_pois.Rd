@@ -2,7 +2,7 @@
 % Please edit documentation in R/pois.R
 \name{get_nearest_pois}
 \alias{get_nearest_pois}
-\title{Returns points of interest in the proximity of the source dataset. Unlike \code{get_osm_pois},
+\title{Returns points of interest in the proximity of the source dataset. Unlike \code{\link{get_osm_pois}},
 this function requires a local dataset of points of interest.}
 \usage{
 get_nearest_pois(
@@ -29,7 +29,7 @@ will be converted to an sf object if it is not already.}
 \item{radius}{Numeric scalar. Buffer radius that will select points of interest that fall
 within it.}
 
-\item{pois_crs}{Any object that is recognized by \code{sf::st_crs}. Coordinate reference system
+\item{pois_crs}{Any object that is recognized by \code{\link[sf]{st_crs}}. Coordinate reference system
 to determine the coordinate notation of the \code{source} and \code{pois} dataset. It is assumed that
 both datasets share the same CRS.}
 }
@@ -38,7 +38,7 @@ List of dataframes with each dataframe containing all points of interest
 in a given type of proximity to the respective source point.
 }
 \description{
-Returns points of interest in the proximity of the source dataset. Unlike \code{get_osm_pois},
+Returns points of interest in the proximity of the source dataset. Unlike \code{\link{get_osm_pois}},
 this function requires a local dataset of points of interest.
 }
 \details{

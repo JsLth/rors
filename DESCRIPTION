@@ -15,21 +15,21 @@ Description: The package allows the usage of OpenRouteService to calculate the
 Encoding: UTF-8
 LazyData: true
 Imports: 
-    beepr,
-    dplyr,
-    fields,
-    httr,
-    jsonlite,
-    magrittr,
-    osmdata,
-    purrr,
-    R6,
-    sf,
-    memuse
+    beepr (>= 1.3),
+    httr (>= 1.4.2),
+    jsonlite (>= 1.7.2),
+    magrittr (>= 2.0.1),
+    purrr (>= 0.3.4),
+    R6 (>= 2.5.0),
+    sf (>= 0.9-8),
+    memuse (>= 4.1-0),
+    dplyr (>= 1.0.7),
+    osmdata (>= 0.1.5),
+    fields (>= 12.5)
 Suggests: 
-    rmarkdown,
-    knitr,
-    ows4R
+    rmarkdown (>= 2.7),
+    knitr (>= 1.31),
+    ows4R (>= 0.1-5)
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr

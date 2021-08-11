@@ -27,14 +27,14 @@ have the same format.}
 
 \item{profile}{Character scalar. Means of transport as supported by OpenRouteService. For
 a list of active profiles, call \code{ORSInstance$config$active_profiles}. For details on all
-profiles, visit https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html.}
+profiles, refer to the \link{documentation}{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}.}
 
 \item{units}{Distance unit for distance calculations ('m', 'km' or 'mi', default: meters)}
 
 \item{local}{Logical scalar. Specifies whether requests should be sent to the official web
-server of OpenRouteService or to the local Docker server set up by \code{ORSInstance}. For the use
-with larger datasets, it is advised to setup a local service backend. To query the official
-web server, an API key has to be provided.}
+server of OpenRouteService or to the local Docker server set up by \code{\link{ORSInstance}}.
+For the use with larger datasets, it is advised to setup a local service backend. To query the
+official web server, an API key has to be provided.}
 
 \item{port}{Integer scalar. Port that the local server is running on.}
 

@@ -14,7 +14,7 @@
 #' @param key Character scalar. OpenStreetMap Map Feature key (e.g. amenity, building)
 #' @param value Character scalar. OpenStreetMap Map Feature value (e.g. hospital, hotel)
 #' @param radius Numeric scalar. Radius in which POIs are to be searched for
-#' @param crs Any object that is recognized by `sf::st_crs`. Coordinate reference system to determine
+#' @param crs Any object that is recognized by \code{\link[sf]{st_crs}}. Coordinate reference system to determine
 #' the coordinate notation of the source dataset
 #' @returns List of dataframes that contain coordinate pairs of nearby points of interest
 #'
@@ -62,7 +62,7 @@ get_osm_pois <- function(source, key, value, radius = 5000, crs = 4326) {
 }
 
 
-#' Returns points of interest in the proximity of the source dataset. Unlike `get_osm_pois`,
+#' Returns points of interest in the proximity of the source dataset. Unlike \code{\link{get_osm_pois}},
 #' this function requires a local dataset of points of interest.
 #'
 #' @param source Source dataset that represents point coordinates that are to be routed
@@ -76,7 +76,7 @@ get_osm_pois <- function(source, key, value, radius = 5000, crs = 4326) {
 #' @param number_of_points Integer scalar. Number of points to be returned.
 #' @param radius Numeric scalar. Buffer radius that will select points of interest that fall
 #' within it.
-#' @param pois_crs Any object that is recognized by `sf::st_crs`. Coordinate reference system
+#' @param pois_crs Any object that is recognized by \code{\link[sf]{st_crs}}. Coordinate reference system
 #' to determine the coordinate notation of the `source` and `pois` dataset. It is assumed that
 #' both datasets share the same CRS.
 #' @returns List of dataframes with each dataframe containing all points of interest

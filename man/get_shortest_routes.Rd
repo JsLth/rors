@@ -22,8 +22,8 @@ to. Each list element matches a row in the source dataset and each element in on
 dataframes represents the x/y or lon/lat coordinate pairs of one point of interest.}
 
 \item{profiles}{Character vector or list. Means of transport as supported by OpenRouteService.
-For a list of active profiles, call \code{ORSInstance$config$active_profiles}. For details on all
-profiles, visit https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html.}
+For a list of active profiles, call \code{\link{ORSConfig}{ORSConfig$active_profiles}}. For
+details on all profiles, refer to the \link{documentation}{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}.}
 
 \item{proximity_type}{Type of proximity that the calculations should be based on. If
 \code{distance}, the shortest physical distance will be calculated and if \code{duration}, the shortest

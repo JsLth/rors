@@ -17,7 +17,7 @@ each row representing a x/y or lon/lat coordinate pair.}
 
 \item{radius}{Numeric scalar. Radius in which POIs are to be searched for}
 
-\item{crs}{Any object that is recognized by \code{sf::st_crs}. Coordinate reference system to determine
+\item{crs}{Any object that is recognized by \code{\link[sf]{st_crs}}. Coordinate reference system to determine
 the coordinate notation of the source dataset}
 }
 \value{

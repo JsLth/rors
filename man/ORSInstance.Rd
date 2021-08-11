@@ -9,9 +9,9 @@ The class facilitates the setup of the Docker container and allows making change
 }
 \details{
 The purpose of this class is to facilitate the OpenRouteService installation process.
-Alternatively, you can follow the official instructions from the \link{OpenRouteService documentation}:
-https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html. The developer
-team recently extended the installation guide considerably.
+Alternatively, you can follow the official instructions from the \link{https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html}{OpenRouteService documentation}.
+The developer team recently extended the installation guide considerably.
+
 The class has four sub classes. \code{\link{ORSExtract}} manages the OpenRouteService extract and is able to
 download \code{.pbf} files from different sources using the \code{osmextract} package. \code{\link{ORSConfig}} controls
 the configuration file (\code{ors-config.json}) which is also used to set active profiles.
@@ -20,16 +20,18 @@ extracts or change the local server access. \code{\link{ORSDockerInterface}} pro
 commands and can be used to check the status of the image, container and service. \code{\link{ORSSetupSettings}}
 should be initialized last as the Docker setup needs information on the extract and the number of
 profiles to assign the extract and estimate the required RAM to be allocated.
+
 If the setup keeps failing due to whatever reason, try resetting the docker path of the main directory
-(as specified in \verb{$dir}).
+(as specified in \verb{$dir}), or just delete the directory and download it again to be safe.
+
 If the setup fails due to an OutOfMemoryError, first check if you allocated enough memory. If it keeps
 failing, clear the available memory or restart the system. OpenRouteService recommends allocating a
 little more than twice the extract size. Make sure not to allocate more than your available memory.
 If you allocate more than 80\% of your free working memory, the function will stop. For details refer
-to the \link{system requirements of OpenRouteService}: https://giscience.github.io/openrouteservice/installation/System-Requirements.html
+to the \href{https://giscience.github.io/openrouteservice/installation/System-Requirements.html}{system requirements of OpenRouteService}
 }
 \seealso{
-\link{ORSExtract}, \link{ORSConfig}, \link{ORSDockerInterface}, \link{ORSSetupSettings}
+\code{\link{ORSExtract}}, \code{\link{ORSConfig}}, \code{\link{ORSDockerInterface}}, \code{\link{ORSSSetupSettings}}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -63,7 +65,8 @@ calling \verb{$clone_ors_repo}}
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize \link{ORSInstance} as well as \link{OSMExtract} and \link{ORSConfig} and \link{ORSDockerInterface}
+Initialize \code{\link{ORSInstance}} as well as \code{\link{ORSExtract}} and \code{\link{ORSConfig}} and
+\code{\link{ORSDockerInterface}}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$new(dir = NULL)}\if{html}{\out{</div>}}
 }
@@ -102,8 +105,8 @@ Initializes \code{\link{ORSConfig}} as an environment field. Call this if the co
 \if{html}{\out{<a id="method-init_docker"></a>}}
 \if{latex}{\out{\hypertarget{method-init_docker}{}}}
 \subsection{Method \code{init_docker()}}{
-Initializes \code{\link{DockerInstance}} as an environment field. This method starts docker and
-delivers and interface to interact with docker.
+Initializes \code{\link{ORSDockerInterface}} as an environment field. This method starts docker
+and delivers and interface to interact with docker.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$init_docker()}\if{html}{\out{</div>}}
 }
