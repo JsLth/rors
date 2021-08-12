@@ -1,0 +1,31 @@
+---
+title: "How to use the package functions"
+author: Jonas Lieth
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{How to use the package functions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+First, we will need sample data:
+```{r}
+wfs <- ows4R::WFSClient$new('https://sgx.geodatenzentrum.de/wfs_vg250', serviceVersion = '2.0.0')
+cgn <- wfs$getCapabilities()$findFeatureTypeByName('vg250:vg250_rbz')$getFeatures()
+sample_data <- sf::st_sample(cgn, 100) %>%
+        sf::st_transform(4326) %>%
+        sf::st_coordinates() %>%
+        as.data.frame()
+```
+
+```{r setup}
+library(ORSRouting)
+```

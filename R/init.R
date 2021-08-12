@@ -142,14 +142,14 @@ ORSInstance <- R6::R6Class(
            setwd(basedir)
          # If only the first exists, don't do anything and print a warning
          } else {
-           stop('The OpenRouteService directory does not seem to exist. Verify that the service backend was downloaded or pass a custom directory.')
+           cli::cli_abort('The OpenRouteService directory does not seem to exist. Verify that the service backend was downloaded or pass a custom directory.')
          }
       # If a path is passed that is not part of the current working directory
       } else if(!is.null(dir) && !grepl(dir, getwd())) {
         if(dir.exists(dir)) {
           setwd(dir)
         } else {
-          stop('The custom directory does not seem to exist.')
+          cli::cli_abort('The custom directory does not seem to exist.')
         }
       # If the ORS path or one of its children is set as a working directory
       } else {
@@ -160,18 +160,18 @@ ORSInstance <- R6::R6Class(
       }
     },
     dir_download_url = 'https://github.com/GIScience/openrouteservice/archive/refs/heads/master.zip',
-    clone_ors_repo = function(dir = NULL) {
+    clone_ors_repo = function(dir = getwd()) {
       basedir <- 'openrouteservice-master'
       if(!is.null(dir) && dir.exists(dir)) {
         setwd(dir)
       }
       if(!dir.exists(basedir) && !grepl(basedir, getwd())) {
         zip_file <- 'openrouteservice.zip'
-        message('Downloading service backend from GitHub repository...')
-        download.file(private$dir_download_url,
-                      zip_file)
+        cli::cli_progress_step('Downloading service backend from GitHub repository...')
+        download.file(private$dir_download_url, zip_file)
         unzip(zip_file, exdir = dir)
         file.remove(zip_file)
+        cli::cli_progress_update()
       }
       private$set_ors_wd()
     }
@@ -218,66 +218,69 @@ ORSExtract <- R6::R6Class(
         self$path <- path
         self$size <- file.info(path)$size * 0.000001
       } else if(sum(osm_file_occurences) > 1) {
-        message('There a multiple OSM files in the data directory. Cannot decide for one, do it yourself.')
+        cli::cli_alert_warning('There a multiple OSM files in the data directory. Please set an extract manually.')
       }
     },
 
     #' @description Downloads an OSM extract.
-    #' @param place Character scalar, sf or sfc object or length-2 numeric vector to be passed to
-    #' \code{\link[osmextract]{oe_match}}. Represents a place that falls inside the coverage of defined
-    #' extract regions of the providers listed in \code{\link[osmextract]{oe_providers}}. The geographic
-    #' scale can be adjusted by changing the parameter `level`. For details, refer to \code{\link[osmextract]{oe_match}}.
-    #' @param level Integer scalar. If an sf or sfc object or a numeric vector is passed to
-    #' `place`, represents the hierarchical level of the extraxt to be matched. See details
-    #' in \code{\link[osmextract]{oe_match}}.
-    #' @details The extract is downloaded directly to docker/data. This will also be the directory
-    #' that is passed to the \code{\link{ORSSetupSettings}} to process the extract. This directory is not
-    #' mutable because Docker expects a relative path to its main directory.
-    get_extract = function(place, level = NULL) {
+    #' @param place Character scalar, sf or sfc object or length-2 numeric
+    #' vector to be passed to \code{\link[osmextract]{oe_match}}. Represents
+    #' a place that falls inside the coverage of defined extract regions of
+    #' the providers listed in \code{\link[osmextract]{oe_providers}}. The
+    #' geographic scale can be adjusted by changing the parameter `level`. For
+    #' details, refer to \code{\link[osmextract]{oe_match}}.
+    #' @param level Passed to \code{\link[osmextract]{oe_match}}.
+    #' @details The extract is downloaded directly to docker/data. This will
+    #' also be the directory that is passed to the
+    #' \code{\link{ORSSetupSettings}} to process the extract. This directory is
+    #' not mutable because Docker expects a relative path to its main directory.
+    get_extract = function(place, ...) {
       download_path <- 'docker/data'
       ok <- TRUE
       i <- 0
       providers <- suppressMessages({osmextract::oe_providers()$available_providers})
-      message('Trying different extract providers...')
+      cli::cli_alert_info('Trying different extract providers...')
       while(ok && i < length(providers)) {
         i <- i + 1
-        place_match <- osmextract::oe_match(place, provider = providers[i], level = level, quiet = TRUE)
+        place_match <- osmextract::oe_match(place, provider = providers[i], quiet = TRUE, ...)
         file_name <- strsplit(place_match$url, '/') %>% .[[1]] %>% tail(1)
-        message('The extract %s is %s MB in size and will be downloaded from %s.' %>%
-                  sprintf(file_name,
-                          round(place_match$file_size * 0.000001),
-                          providers[i]))
+        cli::cli_alert_info('The extract {.val {file_name}} is {.val {round(place_match$file_size / 1024 / 1024)}} MB in size and will be downloaded from {.val {providers[i]}}.')
         if(providers[i] == 'bbbike') {
-          message('bbbike extracts are known to cause issues with memory allocation. Use with caution.')
+          cli::cli_alert_warning('bbbike extracts are known to cause issues with memory allocation. Use with caution.')
         }
         input <- tolower(readline('Should a different provider be tried? (Yes/No/Cancel)'))
         if(!input %in% c('yes', 'no')) {
-          message('Function cancelled.')
+          cli::cli_alert_danger('Function cancelled.')
           invokeRestart('abort')
         }
         ok <- input == 'yes'
       }
       if(ok) {
-        stop('All providers have been searched. Please download the extract manually.')
+        cli::cli_alert_warning('All providers have been searched. Please download the extract manually.')
+        invokeRestart('abort')
       }
       file_occurences <- grepl(file_name, dir(download_path))
       if(sum(file_occurences) == 1) {
-        message('The extract already exists in the download path. Download will be skipped.')
+        cli::cli_alert_info('The extract already exists in the download path. Download will be skipped.')
         path <- paste(download_path, dir(download_path)[file_occurences], sep ='/')
-        message('Download path: %s' %>% sprintf(path))
+        cli::cli_text('Download path: {.val {path}}')
       } else {
         private$rm_old_extracts()
-        path <- osmextract::oe_download(place_match$url,
+        path <- paste0('docker/data/', providers[i], '_', file_name)
+        cli::cli_progress_step('Downloading the OSM extract...',
+                               msg_done = 'The extract was successfully downloaded to the following path: {.val {path}}',
+                               msg_failed = 'Extract could not be downloaded.')
+        osmextract::oe_download(place_match$url,
                                         provider = providers[i],
                                         download_directory = normalizePath(download_path, winslash = '/'),
                                         quiet = TRUE)
-        message('The extract was successfully downloaded to the following path: %s' %>% sprintf(path))
+
       }
       size <- file.info(path)$size / 1024 / 1024
       if(size >= 6000) {
-        warning('The OSM extract is very large. Make sure that you have enough working memory available.')
+        cli::cli_alert_warning('The OSM extract is very large. Make sure that you have enough working memory available.')
       }
-      self$path <- download_path
+      self$path <- path
       self$place <- place
       self$level <- level
       self$size <- size
@@ -292,7 +295,7 @@ ORSExtract <- R6::R6Class(
         self$path <- relativePath(private$move_extract(extract_path))
         self$size <- file.info(extract_path)$size * 0.000001
       } else {
-        stop('The provided extract file does not exist.')
+        cli::cli_abort('The provided extract file does not exist.')
       }
     }
   ),
@@ -313,7 +316,7 @@ ORSExtract <- R6::R6Class(
       extract_occurences <- dir(path) %>%
         grepl('.pbf|.osm.gz|.osm.zip|.osm', .)
       if(sum(extract_occurences) > 0) {
-        message('Removing old extracts...')
+        cli::cli_alert_info('Removing old extracts...')
         for(extract in dir(path)[extract_occurences]) {
           file.remove(paste0('docker/data/', extract))
         }
@@ -351,7 +354,7 @@ ORSConfig <- R6::R6Class(
             .[!duplicated(.)]
           self$ors_config$ors$services$routing$profiles$active <- profiles
         } else {
-          stop('Pass a valid vector of profiles.')
+          cli::cli_abort('Pass a valid vector of profiles.')
         }
       }
     }
@@ -386,7 +389,7 @@ ORSConfig <- R6::R6Class(
         self$ors_config <- config
         self$save_config()
       } else {
-        stop('This class must be initialized from the ORS main directory.')
+        cli::cli_abort('This class must be initialized from the ORS main directory.')
       }
       invisible(self)
     },
@@ -400,6 +403,12 @@ ORSConfig <- R6::R6Class(
       } else {
         cat(config_json, file = 'docker/data/ors-config.json')
       }
+    },
+
+    #' @description Opens the raw config file to allow manual changes. Useful if you find the list
+    #' structure of the parsed JSON impractical.
+    open_config = function() {
+      shell(normalizePath(self$path, winslash = '\\'))
     }
   ),
   private = list(
@@ -420,7 +429,7 @@ ORSConfig <- R6::R6Class(
         } else if(profile %in% translator$config_names) {
           profile
         } else {
-          warning('Profiles that do not conform to the ORS naming scheme will be skipped.')
+          cli::cli_warn('Profile {.val {profile}} does not conform to the ORS naming scheme and will be skipped.')
           NULL
         }
       }
@@ -462,7 +471,7 @@ ORSSetupSettings <- R6::R6Class(
           self$compose$services$`ors-app`$environment[1] <- build_graphs_string
           return(order)
         } else {
-          stop('Pass a logical scalar. Should graphs be built or not?')
+          cli::cli_abort('Pass a logical scalar. Should graphs be built or not?')
         }
       }
     }
@@ -529,15 +538,15 @@ ORSSetupSettings <- R6::R6Class(
           init <- max / 2
           private$write_memory(init, max)
         } else {
-          stop('Initialize the extract and config before changing the setup settings or pass a fixed amount of memory. The memory estimation is based on the extract size and the number of active profiles.')
+          cli::cli_abort('Initialize the extract and config before changing the setup settings or pass a fixed amount of memory. The memory estimation is based on the extract size and the number of active profiles.')
         }
       } else {
-        stop('Either pass a numeric or nothing.')
+        cli::cli_abort('Either pass a numeric or nothing.')
       }
       gc()
       free_mem <- memuse::Sys.meminfo()$freeram@size
       if(free_mem * 0.8 - max <= 0) {
-        warning('You are allocating more than your available memory. Consider lowering the allocated RAM.')
+        cli::cli_warn('You are allocating more than your available memory. Consider lowering the allocated RAM.')
       }
       self$init_memory <- paste(as.character(init / 1000), 'GB')
       self$max_memory <- paste(as.character(max / 1000), 'GB')
@@ -574,6 +583,12 @@ ORSSetupSettings <- R6::R6Class(
     #' This should be run each time after changing any settings.
     save_settings = function() {
       private$write_dockercompose()
+    },
+
+    #' @description Opens the raw compose file to allow manual changes. Useful if you find the list
+    #' structure of the parsed yaml impractical.
+    open_config = function() {
+      shell(normalizePath('docker/docker-compose.yml', winslash = '\\'))
     }
   ),
   private = list(
@@ -662,7 +677,7 @@ ORSDockerInterface <- R6::R6Class(
       if(missing(v)) {
         private$.docker_running()
       } else {
-        stop('`$docker_running` is read only.')
+        cli::cli_abort('`$docker_running` is read only.')
       }
     },
 
@@ -671,7 +686,7 @@ ORSDockerInterface <- R6::R6Class(
       if(missing(v)) {
         private$.image_built()
       } else {
-        stop('`$image_built` is read only.')
+        cli::cli_abort('`$image_built` is read only.')
       }
     },
 
@@ -680,7 +695,7 @@ ORSDockerInterface <- R6::R6Class(
       if(missing(v)) {
         private$.container_exists()
       } else {
-        stop('`$container_exists` is read only.')
+        cli::cli_abort('`$container_exists` is read only.')
       }
     },
 
@@ -689,7 +704,7 @@ ORSDockerInterface <- R6::R6Class(
       if(missing(v)) {
         private$.container_running()
       } else {
-        stop('`$container_running` is read only.')
+        cli::cli_abort('`$container_running` is read only.')
       }
     },
 
@@ -699,7 +714,7 @@ ORSDockerInterface <- R6::R6Class(
       if(missing(v)) {
         private$.service_ready()
       } else {
-        stop('`$service_ready` is read only.')
+        cli::cli_abort('`$service_ready` is read only.')
       }
     }
   ),
@@ -719,14 +734,14 @@ ORSDockerInterface <- R6::R6Class(
       setwd('docker')
       system('docker-compose up -d')
       private$notify_when_ready()
-      setwd('../../GeoTools')
+      setwd('..')
     },
 
     #' @description Deletes the image. Should only be used when the container does not exist.
     image_down = function() {
       setwd('docker')
       system('docker-compose down --rmi \'all\'')
-      setwd('../../GeoTools')
+      setwd('..')
     },
 
     #' @description Starts the container and issues a system notification when the service is ready to
@@ -735,14 +750,14 @@ ORSDockerInterface <- R6::R6Class(
       setwd('docker')
       invisible(system('docker start ors-app'))
       private$notify_when_ready(interval = 2, shutup = TRUE)
-      setwd('../../GeoTools')
+      setwd('..')
     },
 
     #' @description Stops the container.
     stop_container = function() {
       setwd('docker')
       invisible(system('docker stop ors-app'))
-      setwd('../../GeoTools')
+      setwd('..')
     }
   ),
   private = list(
@@ -795,9 +810,9 @@ ORSDockerInterface <- R6::R6Class(
       } else if(docker_check == 1) {
         return(FALSE)
       } else if(docker_check == -1) {
-        stop('Docker is not recognized as a command. Is it installed?')
+        cli::cli_abort('Docker is not recognized as a command. Is it properly installed?')
       } else {
-        stop('Cannot check Docker status for some reason.')
+        cli::cli_abort('Cannot check Docker status for some reason.')
       }
     },
     start_docker = function() {
@@ -808,38 +823,51 @@ ORSDockerInterface <- R6::R6Class(
           unlist() %>%
           head(-3) %>%
           append('Docker Desktop.exe') %>%
-          paste(collapse = '/')
-        scode <- system(docker_desktop, wait = FALSE)
+          paste(collapse = '/') %>% 
+          shQuote()
+        scode <- shell(docker_desktop, wait = FALSE)
         # If Docker is installed, it will try to open
         if(scode == 0) {
-          message('Starting Docker.', appendLF = FALSE)
-          # Check if Docker is usable by running Docker commands
+          cli::cli_progress_step(
+            'Starting Docker...', 
+            spinner = TRUE,
+            msg_done = 'Docker Desktop is now running.',
+            msg_failed = 'The Docker startup has timed out.'
+          )
+          # Check if Docker is usable by running a Docker command
           while(system('docker ps', ignore.stdout = TRUE, ignore.stderr = TRUE) != 0) {
-            message('.', appendLF = FALSE)
-            Sys.sleep(1)
-         }
-         message(' Docker Desktop is now running.')
+            for (i in 1:10) {
+              cli::cli_progress_update()
+              Sys.sleep(0.1)
+            }
+          }
         } else if(scode == -1) {
-          stop('Docker does not seem to be installed on your system.')
+          cli::cli_abort('Docker does not seem to be installed on your system.')
         } else {
           # If something else is returned, I'm all out of ideas
-          stop('Something went wrong while starting Docker.')
+          cli::cli_abort('Something went wrong while starting Docker.')
         }
       }
     },
     notify_when_ready = function(interval = 10, shutup = FALSE) {
       # Checks the service status and gives out a visual and audible notification when
       # the server is ready. Also watches out for errors in the log files.
-      message('The container is being set up and started now. You can stop the process now or let it run and get notified when the service is ready.')
-      message('Building graphs and doing other complicated things.', appendLF = FALSE)
+      cli::cli_inform('The container is being set up and started now. You can stop the process now or let it run and get notified when the service is ready.')
+      cli::cli_progress_step('Starting service', spinner = TRUE)
       while(!self$service_ready) {
-        message('../../GeoTools/R', appendLF = FALSE)
+        for(i in seq_len(interval * 10)) {
+          cli::cli_progress_update()
+          Sys.sleep(0.1)
+        }
         errors <- private$watch_for_error()
         if(!is.null(errors)) {
-          stop(paste0('The docker container ran into the following errors:\n- '),
-               paste0(errors, collapse = '\n- '))
+          cli::cli_abort(
+            c(
+              'The service ran into the following errors:',
+              cli::cli_vec(errors, style = list(vec_sep = '\n'))
+            )
+          )
         }
-        Sys.sleep(interval)
       }
       if(!shutup) {
         switch(Sys.info()['sysname'],

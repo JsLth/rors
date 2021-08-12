@@ -3,3 +3,5 @@ inst/doc
 .Rhistory
 /.Rproj.user/
 .idea
+.vscode
+openrouteservice-master
