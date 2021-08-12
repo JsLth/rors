@@ -153,7 +153,7 @@ lonlat_to_utm <- function(coordinates, crs = NULL, reverse = FALSE, zone = NULL)
 relativePath <- function(absolute_path) {
   relative_path <- gsub(sprintf('%s|%s/', getwd(), getwd()), '', absolute_path)
   if(relative_path == '') {
-    relative_path <- '../../GeoTools/R'
+    relative_path <- '.'
   }
   relative_path
 }

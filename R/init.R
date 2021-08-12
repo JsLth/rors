@@ -51,16 +51,11 @@ ORSInstance <- R6::R6Class(
     #' from the [official GitHub repository]: https://github.com/GIScience/openrouteservice.
     initialize = function(dir = NULL) {
       if(!is.null(dir)) {
-        self$dir <- relativePath(dir)
-        self$set_ors_wd()
+        private$clone_ors_repo(dir)
+        self$dir <- dir
       } else {
-        if(!grepl('ORS_GitClone/openrouteservice-master', getwd())) {
-          private$clone_ors_repo()
-          self$dir <- relativePath(getwd())
-        } else {
-          self$set_ors_wd()
-          self$dir <- relativePath(getwd())
-        }
+        private$clone_ors_repo()
+        self$dir <- getwd()
       }
       self$extract <- ORSExtract$new()
       self$get_config()
@@ -125,39 +120,6 @@ ORSInstance <- R6::R6Class(
       )
     },
 
-    #' @description
-    #' Tries to find the ORS directory and set it as the current working directory.
-    #' @param dir Custom ORS directory. If not specified, the method will look inside the
-    #' default path and expects the default directory naming.
-    set_ors_wd = function(dir = NULL) {
-      both <- 'ORS_GitClone/openrouteservice-master'
-      first <- 'ORS_GitClone'
-      latter <- 'openrouteservice-master'
-      # If no path is given, set the default path as the working dir
-      if(is.null(dir) && !grepl(both, getwd())) {
-         # If both directories exist, set both as the working dir
-         if(dir.exists(both)) {
-           setwd(both)
-         # If only the first exists, don't do anything and print a warning
-         } else if(dir.exists(first)) {
-           warning('openrouteservice-master could not be found. The working directory was not changed. Please make sure that the backend directory is properly named.')
-         # If the first one is the current working dir, set the second one as working dir
-         } else if(dir.exists(latter)) {
-           setwd(latter)
-         } else {
-           stop('Path to OpenRouteService backend is not self-evident. Create "ORS_GitClone/openrouteservice-master" or pass a directory.')
-         }
-      # If a path is passed that is not part of the current working directory
-      } else if(!is.null(dir) && !grepl(dir, getwd())) {
-        setwd(dir)
-      # If the ORS path or one of its children is set as a working directory
-      } else {
-        # go up the directories until the ORS path is the current working directory
-        while(tail(unlist(strsplit(getwd(), '/')), 1) != latter) {
-          setwd('../../GeoTools')
-        }
-      }
-    },
     #' @description Changes the necessary settings and configurations for the first startup, builds the
     #' image and starts the container. This function should only be used when starting the service for
     #' the first time. Changes after that should preferably be made manually.
@@ -171,23 +133,47 @@ ORSInstance <- R6::R6Class(
   ),
   private = list(
     wait = NULL, # TODO: Implement wait parameter
-    dir_download_url = 'https://github.com/GIScience/openrouteservice/archive/refs/heads/master.zip',
-    clone_ors_repo = function() {
-      setwd(here::here())
-      if(!dir.exists('ORS_GitClone')) {
-        dir.create('ORS_GitClone')
+    set_ors_wd = function(dir = NULL) {
+      basedir <- 'openrouteservice-master'
+      # If no path is given, set the default path as the working dir
+      if(is.null(dir) && !grepl(basedir, getwd())) {
+         # If both directories exist, set both as the working dir
+         if(dir.exists(basedir)) {
+           setwd(basedir)
+         # If only the first exists, don't do anything and print a warning
+         } else {
+           stop('The OpenRouteService directory does not seem to exist. Verify that the service backend was downloaded or pass a custom directory.')
+         }
+      # If a path is passed that is not part of the current working directory
+      } else if(!is.null(dir) && !grepl(dir, getwd())) {
+        if(dir.exists(dir)) {
+          setwd(dir)
+        } else {
+          stop('The custom directory does not seem to exist.')
+        }
+      # If the ORS path or one of its children is set as a working directory
+      } else {
+        # go up the directories until the ORS path is the current working directory
+        while(tail(unlist(strsplit(getwd(), '/')), 1) != basedir) {
+          setwd('../../GeoTools')
+        }
       }
-      if(!dir.exists('ORS_GitClone/openrouteservice-master')) {
-        zip_file <- 'ORS_GitClone/openrouteservice.zip'
+    },
+    dir_download_url = 'https://github.com/GIScience/openrouteservice/archive/refs/heads/master.zip',
+    clone_ors_repo = function(dir = NULL) {
+      basedir <- 'openrouteservice-master'
+      if(!is.null(dir) && dir.exists(dir)) {
+        setwd(dir)
+      }
+      if(!dir.exists(basedir) && !grepl(basedir, getwd())) {
+        zip_file <- 'openrouteservice.zip'
         message('Downloading service backend from GitHub repository...')
         download.file(private$dir_download_url,
                       zip_file)
-        unzip(zip_file, exdir = 'ORS_GitClone')
+        unzip(zip_file, exdir = dir)
         file.remove(zip_file)
-      } else {
-        message('Backend directory already exists.')
       }
-      self$set_ors_wd()
+      private$set_ors_wd()
     }
   ),
   cloneable = FALSE
@@ -287,13 +273,14 @@ ORSExtract <- R6::R6Class(
                                         quiet = TRUE)
         message('The extract was successfully downloaded to the following path: %s' %>% sprintf(path))
       }
-      if(file.info(path)$size >= 6000000000) {
+      size <- file.info(path)$size / 1024 / 1024
+      if(size >= 6000) {
         warning('The OSM extract is very large. Make sure that you have enough working memory available.')
       }
       self$path <- download_path
       self$place <- place
       self$level <- level
-      self$size <- file.info(path)$size * 0.000001
+      self$size <- size
       self$provider <- providers[i]
     },
 
