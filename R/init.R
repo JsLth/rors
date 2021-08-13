@@ -994,8 +994,9 @@ ORSDockerInterface <- R6::R6Class(
           paste(
             "docker container ls -a --format \"{{.State}}\"",
             "--filter name=^/ors-app$",
-          intern = TRUE,
-          ignore.stderr = TRUE
+            intern = TRUE,
+            ignore.stderr = TRUE
+          )
         )
       ) %>%
         identical("running")
@@ -1005,7 +1006,9 @@ ORSDockerInterface <- R6::R6Class(
         paste(
           "docker images \"openrouteservice/openrouteservice\"",
           "--format {{.Repository}}",
-        intern = TRUE)
+          intern = TRUE
+        )
+      )
       if (length(image_name) > 0) {
         return(TRUE)
       } else {
@@ -1021,9 +1024,12 @@ ORSDockerInterface <- R6::R6Class(
       } else if (docker_check == 1) {
         return(FALSE)
       } else if (docker_check == -1) {
-        cli::cli_abort(paste(
-          "Docker is not recognized as a command.",
-          "Is it properly installed?")
+        cli::cli_abort(
+          paste(
+            "Docker is not recognized as a command.",
+            "Is it properly installed?"
+          )
+        )
       } else {
         cli::cli_abort("Cannot check Docker status for some reason.")
       }
@@ -1041,8 +1047,13 @@ ORSDockerInterface <- R6::R6Class(
         scode <- shell(docker_desktop, wait = FALSE)
         # If Docker is installed, it will try to open
         if (scode == 0) {
-          cli::cli_progress_step("Starting Docker...", spinner = TRUE)
           timer <- 0
+          cli::cli_progress_step(
+            "Starting Docker...",
+            spinner = TRUE,
+            msg_done = "Docker Desktop is now running.",
+            msg_failed = "The Docker startup has timed out."
+          )
           # Check if Docker is usable by running a Docker command
           while (
             system(
@@ -1060,7 +1071,6 @@ ORSDockerInterface <- R6::R6Class(
               cli::cli_abort("The Docker startup has timed out.")
             }
           }
-          cli::cli_alert_success("Docker Desktop is now running.")
         } else if (scode == -1) {
           cli::cli_abort("Docker does not seem to be installed on your system.")
         } else {
@@ -1095,27 +1105,30 @@ ORSDockerInterface <- R6::R6Class(
         }
       }
       if (!shutup) {
-        switch(Sys.info()["sysname"],
-               Windows = {
-                 system("rundll32 user32.dll,MessageBeep -1")
-                 system("msg * \"ORS Service is ready!\"")
-               },
-               Darwin = {
-                 system(
-                   paste(
-                     "osascript -e 'display notification",
-                     "\"ORS Service is ready!\"",
-                     "with title",
-                     "\"Message from R\""
-                   )
-                 )
-               },
-               Linux = {
-                 system(
-                   paste(
-                     "notify-send \"ORS Service is ready!\"",
-                     "\"Message from R\"")
-               }
+        switch(
+          Sys.info()["sysname"],
+          Windows = {
+            system("rundll32 user32.dll,MessageBeep -1")
+            system("msg * \"ORS Service is ready!\"")
+          },
+          Darwin = {
+            system(
+              paste(
+                "osascript -e 'display notification",
+                "\"ORS Service is ready!\"",
+                "with title",
+                "\"Message from R\""
+              )
+            )
+          },
+          Linux = {
+            system(
+              paste(
+                "notify-send \"ORS Service is ready!\"",
+                "\"Message from R\""
+              )
+            )
+          }
         )
       }
       invisible(NULL)
