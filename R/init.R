@@ -929,6 +929,16 @@ ORSDockerInterface <- R6::R6Class(
     #' and specifies the port.
     #' @param port Integer scalar. Port that the server should run on.
     initialize = function(port = 8080) {
+      if (Sys.info()["sysname"] == "Linux") {
+        cli::cli_alert_warning(
+          "ORSInstance needs superuser permissions to communicate with Docker"
+        )
+        system(
+          "pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY ls",
+          ignore.stdout = TRUE,
+          ignore.stderr = FALSE
+        )
+      }
       private$.start_docker()
       private$.port <- port
       invisible(self)
@@ -938,7 +948,7 @@ ORSDockerInterface <- R6::R6Class(
     #' notification when the service is ready to be used.
     image_up = function() {
       setwd("docker")
-      system("docker-compose up -d")
+      system(ensure_permission("docker-compose up -d"))
       private$.notify_when_ready()
       setwd("..")
     },
@@ -947,7 +957,7 @@ ORSDockerInterface <- R6::R6Class(
     #' does not exist.
     image_down = function() {
       setwd("docker")
-      system("docker-compose down --rmi 'all'")
+      system(ensure_permission("docker-compose down --rmi 'all'"))
       setwd("..")
     },
 
@@ -955,7 +965,7 @@ ORSDockerInterface <- R6::R6Class(
     #' the service is ready to be used.
     start_container = function() {
       setwd("docker")
-      invisible(system("docker start ors-app"))
+      system(ensure_permission("docker start ors-app"), ignore.stdout = TRUE)
       private$.notify_when_ready(interval = 2, shutup = TRUE)
       setwd("..")
     },
@@ -963,7 +973,7 @@ ORSDockerInterface <- R6::R6Class(
     #' @description Stops the container.
     stop_container = function() {
       setwd("docker")
-      invisible(system("docker stop ors-app"))
+      system(ensure_permission("docker stop ors-app"), ignore.stdout = TRUE)
       setwd("..")
     }
   ),
@@ -983,32 +993,32 @@ ORSDockerInterface <- R6::R6Class(
     },
     .container_exists = function() {
       container_exists <- system(
-        "docker ps -a --format \"{{.Names}}\" --filter name=^/ors-app$",
+        ensure_permission(
+          "docker ps -a --format \"{{.Names}}\" --filter name=^/ors-app$"
+        ),
         intern = TRUE
       ) %>%
         identical("ors-app")
     },
     .container_running = function() {
       container_status <- suppressWarnings(
-        system(
           paste(
             "docker container ls -a --format \"{{.State}}\"",
-            "--filter name=^/ors-app$",
-            intern = TRUE,
-            ignore.stderr = TRUE
-          )
-        )
-      ) %>%
-        identical("running")
+            "--filter name=^/ors-app$"
+          ) %>%
+          ensure_permission() %>%
+          system(intern = TRUE, ignore.stderr = TRUE) %>%
+          identical("running")
+      )
     },
     .image_built = function() {
-      image_name <- system(
-        paste(
-          "docker images \"openrouteservice/openrouteservice\"",
-          "--format {{.Repository}}",
-          intern = TRUE
-        )
-      )
+      image_name <- paste(
+        "docker images \"openrouteservice/openrouteservice\"",
+        "--format {{.Repository}}"
+      ) %>%
+      ensure_permission() %>%
+      system(intern = TRUE)
+
       if (length(image_name) > 0) {
         return(TRUE)
       } else {
@@ -1016,7 +1026,7 @@ ORSDockerInterface <- R6::R6Class(
       }
     },
     .docker_running = function() {
-      docker_check <- system("docker ps",
+      docker_check <- system(ensure_permission("docker ps"),
                              ignore.stdout = TRUE,
                              ignore.stderr = TRUE)
       if (docker_check == 0) {
@@ -1036,45 +1046,49 @@ ORSDockerInterface <- R6::R6Class(
     },
     .start_docker = function() {
       if (!private$.docker_running()) {
-        docker_path <- system("where docker.exe", intern = TRUE)
-        docker_desktop <- docker_path %>%
-          strsplit("\\\\") %>%
-          unlist() %>%
-          head(-3) %>%
-          append("Docker Desktop.exe") %>%
-          paste(collapse = "/") %>%
-          shQuote()
-        scode <- shell(docker_desktop, wait = FALSE)
-        # If Docker is installed, it will try to open
-        if (scode == 0) {
-          timer <- 0
-          cli::cli_progress_step(
-            "Starting Docker...",
-            spinner = TRUE,
-            msg_done = "Docker Desktop is now running.",
-            msg_failed = "The Docker startup has timed out."
-          )
-          # Check if Docker is usable by running a Docker command
-          while (
-            system(
-              "docker ps",
-              ignore.stdout = TRUE,
-              ignore.stderr = TRUE
-            ) != 0
-          ) {
-            for (i in 1:100) {
-              cli::cli_progress_update()
-              Sys.sleep(0.01)
+        if (Sys.info()["sysname"] == "Windows") {
+          docker_path <- system("where docker.exe", intern = TRUE)
+          docker_desktop <- docker_path %>%
+            strsplit("\\\\") %>%
+            unlist() %>%
+            head(-3) %>%
+            append("Docker Desktop.exe") %>%
+            paste(collapse = "/") %>%
+            shQuote()
+          scode <- shell(docker_desktop, wait = FALSE)
+          # If Docker is installed, it will try to open
+          if (scode == 0) {
+            timer <- 0
+            cli::cli_progress_step(
+              "Starting Docker...",
+              spinner = TRUE,
+              msg_done = "Docker Desktop is now running.",
+              msg_failed = "The Docker startup has timed out."
+            )
+            # Check if Docker is usable by running a Docker command
+            while (
+              system(
+                "docker ps",
+                ignore.stdout = TRUE,
+                ignore.stderr = TRUE
+              ) != 0
+            ) {
+              for (i in 1:100) {
+                cli::cli_progress_update()
+                Sys.sleep(0.01)
+              }
+              timer <- timer + 1
+              if (timer == 30) {
+                cli::cli_abort("The Docker startup has timed out.")
+              }
             }
-            timer <- timer + 1
-            if (timer == 30) {
-              cli::cli_abort("The Docker startup has timed out.")
-            }
+          } else if (scode == -1) {
+            cli::cli_abort("Docker does not seem to be installed on your system.")
+          } else {
+            cli::cli_abort("Something went wrong while starting Docker.")
           }
-        } else if (scode == -1) {
-          cli::cli_abort("Docker does not seem to be installed on your system.")
-        } else {
-          cli::cli_abort("Something went wrong while starting Docker.")
+        } else if (Sys.info()["sysname"] == "Linux") {
+          system(ensure_permission("systemctl start docker"))
         }
       }
     },
@@ -1108,7 +1122,7 @@ ORSDockerInterface <- R6::R6Class(
         switch(
           Sys.info()["sysname"],
           Windows = {
-            system("rundll32 user32.dll,MessageBeep -1")
+            system("rundll32 user32.dll, MessageBeep -1")
             system("msg * \"ORS Service is ready!\"")
           },
           Darwin = {
@@ -1122,6 +1136,7 @@ ORSDockerInterface <- R6::R6Class(
             )
           },
           Linux = {
+            system("paplay /usr/share/sounds/freedesktop/stereo/complete.oga")
             system(
               paste(
                 "notify-send \"ORS Service is ready!\"",
@@ -1151,10 +1166,12 @@ ORSDockerInterface <- R6::R6Class(
           # Logs from OpenRouteService (this sometimes stops logging)
           readLines("docker/logs/ors/ors.log"),
           # Output from Dockers logs command (this never stops logging)
-          system2("docker",
-          args = "logs ors-app",
-          stdout = FALSE,
-          stderr = TRUE)
+          system2(
+            "docker",
+            args = "logs ors-app",
+            stdout = FALSE,
+            stderr = TRUE
+          )
         )
         error_catcher <- function(log) {
           errors <- grep("error | exception",

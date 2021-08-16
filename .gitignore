@@ -1,6 +1,7 @@
 inst/doc
 ^.*\.Rproj$
 .Rhistory
+.RData
 /.Rproj.user/
 .idea
 .vscode

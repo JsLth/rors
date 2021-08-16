@@ -5,7 +5,7 @@
 
 #' @importFrom magrittr %>%
 
-centroids_from_polygons <- function (polygons, as_sf = FALSE) {
+centroids_from_polygons <- function(polygons, as_sf = FALSE) {
   crs <- sf::st_crs(polygons)
   # Polygone zu projiziertem CRS transformieren
   polygons_metric <- polygons %>%
@@ -18,14 +18,20 @@ centroids_from_polygons <- function (polygons, as_sf = FALSE) {
   if (as_sf) {
     return(centroids)
   } else {
-    return(centroids %>% sf::st_coordinates() %>% as.data.frame())
+    return(centroids %>%
+      sf::st_coordinates() %>%
+      as.data.frame())
   }
 
 }
 
 #' @importFrom magrittr %>%
 
-buffers_from_points <- function (points, radius, cap_style = 'ROUND', join_style = 'ROUND') {
+buffers_from_points <- function(
+  points,
+  radius,
+  cap_style = "ROUND",
+  join_style = "ROUND") {
   crs <- sf::st_crs(points)
   points %>%
     lonlat_to_utm() %>%
@@ -35,18 +41,16 @@ buffers_from_points <- function (points, radius, cap_style = 'ROUND', join_style
 
 #' @importFrom magrittr %>%
 
-buffer_bbox_from_coordinates <- function (coordinates, radius, crs = 4326) {
+buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326) {
+  # Convert coordinates to metric points
   points <- coordinates %>%
-    # Datensatz in simple feature konvertieren
     sf::st_as_sf(coords = c(1, 2), crs = crs) %>%
-    # Geometrie in metrisches CRS transformieren
     lonlat_to_utm()
+  # Generate buffers
   buffers <- points %>%
-    # Buffer generieren
     sf::st_buffer(dist = radius) %>%
-    # Geometrie zurück transformieren
     lonlat_to_utm(crs = crs, reverse = TRUE)
-    # Koordinaten extrahieren und zusammenführen
+  # Extract bboxes
   buffer_bbox <- buffers %>%
     sf::st_geometry() %>%
     purrr::map(st_bbox) %>%
@@ -57,7 +61,8 @@ buffer_bbox_from_coordinates <- function (coordinates, radius, crs = 4326) {
 
 #' @importFrom magrittr %>%
 
-reformat_vectordata <- function (data, crs = 4326) {
+reformat_vectordata <- function(data, crs = 4326) {
+  # Extract coordinates from geometries
   data %>%
     sf::st_transform(crs = crs) %>%
     sf::st_coordinates() %>%
@@ -67,14 +72,16 @@ reformat_vectordata <- function (data, crs = 4326) {
 
 
 swap_xy <- function(data) {
-  data <- data[, c(2,1)]
+  data <- data[, c(2, 1)]
   return(data)
 }
 
 #' @importFrom magrittr %>%
 
 ctransform <- function(coordinates, from_crs, to_crs) {
+  # Convert coordinates to sf features
   coordinates_sf <- sf::st_as_sf(coordinates, coords = c(1, 2), crs = from_crs)
+  # Transform sf features and extract coordinates
   transf_coordinates <- sf::st_transform(coordinates_sf, to_crs) %>%
     sf::st_coordinates() %>%
     as.data.frame()
@@ -85,20 +92,24 @@ ctransform <- function(coordinates, from_crs, to_crs) {
 
 parse_proj4string <- function(proj4_string) {
   crs_props <- proj4_string %>%
-    strsplit(' ') %>%
-    purrr::map(~strsplit(..1, '=')) %>%
+    strsplit(" ") %>%
+    purrr::map(~strsplit(..1, "=")) %>%
     purrr::flatten() %>%
     do.call(data.frame, .)
-  names(crs_props) <- as.character(unlist(crs_props[1,]))
-  crs_props <- crs_props[-1,]
+  names(crs_props) <- as.character(unlist(crs_props[1, ]))
+  crs_props <- crs_props[-1, ]
   rownames(crs_props) <- NULL
   return(crs_props)
 }
 
 #' @importFrom magrittr %>%
 
-lonlat_to_utm <- function(coordinates, crs = NULL, reverse = FALSE, zone = NULL) {
-  sf_check <- is(coordinates, c('sf', 'sfc'))
+lonlat_to_utm <- function(
+  coordinates,
+  crs = NULL,
+  reverse = FALSE,
+  zone = NULL) {
+  sf_check <- is(coordinates, c("sf", "sfc"))
   if (!reverse) {
     if (!sf_check) {
       coordinates <- sf::st_as_sf(coordinates, coords = c(1, 2), crs = crs)
@@ -111,7 +122,8 @@ lonlat_to_utm <- function(coordinates, crs = NULL, reverse = FALSE, zone = NULL)
       return(coordinates)
     }
 
-    from_crs_props <- crs$proj4string %>% parse_proj4string()
+    from_crs_props <- crs$proj4string %>%
+      parse_proj4string()
     if (is.null(zone)) {
       get.zone <- function(longitudes) {
         longitude_median <- median(longitudes)
@@ -123,7 +135,7 @@ lonlat_to_utm <- function(coordinates, crs = NULL, reverse = FALSE, zone = NULL)
         as.vector() %>%
         get.zone()
     }
-    to_crs_wkt <- '+proj=utm +zone=%s +datum=%s +units=m' %>%
+    to_crs_wkt <- "+proj=utm +zone=%s +datum=%s +units=m" %>%
       sprintf(zone, from_crs_props$`+datum`) %>%
       sf::st_crs()
     if (!sf_check) {
@@ -140,7 +152,7 @@ lonlat_to_utm <- function(coordinates, crs = NULL, reverse = FALSE, zone = NULL)
       transf_coordinates <- sf::st_transform(coordinates, crs)
     } else {
       to_crs_props <- sf::st_crs(crs)$proj4string %>% parse_proj4string()
-      from_crs_wkt <- '+proj=utm +zone=%s +datum=%s +units=m' %>%
+      from_crs_wkt <- "+proj=utm +zone=%s +datum=%s +units=m" %>%
         sprintf(zone, to_crs_props$`+datum`) %>%
         sf::st_crs()
       transf_coordinates <- ctransform(coordinates, from_crs_wkt, crs)
@@ -151,9 +163,22 @@ lonlat_to_utm <- function(coordinates, crs = NULL, reverse = FALSE, zone = NULL)
 
 
 relativePath <- function(absolute_path) {
-  relative_path <- gsub(sprintf('%s|%s/', getwd(), getwd()), '', absolute_path)
-  if(relative_path == '') {
-    relative_path <- '.'
+  relative_path <- gsub(sprintf("%s|%s/", getwd(), getwd()), "", absolute_path)
+  if (relative_path == "") {
+    relative_path <- "."
   }
   relative_path
+}
+
+
+ensure_permission <- function(command) {
+  paste0(
+    switch(
+      EXPR = Sys.info()["sysname"],
+      Windows = "",
+      Linux = "sudo ",
+      Darwin = "sudo "
+    ),
+  command
+  )
 }
