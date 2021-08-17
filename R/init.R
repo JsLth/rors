@@ -169,7 +169,8 @@ ORSInstance <- R6::R6Class(
     #' the container is being started and will give out a notification as soon
     #' as the service is ready. If `FALSE`, the function will start the
     #' container and then stop. To check the server status, you can then call
-    #' `$service_ready` from the class \code{\link{ORSDockerInterface}}.
+    #' `$service_ready` from the class \code{\link{ORSDockerInterface}}. Passed
+    #' to \code{\link{ORSDockerInterface}}.
     #' @param run Locial. If `TRUE`, returns `TRUE` if the initial setup is done
     #' and runs the setup if not. If `FALSE`, only returns logicals to check
     #' whether the initial setup is done or not.
@@ -234,6 +235,7 @@ ORSInstance <- R6::R6Class(
 
         # Set up Docker -------------------------------------------------------
         self$get_setup_settings()
+        self$setup_settings$build_graphs <- TRUE
         self$setup_settings$assign_data(extract_path)
         self$setup_settings$allocate_memory(init_memory, max_memory)
         self$setup_settings$save_settings()
@@ -241,10 +243,12 @@ ORSInstance <- R6::R6Class(
         # Start the service ---------------------------------------------------
         self$init_docker()
         self$docker$image_up()
+
+        # Update the config file
+        self$get_config()
     }
   ),
   private = list(
-    .wait = NULL, # TODO: Implement wait parameter
     .set_ors_wd = function(dir = NULL) {
 
       basedir <- "openrouteservice-master"
@@ -588,7 +592,7 @@ ORSConfig <- R6::R6Class(
           "This class must be initialized from the ORS main directory."
         )
       }
-      invisible(self)
+      return(self)
     },
 
     #' @description Saves the config changes by overwriting the config files
@@ -736,14 +740,18 @@ ORSSetupSettings <- R6::R6Class(
       profiles = NULL
     ) {
       self$compose <- private$.read_dockercompose()
-      self$extract_path <- paste("docker/data", extract_name, sep = "/")
+      if(!is.null(extract_name)) {
+        self$extract_path <- paste("docker/data", extract_name, sep = "/")
+        private$.extract_size <- file.info(self$extract_path)$size * 0.000001
+      }
+      if(!is.null(profiles)) {
+        private$.profiles <- length(profiles)
+      }
       self$config_path <- "docker/data/ors-config.json"
-      private$.extract_size <- file.info(self$extract_path)$size * 0.000001
-      private$.profiles <- length(profiles)
       private$.disable_auto_deletion()
       self$allocate_memory(init_memory, max_memory)
       self$save_settings()
-      invisible(self)
+      return(self)
     },
 
     #' @description Specifies the amount of memory to be allocated. If only the
@@ -1039,15 +1047,22 @@ ORSDockerInterface <- R6::R6Class(
       }
       private$.start_docker()
       private$.port <- port
-      invisible(self)
+      return(self)
     },
 
     #' @description Builds the image, starts the container and issues a system
     #' notification when the service is ready to be used.
-    image_up = function() {
+    #' @param wait Logical. If `TRUE`, the function will not stop running after
+    #' the container is being started and will give out a notification as soon
+    #' as the service is ready. If `FALSE`, the function will start the
+    #' container and then stop. To check the server status, you can then call
+    #' `$service_ready` from the class \code{\link{ORSDockerInterface}}.
+    image_up = function(wait = TRUE) {
       setwd("docker")
       system(ensure_permission("docker-compose up -d"))
-      private$.notify_when_ready()
+      if (wait) {
+        private$.notify_when_ready()
+      }
       setwd("..")
     },
 
@@ -1061,10 +1076,17 @@ ORSDockerInterface <- R6::R6Class(
 
     #' @description Starts the container and issues a system notification when
     #' the service is ready to be used.
-    start_container = function() {
+    #' @param wait Logical. If `TRUE`, the function will not stop running after
+    #' the container is being started and will give out a notification as soon
+    #' as the service is ready. If `FALSE`, the function will start the
+    #' container and then stop. To check the server status, you can then call
+    #' `$service_ready` from the class \code{\link{ORSDockerInterface}}.
+    start_container = function(wait = TRUE) {
       setwd("docker")
       system(ensure_permission("docker start ors-app"), ignore.stdout = TRUE)
-      private$.notify_when_ready(interval = 2, shutup = TRUE)
+      if (wait) {
+        private$.notify_when_ready(interval = 2, shutup = TRUE)
+      }
       setwd("..")
     },
 

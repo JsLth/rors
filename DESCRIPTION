@@ -1,7 +1,7 @@
 Package: ORSRouting
 Type: Package
 Title: Bulk routing distance calculations using OpenRouteService
-Version: 0.5.0
+Version: 0.6.0
 Date: 2021-07-26
 Authors@R: person("Lieth", "Jonas", email = "Jonas.Lieth@gesis.org", 
                   role = c("aut", "cre"))
@@ -14,8 +14,7 @@ Description: The package allows the usage of OpenRouteService to calculate the
     setup by including a class that acts as a setup wizard and control panel.
 Encoding: UTF-8
 LazyData: true
-Imports: 
-    beepr (>= 1.3),
+Imports:
     httr (>= 1.4.2),
     jsonlite (>= 1.7.2),
     magrittr (>= 2.0.1),
@@ -28,8 +27,7 @@ Imports:
     fields (>= 12.5)
 Suggests: 
     rmarkdown (>= 2.7),
-    knitr (>= 1.31),
-    ows4R (>= 0.1-5)
+    knitr (>= 1.31)
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
