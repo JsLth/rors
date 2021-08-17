@@ -4,13 +4,17 @@
 \alias{ORSConfig}
 \title{OpenRouteService configuration control panel}
 \description{
-R6 class that loads the ORS config file and can be used to change the ORS configurations
+R6 class that loads the ORS config file and can be used to
+change the ORS configurations
 }
 \details{
-The argument \code{profiles} refers to the supported modes of transport. Avoid passing all profiles
-as each profile has to be built seperately, which can strain memory extremely quickly. For a list of
-and details on the supported profiles, refer to the \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{OpenRouteService documentation}.
-For a details on each configuration in the config file, refer to the \href{https://giscience.github.io/openrouteservice/installation/Configuration.html}{config documentation}.
+The argument \code{profiles} refers to the supported modes of transport.
+Avoid passing all profiles as each profile has to be built seperately, which
+can strain memory extremely quickly. For a list of and details on the
+supported profiles, refer to the
+\href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{OpenRouteService documentation}.
+For a details on each configuration in the config file, refer to the
+\href{https://giscience.github.io/openrouteservice/installation/Configuration.html}{config documentation}.
 }
 \seealso{
 \code{\link{ORSInstance}}
@@ -18,19 +22,21 @@ For a details on each configuration in the config file, refer to the \href{https
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{ors_config}}{JSON config file, parsed as a list. Objects and items can be changed by assigning
-values to them.}
+\item{\code{ors_config}}{JSON config file, parsed as a list. Objects and items
+can be changed by assigning values to them.}
 
-\item{\code{path}}{Path to the config file. Usually, this is either docker/conf if the ORS image was
-already built or docker/data if the image is yet to be built for the first time.}
+\item{\code{path}}{Path to the config file. Usually, this is either docker/conf
+if the ORS image was already built or docker/data if the image is yet to
+be built for the first time.}
 }
 \if{html}{\out{</div>}}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{active_profiles}}{Currently active profiles in the config file. By assigning a character
-vector, the field changes the active profiles in the config file.}
+\item{\code{active_profiles}}{Currently active profiles in the config file.
+By assigning a character vector, the field changes the active profiles
+in the config file.}
 }
 \if{html}{\out{</div>}}
 }
@@ -39,14 +45,15 @@ vector, the field changes the active profiles in the config file.}
 \itemize{
 \item \href{#method-new}{\code{ORSConfig$new()}}
 \item \href{#method-save_config}{\code{ORSConfig$save_config()}}
+\item \href{#method-open_config}{\code{ORSConfig$open_config()}}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initializes the \code{ORSConfig} class. Specifies the config path, copies the config files
-if necessary and reads them.
+Initializes the \code{ORSConfig} class. Specifies the config
+path, copies the config files if necessary and reads them.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSConfig$new()}\if{html}{\out{</div>}}
 }
@@ -56,10 +63,22 @@ if necessary and reads them.
 \if{html}{\out{<a id="method-save_config"></a>}}
 \if{latex}{\out{\hypertarget{method-save_config}{}}}
 \subsection{Method \code{save_config()}}{
-Saves the config changes by overwriting the config files with all changed fields.
-This should be run each time after changing any configurations.
+Saves the config changes by overwriting the config files
+with all changed fields. This should be run each time after changing
+any configurations.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSConfig$save_config()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-open_config"></a>}}
+\if{latex}{\out{\hypertarget{method-open_config}{}}}
+\subsection{Method \code{open_config()}}{
+Opens the raw config file to allow manual changes. Useful
+if you find the list structure of the parsed JSON impractical.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSConfig$open_config()}\if{html}{\out{</div>}}
 }
 
 }

@@ -4,48 +4,62 @@
 \alias{ORSInstance}
 \title{OpenRouteService backend control panel}
 \description{
-R6 class that acts as a setup wizard and control panel for the OpenRouteService backend service.
-The class facilitates the setup of the Docker container and allows making changes to the setup from within R.
+R6 class that acts as a setup wizard and control panel for the
+OpenRouteService backend service. The class facilitates the setup of the
+Docker container and allows making changes to the setup from within R.
 }
 \details{
-The purpose of this class is to facilitate the OpenRouteService installation process.
-Alternatively, you can follow the official instructions from the \href{https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html}{OpenRouteService documentation}.
+The purpose of this class is to facilitate the OpenRouteService
+installation process. Alternatively, you can follow the official
+instructions from the \href{https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html}{OpenRouteService documentation}.
 The developer team recently extended the installation guide considerably.
 
-The class has four sub classes. \code{\link{ORSExtract}} manages the OpenRouteService extract and is able to
-download \code{.pbf} files from different sources using the \code{osmextract} package. \code{\link{ORSConfig}} controls
-the configuration file (\code{ors-config.json}) which is also used to set active profiles.
-\code{\link{ORSSetupSettings}} can be used to make changes to the Docker setup, e.g. to allocate RAM, assign
-extracts or change the local server access. \code{\link{ORSDockerInterface}} provides a basic interface to Docker
-commands and can be used to check the status of the image, container and service. \code{\link{ORSSetupSettings}}
-should be initialized last as the Docker setup needs information on the extract and the number of
-profiles to assign the extract and estimate the required RAM to be allocated.
+The class has four sub classes. \code{\link{ORSExtract}} manages the
+OpenRouteService extract and is able to download \code{.pbf} files from different
+sources using the \code{osmextract} package. \code{\link{ORSConfig}} controls the
+configuration file (\code{ors-config.json}) which is also used to set active
+profiles. \code{\link{ORSSetupSettings}} can be used to make changes to the
+Docker setup, e.g. to allocate RAM, assign extracts or change the local
+server access. \code{\link{ORSDockerInterface}} provides a basic interface
+to Docker commands and can be used to check the status of the image,
+container and service. \code{\link{ORSSetupSettings}} should be initialized
+last as the Docker setup needs information on the extract and the number of
+profiles to assign the extract and estimate the required RAM to be
+allocated.
 
-If the setup keeps failing due to whatever reason, try resetting the docker path of the main directory
-(as specified in \verb{$dir}), or just delete the directory and download it again to be safe.
+If the setup keeps failing due to whatever reason, try resetting the docker
+path of the main directory (as specified in \verb{$dir}), or just delete the
+directory and download it again to be safe.
 
-If the setup fails due to an OutOfMemoryError, first check if you allocated enough memory. If it keeps
-failing, clear the available memory or restart the system. OpenRouteService recommends allocating a
-little more than twice the extract size. Make sure not to allocate more than your available memory.
-If you allocate more than 80\% of your free working memory, the function will stop. For details refer
-to the \href{https://giscience.github.io/openrouteservice/installation/System-Requirements.html}{system requirements of OpenRouteService}
+If the setup fails due to an OutOfMemoryError, first check if you allocated
+enough memory. If it keeps failing, clear the available memory or restart
+the system. OpenRouteService recommends allocating a little more than twice
+the extract size. Make sure not to allocate more than your available memory.
+If you allocate more than 80\% of your free working memory, the function will
+stop. For details refer to the
+\href{https://giscience.github.io/openrouteservice/installation/System-Requirements.html}{system requirements of OpenRouteService}
 }
 \seealso{
-\code{\link{ORSExtract}}, \code{\link{ORSConfig}}, \code{\link{ORSDockerInterface}}, \code{\link{ORSSSetupSettings}}
+\code{\link{ORSExtract}},
+\code{\link{ORSConfig}},
+\code{\link{ORSDockerInterface}},
+\code{\link{ORSSSetupSettings}}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{dir}}{ORS directory, either passed as a parameter or automatically set after
-calling \verb{$clone_ors_repo}}
+\item{\code{dir}}{ORS directory, either passed as a parameter or automatically
+set after calling \verb{$new} or \verb{$initialize}.}
 
 \item{\code{extract}}{\code{ORSExtract} environment. See \code{\link{ORSExtract}}.}
 
 \item{\code{config}}{\code{ORSConfig} environment. See \code{\link{ORSConfig}}.}
 
-\item{\code{docker}}{\code{ORSDockerInterface} environment. See \code{\link{ORSDockerInterface}}.}
+\item{\code{docker}}{\code{ORSDockerInterface} environment. See
+\code{\link{ORSDockerInterface}}.}
 
-\item{\code{setup_settings}}{\code{ORSSetupSettings} environment. See \code{\link{ORSSetupSettings}}.}
+\item{\code{setup_settings}}{\code{ORSSetupSettings} environment. See
+\code{\link{ORSSetupSettings}}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -57,7 +71,6 @@ calling \verb{$clone_ors_repo}}
 \item \href{#method-get_config}{\code{ORSInstance$get_config()}}
 \item \href{#method-init_docker}{\code{ORSInstance$init_docker()}}
 \item \href{#method-get_setup_settings}{\code{ORSInstance$get_setup_settings()}}
-\item \href{#method-set_ors_wd}{\code{ORSInstance$set_ors_wd()}}
 \item \href{#method-init_setup}{\code{ORSInstance$init_setup()}}
 }
 }
@@ -65,8 +78,8 @@ calling \verb{$clone_ors_repo}}
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize \code{\link{ORSInstance}} as well as \code{\link{ORSExtract}} and \code{\link{ORSConfig}} and
-\code{\link{ORSDockerInterface}}
+Initialize \code{\link{ORSInstance}} as well as \code{\link{ORSExtract}},
+\code{\link{ORSConfig}} and' \code{\link{ORSDockerInterface}}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$new(dir = NULL)}\if{html}{\out{</div>}}
 }
@@ -74,8 +87,9 @@ Initialize \code{\link{ORSInstance}} as well as \code{\link{ORSExtract}} and \co
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{dir}}{Custom ORS directory. If not specified, the directory will be downloaded
-from the \link{official GitHub repository}: https://github.com/GIScience/openrouteservice.}
+\item{\code{dir}}{Custom ORS directory. If not specified, the directory will be
+downloaded from the
+\href{https://github.com/GIScience/openrouteservice}{official GitHub repository}}
 }
 \if{html}{\out{</div>}}
 }
@@ -84,7 +98,8 @@ from the \link{official GitHub repository}: https://github.com/GIScience/openrou
 \if{html}{\out{<a id="method-finalize"></a>}}
 \if{latex}{\out{\hypertarget{method-finalize}{}}}
 \subsection{Method \code{finalize()}}{
-If necessary, stops the current ORS container when the class instance is removed.
+If necessary, stops the current ORS container when the class instance is
+removed.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$finalize()}\if{html}{\out{</div>}}
 }
@@ -94,8 +109,8 @@ If necessary, stops the current ORS container when the class instance is removed
 \if{html}{\out{<a id="method-get_config"></a>}}
 \if{latex}{\out{\hypertarget{method-get_config}{}}}
 \subsection{Method \code{get_config()}}{
-Initializes \code{\link{ORSConfig}} as an environment field. Call this if the config path changes
-(e.g. after the initial ORS setup).
+Initializes \code{\link{ORSConfig}} as an environment field. Call this
+if the config path changes (e.g. after the initial ORS setup).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$get_config()}\if{html}{\out{</div>}}
 }
@@ -105,8 +120,9 @@ Initializes \code{\link{ORSConfig}} as an environment field. Call this if the co
 \if{html}{\out{<a id="method-init_docker"></a>}}
 \if{latex}{\out{\hypertarget{method-init_docker}{}}}
 \subsection{Method \code{init_docker()}}{
-Initializes \code{\link{ORSDockerInterface}} as an environment field. This method starts docker
-and delivers and interface to interact with docker.
+Initializes \code{\link{ORSDockerInterface}} as an environment field.
+This method starts docker and delivers and interface to interact with
+docker.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$init_docker()}\if{html}{\out{</div>}}
 }
@@ -116,8 +132,9 @@ and delivers and interface to interact with docker.
 \if{html}{\out{<a id="method-get_setup_settings"></a>}}
 \if{latex}{\out{\hypertarget{method-get_setup_settings}{}}}
 \subsection{Method \code{get_setup_settings()}}{
-Initializes \code{\link{ORSSetupSettings}} as an environment field and prepares the necessary
-changes to the \code{Dockerfile} and \code{docker-compose.yml}
+Initializes \code{\link{ORSSetupSettings}} as an environment field and
+prepares the necessary changes to the \code{Dockerfile} and
+\code{docker-compose.yml}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$get_setup_settings(init_memory = NULL, max_memory = NULL)}\if{html}{\out{</div>}}
 }
@@ -125,29 +142,12 @@ changes to the \code{Dockerfile} and \code{docker-compose.yml}
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{init_memory}}{Initial memory to be allocated to the docker container.}
+\item{\code{init_memory}}{Initial memory to be allocated to the docker
+container.}
 
-\item{\code{max_memory}}{Maximum memory to be allocated to the docker container. The
-container will start with the initial memory and increases the memory usage up to
-the maximum memory if necessary.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-set_ors_wd"></a>}}
-\if{latex}{\out{\hypertarget{method-set_ors_wd}{}}}
-\subsection{Method \code{set_ors_wd()}}{
-Tries to find the ORS directory and set it as the current working directory.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$set_ors_wd(dir = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{dir}}{Custom ORS directory. If not specified, the method will look inside the
-default path and expects the default directory naming.}
+\item{\code{max_memory}}{Maximum memory to be allocated to the docker
+container. The container will start with the initial memory and increases
+the memory usage up to the maximum memory if necessary.}
 }
 \if{html}{\out{</div>}}
 }
@@ -156,20 +156,50 @@ default path and expects the default directory naming.}
 \if{html}{\out{<a id="method-init_setup"></a>}}
 \if{latex}{\out{\hypertarget{method-init_setup}{}}}
 \subsection{Method \code{init_setup()}}{
-Changes the necessary settings and configurations for the first startup, builds the
-image and starts the container. This function should only be used when starting the service for
-the first time. Changes after that should preferably be made manually.
+Changes the necessary settings and configurations for the
+first startup, builds the image and starts the container. This function
+should only be used when starting the service for the first time. Changes
+after that should preferably be made manually.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$init_setup(wait = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$init_setup(
+  profiles = "car",
+  extract_path = self$extract$path,
+  init_memory = NULL,
+  max_memory = NULL,
+  wait = TRUE,
+  run = TRUE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{wait}}{Logical. If \code{TRUE}, the function will not stop running after the container is being
-started and will give out a notification as soon as the service is ready. If \code{FALSE}, the function
-will start the container and then stop. To check the server status, you can then call \verb{$server_ready}
-from the class \code{\link{ORSDockerInterface}}.}
+\item{\code{profiles}}{Character vector. Modes of transport for which graphs
+should be build. Passed to \code{\link{ORSConfig}}.}
+
+\item{\code{extract_path}}{Path to an OSM extract that is then passed to
+\code{\link{ORSSetupSettings}}. Defaults to \verb{$extract$path}. This means
+that if you already set an extract using \code{\link{ORSExtract}}, you
+do not need to specify this argument. If you did not set an extract
+using ORSExtract, you can pass a path to a local extract here.}
+
+\item{\code{init_memory}}{Initial memory to be allocated to the docker
+container. Passed to \code{\link{ORSSetupSettings}}.}
+
+\item{\code{max_memory}}{Maximum memory to be allocated to the docker
+container. The container will start with the initial memory and increases
+the memory usage up to the maximum memory if necessary.
+Passed to \code{\link{ORSSetupSettings}}.}
+
+\item{\code{wait}}{Logical. If \code{TRUE}, the function will not stop running after
+the container is being started and will give out a notification as soon
+as the service is ready. If \code{FALSE}, the function will start the
+container and then stop. To check the server status, you can then call
+\verb{$service_ready} from the class \code{\link{ORSDockerInterface}}.}
+
+\item{\code{run}}{Locial. If \code{TRUE}, returns \code{TRUE} if the initial setup is done
+and runs the setup if not. If \code{FALSE}, only returns logicals to check
+whether the initial setup is done or not.}
 }
 \if{html}{\out{</div>}}
 }

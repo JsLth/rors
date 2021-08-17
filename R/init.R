@@ -140,10 +140,11 @@ ORSInstance <- R6::R6Class(
     #' the memory usage up to the maximum memory if necessary.
     get_setup_settings = function(init_memory = NULL, max_memory = NULL) {
       self$
-        setup_settings <- ORSSetupSettings$new(basename(self$extract$path),
-                                               init_memory,
-                                               max_memory,
-                                               self$config$active_profiles
+        setup_settings <- ORSSetupSettings$new(
+          basename(self$extract$path),
+          init_memory,
+          max_memory,
+          self$config$active_profiles
       )
     },
 
@@ -151,13 +152,95 @@ ORSInstance <- R6::R6Class(
     #' first startup, builds the image and starts the container. This function
     #' should only be used when starting the service for the first time. Changes
     #' after that should preferably be made manually.
+    #' @param profiles Character vector. Modes of transport for which graphs
+    #' should be build. Passed to \code{\link{ORSConfig}}.
+    #' @param extract_path Path to an OSM extract that is then passed to
+    #' \code{\link{ORSSetupSettings}}. Defaults to `$extract$path`. This means
+    #' that if you already set an extract using \code{\link{ORSExtract}}, you
+    #' do not need to specify this argument. If you did not set an extract
+    #' using ORSExtract, you can pass a path to a local extract here.
+    #' @param init_memory Initial memory to be allocated to the docker
+    #' container. Passed to \code{\link{ORSSetupSettings}}.
+    #' @param max_memory Maximum memory to be allocated to the docker
+    #' container. The container will start with the initial memory and increases
+    #' the memory usage up to the maximum memory if necessary.
+    #' Passed to \code{\link{ORSSetupSettings}}.
     #' @param wait Logical. If `TRUE`, the function will not stop running after
     #' the container is being started and will give out a notification as soon
     #' as the service is ready. If `FALSE`, the function will start the
     #' container and then stop. To check the server status, you can then call
-    #' `$server_ready` from the class \code{\link{ORSDockerInterface}}.
-    init_setup = function(wait = TRUE) {
-      # TODO: Implement method and set to TRUE if setup is successful
+    #' `$service_ready` from the class \code{\link{ORSDockerInterface}}.
+    #' @param run Locial. If `TRUE`, returns `TRUE` if the initial setup is done
+    #' and runs the setup if not. If `FALSE`, only returns logicals to check
+    #' whether the initial setup is done or not.
+    init_setup = function(
+      profiles = "car",
+      extract_path = self$extract$path,
+      init_memory = NULL,
+      max_memory = NULL,
+      wait = TRUE,
+      run = TRUE) {
+        if (
+          (self$docker$service_ready == "TRUE" ||
+          self$docker$image_built == "TRUE" ||
+          dir.exists("docker/graphs")) &&
+          is.null(self$docker$error_log)
+        ) {
+          return(TRUE)
+        } else if (!run) {
+          return(FALSE)
+        }
+
+        # Initialize extract --------------------------------------------------
+        if (!missing(extract_path)) {
+          self$extract$set_extract(extract_path)
+        } else {
+          if (is.null(extract_path)) {
+            cli::cli_abort(
+              "Either pass an extract path or set an extract using `$extract`"
+            )
+          }
+        }
+
+        # Initialize config ---------------------------------------------------
+        self$get_config()
+        self$
+          config$
+          ors_config$
+          ors$
+          services$
+          routing$
+          profiles$
+          active <- profiles
+        self$
+          config$
+          ors_config$
+          ors$
+          services$
+          routing$
+          profiles$
+          default_params$
+          maximum_snapping_radius <- -1
+        self$
+          config$
+          ors_config$
+          ors$
+          services$
+          routing$
+          profiles$
+          `profile-car`$
+          maximum_snapping_radius <- -1
+        self$config$save_config()
+
+        # Set up Docker -------------------------------------------------------
+        self$get_setup_settings()
+        self$setup_settings$assign_data(extract_path)
+        self$setup_settings$allocate_memory(init_memory, max_memory)
+        self$setup_settings$save_settings()
+
+        # Start the service ---------------------------------------------------
+        self$init_docker()
+        self$docker$image_up()
     }
   ),
   private = list(
@@ -197,7 +280,7 @@ ORSInstance <- R6::R6Class(
         }
       }
     },
-    .dir_download_url = paste(
+    .dir_download_url = paste0(
       "https://github.com/",
       "GIScience/openrouteservice/archive/refs/heads/master.zip"
     ),
@@ -209,12 +292,14 @@ ORSInstance <- R6::R6Class(
       if (!dir.exists(basedir) && !grepl(basedir, getwd())) {
         zip_file <- "openrouteservice.zip"
         cli::cli_progress_step(
-          "Downloading service backend from GitHub repository..."
+          "Downloading service backend from GitHub repository...",
+          msg_done = "Successfully downloaded the service backend.",
+          msg_failed = "Failed to download the service backend."
         )
         download.file(private$.dir_download_url, zip_file)
         unzip(zip_file, exdir = dir)
         file.remove(zip_file)
-        cli::cli_progress_update()
+        cli::cli_progress_done()
       }
       private$.set_ors_wd()
     }
@@ -260,13 +345,13 @@ ORSExtract <- R6::R6Class(
       osm_file_occurences <- dir("docker/data") %>%
         grepl(".pbf|.osm.gz|.osm.zip|.osm", .)
       if (sum(osm_file_occurences) == 1) {
-        path <- paste0("docker/data", dir("docker/data")[osm_file_occurences])
+        path <- paste0("docker/data/", dir("docker/data")[osm_file_occurences])
         self$path <- path
         self$size <- file.info(path)$size * 0.000001
       } else if (sum(osm_file_occurences) > 1) {
         cli::cli_alert_warning(
           paste(
-            "There a multiple OSM files in the data directory.",
+            "Multiple OSM files found in the data directory.",
             "Please set an extract manually."
           )
         )
@@ -280,7 +365,7 @@ ORSExtract <- R6::R6Class(
     #' the providers listed in \code{\link[osmextract]{oe_providers}}. The
     #' geographic scale can be adjusted by changing the parameter `level`. For
     #' details, refer to \code{\link[osmextract]{oe_match}}.
-    #' @param level Passed to \code{\link[osmextract]{oe_match}}.
+    #' @param ... Passed to \code{\link[osmextract]{oe_match}}.
     #' @details The extract is downloaded directly to docker/data. This will
     #' also be the directory that is passed to the
     #' \code{\link{ORSSetupSettings}} to process the extract. This directory is
@@ -353,7 +438,7 @@ ORSExtract <- R6::R6Class(
         cli::cli_text("Download path: {.val {path}}")
       } else {
         private$.rm_old_extracts()
-        path <- paste0("docker/data", providers[i], "_", file_name)
+        path <- paste0("docker/data/", providers[i], "_", file_name)
         cli::cli_progress_step(
           "Downloading the OSM extract...",
           msg_done = paste(
@@ -368,7 +453,7 @@ ORSExtract <- R6::R6Class(
           download_directory = normalizePath(download_path, winslash = "/"),
           quiet = TRUE
         )
-
+        cli::cli_progress_done()
       }
       size <- file.info(path)$size / 1024 / 1024
       if (size >= 6000) {
@@ -381,8 +466,7 @@ ORSExtract <- R6::R6Class(
       }
       self$path <- path
       self$place <- place
-      self$level <- level
-      self$size <- size
+      self$size <- round(size, 2)
       self$provider <- providers[i]
     },
 
@@ -698,9 +782,9 @@ ORSSetupSettings <- R6::R6Class(
       } else {
         cli::cli_abort("Either pass a numeric or nothing.")
       }
-      gc()
+      gc(verbose = FALSE)
       free_mem <- memuse::Sys.meminfo()$freeram@size
-      if (free_mem * 0.8 - max <= 0) {
+      if (free_mem * 0.8 - max / 1000 <= 0) {
         cli::cli_warn(
           paste(
             "You are allocating more than your available memory.",
@@ -847,12 +931,16 @@ ORSSetupSettings <- R6::R6Class(
       )
 
       # Build yaml with indented bullet points
-      yml_as_string <- yaml::as.yaml(self$compose,
-                                     indent.mapping.sequence = TRUE)
+      yml_as_string <- yaml::as.yaml(
+        self$compose,
+        indent.mapping.sequence = TRUE
+      )
 
       # Remove single quotes that are somehow added by as.yaml when introducing
-      #' double quotes
-      corrected_yml_string <- gsub("\"'|'\"", '"', yml_as_string)
+      # double quotes. Also tell double quotes to really be escaped. They
+      # sometimes refuse to for some reason.
+      corrected_yml_string <- gsub("\"'|'\"", '"', yml_as_string) %>%
+        gsub("\\\"", "\"", .)
 
       # Remove line breaks of long strings
       corrected_yml_string <- corrected_yml_string %>%
@@ -921,6 +1009,16 @@ ORSDockerInterface <- R6::R6Class(
       } else {
         cli::cli_abort("`$service_ready` is read only.")
       }
+    },
+
+    #' @field error_log Returns all errors from the logs. If `NULL`, no errors
+    #' occurred.
+    error_log = function(v) {
+      if (missing(v)) {
+        private$.watch_for_error()
+      } else {
+        cli::cli_abort("`$error_log` is read only.")
+      }
     }
   ),
   public = list(
@@ -979,14 +1077,17 @@ ORSDockerInterface <- R6::R6Class(
   ),
   private = list(
     .port = NULL,
-    .service_ready = function() {
+    .service_ready = function(retry = FALSE) {
       health_url <- "http://localhost:%s/ors/health" %>% sprintf(private$.port)
       if (private$.docker_running() &&
          private$.image_built() &&
          private$.container_exists() &&
          private$.container_running()) {
-        health <- httr::GET(health_url) %>% httr::content()
-        health$status == "ready"
+        health <- tryCatch(
+          httr::GET(health_url) %>% httr::content(),
+          error = function(e) list(status = e)
+        )
+        identical(health$status, "ready")
       } else {
         FALSE
       }
@@ -1083,7 +1184,9 @@ ORSDockerInterface <- R6::R6Class(
               }
             }
           } else if (scode == -1) {
-            cli::cli_abort("Docker does not seem to be installed on your system.")
+            cli::cli_abort(
+              "Docker does not seem to be installed on your system."
+            )
           } else {
             cli::cli_abort("Something went wrong while starting Docker.")
           }
@@ -1102,7 +1205,12 @@ ORSDockerInterface <- R6::R6Class(
         "process now or let it run and get notified when the service is ready."
         )
       )
-      cli::cli_progress_step("Starting service", spinner = TRUE)
+      cli::cli_progress_step(
+        "Starting service",
+        spinner = TRUE,
+        msg_done = "Service setup done. ORS should not be ready to use.",
+        msg_failed = "Service setup failed."
+      )
       while (!self$service_ready) {
         for (i in seq_len(interval * 10)) {
           cli::cli_progress_update()
@@ -1118,6 +1226,7 @@ ORSDockerInterface <- R6::R6Class(
           )
         }
       }
+      cli::cli_progress_done()
       if (!shutup) {
         switch(
           Sys.info()["sysname"],
@@ -1181,7 +1290,7 @@ ORSDockerInterface <- R6::R6Class(
           error_msgs <- errors %>%
             strsplit(" - ") %>%
             do.call(rbind, .)
-          # CLI logs are formatted differently and are therefore not splitted
+          # CLI logs are formatted differently and are therefore not split
           # by strsplit. If this is the case, just return the whole thing,
           # else return only the messages.
           if (length(error_msgs) > 1) {
@@ -1190,7 +1299,7 @@ ORSDockerInterface <- R6::R6Class(
             return(error_msgs)
           }
         }
-        sapply(logs, error.catcher) %>%
+        sapply(logs, error_catcher) %>%
           purrr::discard(sapply(., is.null)) %>%
           unlist(use.names = FALSE) %>%
           unique() # Don't return the same errors multiple times

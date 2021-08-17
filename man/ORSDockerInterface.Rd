@@ -4,8 +4,9 @@
 \alias{ORSDockerInterface}
 \title{OpenRouteService Docker interface}
 \description{
-R6 class that interacts with the Docker daemon and is able to run basic commands
-on the openrouteservice:latest image and the ors-app container
+R6 class that interacts with the Docker daemon and is able to
+run basic commands on the openrouteservice:latest image and the ors-app
+container
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -18,8 +19,11 @@ on the openrouteservice:latest image and the ors-app container
 
 \item{\code{container_running}}{Checks if the the container ors-app is running.}
 
-\item{\code{service_ready}}{Checks if the container service is ready to use. If this field is \code{TRUE},
-the service can be queried and used.}
+\item{\code{service_ready}}{Checks if the container service is ready to use. If
+this field is \code{TRUE}, the service can be queried and used.}
+
+\item{\code{error_log}}{Returns all errors from the logs. If \code{NULL}, no errors
+occurred.}
 }
 \if{html}{\out{</div>}}
 }
@@ -37,7 +41,8 @@ the service can be queried and used.}
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initializes ORSDockerInterface, starts the Docker daemon and specifies the port.
+Initializes ORSDockerInterface, starts the Docker daemon
+and specifies the port.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$new(port = 8080)}\if{html}{\out{</div>}}
 }
@@ -54,8 +59,8 @@ Initializes ORSDockerInterface, starts the Docker daemon and specifies the port.
 \if{html}{\out{<a id="method-image_up"></a>}}
 \if{latex}{\out{\hypertarget{method-image_up}{}}}
 \subsection{Method \code{image_up()}}{
-Builds the image, starts the container and issues a system notification when the
-service is ready to be used.
+Builds the image, starts the container and issues a system
+notification when the service is ready to be used.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$image_up()}\if{html}{\out{</div>}}
 }
@@ -65,7 +70,8 @@ service is ready to be used.
 \if{html}{\out{<a id="method-image_down"></a>}}
 \if{latex}{\out{\hypertarget{method-image_down}{}}}
 \subsection{Method \code{image_down()}}{
-Deletes the image. Should only be used when the container does not exist.
+Deletes the image. Should only be used when the container
+does not exist.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$image_down()}\if{html}{\out{</div>}}
 }
@@ -75,8 +81,8 @@ Deletes the image. Should only be used when the container does not exist.
 \if{html}{\out{<a id="method-start_container"></a>}}
 \if{latex}{\out{\hypertarget{method-start_container}{}}}
 \subsection{Method \code{start_container()}}{
-Starts the container and issues a system notification when the service is ready to
-be used.
+Starts the container and issues a system notification when
+the service is ready to be used.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$start_container()}\if{html}{\out{</div>}}
 }
@@ -87,6 +93,8 @@ be used.
 \if{latex}{\out{\hypertarget{method-stop_container}{}}}
 \subsection{Method \code{stop_container()}}{
 Stops the container.
+notification when the server is ready. Also watches out for errors
+in the log files.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$stop_container()}\if{html}{\out{</div>}}
 }

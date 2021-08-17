@@ -142,7 +142,7 @@ get_nearest_pois <- function(source, pois, number_of_points = NULL, radius = NUL
   }
 }
 
-
+# TODO: Replace fields with ORS matrix calls?
 n.nearest.pois <- function(source, poi_coordinates, n) {
   if(is(poi_coordinates, c('sf', 'sfc'))) {
     # No simple features allowed here. Calculations are done with flat numbers.

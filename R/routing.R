@@ -97,7 +97,7 @@ get_route_lengths <- function(source, destination, profile, units = 'm', local =
   return(route.list)
 }
 
-
+# TODO: Implement one-to-many matrix?
 query.ors <- function(source, destination, profile, url, units = 'm', api_key = NULL, geometry = FALSE) {
   # Get coordinates in shape
   locations <- list(

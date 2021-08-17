@@ -4,20 +4,22 @@
 \alias{ORSSetupSettings}
 \title{R6 Docker setup control panel}
 \description{
-R6 class that controls \code{docker-compose.yml} and \code{Dockerfile}. Provides an interface to
-easily allocate memory, switch graph building on or off and assign data.
+R6 class that controls \code{docker-compose.yml} and \code{Dockerfile}.
+Provides an interface to easily allocate memory, switch graph building on or
+off and assign data.
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{compose}}{\code{docker-compose.yml}, parsed as a list. Blocks and items can be changed by assigning
-values to them.}
+\item{\code{compose}}{\code{docker-compose.yml}, parsed as a list. Blocks and items
+can be changed by assigning values to them.}
 
-\item{\code{init_memory}}{Initial memory to be allocated to the docker container. The container will
-start with this amount of memory and will increase its memory usage if necessary.}
+\item{\code{init_memory}}{Initial memory to be allocated to the docker
+container. The container will start with this amount of memory and will
+increase its memory usage if necessary.}
 
-\item{\code{max_memory}}{Maximum memory to be allocated to the docker container. The container is not
-allowed to exceed this memory limit.}
+\item{\code{max_memory}}{Maximum memory to be allocated to the docker container.
+The container is not allowed to exceed this memory limit.}
 
 \item{\code{extract_path}}{Path where the OSM extract is saved.}
 
@@ -28,10 +30,11 @@ allowed to exceed this memory limit.}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{build_graphs}}{Switches graph building on or off. Graph building should be turned on when
-the OSM extract changes or when no graphs exist yet. It should be turned off after building
-graphs. If graph building is turned on after building the graphs, the service will rebuild all
-graphs each time the image is rebuilt.}
+\item{\code{build_graphs}}{Switches graph building on or off. Graph building
+should be turned on when the OSM extract changes or when no graphs exist
+yet. It should be turned off after building graphs. If graph building is
+turned on after building the graphs, the service will rebuild all graphs
+each time the image is rebuilt.}
 }
 \if{html}{\out{</div>}}
 }
@@ -42,14 +45,15 @@ graphs each time the image is rebuilt.}
 \item \href{#method-allocate_memory}{\code{ORSSetupSettings$allocate_memory()}}
 \item \href{#method-assign_data}{\code{ORSSetupSettings$assign_data()}}
 \item \href{#method-save_settings}{\code{ORSSetupSettings$save_settings()}}
+\item \href{#method-open_config}{\code{ORSSetupSettings$open_config()}}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initializes the \code{ORSSetupSettings} class. Reads the \code{docker-compose.yml}, adjusts the
-\code{Dockerfile} and allocates memory.
+Initializes the \code{ORSSetupSettings} class. Reads the
+\code{docker-compose.yml}, adjusts the \code{Dockerfile} and allocates memory.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSSetupSettings$new(
   extract_name,
@@ -64,11 +68,12 @@ Initializes the \code{ORSSetupSettings} class. Reads the \code{docker-compose.ym
 \describe{
 \item{\code{extract_name}}{File name of the extract}
 
-\item{\code{init_memory}}{Initial memory to be allocated to the docker container.}
+\item{\code{init_memory}}{Initial memory to be allocated to the docker
+container.}
 
-\item{\code{max_memory}}{Maximum memory to be allocated to the docker container. The
-container will start with the initial memory and increases the memory usage up to
-the maximum memory if necessary.}
+\item{\code{max_memory}}{Maximum memory to be allocated to the docker
+container. The container will start with the initial memory and
+increases the memory usage up to the maximum memory if necessary.}
 
 \item{\code{profiles}}{Active profiles as set in the config file}
 }
@@ -79,9 +84,11 @@ the maximum memory if necessary.}
 \if{html}{\out{<a id="method-allocate_memory"></a>}}
 \if{latex}{\out{\hypertarget{method-allocate_memory}{}}}
 \subsection{Method \code{allocate_memory()}}{
-Specifies the amount of memory to be allocated. If only the memory limit is given,
-the initial memory will be set to half that amount. If no memory is given, the method will
-estimate the optimal amount of memory to be allocated. The memory is written to the compose file
+Specifies the amount of memory to be allocated. If only the
+memory limit is given, the initial memory will be set to half that
+amount. If no memory is given, the method will estimate the optimal
+amount of memory to be allocated. The memory is written to the compose
+file.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSSetupSettings$allocate_memory(init = NULL, max = NULL)}\if{html}{\out{</div>}}
 }
@@ -92,8 +99,8 @@ estimate the optimal amount of memory to be allocated. The memory is written to 
 \item{\code{init}}{Initial memory to be allocated to the docker container.}
 
 \item{\code{max}}{Maximum memory to be allocated to the docker container. The
-container will start with the initial memory and increases the memory usage up to
-the maximum memory if necessary.}
+container will start with the initial memory and increases the memory
+usage up to the maximum memory if necessary.}
 }
 \if{html}{\out{</div>}}
 }
@@ -110,10 +117,11 @@ Writes the provided paths to the compose file.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{mode}}{Specifices whether the image is built for the first time or if the OSM extract is
-being changed. \code{mode = build} inserts a \code{build} block that specifices the path to the extract
-and config file. \code{mode = change} inserts a volume that overwrites the current graphs if graph
-building is turned on.}
+\item{\code{mode}}{Specifices whether the image is built for the first time or
+if the OSM extract is being changed. \code{mode = build} inserts a \code{build}
+block that specifices the path to the extract and config file.
+\code{mode = change} inserts a volume that overwrites the current graphs if
+graph building is turned on.}
 }
 \if{html}{\out{</div>}}
 }
@@ -122,10 +130,22 @@ building is turned on.}
 \if{html}{\out{<a id="method-save_settings"></a>}}
 \if{latex}{\out{\hypertarget{method-save_settings}{}}}
 \subsection{Method \code{save_settings()}}{
-Saves the setup changes by overwriting \code{docker-compose.yml} with all changed fields.
-This should be run each time after changing any settings.
+Saves the setup changes by overwriting \code{docker-compose.yml}
+with all changed fields. This should be run each time after changing any
+settings.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSSetupSettings$save_settings()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-open_config"></a>}}
+\if{latex}{\out{\hypertarget{method-open_config}{}}}
+\subsection{Method \code{open_config()}}{
+Opens the raw compose file to allow manual changes. Useful
+if you find the list structure of the parsed yaml impractical.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSSetupSettings$open_config()}\if{html}{\out{</div>}}
 }
 
 }

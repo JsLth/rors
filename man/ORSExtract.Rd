@@ -7,17 +7,19 @@
 R6 class to download, set or manage an OpenStreetMap extract
 }
 \details{
-Note that the coverage of the OSM extract should include all necessary places that need to
-be processed. If a location is not covered by the extract, the service will respond with an error.
-If necessary, the OSM extract can be changed later by running \verb{$assign_data(build = change)} in
-\code{\link{ORSSetupSettings}}.
+Note that the coverage of the OSM extract should include all
+necessary places that need to be processed. If a location is not covered
+by the extract, the service will respond with an error. If necessary, the
+OSM extract can be changed later by running \verb{$assign_data(build = change)}
+in \code{\link{ORSSetupSettings}}.
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{path}}{Relative path to the extract.}
 
-\item{\code{place}}{Name or coordinates of the place that is passed for the extract download.}
+\item{\code{place}}{Name or coordinates of the place that is passed for the
+extract download.}
 
 \item{\code{level}}{Hierarchical level of the extraxt to be matched.}
 
@@ -39,7 +41,8 @@ If necessary, the OSM extract can be changed later by running \verb{$assign_data
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initializes \code{\link{ORSExtract}} and looks for an existing extract in data path.
+Initializes \code{\link{ORSExtract}} and looks for an
+existing extract in data path.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSExtract$new()}\if{html}{\out{</div>}}
 }
@@ -51,27 +54,28 @@ Initializes \code{\link{ORSExtract}} and looks for an existing extract in data p
 \subsection{Method \code{get_extract()}}{
 Downloads an OSM extract.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSExtract$get_extract(place, level = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSExtract$get_extract(place, ...)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{place}}{Character scalar, sf or sfc object or length-2 numeric vector to be passed to
-\code{\link[osmextract]{oe_match}}. Represents a place that falls inside the coverage of defined
-extract regions of the providers listed in \code{\link[osmextract]{oe_providers}}. The geographic
-scale can be adjusted by changing the parameter \code{level}. For details, refer to \code{\link[osmextract]{oe_match}}.}
+\item{\code{place}}{Character scalar, sf or sfc object or length-2 numeric
+vector to be passed to \code{\link[osmextract]{oe_match}}. Represents
+a place that falls inside the coverage of defined extract regions of
+the providers listed in \code{\link[osmextract]{oe_providers}}. The
+geographic scale can be adjusted by changing the parameter \code{level}. For
+details, refer to \code{\link[osmextract]{oe_match}}.}
 
-\item{\code{level}}{Integer scalar. If an sf or sfc object or a numeric vector is passed to
-\code{place}, represents the hierarchical level of the extraxt to be matched. See details
-in \code{\link[osmextract]{oe_match}}.}
+\item{\code{...}}{Passed to \code{\link[osmextract]{oe_match}}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-The extract is downloaded directly to docker/data. This will also be the directory
-that is passed to the \code{\link{ORSSetupSettings}} to process the extract. This directory is not
-mutable because Docker expects a relative path to its main directory.
+The extract is downloaded directly to docker/data. This will
+also be the directory that is passed to the
+\code{\link{ORSSetupSettings}} to process the extract. This directory is
+not mutable because Docker expects a relative path to its main directory.
 }
 
 }
@@ -87,7 +91,8 @@ Moves a given OSM extract to the ORS data directory
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{extract_path}}{Character scalar. Path to an OSM extract formatted as \code{.pbf}, \code{.osm}, \code{.osm.gz}
+\item{\code{extract_path}}{Character scalar. Path to an OSM extract formatted
+as \code{.pbf}, \code{.osm}, \code{.osm.gz}
 or \code{.osm.zip}.}
 }
 \if{html}{\out{</div>}}
