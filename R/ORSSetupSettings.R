@@ -84,6 +84,8 @@ ORSSetupSettings <- R6::R6Class(
     #' increases the memory usage up to the maximum memory if necessary.
     #' @param profiles Active profiles as set in the config file
     initialize = function(
+      # TODO: Clean up. This function should not allocate memory or the
+      # likes.
       extract_name,
       init_memory = NULL,
       max_memory = NULL,
@@ -94,13 +96,13 @@ ORSSetupSettings <- R6::R6Class(
         self$extract_path <- paste("docker/data", extract_name, sep = "/")
         private$.extract_size <- file.info(self$extract_path)$size * 0.000001
       }
-      if(!is.null(profiles)) {
+      if (!is.null(profiles)) {
         private$.profiles <- length(profiles)
       }
       self$config_path <- "docker/data/ors-config.json"
       private$.disable_auto_deletion()
       self$allocate_memory(init_memory, max_memory)
-      self$save_settings()
+      self$save_compose()
       return(self)
     },
 
@@ -205,13 +207,13 @@ ORSSetupSettings <- R6::R6Class(
     #' @description Saves the setup changes by overwriting `docker-compose.yml`
     #' with all changed fields. This should be run each time after changing any
     #' settings.
-    save_settings = function() {
+    save_compose = function() {
       private$.write_dockercompose()
     },
 
     #' @description Opens the raw compose file to allow manual changes. Useful
     #' if you find the list structure of the parsed yaml impractical.
-    open_config = function() {
+    open_compose = function() {
       shell(normalizePath("docker/docker-compose.yml", winslash = "\\"))
     }
   ),
@@ -297,6 +299,7 @@ ORSSetupSettings <- R6::R6Class(
       # Remove single quotes that are somehow added by as.yaml when introducing
       # double quotes. Also tell double quotes to really be escaped. They
       # sometimes refuse to for some reason.
+      # TODO: Does this still mess up the output or are we good?
       corrected_yml_string <- gsub("\"'|'\"", '"', yml_as_string) %>%
         gsub("\\\"", "\"", .)
 

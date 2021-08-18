@@ -57,6 +57,7 @@ ORSDockerInterface <- R6::R6Class(
     service_ready = function(v) {
       if (missing(v)) {
         private$.service_ready()
+        setwd("..")
       } else {
         cli::cli_abort("`$service_ready` is read only.")
       }
@@ -320,12 +321,20 @@ ORSDockerInterface <- R6::R6Class(
           }
         )
       }
+      # TODO: Implement a function that cleans up if an error occurred
       invisible(NULL)
     },
     .watch_for_error = function() {
       # Searches the OpenRouteService logs for the keyword 'error' and returns
       # their error messages. The function might be called before logs are
       # created. If this is the case, don't stop, just don't return anything.
+      if (grepl("openrouteservice-master", getwd())) {
+        while (basename(getwd()) != "openrouteservice-master") {
+          setwd("..")
+        }
+      } else {
+        cli::cli_abort("Wrong directory.")
+      }
       if (dir.exists("docker/logs") &&
         is.element(c("ors", "tomcat"), dir("docker/logs")) &&
         length(dir("docker/logs/ors")) != 0 &&
@@ -370,6 +379,7 @@ ORSDockerInterface <- R6::R6Class(
           unique() # Don't return the same errors multiple times
           # The function might be called before log files are created. In this
           # case, don't stop, just don't return anything.
+        setwd("docker")
       }
     }
   ),

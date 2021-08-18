@@ -15,10 +15,9 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
-```{r setup}
+```{r setup, echo = FALSE}
 library(ORSRouting)
 library(magrittr)
-setwd("..")
 ```
 
 # Introduction
@@ -33,10 +32,17 @@ By default, ORS is queryable over the [official webserver](https://api.openroute
 Instead, the ORS backend can be installed locally via Docker. The R6 class `ORSInstance` controls both the installation and customization of the backend. The installation requires Docker, a raw OpenStreetMap extract (i.e., `.pbf` or `.osm`) of the required region, and the source code of OpenStreetMap. Of these, only [Docker needs to be installed beforehand](https://www.docker.com/products/docker-desktop).
 
 After installing Docker, a new ORS instance can be initialized. If necessary, this will download the ORS GitHub repository and start the Docker daemon. Most importantly though, it allows access to a bunch of new methods.
-```{r}
+```{r, eval = FALSE}
 ors <- ORSRouting::ORSInstance$new()
 ors
+#> trying URL 'https://github.com/GIScience/openrouteservice/archive/refs/heads/master.zip'
+#> Content type 'application/zip' length unknown
+#> downloaded 105.0 MB
+#>
+#> v Successfully downloaded the service backend. [21.9s]
+#> v Docker Desktop is now running. [45.1s]
 ```
+
 
 Generally, the workflow to install the ORS backup consists of four steps:
 
@@ -47,41 +53,71 @@ Generally, the workflow to install the ORS backup consists of four steps:
 
 All of these steps can be done manually, however the method `$init_setup` is happy to take over steps 2-4.
 
+
+## The easy way
+
+Let's assume you already have an extract, a list of profiles, and don't have any special wishes or needs for ORS. In this case you can just pass the extract path and a character vector containing your profiles to
+
+```{r, eval = FALSE}
+ors$init_setup(
+  profiles = c("car", "walking"),
+  extract_path = "osm_file.osm.pbf"
+)
+```
+
+The rest of the setup should be done automatically. You can also specify the amount of memory to be allocated by passing `init_memory` and `max_memory`. If you need to use the R console while the setup is running, set `wait = FALSE`. Of course you can make changes to this setup, either by hand or by making use of the methods presented below.
+
+
 ## Set or get an extract
 
 OpenStreetMap extracts contain all elements mapped by OSM contributors within a certain region. OpenRouteService is based on OSM and thus needs OSM data to generate routes. OSM data can be acquired with different tools. An overview of extract providers can be found [here](https://wiki.openstreetmap.org/wiki/Planet.osm#Country_and_area_extracts) and [here](https://wiki.openstreetmap.org/wiki/Downloading_data). The [official OSM website](https://www.openstreetmap.org/export) also supports extracting data by bounding boxes.
 
 Extracts are controlled by the class `ORSExtract` that can be accessed with `$extract`.
 If you already have an extract, you can mount it here:
-```{r}
-path_to_extract <- paste(getwd(), "osm_file.osm.pbf", sep = "/")
+```{r, eval = FALSE}
+path_to_extract <- paste(tempdir(), "osm_file.osm.pbf", sep = "/")
 download.file(
         "http://download.geofabrik.de/europe/germany/nordrhein-westfalen/koeln-regbez-latest.osm.pbf",
         destfile = path_to_extract
 )
 ors$extract$set_extract(path_to_extract)
+ors$extract$path
+#> trying URL 'http://download.geofabrik.de/europe/germany/nordrhein-westfalen/koeln-regbez-latest.osm.pbf'
+#> Content type 'application/octet-stream' length 187411825 bytes (178.7 MB)
+#> downloaded 178.7 MB
+#> [1] "docker/data/osm_file.osm.pbf"
 ```
 
 If you don't have an extract, `$get_extract` provides a way to download extracts from known providers:
 ```{r, eval = FALSE}
-ors$extract$get_extract('Cologne')
-# Trying different extract providers...
-# The extract koeln-regbez-latest.osm.pbf is 180 MB in size and will be downloaded from geofabrik.
-#
-# Should a different provider be tried? (Yes/No/Cancel)
+ors$extract$get_extract("Cologne")
+#> i Trying different extract providers...
+#> i The extract "koeln-regbez-latest.osm.pbf" is 171 MB in size and will be downloaded from "geofabrik".
+#> i Removing old extracts...
+#> v The extract was successfully downloaded to the following path: "docker/data/geofabrik_koeln-regbez-latest.os...
 ```
 
 The `$get_extract` method makes use of `osmextract::oe_match`. It searches different providers for extracts that match the input. The extract is downloaded to the data path inside the ORS main directory where it waits to be processed by ORS.
 
-At this point, you can just run `$init_setup` and let R do the rest. When the function is done, the service should be ready to use. However, for certain use cases, it might be useful to change the configuration or setup settings.
+At this point, you can just run `$init_setup` and let R do the rest.
 
 
 ## Adjust the configurations in ors-config.json
 
 The ORS configurations are managed inside the file `ors-config.json`. It is accessible using `$config`. If you're not into nested list structures, you can also open the raw file using `$open_config`.
 The config file is documented in the [ORS documentation](https://giscience.github.io/openrouteservice/installation/Configuration.html).
-```{r}
+```{r, eval = FALSE}
 ors$config
+#> <ORSConfig>
+#>   Public:
+#>     active_profiles: active binding
+#>     initialize: function ()
+#>     open_config: function ()
+#>     ors_config: list
+#>     path: docker/data/ors-config.json
+#>     save_config: function ()
+#>   Private:
+#>     .translate_profiles: function (profiles)
 ```
 
 The most important setting to be changed are the active profiles. Profiles represent the means of transport that are supported by OpenRouteService. Activating a profile means approving it for graph building. Only profiles whose graphs have been built, can be used for routing. A profile can be one of the following:
@@ -99,22 +135,51 @@ The most important setting to be changed are the active profiles. Profiles repre
 or their respective synonyms according to the ORS documentation.
 
 Profiles can be changed by assigning character vectors to the active binding `active_profiles`:
-```{r}
-ors$config$active_profiles <- c('car', 'bike-regular', 'walking')
+```{r, eval = FALSE}
+ors$config$active_profiles <- c("car", "bike-regular", "walking")
 ors$config$ors_config$ors$services$routing$profiles$active
+#> [[1]]
+#> [1] "car"
+#>
+#> [[2]]
+#> [1] "bike-regular"
+#>
+#> [[3]]
+#> [1] "walking"
 ```
 
 
 In the same way, all configurations can be changed under `$ors_config`:
-```{r}
+```{r, eval = FALSE}
 # Setting the maximum snapping radius to -1 removes the limit for coordinates to be snapped to a
 # nearby geometry edge. For coordinates that are far off from ways or streets, this is especially
 # useful
-ors$config$ors_config$ors$services$routing$profiles$default_params$maximum_snapping_radius <- -1
-ors$config$ors_config$ors$services$routing$profiles$`profile-car`$parameters$maximum_snapping_radius <- -1
+ors$
+        config$
+        ors_config$
+        ors$
+        services$
+        routing$
+        profiles$
+        default_params$
+        maximum_snapping_radius <- -1
+ors$
+        config$
+        ors_config$
+        ors$
+        services$
+        routing$
+        profiles$
+        `profile-car`$
+        parameters$
+        maximum_snapping_radius <- -1
 ```
 
-After changing any configurations, the changes have to be saved to the config file using `$save_config`.
+After changing any configurations, the changes have to be saved to the config file using.
+
+```{r, eval = FALSE}
+ors$config$save_config()
+```
 
 ## Change the default setup settings in docker-compose.yml
 
@@ -122,20 +187,41 @@ The Docker Compose file manages ports, the assignment of OSM files and config fi
 
 The Docker Compose file can be read and accessed using `$setup_settings`. A new `ORSSetupSettings` instance can be initialized using `$get_setup_settings`.
 
-```{r}
+```{r, eval = FALSE}
 ors$get_setup_settings()
 ors$setup_settings
+#> <ORSSetupSettings>
+#>   Public:
+#>     allocate_memory: function (init = NULL, max = NULL)
+#>     assign_data: function (mode = "build")
+#>     build_graphs: active binding
+#>     compose: list
+#>     config_path: docker/data/ors-config.json
+#>     extract_path: docker/data/geofabrik_koeln-regbez-latest.osm.pbf
+#>     init_memory: 0.75 GB
+#>     initialize: function (extract_name, init_memory = NULL, max_memory = NULL,
+#>     max_memory: 1.5 GB
+#>     open_settings: function ()
+#>     save_settings: function ()
+#>   Private:
+#>     .disable_auto_deletion: function ()
+#>     .extract_size: 187.411825
+#>     .profiles: 3
+#>     .read_dockercompose: function ()
+#>     .stringify_graph_building: function (order)
+#>     .write_dockercompose: function ()
+#>     .write_memory: function (init, max)
 ```
 
 In order to build profiles and process the OSM extract, graph building needs to be turned on. This is an important step as only profiles whose graphs are built can be accessed later on.
 
-```{r}
+```{r, eval = FALSE}
 ors$setup_settings$build_graphs <- TRUE
 ```
 
 Furthermore, Docker needs to know where to find the OSM extract and the config file. You can add both files to the Docker setup using `$assign_data`.
 
-```{r}
+```{r, eval = FALSE}
 ors$setup_settings$assign_data(mode = "build")
 ```
 
@@ -143,7 +229,7 @@ Set `mode = "build"` if you're running the service for the first time. If you in
 
 Finally, you can specify the working memory to be allocated to Docker. By default, the memory is estimated, however, this estimation might underestimate or overestimate the actually required memory. In such cases, you may specify the memory using `$allocate_memory`.
 
-```{r}
+```{r, eval = FALSE}
 ors$setup_settings$allocate_memory(init = NULL, max = NULL)
 data.frame(
          Size = c(
@@ -152,6 +238,9 @@ data.frame(
          ),
          row.names = c('Initial memory', 'Max memory')
 )
+#>                   Size
+#> Initial memory 0.75 GB
+#> Max memory      1.5 GB
 ```
 
 In this case, 1 GB of initial memory and 2 GB of maximum memory are going to be allocated. Initial memory refers to the memory that is allocated at the beginning of the process. Memory usage is successively increased but cannot exceed the set maximum. If no arguments are passed, the method will estimate the needed memory. If only the maximum memory is passed, the initial memory will be half that value.
@@ -160,8 +249,8 @@ If there are any other things you want to change, you can do so by assigning val
 
 Again, you have to save your changes in order for them to have any effect:
 
-```{r}
-ors$setup_settings$save_settings
+```{r, eval = FALSE}
+ors$setup_settings$save_compose()
 ```
 
 
@@ -169,16 +258,39 @@ ors$setup_settings$save_settings
 
 The final step is to instruct Docker to build the image and start the container. As soon as the container is running, the service is being prepared. Depending on the size of the extract and the number of profiles, this can take between a few minutes and a few hours.
 
-Docker can be accessed and controlled using `$docker`. The environment `ORSDockerInterface` can be initialized with `$init_docker`. The function starts Docker and specifies the port that the local server should run on.
-```{r}
+Docker can be accessed and controlled using `$docker`. The environment `ORSDockerInterface` can be initialized with `$init_docker`. The method starts Docker and specifies the port that the local server should run on.
+```{r, eval = FALSE}
 ors$docker
+#> <ORSDockerInterface>
+#>   Public:
+#>     container_exists: active binding
+#>     container_running: active binding
+#>     docker_running: active binding
+#>     error_log: active binding
+#>     image_built: active binding
+#>     image_down: function ()
+#>     image_up: function (wait = TRUE)
+#>     initialize: function (port = 8080)
+#>     service_ready: active binding
+#>     start_container: function (wait = TRUE)
+#>     stop_container: function ()
+#>   Private:
+#>     .container_exists: function ()
+#>     .container_running: function ()
+#>     .docker_running: function ()
+#>     .image_built: function ()
+#>     .notify_when_ready: function (interval = 10, shutup = FALSE)
+#>     .port: 8080
+#>     .service_ready: function (retry = FALSE)
+#>     .start_docker: function ()
+#>     .watch_for_error: function ()
 ```
 
 `ORSDockerInterface` is divided into two functionalities: Checking the service status and controlling the image and container.
 
 Checking the service status works using six 'green lights'. `$docker_running` should always be green after you initialized `ORSDockerInterface`. `$image_built` checks if the Docker image `openrouteservice:latest` exists. `$container_exists` then verifies the existence of a container named `ors-app`. `$container_running` checks if `ors-app` is running. Finally, `$service_ready` sends a `GET` request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of `ORSDockerInterface`, all lights but the first should be off.
 
-```{r}
+```{r, eval = FALSE}
 data.frame(
   status = c(
     ors$docker$docker_running,
@@ -195,19 +307,29 @@ data.frame(
     'Is the service ready to use?'
   )
 )
+#>                              status
+#> Is docker running?             TRUE
+#> Does the image exist?         FALSE
+#> Does the container exist?     FALSE
+#> Is the container running?     FALSE
+#> Is the service ready to use?  FALSE
 ```
 
-If you already built the image and started the container, but encountered an error, you can view the error logs using $error_log.
+If you already built the image and started the container, but encountered an error, you can view the error logs using $error_log. Preferably, this should return NULL.
 
 In order to build the image and start the container, simply call
-```{r}
+```{r, eval = FALSE}
 ors$docker$image_up(wait = TRUE)
+#> This prints lots and lots of incomprehensible logs
 ```
 
 This will forward the heavy work to docker-compose. If `wait` is set to `TRUE`, you will get a notification as soon as the process is done.
 
 If you need to change any configurations afterwards, first stop the container and update the location of the config file. You can then change anything using `$config`, `$extract` and `$setup_settings`.
-```{r}
+```{r, eval = FALSE}
+# Return to the ORS directory after working on other things
+setwd(ors$dir)
+
 # Stop container, turn graph building off and update config
 ors$docker$stop_container()
 ors$setup_settings$build_graphs <- FALSE
@@ -223,4 +345,4 @@ ors$setup_settings$save_settings()
 ors$docker$start_container(wait = FALSE)
 ```
 
-Note that in order to change the extract using `$assign_data(mode = "change")`, graph building needs to be turned on for existing graphs to be overwritten.
+Note that for changes to the setup settings in ORSSetupSettings, you need to bring down the image using `$image_down` while `$container_stop` does the trick if you merely need to change the configs in `ORSConfig`. Also, for changes to the setup settings, note that graph building should be turned off for changes to, e.g., the memory allocation but needs to be turned on if you need to change the OSM extract using `$assign_data(mode = "change")` in order to overwrite existing graphs.
