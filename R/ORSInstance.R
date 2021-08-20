@@ -138,12 +138,9 @@ ORSInstance <- R6::R6Class(
     #' @param max_memory Maximum memory to be allocated to the docker
     #' container. The container will start with the initial memory and increases
     #' the memory usage up to the maximum memory if necessary.
-    get_setup_settings = function(init_memory = NULL, max_memory = NULL) {
-      self$
-        setup_settings <- ORSSetupSettings$new(
-          basename(self$extract$path),
-          init_memory,
-          max_memory,
+    get_setup_settings = function() {
+      self$setup_settings <- ORSSetupSettings$new(
+          self$extract$path,
           self$config$active_profiles
       )
     },

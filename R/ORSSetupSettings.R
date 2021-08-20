@@ -7,7 +7,8 @@
 #' R6 Docker setup control panel
 #' @description R6 class that controls `docker-compose.yml` and `Dockerfile`.
 #' Provides an interface to easily allocate memory, switch graph building on or
-#' off and assign data.
+#' off and assign data. It is recommended to initialize this class after
+#' setting an extract and configuring ORS.
 #'
 #' @importFrom magrittr %>%
 
@@ -84,16 +85,12 @@ ORSSetupSettings <- R6::R6Class(
     #' increases the memory usage up to the maximum memory if necessary.
     #' @param profiles Active profiles as set in the config file
     initialize = function(
-      # TODO: Clean up. This function should not allocate memory or the
-      # likes.
-      extract_name,
-      init_memory = NULL,
-      max_memory = NULL,
+      extract_path,
       profiles = NULL
     ) {
       self$compose <- private$.read_dockercompose()
-      if(!is.null(extract_name)) {
-        self$extract_path <- paste("docker/data", extract_name, sep = "/")
+      if(!is.null(extract_path)) {
+        self$extract_path <- extract_path
         private$.extract_size <- file.info(self$extract_path)$size * 0.000001
       }
       if (!is.null(profiles)) {
@@ -101,8 +98,6 @@ ORSSetupSettings <- R6::R6Class(
       }
       self$config_path <- "docker/data/ors-config.json"
       private$.disable_auto_deletion()
-      self$allocate_memory(init_memory, max_memory)
-      self$save_compose()
       return(self)
     },
 
@@ -111,10 +106,10 @@ ORSSetupSettings <- R6::R6Class(
     #' amount. If no memory is given, the method will estimate the optimal
     #' amount of memory to be allocated. The memory is written to the compose
     #' file.
-    #' @param init Initial memory to be allocated to the docker container.
-    #' @param max Maximum memory to be allocated to the docker container. The
-    #' container will start with the initial memory and increases the memory
-    #' usage up to the maximum memory if necessary.
+    #' @param init Initial memory (GB) to be allocated to the docker container.
+    #' @param max Maximum memory (GB) to be allocated to the docker container.
+    #' The' container will start with the initial memory and increases the
+    #' memory usage up to the maximum memory if necessary.
     allocate_memory = function(init = NULL, max = NULL) {
       if (is.numeric(init) && is.numeric(max)) {
         private$.write_memory(init, max)
@@ -126,7 +121,7 @@ ORSSetupSettings <- R6::R6Class(
         private$.write_memory(init, max)
       } else if (is.null(init) && is.null(max)) {
         if (!is.null(private$.extract_size) && !is.null(private$.profiles)) {
-          max <- round(private$.extract_size, -2) * 2.5 * private$.profiles
+          max <- round(private$.extract_size, -2) * 2.5 * private$.profiles / 1000
           init <- max / 2
           private$.write_memory(init, max)
         } else {
@@ -144,7 +139,7 @@ ORSSetupSettings <- R6::R6Class(
       }
       gc(verbose = FALSE)
       free_mem <- memuse::Sys.meminfo()$freeram@size
-      if (free_mem * 0.8 - max / 1000 <= 0) {
+      if (free_mem * 0.8 - max <= 0) {
         cli::cli_warn(
           paste(
             "You are allocating more than your available memory.",
@@ -152,8 +147,8 @@ ORSSetupSettings <- R6::R6Class(
           )
         )
       }
-      self$init_memory <- paste(as.character(init / 1000), "GB")
-      self$max_memory <- paste(as.character(max / 1000), "GB")
+      self$init_memory <- paste(as.character(init), "GB")
+      self$max_memory <- paste(as.character(max), "GB")
     },
 
     #' @description Writes the provided paths to the compose file.
@@ -163,6 +158,15 @@ ORSSetupSettings <- R6::R6Class(
     #' `mode = change` inserts a volume that overwrites the current graphs if
     #' graph building is turned on.
     assign_data = function(mode = "build") {
+      if(is.null(self$extract_path)) {
+        cli::cli_abort(
+          paste(
+            "Please set an extract before calling this method it or assign a",
+            "path to {.var $extract_path}"
+          )
+        )
+      }
+
       self$
       compose$
       services$
@@ -187,11 +191,13 @@ ORSSetupSettings <- R6::R6Class(
         )
 
         self$
-        compose$
-        services$
-        `ors-app` <- append(self$compose$services$`ors-app`,
-                                             build_branch,
-                                             after = 3)
+          compose$
+          services$
+          `ors-app` <- append(
+          self$compose$services$`ors-app`,
+          build_branch,
+          after = 3
+        )
       } else if (mode == "change") {
         change_node <- "./%s:/ors-core/data/osm_file.pbf" %>%
           sprintf(self$extract_path)
@@ -266,6 +272,20 @@ ORSSetupSettings <- R6::R6Class(
       yaml::read_yaml("docker/docker-compose.yml")
     },
     .write_dockercompose = function() {
+      # Preserve options before they get put in quotes to not mess up the
+      # parsed yaml after saving the settings
+      java_opts <- self$
+        compose$
+        services$
+        `ors-app`$
+        environment[2]
+
+      catalina_opts <- self$
+        compose$
+        services$
+        `ors-app`$
+        environment[3]
+
       # Put Java and Catalina options in quotes
       self$
         compose$
@@ -297,18 +317,30 @@ ORSSetupSettings <- R6::R6Class(
       )
 
       # Remove single quotes that are somehow added by as.yaml when introducing
-      # double quotes. Also tell double quotes to really be escaped. They
-      # sometimes refuse to for some reason.
-      # TODO: Does this still mess up the output or are we good?
-      corrected_yml_string <- gsub("\"'|'\"", '"', yml_as_string) %>%
-        gsub("\\\"", "\"", .)
+      # double quotes.
+       corrected_yml_string <- gsub("'\"|\"'", "\"", yml_as_string)
 
       # Remove line breaks of long strings
       corrected_yml_string <- corrected_yml_string %>%
         gsub("\\n\\s{8}-", " -", .)
 
       # Write new yaml to old yaml file
-      cat(corrected_yml_string, file = "docker/docker-compose.yml")
+      cat(
+        corrected_yml_string,
+        file = "docker/docker-compose.yml"
+      )
+
+      self$
+        compose$
+        services$
+        `ors-app`$
+        environment[2] <- java_opts
+
+      self$
+        compose$
+        services$
+        `ors-app`$
+        environment[3] <- catalina_opts
     }
   ),
   cloneable = FALSE
