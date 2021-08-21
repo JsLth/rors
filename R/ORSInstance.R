@@ -247,8 +247,11 @@ ORSInstance <- R6::R6Class(
   ),
   private = list(
     .set_ors_wd = function(dir = NULL) {
-
       basedir <- "openrouteservice-master"
+      pkg_path <- system.file(package = "ORSRouting")
+      if(dir.exists(pkg_path)) {
+        setwd(pkg_path)
+      }
       # If no path is given, set the default path as the working dir
       if (is.null(dir) && !grepl(basedir, getwd())) {
 
@@ -287,8 +290,14 @@ ORSInstance <- R6::R6Class(
     ),
     .clone_ors_repo = function(dir = getwd()) {
       basedir <- "openrouteservice-master"
-      if (!is.null(dir) && dir.exists(dir)) {
+      if (!missing(dir) && dir.exists(dir)) {
         setwd(dir)
+      } else {
+        pkg_path <- system.file(package = "ORSRouting")
+        if(dir.exists(pkg_path)) {
+          dir <- pkg_path
+          setwd(dir)
+        }
       }
       if (!dir.exists(basedir) && !grepl(basedir, getwd())) {
         zip_file <- "openrouteservice.zip"

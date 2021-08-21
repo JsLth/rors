@@ -15,40 +15,96 @@
 ORSSetupSettings <- R6::R6Class(
   classname = "ORSSetupSettings",
   active = list(
-
-    #' @field build_graphs Switches graph building on or off. Graph building
-    #' should be turned on when the OSM extract changes or when no graphs exist
-    #' yet. It should be turned off after building graphs. If graph building is
-    #' turned on after building the graphs, the service will rebuild all graphs
-    #' each time the image is rebuilt.
-    build_graphs = function(order) {
-      if (missing(order)) {
-        build_graphs_string <- self$
+    #' @field Specifices whether the image is built for the first time or if
+    #' the OSM extract is being changed. If `build` is assigned to the field,
+    #' indiciates that the graphs are built for the first time. If `change` is
+    #' assigned, indicates that the extract file was changed and the existing
+    #' graphs should be overwritten using the new extract. If `NA` is assigned,
+    #' indicates that no changes should be made and that graph building should
+    #' not be forced.
+    graph_building = function(mode = "build") {
+      build <- "build" %in% names(
+        self$
+          compose$
+          services$
+          `ors-app`
+      )
+      change <- !is.na(
+        self$
           compose$
           services$
           `ors-app`$
-          environment[1]
-        order <- build_graphs_string %>%
-          strsplit("=") %>%
-          unlist() %>%
-          .[2] %>%
-          as.logical()
-        return(order)
+          environment[6]
+      )
+      if(missing(mode)) {
+        if(build) {
+          return("build")
+        } else if(change) {
+          return("change")
+        } else {
+          return(NA)
+        }
       } else {
-        if (is.logical(order)) {
-          build_graphs_string <- private$.stringify_graph_building(order)
+        if(is.null(self$extract_path)) {
+          cli::cli_warn(
+            paste(
+              "Please set an extract before calling this binding it or assign",
+              "a path to {.var $extract_path}"
+            )
+          )
+          return(NA)
+        }
+
+        self$
+          compose$
+          services$
+          `ors-app`$
+          build <- NULL
+
+        self$
+          compose$
+          services$
+          `ors-app`$
+          volumes <- self$compose$services$`ors-app`$volumes[-6]
+
+        if (identical(mode, "build")) {
+          private$.force_graphbuilding(handle = FALSE)
+          build_branch <- list(
+            build = list(
+              context = "../",
+              args = list(
+                APP_CONFIG = "./%s" %>% sprintf(self$config_path),
+                OSM_FILE = "./%s" %>% sprintf(self$extract_path)
+              )
+            )
+          )
+
+          self$
+            compose$
+            services$
+            `ors-app` <- append(
+            self$compose$services$`ors-app`,
+            build_branch,
+            after = 3
+          )
+          return(mode)
+        } else if (identical(mode, "change")) {
+          private$.force_graphbuilding(handle = TRUE)
+          change_node <- "./%s:/ors-core/data/osm_file.pbf" %>%
+            sprintf(self$extract_path)
+
           self$
           compose$
           services$
           `ors-app`$
-          environment[1] <- build_graphs_string
-          return(order)
+          volumes[6] <- change_node
+          return(mode)
+        } else if (is.na(mode) || is.null(mode)) {
+          private$.force_graphbuilding(handle = FALSE)
+          return(NA)
         } else {
           cli::cli_abort(
-            paste(
-              "Pass a logical scalar.",
-              "Should graphs be built or not?"
-            )
+            "{.var $graph_building} expects a character scalar or NA"
           )
         }
       }
@@ -151,65 +207,6 @@ ORSSetupSettings <- R6::R6Class(
       self$max_memory <- paste(as.character(max), "GB")
     },
 
-    #' @description Writes the provided paths to the compose file.
-    #' @param mode Specifices whether the image is built for the first time or
-    #' if the OSM extract is being changed. `mode = build` inserts a `build`
-    #' block that specifices the path to the extract and config file.
-    #' `mode = change` inserts a volume that overwrites the current graphs if
-    #' graph building is turned on.
-    assign_data = function(mode = "build") {
-      if(is.null(self$extract_path)) {
-        cli::cli_abort(
-          paste(
-            "Please set an extract before calling this method it or assign a",
-            "path to {.var $extract_path}"
-          )
-        )
-      }
-
-      self$
-      compose$
-      services$
-      `ors-app`$
-      build <- NULL
-
-      self$
-      compose$
-      services$
-      `ors-app`$
-      volumes <- self$compose$services$`ors-app`$volumes[-6]
-
-      if (mode == "build") {
-        build_branch <- list(
-          build = list(
-            context = "../",
-            args = list(
-              APP_CONFIG = "./%s" %>% sprintf(self$config_path),
-              OSM_FILE = "./%s" %>% sprintf(self$extract_path)
-            )
-          )
-        )
-
-        self$
-          compose$
-          services$
-          `ors-app` <- append(
-          self$compose$services$`ors-app`,
-          build_branch,
-          after = 3
-        )
-      } else if (mode == "change") {
-        change_node <- "./%s:/ors-core/data/osm_file.pbf" %>%
-          sprintf(self$extract_path)
-
-        self$
-        compose$
-        services$
-        `ors-app`$
-        volumnes[6] <- change_node
-      }
-    },
-
     #' @description Saves the setup changes by overwriting `docker-compose.yml`
     #' with all changed fields. This should be run each time after changing any
     #' settings.
@@ -245,10 +242,15 @@ ORSSetupSettings <- R6::R6Class(
       )
       self$compose$services$`ors-app`$environment[2] <- java_options
     },
-    .stringify_graph_building = function(order) {
-      order <- tolower(as.character(order))
-      substr(order, 1, 1) <- toupper(substr(order, 1, 1))
-      build_graphs_string <- "BUILD_GRAPHS=%s" %>% sprintf(order)
+    .force_graphbuilding = function(handle) {
+      handle <- tolower(as.character(handle))
+      substr(handle, 1, 1) <- toupper(substr(handle, 1, 1))
+      build_graphs_string <- "BUILD_GRAPHS=%s" %>% sprintf(handle)
+      self$
+        compose$
+        services$
+        `ors-app`$
+        environment[1] <- build_graphs_string
     },
     .disable_auto_deletion = function() {
       # Don't delete any profiles. Setup every profile at first start.
