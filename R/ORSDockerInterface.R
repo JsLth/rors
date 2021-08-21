@@ -21,7 +21,7 @@ ORSDockerInterface <- R6::R6Class(
       if (missing(v)) {
         private$.docker_running()
       } else {
-        cli::cli_abort("`$docker_running` is read only.")
+        cli::cli_abort("{.var $docker_running} is read only.")
       }
     },
 
@@ -30,7 +30,7 @@ ORSDockerInterface <- R6::R6Class(
       if (missing(v)) {
         private$.image_built()
       } else {
-        cli::cli_abort("`$image_built` is read only.")
+        cli::cli_abort("{.var $image_built} is read only.")
       }
     },
 
@@ -39,7 +39,7 @@ ORSDockerInterface <- R6::R6Class(
       if (missing(v)) {
         private$.container_exists()
       } else {
-        cli::cli_abort("`$container_exists` is read only.")
+        cli::cli_abort("{.var $container_exists} is read only.")
       }
     },
 
@@ -48,7 +48,7 @@ ORSDockerInterface <- R6::R6Class(
       if (missing(v)) {
         private$.container_running()
       } else {
-        cli::cli_abort("`$container_running` is read only.")
+        cli::cli_abort("{.var $container_running} is read only.")
       }
     },
 
@@ -59,7 +59,7 @@ ORSDockerInterface <- R6::R6Class(
         private$.service_ready()
         setwd("..")
       } else {
-        cli::cli_abort("`$service_ready` is read only.")
+        cli::cli_abort("{.var $service_ready} is read only.")
       }
     },
 
@@ -69,7 +69,21 @@ ORSDockerInterface <- R6::R6Class(
       if (missing(v)) {
         private$.watch_for_error()
       } else {
-        cli::cli_abort("`$error_log` is read only.")
+        if (is.null(v) || is.na(v)) {
+          code <- unlink("docker/logs", recursive = TRUE, force = TRUE)
+          if (code == 0) {
+            private$.watch_for_error()
+          } else {
+            cli::cli_abort("Logs could not be removed.")
+          }
+        } else {
+          cli::cli_abort(
+            paste(
+              "Cannot assign logs to {.var $error_log}.",
+              "Pass NULL to clear the logs."
+            )
+          )
+        }
       }
     }
   ),
@@ -81,7 +95,7 @@ ORSDockerInterface <- R6::R6Class(
     initialize = function(port = 8080) {
       if (Sys.info()["sysname"] == "Linux") {
         cli::cli_alert_warning(
-          "ORSInstance needs superuser permissions to communicate with Docker"
+          "{.cls ORSInstance} needs superuser permissions to communicate with Docker"
         )
         system(
           "pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY ls",
@@ -102,6 +116,7 @@ ORSDockerInterface <- R6::R6Class(
     #' container and then stop. To check the server status, you can then call
     #' `$service_ready` from the class \code{\link{ORSDockerInterface}}.
     image_up = function(wait = TRUE) {
+      self$error_log <- NULL
       setwd("docker")
       system(ensure_permission("docker-compose up -d"))
       if (wait) {
@@ -126,6 +141,7 @@ ORSDockerInterface <- R6::R6Class(
     #' container and then stop. To check the server status, you can then call
     #' `$service_ready` from the class \code{\link{ORSDockerInterface}}.
     start_container = function(wait = TRUE) {
+      self$error_log <- NULL
       setwd("docker")
       system(ensure_permission("docker start ors-app"), ignore.stdout = TRUE)
       if (wait) {

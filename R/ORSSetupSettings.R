@@ -22,7 +22,7 @@ ORSSetupSettings <- R6::R6Class(
     #' graphs should be overwritten using the new extract. If `NA` is assigned,
     #' indicates that no changes should be made and that graph building should
     #' not be forced.
-    graph_building = function(mode = "build") {
+    graph_building = function(mode) {
       build <- "build" %in% names(
         self$
           compose$
@@ -107,6 +107,7 @@ ORSSetupSettings <- R6::R6Class(
             "{.var $graph_building} expects a character scalar or NA"
           )
         }
+        self$save_settings()
       }
     }
   ),
@@ -154,6 +155,7 @@ ORSSetupSettings <- R6::R6Class(
       }
       self$config_path <- "docker/data/ors-config.json"
       private$.disable_auto_deletion()
+      self$graph_building <- NA
       return(self)
     },
 
@@ -183,10 +185,10 @@ ORSSetupSettings <- R6::R6Class(
         } else {
           cli::cli_abort(
             paste(
-              "Initialize the extract and config before changing the setup",
-              "settings or pass a fixed amount of memory. The memory",
-              "estimation is based on the extract size and the number of",
-              "active profiles."
+              "Initialize {.cls ORSExtract} and {.cls ORSConfig} before",
+              "changing the setup settings or pass a fixed amount of memory.",
+              "The memory estimation is based on the extract size and the",
+              "number of active profiles."
             )
           )
         }
@@ -205,6 +207,7 @@ ORSSetupSettings <- R6::R6Class(
       }
       self$init_memory <- paste(as.character(init), "GB")
       self$max_memory <- paste(as.character(max), "GB")
+      self$save_settings()
     },
 
     #' @description Saves the setup changes by overwriting `docker-compose.yml`

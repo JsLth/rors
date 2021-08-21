@@ -189,16 +189,14 @@ The Docker Compose file manages ports, the assignment of OSM files and config fi
 The Docker Compose file can be read and accessed using `$setup_settings`. A new `ORSSetupSettings` instance can be initialized using `$get_setup_settings`.
 
 ```{r, eval = FALSE}
-ors$get_setup_settings()
 ors$setup_settings
 #> <ORSSetupSettings>
 #>   Public:
 #>     allocate_memory: function (init = NULL, max = NULL)
-#>     assign_data: function (mode = "build")
-#>     build_graphs: active binding
 #>     compose: list
 #>     config_path: docker/data/ors-config.json
 #>     extract_path: docker/data/geofabrik_koeln-regbez-latest.osm.pbf
+#>     graph_building: active binding
 #>     init_memory: 0.75 GB
 #>     initialize: function (extract_name, init_memory = NULL, max_memory = NULL,
 #>     max_memory: 1.5 GB
@@ -207,28 +205,22 @@ ors$setup_settings
 #>   Private:
 #>     .disable_auto_deletion: function ()
 #>     .extract_size: 187.411825
+#>     .force_graphbuilding: function (handle)
 #>     .profiles: 3
 #>     .read_dockercompose: function ()
-#>     .stringify_graph_building: function (order)
 #>     .write_dockercompose: function ()
 #>     .write_memory: function (init, max)
 ```
 
-In order to build profiles and process the OSM extract, graph building needs to be turned on. This is an important step as only profiles whose graphs are built can be accessed later on.
+First, Docker needs to know if it should build the graphs from scratch including a new extract and a new config file, if it should overwrite the existing graphs or if it should leave the graphs be. This can be done by assigning the respective order to the active binding `$graph_building`. Assigning `"build"` to the binding creates a `build` branch in the compose file that orders Docker to build a new graphs directory and apply a non-default config file.
 
 ```{r, eval = FALSE}
-ors$setup_settings$build_graphs <- TRUE
+ors$setup_settings$graph_building <- "build"
 ```
 
-Furthermore, Docker needs to know where to find the OSM extract and the config file. You can add both files to the Docker setup using `$assign_data`.
+Assign `"build"` if you're running the service for the first time. If you intend to change the extract, assign `"change"`. If you already have graphs and do not want to change the existing graphs, assign NA. This will turn off graph building so that graphs will not be forced to be rebuilt each time you rebuild the ORS image.
 
-```{r, eval = FALSE}
-ors$setup_settings$assign_data(mode = "build")
-```
-
-Set `mode = "build"` if you're running the service for the first time. If you intend to change the extract, pass `mode = "change"`.
-
-Finally, you can specify the working memory to be allocated to Docker. By default, the memory is estimated, however, this estimation might underestimate or overestimate the actually required memory. In such cases, you may specify the memory using `$allocate_memory`.
+Furthermore, you can specify the working memory to be allocated to Docker. By default, the memory is estimated, however, this estimation might underestimate or overestimate the actually required memory. In such cases, you may specify the memory using `$allocate_memory`.
 
 ```{r, eval = FALSE}
 ors$setup_settings$allocate_memory(init = NULL, max = NULL)

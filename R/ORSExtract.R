@@ -86,9 +86,9 @@ ORSExtract <- R6::R6Class(
         file_name <- strsplit(place_match$url, "/") %>% .[[1]] %>% tail(1)
         cli::cli_alert_info(
           paste(
-            "The extract {.val {file_name}} is",
-            "{.val {round(place_match$file_size / 1024 / 1024)}} MB in size",
-            "and will be downloaded from {.val {providers[i]}}."
+            "The extract {.file {file_name}} is",
+            "{.field {round(place_match$file_size / 1024 / 1024)}} MB in size",
+            "and will be downloaded from {.field {providers[i]}}."
           )
         )
         if (providers[i] == "bbbike") {
@@ -123,7 +123,7 @@ ORSExtract <- R6::R6Class(
       if (sum(file_occurences) == 1) {
         cli::cli_alert_info(
           paste(
-            "The extract already exists in the download path.",
+            "The extract already exists in {.file /docker/data}.",
             "Download will be skipped."
           )
         )
@@ -132,7 +132,7 @@ ORSExtract <- R6::R6Class(
           dir(download_path)[file_occurences],
           sep = "/"
         )
-        cli::cli_text("Download path: {.val {path}}")
+        cli::cli_text("Download path: {.file {path}}")
       } else {
         private$.rm_old_extracts()
         path <- paste0("docker/data/", providers[i], "_", file_name)
@@ -140,7 +140,7 @@ ORSExtract <- R6::R6Class(
           "Downloading the OSM extract...",
           msg_done = paste(
             "The extract was successfully downloaded to the following path:",
-            "{.val {path}}"
+            "{.file {path}}"
           ),
           msg_failed = "Extract could not be downloaded."
         )
@@ -176,7 +176,7 @@ ORSExtract <- R6::R6Class(
         self$path <- relativePath(private$.move_extract(extract_path))
         self$size <- file.info(extract_path)$size * 0.000001
       } else {
-        cli::cli_abort("The provided extract file does not exist.")
+        cli::cli_abort("{.file {extract_path}} does not exist.")
       }
     }
   ),

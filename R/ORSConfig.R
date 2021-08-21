@@ -39,6 +39,7 @@ ORSConfig <- R6::R6Class(
         } else {
           cli::cli_abort("Pass a valid vector of profiles.")
         }
+        self$save_config()
       }
     }
   ),

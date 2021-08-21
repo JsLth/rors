@@ -79,6 +79,7 @@ ORSInstance <- R6::R6Class(
       }
       self$extract <- ORSExtract$new()
       self$get_config()
+      self$get_setup_settings()
       self$init_docker()
     },
 
@@ -195,7 +196,10 @@ ORSInstance <- R6::R6Class(
         } else {
           if (is.null(extract_path)) {
             cli::cli_abort(
-              "Either pass an extract path or set an extract using `$extract`"
+              paste(
+                "Either pass an extract path or set an extract using",
+                "{.cls ORSExtract}"
+              )
             )
           }
         }
@@ -232,17 +236,19 @@ ORSInstance <- R6::R6Class(
 
         # Set up Docker -------------------------------------------------------
         self$get_setup_settings()
-        self$setup_settings$build_graphs <- TRUE
-        self$setup_settings$assign_data(extract_path)
+        self$setup_settings$graph_building <- "build"
         self$setup_settings$allocate_memory(init_memory, max_memory)
         self$setup_settings$save_settings()
 
         # Start the service ---------------------------------------------------
         self$init_docker()
-        self$docker$image_up()
+        self$docker$image_up(wait)
 
         # Update the config file
         self$get_config()
+
+        # Turn off graph building
+        self$setup_settings$graph_building <- NA
     }
   ),
   private = list(
