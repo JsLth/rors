@@ -12,7 +12,7 @@
 
 <meta name="author" content="Jonas Lieth" />
 
-<meta name="date" content="2021-08-18" />
+<meta name="date" content="2021-08-22" />
 
 <title>Installing and setting up the package</title>
 
@@ -141,12 +141,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <h1 class="title toc-ignore">Installing and setting up the package</h1>
 <h4 class="author">Jonas Lieth</h4>
-<h4 class="date">2021-08-18</h4>
+<h4 class="date">2021-08-22</h4>
 
 
 
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ORSRouting)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(magrittr)</span></code></pre></div>
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>The main purpose of the package is to calculate the routing distances and durations from geo-referenced survey data or other geolocations to nearby points of interest (e.g. hospitals). To achieve this, the package provides two routing functions that are powered by OpenRouteService (ORS), and two functions to either extract OpenStreetMap (OSM) elements or digest local location datasets. To enable the processing of large datasets, the package requires a local installation of the OpenRouteService backend. The setup can be done manually but is time-consuming and not very intuitive. The package provides an R6 class to set up the backend and manage it from within R.</p>
@@ -156,14 +154,14 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>By default, ORS is queryable over the <a href="https://api.openrouteservice.org">official webserver</a> given a valid API key. However, to not overburden the server, the Web API is <a href="https://openrouteservice.org/restrictions/">heavily restricted</a>. For the purpose of this package, these restrictions render the online usage unfeasible.</p>
 <p>Instead, the ORS backend can be installed locally via Docker. The R6 class <code>ORSInstance</code> controls both the installation and customization of the backend. The installation requires Docker, a raw OpenStreetMap extract (i.e., <code>.pbf</code> or <code>.osm</code>) of the required region, and the source code of OpenStreetMap. Of these, only <a href="https://www.docker.com/products/docker-desktop">Docker needs to be installed beforehand</a>.</p>
 <p>After installing Docker, a new ORS instance can be initialized. If necessary, this will download the ORS GitHub repository and start the Docker daemon. Most importantly though, it allows access to a bunch of new methods.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>ors <span class="ot">&lt;-</span> ORSRouting<span class="sc">::</span>ORSInstance<span class="sc">$</span><span class="fu">new</span>()</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>ors</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; trying URL &#39;https://github.com/GIScience/openrouteservice/archive/refs/heads/master.zip&#39;</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Content type &#39;application/zip&#39; length unknown</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; downloaded 105.0 MB</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Successfully downloaded the service backend. [21.9s]</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Docker Desktop is now running. [45.1s]</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>ors <span class="ot">&lt;-</span> ORSRouting<span class="sc">::</span>ORSInstance<span class="sc">$</span><span class="fu">new</span>()</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>ors</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; trying URL &#39;https://github.com/GIScience/openrouteservice/archive/refs/heads/master.zip&#39;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Content type &#39;application/zip&#39; length unknown</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; downloaded 105.0 MB</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Successfully downloaded the service backend. [21.9s]</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Docker Desktop is now running. [45.1s]</span></span></code></pre></div>
 <p>Generally, the workflow to install the ORS backup consists of four steps:</p>
 <ul>
 <li>Set or get an extract</li>
@@ -172,6 +170,15 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>Build the image and start the container</li>
 </ul>
 <p>All of these steps can be done manually, however the method <code>$init_setup</code> is happy to take over steps 2-4.</p>
+<div id="the-easy-way" class="section level2">
+<h2>The easy way</h2>
+<p>Let’s assume you already have an extract, a list of profiles, and don’t have any special wishes or needs for ORS. In this case you can just pass the extract path and a character vector containing your profiles to</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span><span class="fu">init_setup</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">profiles =</span> <span class="fu">c</span>(<span class="st">&quot;car&quot;</span>, <span class="st">&quot;walking&quot;</span>),</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">extract_path =</span> <span class="st">&quot;osm_file.osm.pbf&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>The rest of the setup should be done automatically. You can also specify the amount of memory to be allocated by passing <code>init_memory</code> and <code>max_memory</code>. If you need to use the R console while the setup is running, set <code>wait = FALSE</code>. Of course you can make changes to this setup, either by hand or by making use of the methods presented below.</p>
+</div>
 <div id="set-or-get-an-extract" class="section level2">
 <h2>Set or get an extract</h2>
 <p>OpenStreetMap extracts contain all elements mapped by OSM contributors within a certain region. OpenRouteService is based on OSM and thus needs OSM data to generate routes. OSM data can be acquired with different tools. An overview of extract providers can be found <a href="https://wiki.openstreetmap.org/wiki/Planet.osm#Country_and_area_extracts">here</a> and <a href="https://wiki.openstreetmap.org/wiki/Downloading_data">here</a>. The <a href="https://www.openstreetmap.org/export">official OSM website</a> also supports extracting data by bounding boxes.</p>
@@ -194,7 +201,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Removing old extracts...</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v The extract was successfully downloaded to the following path: &quot;docker/data/geofabrik_koeln-regbez-latest.os...</span></span></code></pre></div>
 <p>The <code>$get_extract</code> method makes use of <code>osmextract::oe_match</code>. It searches different providers for extracts that match the input. The extract is downloaded to the data path inside the ORS main directory where it waits to be processed by ORS.</p>
-<p>At this point, you can just run <code>$init_setup</code> and let R do the rest. When the function is done, the service should be ready to use. However, for certain use cases, it might be useful to change the configuration or setup settings.</p>
+<p>At this point, you can just run <code>$init_setup</code> and let R do the rest.</p>
 </div>
 <div id="adjust-the-configurations-in-ors-config.json" class="section level2">
 <h2>Adjust the configurations in ors-config.json</h2>
@@ -264,126 +271,128 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2>Change the default setup settings in docker-compose.yml</h2>
 <p>The Docker Compose file manages ports, the assignment of OSM files and config files, volumes, and settings for Tomcat and Java. Thus, the most important changes to be made to the Docker Compose file are assigning the extract and the config file, and allocating enough memory for building the profile graphs.</p>
 <p>The Docker Compose file can be read and accessed using <code>$setup_settings</code>. A new <code>ORSSetupSettings</code> instance can be initialized using <code>$get_setup_settings</code>.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span><span class="fu">get_setup_settings</span>()</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSSetupSettings&gt;</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     allocate_memory: function (init = NULL, max = NULL)</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     assign_data: function (mode = &quot;build&quot;)</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     build_graphs: active binding</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     compose: list</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     config_path: docker/data/ors-config.json</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     extract_path: docker/data/geofabrik_koeln-regbez-latest.osm.pbf</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     init_memory: 0.75 GB</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function (extract_name, init_memory = NULL, max_memory = NULL,</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     max_memory: 1.5 GB</span></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     open_settings: function ()</span></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     save_settings: function ()</span></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .disable_auto_deletion: function ()</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .extract_size: 187.411825</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .profiles: 3</span></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .read_dockercompose: function ()</span></span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .stringify_graph_building: function (order)</span></span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .write_dockercompose: function ()</span></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .write_memory: function (init, max)</span></span></code></pre></div>
-<p>In order to build profiles and process the OSM extract, graph building needs to be turned on. This is an important step as only profiles whose graphs are built can be accessed later on.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span>build_graphs <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span></code></pre></div>
-<p>Furthermore, Docker needs to know where to find the OSM extract and the config file. You can add both files to the Docker setup using <code>$assign_data</code>.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span><span class="fu">assign_data</span>(<span class="at">mode =</span> <span class="st">&quot;build&quot;</span>)</span></code></pre></div>
-<p>Set <code>mode = &quot;build&quot;</code> if you’re running the service for the first time. If you intend to change the extract, pass <code>mode = &quot;change&quot;</code>.</p>
-<p>Finally, you can specify the working memory to be allocated to Docker. By default, the memory is estimated, however, this estimation might underestimate or overestimate the actually required memory. In such cases, you may specify the memory using <code>$allocate_memory</code>.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span><span class="fu">allocate_memory</span>(<span class="at">init =</span> <span class="cn">NULL</span>, <span class="at">max =</span> <span class="cn">NULL</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">Size =</span> <span class="fu">c</span>(</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>                 ors<span class="sc">$</span>setup_settings<span class="sc">$</span>init_memory,</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                 ors<span class="sc">$</span>setup_settings<span class="sc">$</span>max_memory</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>         ),</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">row.names =</span> <span class="fu">c</span>(<span class="st">&#39;Initial memory&#39;</span>, <span class="st">&#39;Max memory&#39;</span>)</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                   Size</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Initial memory 0.75 GB</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Max memory      1.5 GB</span></span></code></pre></div>
-<p>In this case, 1 GB of initial memory and 2 GB of maximum memory are going to be allocated. Initial memory refers to the memory that is allocated at the beginning of the process. Memory usage is successively increased but cannot exceed the set maximum. If no arguments are passed, the method will estimate the needed memory. If only the maximum memory is passed, the initial memory will be half that value.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSSetupSettings&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     allocate_memory: function (init = NULL, max = NULL)</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     compose: list</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     config_path: docker/data/ors-config.json</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     extract_path: docker/data/geofabrik_koeln-regbez-latest.osm.pbf</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     graph_building: active binding</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     init_memory: 0.75 GB</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function (extract_name, init_memory = NULL, max_memory = NULL,</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     max_memory: 1.5 GB</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     open_compose: function ()</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     save_compose: function ()</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .disable_auto_deletion: function ()</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .extract_size: 187.411825</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .force_graphbuilding: function (handle)</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .profiles: 3</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .read_dockercompose: function ()</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .write_dockercompose: function ()</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .write_memory: function (init, max)</span></span></code></pre></div>
+<p>First, Docker needs to know if it should build the graphs from scratch including a new extract and a new config file, if it should overwrite the existing graphs or if it should leave the graphs be. This can be done by assigning the respective order to the active binding <code>$graph_building</code>. Assigning <code>&quot;build&quot;</code> to the binding creates a <code>build</code> branch in the compose file that orders Docker to build a new graphs directory and apply a non-default config file.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span>graph_building <span class="ot">&lt;-</span> <span class="st">&quot;build&quot;</span></span></code></pre></div>
+<p>Assign <code>&quot;build&quot;</code> if you’re running the service for the first time. If you intend to change the extract, assign <code>&quot;change&quot;</code>. If you already have graphs and do not want to change the existing graphs, assign NA. This will turn off graph building so that graphs will not be forced to be rebuilt each time you rebuild the ORS image.</p>
+<p>Furthermore, you can specify the working memory to be allocated to Docker. By default, the memory is estimated, however, this estimation might underestimate or overestimate the actually required memory. In such cases, you may specify the memory using <code>$allocate_memory</code>.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span><span class="fu">allocate_memory</span>(<span class="at">init =</span> <span class="cn">NULL</span>, <span class="at">max =</span> <span class="cn">NULL</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">Size =</span> <span class="fu">c</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                 ors<span class="sc">$</span>setup_settings<span class="sc">$</span>init_memory,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                 ors<span class="sc">$</span>setup_settings<span class="sc">$</span>max_memory</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>         ),</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">row.names =</span> <span class="fu">c</span>(<span class="st">&#39;Initial memory&#39;</span>, <span class="st">&#39;Max memory&#39;</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                   Size</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Initial memory 0.75 GB</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Max memory      1.5 GB</span></span></code></pre></div>
+<p>In this case, 0.75 GB of initial memory and 1.5 GB of maximum memory are going to be allocated. Initial memory refers to the memory that is allocated at the beginning of the process. Memory usage is successively increased but cannot exceed the set maximum. If no arguments are passed, the method will estimate the needed memory. If only the maximum memory is passed, the initial memory will be half that value.</p>
 <p>If there are any other things you want to change, you can do so by assigning values to the parsed compose file in <code>$compose</code> or by opening the raw file using <code>$open_settings</code>.</p>
 <p>Again, you have to save your changes in order for them to have any effect:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span><span class="fu">save_settings</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span><span class="fu">save_compose</span>()</span></code></pre></div>
 </div>
 <div id="build-the-image-and-start-the-container" class="section level2">
 <h2>Build the image and start the container</h2>
 <p>The final step is to instruct Docker to build the image and start the container. As soon as the container is running, the service is being prepared. Depending on the size of the extract and the number of profiles, this can take between a few minutes and a few hours.</p>
-<p>Docker can be accessed and controlled using <code>$docker</code>. The environment <code>ORSDockerInterface</code> can be initialized with <code>$init_docker</code>. The function starts Docker and specifies the port that the local server should run on.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSDockerInterface&gt;</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     container_exists: active binding</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     container_running: active binding</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker_running: active binding</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     error_log: active binding</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     image_built: active binding</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     image_down: function ()</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     image_up: function (wait = TRUE)</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function (port = 8080)</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     service_ready: active binding</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     start_container: function (wait = TRUE)</span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     stop_container: function ()</span></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .container_exists: function ()</span></span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .container_running: function ()</span></span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .docker_running: function ()</span></span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .image_built: function ()</span></span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .notify_when_ready: function (interval = 10, shutup = FALSE)</span></span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .port: 8080</span></span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .service_ready: function (retry = FALSE)</span></span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .start_docker: function ()</span></span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .watch_for_error: function ()</span></span></code></pre></div>
+<p>Docker can be accessed and controlled using <code>$docker</code>. The environment <code>ORSDockerInterface</code> can be initialized with <code>$init_docker</code>. The method starts Docker and specifies the port that the local server should run on.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSDockerInterface&gt;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     container_exists: active binding</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     container_running: active binding</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker_running: active binding</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     error_log: active binding</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     image_built: active binding</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     image_down: function ()</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     image_up: function (wait = TRUE)</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function (port = 8080)</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     service_ready: active binding</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     start_container: function (wait = TRUE)</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     stop_container: function ()</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .container_exists: function ()</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .container_running: function ()</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .docker_running: function ()</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .image_built: function ()</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .notify_when_ready: function (interval = 10, shutup = FALSE)</span></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .port: 8080</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .service_ready: function (retry = FALSE)</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .start_docker: function ()</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .watch_for_error: function ()</span></span></code></pre></div>
 <p><code>ORSDockerInterface</code> is divided into two functionalities: Checking the service status and controlling the image and container.</p>
-<p>Checking the service status works using six ‘green lights’. <code>$docker_running</code> should always be green after you initialized <code>ORSDockerInterface</code>. <code>$image_built</code> checks if the Docker image <code>openrouteservice:latest</code> exists. <code>$container_exists</code> then verifies the existence of a container named <code>ors-app</code>. <code>$container_running</code> checks if <code>ors-app</code> is running. Finally, <code>$service_ready</code> sends a <code>GET</code> request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of <code>ORSDockerInterface</code>, all lights but the first should be off.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">status =</span> <span class="fu">c</span>(</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>docker_running,</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>image_built,</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>container_exists,</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>container_running,</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>service_ready</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names =</span> <span class="fu">c</span>(</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is docker running?&#39;</span>,</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Does the image exist?&#39;</span>,</span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Does the container exist?&#39;</span>,</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is the container running?&#39;</span>,</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is the service ready to use?&#39;</span></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                              status</span></span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is docker running?             TRUE</span></span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Does the image exist?         FALSE</span></span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Does the container exist?     FALSE</span></span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is the container running?     FALSE</span></span>
-<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is the service ready to use?  FALSE</span></span></code></pre></div>
-<p>If you already built the image and started the container, but encountered an error, you can view the error logs using $error_log. Preferably, this should return NULL.</p>
+<p>Checking the service status works using six ‘green lights’. <code>$docker_running</code> should always be green after you initialized <code>ORSDockerInterface</code>. <code>$image_built</code> checks if the Docker image <code>openrouteservice:latest</code> exists. <code>$container_exists</code> then verifies the existence of a container named <code>ors-app</code>. <code>$container_running</code> checks if <code>ors-app</code> is running. Finally, <code>$service_ready</code> sends a <code>GET</code> request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of <code>ORSDockerInterface</code>, all lights but the first are probably off.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">status =</span> <span class="fu">c</span>(</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>docker_running,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>image_built,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>container_exists,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>container_running,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>service_ready</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names =</span> <span class="fu">c</span>(</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is docker running?&#39;</span>,</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Does the image exist?&#39;</span>,</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Does the container exist?&#39;</span>,</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is the container running?&#39;</span>,</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is the service ready to use?&#39;</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                              status</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is docker running?             TRUE</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Does the image exist?         FALSE</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Does the container exist?     FALSE</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is the container running?     FALSE</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is the service ready to use?  FALSE</span></span></code></pre></div>
+<p>If you already built the image and started the container, but encountered an error, you can view the error logs using <code>$error_log</code>. Preferably, this should return NULL.</p>
 <p>In order to build the image and start the container, simply call</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">image_up</span>(<span class="at">wait =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; This prints lots and lots of incomprehensible logs</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">image_up</span>(<span class="at">wait =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; This prints lots and lots of incomprehensible logs</span></span></code></pre></div>
 <p>This will forward the heavy work to docker-compose. If <code>wait</code> is set to <code>TRUE</code>, you will get a notification as soon as the process is done.</p>
 <p>If you need to change any configurations afterwards, first stop the container and update the location of the config file. You can then change anything using <code>$config</code>, <code>$extract</code> and <code>$setup_settings</code>.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Return to the ORS directory after working on other things</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(ors<span class="sc">$</span>dir)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop container, turn graph building off and update config</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">stop_container</span>()</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span>build_graphs <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span><span class="fu">get_config</span>()</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Make changes</span></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span>ors_config<span class="sc">$</span>ors<span class="sc">$</span>services<span class="sc">$</span>matrix<span class="sc">$</span>maximum_routes <span class="ot">&lt;-</span> <span class="dv">10000</span></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span><span class="fu">save_config</span>()</span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span><span class="fu">allocate_memory</span>(<span class="at">init =</span> <span class="dv">1</span>, <span class="at">max =</span> <span class="dv">2</span>)</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span><span class="fu">save_settings</span>()</span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Restart container</span></span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">start_container</span>(<span class="at">wait =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
-<p>Note that for changes to the setup settings in ORSSetupSettings, you need to bring down the image using <code>$image_down</code> while <code>$container_stop</code> does the trick if you merely need to change the configs in <code>ORSConfig</code>. Also, for changes to the setup settings, note that graph building should be turned off for changes to, e.g., the memory allocation but needs to be turned on if you need to change the OSM extract using <code>$assign_data(mode = &quot;change&quot;)</code> in order to overwrite existing graphs.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Return to the ORS directory after working on other things</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(ors<span class="sc">$</span>dir)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop container, turn graph building off and update config</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">stop_container</span>()</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span>graph_building <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span><span class="fu">get_config</span>()</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Make changes</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span>ors_config<span class="sc">$</span>ors<span class="sc">$</span>services<span class="sc">$</span>matrix<span class="sc">$</span>maximum_routes <span class="ot">&lt;-</span> <span class="dv">10000</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span><span class="fu">save_config</span>()</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span><span class="fu">allocate_memory</span>(<span class="at">init =</span> <span class="dv">1</span>, <span class="at">max =</span> <span class="dv">2</span>)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Restart container</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">start_container</span>(<span class="at">wait =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>Some final things to keep in mind:</p>
+<ul>
+<li>To change the setup settings, you need to bring down the image using <code>$image_down</code></li>
+<li>To change the configurations, you only need to stop the container using <code>$stop_container</code></li>
+<li>To change the OSM extract, graphs must be overwritten by changing <code>$graph_building</code> to <code>change</code></li>
+<li>To make sure that graphs are not overwritten when you rebuild the image, assign NA to <code>graph_building</code></li>
+<li>If you change the configurations or settings by assigning values to the parsed files, you need to save the changes using <code>$save_compose</code> or <code>$save_config</code>, otherwise this step is not necessary</li>
+</ul>
 </div>
 </div>
 

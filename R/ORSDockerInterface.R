@@ -70,11 +70,13 @@ ORSDockerInterface <- R6::R6Class(
         private$.watch_for_error()
       } else {
         if (is.null(v) || is.na(v)) {
-          code <- unlink("docker/logs", recursive = TRUE, force = TRUE)
-          if (code == 0) {
-            private$.watch_for_error()
-          } else {
-            cli::cli_abort("Logs could not be removed.")
+          if (dir.exists("docker/logs")) {
+            code <- unlink("docker/logs", recursive = TRUE, force = TRUE)
+            if (code == 0) {
+              private$.watch_for_error()
+            } else {
+              cli::cli_abort("Logs could not be removed.")
+            }
           }
         } else {
           cli::cli_abort(

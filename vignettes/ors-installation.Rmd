@@ -200,8 +200,8 @@ ors$setup_settings
 #>     init_memory: 0.75 GB
 #>     initialize: function (extract_name, init_memory = NULL, max_memory = NULL,
 #>     max_memory: 1.5 GB
-#>     open_settings: function ()
-#>     save_settings: function ()
+#>     open_compose: function ()
+#>     save_compose: function ()
 #>   Private:
 #>     .disable_auto_deletion: function ()
 #>     .extract_size: 187.411825
@@ -236,7 +236,7 @@ data.frame(
 #> Max memory      1.5 GB
 ```
 
-In this case, 1 GB of initial memory and 2 GB of maximum memory are going to be allocated. Initial memory refers to the memory that is allocated at the beginning of the process. Memory usage is successively increased but cannot exceed the set maximum. If no arguments are passed, the method will estimate the needed memory. If only the maximum memory is passed, the initial memory will be half that value.
+In this case, 0.75 GB of initial memory and 1.5 GB of maximum memory are going to be allocated. Initial memory refers to the memory that is allocated at the beginning of the process. Memory usage is successively increased but cannot exceed the set maximum. If no arguments are passed, the method will estimate the needed memory. If only the maximum memory is passed, the initial memory will be half that value.
 
 If there are any other things you want to change, you can do so by assigning values to the parsed compose file in `$compose` or by opening the raw file using `$open_settings`.
 
@@ -281,7 +281,7 @@ ors$docker
 
 `ORSDockerInterface` is divided into two functionalities: Checking the service status and controlling the image and container.
 
-Checking the service status works using six 'green lights'. `$docker_running` should always be green after you initialized `ORSDockerInterface`. `$image_built` checks if the Docker image `openrouteservice:latest` exists. `$container_exists` then verifies the existence of a container named `ors-app`. `$container_running` checks if `ors-app` is running. Finally, `$service_ready` sends a `GET` request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of `ORSDockerInterface`, all lights but the first should be off.
+Checking the service status works using six 'green lights'. `$docker_running` should always be green after you initialized `ORSDockerInterface`. `$image_built` checks if the Docker image `openrouteservice:latest` exists. `$container_exists` then verifies the existence of a container named `ors-app`. `$container_running` checks if `ors-app` is running. Finally, `$service_ready` sends a `GET` request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of `ORSDockerInterface`, all lights but the first are probably off.
 
 ```{r, eval = FALSE}
 data.frame(
@@ -308,7 +308,7 @@ data.frame(
 #> Is the service ready to use?  FALSE
 ```
 
-If you already built the image and started the container, but encountered an error, you can view the error logs using $error_log. Preferably, this should return NULL.
+If you already built the image and started the container, but encountered an error, you can view the error logs using `$error_log`. Preferably, this should return NULL.
 
 In order to build the image and start the container, simply call
 ```{r, eval = FALSE}
@@ -325,17 +325,22 @@ setwd(ors$dir)
 
 # Stop container, turn graph building off and update config
 ors$docker$stop_container()
-ors$setup_settings$build_graphs <- FALSE
+ors$setup_settings$graph_building <- NA
 ors$get_config()
 
 # Make changes
 ors$config$ors_config$ors$services$matrix$maximum_routes <- 10000
 ors$config$save_config()
 ors$setup_settings$allocate_memory(init = 1, max = 2)
-ors$setup_settings$save_settings()
 
 # Restart container
 ors$docker$start_container(wait = FALSE)
 ```
 
-Note that for changes to the setup settings in ORSSetupSettings, you need to bring down the image using `$image_down` while `$container_stop` does the trick if you merely need to change the configs in `ORSConfig`. Also, for changes to the setup settings, note that graph building should be turned off for changes to, e.g., the memory allocation but needs to be turned on if you need to change the OSM extract using `$assign_data(mode = "change")` in order to overwrite existing graphs.
+Some final things to keep in mind:
+
+* To change the setup settings, you need to bring down the image using `$image_down`
+* To change the configurations, you only need to stop the container using `$stop_container`
+* To change the OSM extract, graphs must be overwritten by changing `$graph_building` to `change`
+* To make sure that graphs are not overwritten when you rebuild the image, assign NA to `graph_building`
+* If you change the configurations or settings by assigning values to the parsed files, you need to save the changes using `$save_compose` or `$save_config`, otherwise this step is not necessary
