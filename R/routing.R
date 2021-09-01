@@ -57,16 +57,25 @@ datensatz.b <- data.frame(
 #' # 4  14933.1   1522.8
 #' # 5   7926.0    876.8
 
-get_route_lengths <- function(source, destination, profile, units = 'm', local = TRUE, port = 8080, api_key = NULL, geometry = FALSE) {
+get_route_lengths <- function(
+  source,
+  destination,
+  profile,
+  units = "m",
+  local = TRUE,
+  port = 8080,
+  api_key = NULL,
+  geometry = FALSE
+) {
   if (!identical(dim(source), dim(destination))) {
-    stop('Both datasets must have the same shape.')
+    stop("Both datasets must have the same shape.")
   }
   if (local) {
-    url <- paste0('http://localhost:', port, '/ors/v2/directions/')
+    url <- paste0("http://localhost:", port, "/ors/v2/directions/")
   } else if (is(api_key, 'character')) {
-    url <- 'https://api.openrouteservice.org/v2/directions/'
+    url <- "https://api.openrouteservice.org/v2/directions/"
   } else {
-    stop('API key must be passed if queries are not local.')
+    stop("API key must be passed if queries are not local.")
   }
 
   extract.lengths <- function(source, dest) {
@@ -86,9 +95,18 @@ get_route_lengths <- function(source, destination, profile, units = 'm', local =
     )
   }
 
-  zipped_locations <- data.frame(source = source, dest = destination) %>%
-    dplyr::group_split(dplyr::row_number(), .keep = FALSE) %>%
-    purrr::map_df(tidyr::nest, source = dplyr::starts_with('source'), dest = dplyr::starts_with('dest'))
+  zipped_locations <- data.frame(
+    source = source,
+    dest = destination
+  ) %>%
+    dplyr::group_split(
+      dplyr::row_number(),
+      .keep = FALSE
+    ) %>%
+    purrr::map_df(
+      tidyr::nest,
+      source = dplyr::starts_with("source"),
+      dest = dplyr::starts_with("dest"))
 
   # Routen für jedes Koordinatenpaar berechnen
   route.list <- zipped_locations %>%
@@ -98,7 +116,15 @@ get_route_lengths <- function(source, destination, profile, units = 'm', local =
 }
 
 # TODO: Implement one-to-many matrix?
-query.ors <- function(source, destination, profile, url, units = 'm', api_key = NULL, geometry = FALSE) {
+query.ors <- function(
+  source,
+  destination,
+  profile,
+  url,
+  units,
+  api_key,
+  geometry
+) {
   # Get coordinates in shape
   locations <- list(
     c(as.numeric(source[1]), as.numeric(source[2])),
@@ -107,58 +133,78 @@ query.ors <- function(source, destination, profile, url, units = 'm', api_key = 
   # Create http body of the request
   body <- jsonlite::toJSON(
     list(
-      'coordinates' = locations,
+      coordinates = locations,
       # Remove the clipping distance limit
-      'radiuses' = rep(list(-1), length(locations)),
-      'units' = units,
-      'geometry' = geometry
+      radiuses = rep(list(-1), length(locations)),
+      units = units,
+      geometry = geometry
     ),
     auto_unbox = TRUE
   )
   header <- httr::add_headers(
-    'Accept' = 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
+    "Accept" = paste(
+      "application/json",
+      "application/geo+json",
+      "application/gpx+xml",
+      "img/png; charset=utf-8",
+      sep = ", "
+    ),
     # Will not be passed if api_key = NULL
-    'Authorization' = api_key,
-    'Content-Type' = 'application/json; charset=utf-8'
+    "Authorization" = api_key,
+    "Content-Type" = "application/json; charset=utf-8"
   )
 
   # Calculate routes for every profile
   routes <- url %>%
     paste0(profile) %>%
-    httr::POST(body=body, encode = paste0(rep('geo', geometry), 'json'), header) %>%
+    httr::POST(
+      body = body,
+      encode = paste0(rep('geo', geometry), 'json'),
+      header
+    ) %>%
     httr::content()
   return(routes)
 }
 
 
 #' Calculate shortest routes to nearby points of interest
-#' @description Calculates the shortest routes from a source dataset to the points of interest
-#' of each coordinate pair. This function is a wrapper around `get_route_lengths` that matches
-#' each coordinate pair to a list of points of interest and returns the route with the shortest
-#' distance.
+#' @description Calculates the shortest routes from a source dataset to the
+#' points of interest of each coordinate pair. This function is a wrapper
+#' around `get_route_lengths` that matches each coordinate pair to a list of
+#' points of interest and returns the route with the shortest distance.
 #'
-#' @param source Source dataset that represents point coordinates that are to be routed
-#' from. The source dataset should be passed as a double nested dataframe or list with
-#' each row representing a x/y or lon/lat coordinate pair.
-#' @param poi_coords Dataset containing dataframes of points of interest that are to be routed
-#' to. Each list element matches a row in the source dataset and each element in one of the
-#' dataframes represents the x/y or lon/lat coordinate pairs of one point of interest.
-#' @param profiles Character vector or list. Means of transport as supported by OpenRouteService.
-#' For a list of active profiles, call \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}. For
-#' details on all profiles, refer to the \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
-#' @param proximity_type Type of proximity that the calculations should be based on. If
-#' `distance`, the shortest physical distance will be calculated and if `duration`, the shortest
-#' temporal distance will be calculated.
+#' @param source Source dataset that represents point coordinates that are to
+#' be routed from. The source dataset should be passed as a double nested
+#' dataframe or list with each row representing a x/y or lon/lat coordinate
+#' pair.
+#' @param poi_coords Dataset containing dataframes of points of interest that
+#' are to be routed to. Each list element matches a row in the source dataset
+#' and each element in one of the dataframes represents the x/y or lon/lat
+#' coordinate pairs of one point of interest.
+#' @param profiles Character vector or list. Means of transport as supported by
+#' OpenRouteService. For a list of active profiles, call
+#' \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}. For details
+#' on all profiles, refer to the
+#' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
+#' @param proximity_type Type of proximity that the calculations should be
+#' based on. If `distance`, the shortest physical distance will be calculated
+#' and if `duration`, the shortest temporal distance will be calculated.
 #' @param port Integer scalar. Port that the local server is running on.
-#' @returns Dataframe with distances, travel durations and the index number of the point of
-#' interest with the shortest distance to the respective place of the source dataset.
+#' @returns Dataframe with distances, travel durations and the index number of
+#' the point of interest with the shortest distance to the respective place of
+#' the source dataset.
 #'
 #' @export
 #'
 #' @importFrom magrittr %>%
 #'
 #' @examples
-#' pois <- query.osm.pois(datensatz.a, key = 'amenity', value = 'hospital', radius = 5000)
+#' pois <- query.osm.pois(
+#'      datensatz.a,
+#'      key = 'amenity',
+#'      value = 'hospital',
+#'      radius = 5000
+#' )
 #' shortest_routes <- get_shortest_routes(datensatz.a, pois)
 #' shortest_routes
 #' #    point_number   route_type poi_number distance duration
@@ -173,33 +219,83 @@ query.ors <- function(source, destination, profile, url, units = 'm', api_key = 
 #' # 9             5  driving-car         11   1393.1    196.1
 #' # 10            5 foot-walking          2    926.9    667.4
 
-get_shortest_routes <- function(source, poi_coords, profiles = c('driving-car', 'foot-walking'), proximity_type = 'duration', port = 8080) {
+get_shortest_routes <- function(
+  source,
+  poi_coords,
+  profiles = c('driving-car', 'foot-walking'),
+  proximity_type = 'duration',
+  port = 8080
+) {
+  if (!is.null(dim(poi_coords))) {
+    poi_coords <- replicate(
+      nrow(source),
+      poi_coords,
+      simplify = FALSE
+    )
+  }
   calculate.shortest.routes <- function (profile, point_number) {
     routes <- get_route_lengths(
-      rep(source[point_number, ], nrow(poi_coords[[point_number]])),
+      replicate(
+        nrow(poi_coords[[point_number]]),
+        source[point_number, ],
+        simplify = FALSE
+      ) %>%
+        dplyr::bind_rows(),
       poi_coords[[point_number]],
       profile = profile,
       local = TRUE,
       port = port
     )
-    if (tolower(proximity_type) == 'distance') {
-      best_index <- match(min(routes[['distance']]), routes[['distance']])
+    # TODO: Implement dataframe conversion for non-nested POI data
+    if (tolower(proximity_type) == "distance") {
+      best_index <- match(
+        min(routes[["distance"]]),
+        routes[["distance"]]
+      )
     } else if (tolower(proximity_type) == 'duration') {
-      best_index <- match(min(routes[['duration']]), routes[['duration']])
+      best_index <- match(
+        min(routes[["duration"]]),
+        routes[["duration"]]
+      )
     } else {
-      stop('Expected a proximity type ("duration" or "distance")')
+      cli::cli_abort(
+        paste(
+          "Expected a proximity type",
+          "({.val {\"duration\"}} or {.val {\"distance\"}})"
+        )
+      )
     }
-    best_route <- purrr::map(seq_len(ncol(routes)), ~routes[best_index, ..1]) %>%
+    best_route <- purrr::map(
+      seq_len(ncol(routes)),
+      ~routes[best_index, ..1]
+    ) %>%
       c(best_index, .)
   }
-  nested_iterator <- list(profiles = profiles, point_number = seq_len(nrow(source))) %>%
+  nested_iterator <- list(
+    profiles = profiles,
+    point_number = seq_len(nrow(source))
+  ) %>%
     expand.grid()
-  route_list <- purrr::pmap(nested_iterator, ~calculate.shortest.routes(..1, ..2)) %>%
+
+  route_list <- purrr::pmap(
+    nested_iterator,
+    ~calculate.shortest.routes(..1, ..2)
+  ) %>%
     cbind() %>%
     do.call(rbind, .) %>%
     as.data.frame() %>%
-    cbind(profile_source_zipped[['point_number']], profile_source_zipped[['profiles']], .)
-  output_cols <- c('point_number', 'route_type', 'poi_number', 'distance', 'duration')
+    cbind(
+      nested_iterator[["point_number"]],
+      nested_iterator[["profiles"]], .
+    )
+
+  output_cols <- c(
+    "point_number",
+    "route_type",
+    "poi_number",
+    "distance",
+    "duration"
+  )
   colnames(route_list) <- output_cols
   return(route_list)
 }

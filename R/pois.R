@@ -53,7 +53,7 @@ get_osm_pois <- function(source, key, value, radius = 5000, crs = 4326) {
   response <- point.bbox %>% apply(1, query.osm)
   # Calculate the centroids of each output multipolygon
   pois <- response %>%
-    lapply(function(response) {
+    lapply(function(response) { # TODO: Extract not only polygons
       centroids_from_polygons(response$osm_polygons) %>%
       as.data.frame()
     }
