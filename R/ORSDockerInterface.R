@@ -57,7 +57,6 @@ ORSDockerInterface <- R6::R6Class(
     service_ready = function(v) {
       if (missing(v)) {
         private$.service_ready()
-        setwd("..")
       } else {
         cli::cli_abort("{.var $service_ready} is read only.")
       }
@@ -124,7 +123,7 @@ ORSDockerInterface <- R6::R6Class(
       if (wait) {
         private$.notify_when_ready()
       }
-      setwd("..")
+      on.exit(setwd(".."))
     },
 
     #' @description Deletes the image. Should only be used when the container
@@ -132,7 +131,7 @@ ORSDockerInterface <- R6::R6Class(
     image_down = function() {
       setwd("docker")
       system(ensure_permission("docker-compose down --rmi 'all'"))
-      setwd("..")
+      on.exit(setwd(".."))
     },
 
     #' @description Starts the container and issues a system notification when
@@ -149,19 +148,19 @@ ORSDockerInterface <- R6::R6Class(
       if (wait) {
         private$.notify_when_ready(interval = 2, shutup = TRUE)
       }
-      setwd("..")
+      on.exit(setwd(".."))
     },
 
     #' @description Stops the container.
     stop_container = function() {
       setwd("docker")
       system(ensure_permission("docker stop ors-app"), ignore.stdout = TRUE)
-      setwd("..")
+      on.exit(setwd(".."))
     }
   ),
   private = list(
     .port = NULL,
-    .service_ready = function(retry = FALSE) {
+    .service_ready = function() {
       health_url <- "http://localhost:%s/ors/health" %>% sprintf(private$.port)
       if (private$.docker_running() &&
          private$.image_built() &&
@@ -263,7 +262,7 @@ ORSDockerInterface <- R6::R6Class(
                 Sys.sleep(0.01)
               }
               timer <- timer + 1
-              if (timer == 30) {
+              if (timer == 180) {
                 cli::cli_abort("The Docker startup has timed out.")
               }
             }
@@ -374,10 +373,14 @@ ORSDockerInterface <- R6::R6Class(
             stderr = TRUE
           )
         )
+        setwd("docker")
         error_catcher <- function(log) {
-          errors <- grep("error | exception",
-          log, value = TRUE,
-          ignore.case = TRUE) %>%
+          errors <- grep(
+            "error | exception",
+            log,
+            value = TRUE,
+            ignore.case = TRUE
+          ) %>%
             unlist()
           error_msgs <- errors %>%
             strsplit(" - ") %>%
@@ -397,7 +400,6 @@ ORSDockerInterface <- R6::R6Class(
           unique() # Don't return the same errors multiple times
           # The function might be called before log files are created. In this
           # case, don't stop, just don't return anything.
-        setwd("docker")
       }
     }
   ),

@@ -45,11 +45,11 @@ ORSSetupSettings <- R6::R6Class(
           return(NA)
         }
       } else {
-        if(is.null(self$extract_path)) {
+        if(is.null(self$extract_path) && !is.na(mode)) {
           cli::cli_warn(
             paste(
-              "Please set an extract before calling this binding it or assign",
-              "a path to {.var $extract_path}"
+              "Please set an extract before calling {.var $graph_building}",
+              "or assign a path to {.var $extract_path}"
             )
           )
           return(NA)
@@ -68,7 +68,7 @@ ORSSetupSettings <- R6::R6Class(
           volumes <- self$compose$services$`ors-app`$volumes[-6]
 
         if (identical(mode, "build")) {
-          private$.force_graphbuilding(handle = FALSE)
+          private$.force_graphbuilding(handle = TRUE)
           build_branch <- list(
             build = list(
               context = "../",
@@ -207,7 +207,7 @@ ORSSetupSettings <- R6::R6Class(
       }
       self$init_memory <- paste(as.character(init), "GB")
       self$max_memory <- paste(as.character(max), "GB")
-      self$save_settings()
+      self$save_compose()
     },
 
     #' @description Saves the setup changes by overwriting `docker-compose.yml`
@@ -235,12 +235,12 @@ ORSSetupSettings <- R6::R6Class(
       max_mem_allocation <- java_mem[2]
       java_options <- gsub(
         init_mem_allocation,
-        sprintf("-Xms%sm", init),
+        sprintf("-Xms%sm", init * 1000),
         java_options
       )
       java_options <- gsub(
         max_mem_allocation,
-        sprintf("-Xmx%sm", max),
+        sprintf("-Xmx%sm", max * 1000),
         java_options
       )
       self$compose$services$`ors-app`$environment[2] <- java_options

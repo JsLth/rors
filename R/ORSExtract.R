@@ -135,7 +135,7 @@ ORSExtract <- R6::R6Class(
         cli::cli_text("Download path: {.file {path}}")
       } else {
         private$.rm_old_extracts()
-        path <- paste0("docker/data/", providers[i], "_", file_name)
+        path <- paste0(download_path, "/", providers[i], "_", file_name)
         cli::cli_progress_step(
           "Downloading the OSM extract...",
           msg_done = paste(

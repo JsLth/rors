@@ -26,10 +26,12 @@ Imports:
     memuse (>= 4.1-0),
     dplyr (>= 1.0.7),
     osmdata (>= 0.1.5),
-    fields (>= 12.5)
-Suggests: 
+    fields (>= 12.5),
+    tidyr (>= 1.1.3)
+Suggests:
     rmarkdown (>= 2.7),
     knitr (>= 1.31)
+SystemRequirements: Docker Engine on Linux systems, Docker Desktop on Windows (>= 20.10.6)
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr

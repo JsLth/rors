@@ -88,7 +88,7 @@ get_route_lengths <- function(source, destination, profile, units = 'm', local =
 
   zipped_locations <- data.frame(source = source, dest = destination) %>%
     dplyr::group_split(dplyr::row_number(), .keep = FALSE) %>%
-    purrr::map_df(nest, source = dplyr::starts_with('source'), dest = dplyr::starts_with('dest'))
+    purrr::map_df(tidyr::nest, source = dplyr::starts_with('source'), dest = dplyr::starts_with('dest'))
 
   # Routen für jedes Koordinatenpaar berechnen
   route.list <- zipped_locations %>%
@@ -105,14 +105,15 @@ query.ors <- function(source, destination, profile, url, units = 'm', api_key = 
     c(as.numeric(destination[1]), as.numeric(destination[2]))
   )
   # Create http body of the request
-  body <- jsonlite::toJSON( # TODO: Drop rjson and implement jsonlite
+  body <- jsonlite::toJSON(
     list(
       'coordinates' = locations,
       # Remove the clipping distance limit
       'radiuses' = rep(list(-1), length(locations)),
       'units' = units,
       'geometry' = geometry
-    )
+    ),
+    auto_unbox = TRUE
   )
   header <- httr::add_headers(
     'Accept' = 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',

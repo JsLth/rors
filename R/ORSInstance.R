@@ -163,6 +163,8 @@ ORSInstance <- R6::R6Class(
     #' container. The container will start with the initial memory and increases
     #' the memory usage up to the maximum memory if necessary.
     #' Passed to \code{\link{ORSSetupSettings}}.
+    #' @param snapping_radius Integer. Radius within which points are snapped
+    #' to the nearest roads. See details.
     #' @param wait Logical. If `TRUE`, the function will not stop running after
     #' the container is being started and will give out a notification as soon
     #' as the service is ready. If `FALSE`, the function will start the
@@ -172,11 +174,19 @@ ORSInstance <- R6::R6Class(
     #' @param run Locial. If `TRUE`, returns `TRUE` if the initial setup is done
     #' and runs the setup if not. If `FALSE`, only returns logicals to check
     #' whether the initial setup is done or not.
+    #' @details The default setup removes the maximum snapping radius meaning
+    #' that points are snapped to the nearest road irrespective of their
+    #' distance to the road. The ORS default lies at 350 meters. Limitting the
+    #' snapping radius might cause errors for points that are over 350 meters
+    #' from the nearest road. However, removing this limit might cause
+    #' inaccuracies in the distance and time calculations as points can be
+    #' instantly snapped to a road kilometers away.
     init_setup = function(
       profiles = "car",
       extract_path = self$extract$path,
       init_memory = NULL,
       max_memory = NULL,
+      snapping_radius = -1,
       wait = TRUE,
       run = TRUE) {
         if (
@@ -222,7 +232,7 @@ ORSInstance <- R6::R6Class(
           routing$
           profiles$
           default_params$
-          maximum_snapping_radius <- -1
+          maximum_snapping_radius <- snapping_radius
         self$
           config$
           ors_config$
@@ -231,14 +241,14 @@ ORSInstance <- R6::R6Class(
           routing$
           profiles$
           `profile-car`$
-          maximum_snapping_radius <- -1
+          maximum_snapping_radius <- snapping_radius
         self$config$save_config()
 
         # Set up Docker -------------------------------------------------------
         self$get_setup_settings()
         self$setup_settings$graph_building <- "build"
         self$setup_settings$allocate_memory(init_memory, max_memory)
-        self$setup_settings$save_settings()
+        self$setup_settings$save_compose()
 
         # Start the service ---------------------------------------------------
         self$init_docker()

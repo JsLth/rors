@@ -80,7 +80,7 @@ ORSConfig <- R6::R6Class(
         self$save_config()
       } else {
         cli::cli_abort(
-          "This class must be initialized from the ORS main directory."
+          "{.cls ORSConfig} must be initialized from the ORS main directory."
         )
       }
       return(self)
