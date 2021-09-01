@@ -1,6 +1,7 @@
 # Title     : Routing functions for datasets with OpenRouteService
-# Objective : Calculate routing distances between a source dataset and a destination dataset using
-#             the directions service from OpenRouteService
+# Objective : Calculate routing distances between a source dataset and a
+#             destination dataset using the directions service from
+#             OpenRouteService
 # Created by: Jonas Lieth
 # Created on: 17.04.2021
 
@@ -21,27 +22,33 @@ datensatz.b <- data.frame(
 #' Rowwise routing between two dataframes
 #' @description Calculates the routing distance between two datasets.
 #'
-#' @param source Source dataset that represents point coordinates that are to be routed
-#' from. The source dataset should be passed as a double nested dataframe or list with
-#' each row representing a x/y or lon/lat coordinate pair.
-#' @param destination Destination dataset that represents point coordinates that are to be
-#' routed to. The source dataset should be passed as a double nested dataframe or list with
-#' each row representing a x/y or lon/lat coordinate pair. Essentially both datasets should
-#' have the same format.
-#' @param profile Character scalar. Means of transport as supported by OpenRouteService. For
-#' a list of active profiles, call \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}.
-#' For details on all profiles, refer to the
+#' @param source Source dataset that represents point coordinates that are to
+#' be routed from. The source dataset should be passed as a double nested
+#' dataframe or list with each row representing a x/y or lon/lat coordinate
+#' pair.
+#' @param destination Destination dataset that represents point coordinates
+#' that are to be routed to. The source dataset should be passed as a double
+#' nested dataframe or list with each row representing a x/y or lon/lat
+#' coordinate pair. Essentially both datasets should have the same format.
+#' @param profile Character scalar. Means of transport as supported by
+#' OpenRouteService. For a list of active profiles, call
+#' \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}. For details
+#' on all profiles, refer to the
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
-#' @param units Distance unit for distance calculations ('m', 'km' or 'mi', default: meters)
-#' @param local Logical scalar. Specifies whether requests should be sent to the official web
-#' server of OpenRouteService or to the local Docker server set up by \code{\link{ORSInstance}}.
-#' For the use with larger datasets, it is advised to setup a local service backend. To query the
-#' official web server, an API key has to be provided.
+#' @param units Distance unit for distance calculations ('m', 'km' or 'mi',
+#' default: meters)
+#' @param local Logical scalar. Specifies whether requests should be sent to
+#' the official web server of OpenRouteService or to the local Docker server
+#' set up by \code{\link{ORSInstance}}. For the use with larger datasets, it is
+#' advised to setup a local service backend. To query the official web server,
+#' an API key has to be provided.
 #' @param port Integer scalar. Port that the local server is running on.
-#' @param api_key Character scalar. API key for the use of the official web server of
-#' OpenRouteService. Only necessary, if `local = FALSE`.
-#' @param geometry Specifies whether to return distance values or geometry features.
-#' @returns Dataframe with distances and travel durations between source and destination
+#' @param api_key Character scalar. API key for the use of the official web
+#' server of OpenRouteService. Only necessary, if `local = FALSE`.
+#' @param geometry Specifies whether to return distance values or geometry
+#' features.
+#' @returns Dataframe with distances and travel durations between source and
+#' destination
 #'
 #' @export
 #'
@@ -79,7 +86,7 @@ get_route_lengths <- function(
   }
 
   extract.lengths <- function(source, dest) {
-    route <- query.ors(
+    route <- query.ors.directions(
       source = source,
       destination = dest,
       profile = profile,
@@ -116,7 +123,7 @@ get_route_lengths <- function(
 }
 
 # TODO: Implement one-to-many matrix?
-query.ors <- function(
+query.ors.directions <- function(
   source,
   destination,
   profile,
@@ -142,7 +149,7 @@ query.ors <- function(
     auto_unbox = TRUE
   )
   header <- httr::add_headers(
-    "Accept" = paste(
+    Accept = paste(
       "application/json",
       "application/geo+json",
       "application/gpx+xml",
@@ -150,8 +157,8 @@ query.ors <- function(
       sep = ", "
     ),
     # Will not be passed if api_key = NULL
-    "Authorization" = api_key,
-    "Content-Type" = "application/json; charset=utf-8"
+    Authorization = api_key,
+    `Content-Type` = "application/json; charset=utf-8"
   )
 
   # Calculate routes for every profile
@@ -160,6 +167,61 @@ query.ors <- function(
     httr::POST(
       body = body,
       encode = paste0(rep('geo', geometry), 'json'),
+      header
+    ) %>%
+    httr::content()
+  return(routes)
+}
+
+
+query.ors.matrix <- function(
+  source,
+  destinations,
+  profile,
+  url = "http://localhost:8080/ors/v2/matrix/",
+  units = "m",
+  api_key = NULL
+) {
+  destinations_list <- dplyr::group_by(destinations, dplyr::row_number()) %>%
+    dplyr::group_split(.keep = FALSE) %>%
+    as.list() %>%
+    map(as.numeric)
+
+  locations <- append(
+    destinations_list,
+    list(as.numeric(source)),
+    after = 0
+  )
+
+  body <- jsonlite::toJSON(
+    list(
+      locations = locations,
+      destinations = seq(length(locations) - 1),
+      sources = list(0),
+      metrics = list("distance", "duration"),
+      units = units
+    ),
+    auto_unbox = TRUE
+  )
+
+    header <- httr::add_headers(
+    Accept = paste(
+      "application/json",
+      "application/geo+json",
+      "application/gpx+xml",
+      "img/png; charset=utf-8",
+      sep = ", "
+    ),
+    # Will not be passed if api_key = NULL
+    Authorization = api_key,
+    `Content-Type` = "application/json; charset=utf-8"
+  )
+
+    routes <- url %>%
+    paste0(profile) %>%
+    httr::POST(
+      body = body,
+      encode = 'json',
       header
     ) %>%
     httr::content()
