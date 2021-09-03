@@ -79,7 +79,6 @@ ORSInstance <- R6::R6Class(
       }
       self$extract <- ORSExtract$new()
       self$get_config()
-      self$get_setup_settings()
       self$init_docker()
     },
 
@@ -223,7 +222,7 @@ ORSInstance <- R6::R6Class(
           services$
           routing$
           profiles$
-          active <- profiles
+          active <- as.list(profiles)
         self$
           config$
           ors_config$

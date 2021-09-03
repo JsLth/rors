@@ -146,7 +146,8 @@ query.ors.directions <- function(
       units = units,
       geometry = geometry
     ),
-    auto_unbox = TRUE
+    auto_unbox = TRUE,
+    digits = NA
   )
   header <- httr::add_headers(
     Accept = paste(
@@ -201,7 +202,8 @@ query.ors.matrix <- function(
       metrics = list("distance", "duration"),
       units = units
     ),
-    auto_unbox = TRUE
+    auto_unbox = TRUE,
+    digits = NA
   )
 
     header <- httr::add_headers(
