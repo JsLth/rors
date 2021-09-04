@@ -68,12 +68,12 @@ ORSSetupSettings <- R6::R6Class(
           volumes <- self$compose$services$`ors-app`$volumes[-6]
 
         if (identical(mode, "build")) {
-          private$.force_graphbuilding(handle = TRUE)
+          private$.force_graphbuilding(handle = FALSE)
           build_branch <- list(
             build = list(
               context = "../",
               args = list(
-                APP_CONFIG = "./%s" %>% sprintf(self$config_path),
+                ORS_CONFIG = "./%s" %>% sprintf(self$config_path),
                 OSM_FILE = "./%s" %>% sprintf(self$extract_path)
               )
             )
@@ -291,28 +291,47 @@ ORSSetupSettings <- R6::R6Class(
         `ors-app`$
         environment[3]
 
-      # Put Java and Catalina options in quotes
+      user <- self$
+        compose$
+        services$
+        `ors-app`$
+        user
+
+      # Put string options in quadruple quotes
       self$
         compose$
         services$
         `ors-app`$
         environment[2] <- shQuote(
-          self$
+        self$
           compose$
           services$
           `ors-app`$
           environment[2]
       )
+
       self$
         compose$
         services$
         `ors-app`$
         environment[3] <- shQuote(
-          self$
+        self$
           compose$
           services$
           `ors-app`$
           environment[3]
+      )
+
+      self$
+        compose$
+        services$
+        `ors-app`$
+        user <- shQuote(
+        self$
+          compose$
+          services$
+          `ors-app`$
+          user
       )
 
       # Build yaml with indented bullet points
@@ -346,6 +365,12 @@ ORSSetupSettings <- R6::R6Class(
         services$
         `ors-app`$
         environment[3] <- catalina_opts
+
+      self$
+        compose$
+        services$
+        `ors-app`$
+        user <- user
     }
   ),
   cloneable = FALSE

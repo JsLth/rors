@@ -79,7 +79,7 @@ get_route_lengths <- function(
   }
   if (local) {
     url <- paste0("http://localhost:", port, "/ors/v2/directions/")
-  } else if (is(api_key, 'character')) {
+  } else if (inherits(api_key, 'character')) {
     url <- "https://api.openrouteservice.org/v2/directions/"
   } else {
     stop("API key must be passed if queries are not local.")
@@ -290,13 +290,8 @@ get_shortest_routes <- function(
   proximity_type = 'duration',
   port = 8080
 ) {
-  if (!is.null(dim(poi_coords))) {
-    poi_coords <- replicate(
-      nrow(source),
-      poi_coords,
-      simplify = FALSE
-    )
-  }
+  source <- .adjust_source_data(source)
+  poi_coords <- .adjust_poi_data(poi_coords, nrow(source))
   calculate.shortest.routes <- function (profile, point_number) {
     routes <- get_route_lengths(
       replicate(
@@ -362,4 +357,51 @@ get_shortest_routes <- function(
   )
   colnames(route_list) <- output_cols
   return(route_list)
+}
+
+
+.adjust_source_data <- function(source) {
+  if (inherits(source, c("list", "matrix"))) {
+    as.data.frame(data)
+  } else if (inherits(source, c("sf", "sfc"))) {
+    reformat_vectordata(data)
+  } else if (inherits(source, "data.frame")) {
+    source
+  } else {
+    cli::cli_abort(
+      "Source datasets of type {.cls {class(source)}} are not (yet) supported."
+    )
+  }
+}
+
+
+.adjust_poi_data <- function(pois, number_of_points) {
+  if(inherits(pois, c("sf", "sfc"))) {
+    pois <- reformat_vectordata(pois)
+  }
+  if (inherits(pois, "list")) {
+    elem_type <- sapply(pois, class) %>%
+      unique()
+    if (length(elem_type) == 1) {
+      if (elem_type %in% c("sf", "sfc")) {
+        lapply(pois, reformat_vectordata)
+      } else if (elem_type == "data.frame") {
+        pois
+      } else {
+        cli::cli_abort(
+      "POI datasets of type {.cls {elem_type}} are not (yet) supported."
+        )
+      }
+    }
+  } else if (inherits(pois, c("data.frame", "matrix"))) {
+    replicate(
+      number_of_points,
+      pois,
+      simplify = FALSE
+    )
+  } else {
+    cli::cli_abort(
+      "POI datasets of type {.cls {class(pois)}} are not (yet) supported."
+    )
+  }
 }

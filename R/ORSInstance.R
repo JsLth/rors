@@ -240,6 +240,7 @@ ORSInstance <- R6::R6Class(
           routing$
           profiles$
           `profile-car`$
+          parameters$
           maximum_snapping_radius <- snapping_radius
         self$config$save_config()
 

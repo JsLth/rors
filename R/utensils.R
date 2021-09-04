@@ -109,7 +109,7 @@ lonlat_to_utm <- function(
   crs = NULL,
   reverse = FALSE,
   zone = NULL) {
-  sf_check <- is(coordinates, c("sf", "sfc"))
+  sf_check <- inherits(coordinates, c("sf", "sfc"))
   if (!reverse) {
     if (!sf_check) {
       coordinates <- sf::st_as_sf(coordinates, coords = c(1, 2), crs = crs)

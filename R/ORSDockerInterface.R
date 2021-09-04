@@ -356,13 +356,16 @@ ORSDockerInterface <- R6::R6Class(
         is.element(c("ors", "tomcat"), dir("docker/logs")) &&
         length(dir("docker/logs/ors")) != 0 &&
         length(dir("docker/logs/tomcat")) != 0) {
+        current_date <- as.POSIXct(Sys.time(), tz = Sys.timezone()) %>%
+          format(tz = "Greenwich") %>%
+          as.Date()
         logs <- c(
           # Logs from Apache Tomcats web container
           readLines("docker/logs/tomcat/catalina.%s.log" %>%
-            sprintf(Sys.Date())),
+            sprintf(current_date)),
           # Logs from Apache Tomcats local host
           readLines("docker/logs/tomcat/localhost.%s.log" %>%
-            sprintf(Sys.Date())),
+            sprintf(current_date)),
           # Logs from OpenRouteService (this sometimes stops logging)
           readLines("docker/logs/ors/ors.log"),
           # Output from Dockers logs command (this never stops logging)

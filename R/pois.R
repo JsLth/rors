@@ -144,7 +144,7 @@ get_nearest_pois <- function(source, pois, number_of_points = NULL, radius = NUL
 
 # TODO: Replace fields with ORS matrix calls?
 n.nearest.pois <- function(source, poi_coordinates, n) {
-  if(is(poi_coordinates, c('sf', 'sfc'))) {
+  if(inherits(poi_coordinates, c('sf', 'sfc'))) {
     # No simple features allowed here. Calculations are done with flat numbers.
     poi_coordinates <- reformat_vectordata(poi_coordinates)
   }
@@ -197,7 +197,7 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
 
 
 pois.within.radius <- function(source, pois, radius, pois_crs = NULL) {
-  if (!is(pois, c('sf', 'sfc'))) {
+  if (!inherits(pois, c('sf', 'sfc'))) {
     if (!is.null(pois_crs)) {
       # If the POIs are passed as coordinates and the coordinate notation is known,
       # convert coordinates to features.
