@@ -376,22 +376,42 @@ get_shortest_routes <- function(
 
 
 .adjust_poi_data <- function(pois, number_of_points) {
-  if(inherits(pois, c("sf", "sfc"))) {
+  if (inherits(pois, c("sf", "sfc"))) {
     pois <- reformat_vectordata(pois)
   }
   if (inherits(pois, "list")) {
-    elem_type <- sapply(pois, class) %>%
+    elem_type <- lapply(pois, class) %>%
       unique()
     if (length(elem_type) == 1) {
-      if (elem_type %in% c("sf", "sfc")) {
+      elem_type <- unlist(elem_type, recursive = FALSE)
+      if (any(is.element(elem_type, c("sf", "sfc", "sfg")))) {
         lapply(pois, reformat_vectordata)
-      } else if (elem_type == "data.frame") {
+      } else if (any(is.element(elem_type, c("matrix", "list")))) {
+        lapply(pois, as.data.frame)
+      } else if (identical(elem_type, "data.frame")) {
         pois
       } else {
         cli::cli_abort(
       "POI datasets of type {.cls {elem_type}} are not (yet) supported."
         )
       }
+    } else {
+      multi_types <- lapply(elem_type, paste, collapse = "/") %>%
+        cli::cli_vec(
+          elem_types,
+          style = list(
+            vec_sep = ", ",
+            vec_last = ", ",
+            vec_trunc = 8
+          )
+        )
+      cli::cli_abort(
+        c(
+          "Input POI list contains multiple data types:",
+          "{multi_types}",
+          "Cannot handle lists with varying data types."
+        )
+      )
     }
   } else if (inherits(pois, c("data.frame", "matrix"))) {
     replicate(

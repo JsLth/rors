@@ -3,9 +3,9 @@ Type: Package
 Title: Bulk routing distance calculations using OpenRouteService
 Version: 0.6.0
 Date: 2021-07-26
-Authors@R: person("Lieth", "Jonas", email = "Jonas.Lieth@gesis.org", 
+Authors@R: person("Lieth", "Jonas", email = "jonas.lieth@gesis.org",
                   role = c("aut", "cre"))
-Maintainer: Jonas Lieth <Jonas.Lieth@gesis.org>
+Maintainer: Jonas Lieth <jonas.lieth@gesis.org>
 Description: The package allows the usage of OpenRouteService to calculate the
     (shortest) routing distances of large datasets to certain points of
     interest. It also provides functions to download or calculate nearby points
