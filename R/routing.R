@@ -19,17 +19,17 @@ datensatz.b <- data.frame(
 )
 
 
-#' Rowwise routing between two dataframes
+#' Routing between two dataframes
 #' @description Calculates the routing distance between two datasets.
 #'
 #' @param source Source dataset that represents point coordinates that are to
 #' be routed from. The source dataset should be passed as a double nested
-#' dataframe or list with each row representing a x/y or lon/lat coordinate
+#' dataframe with each row representing a x/y or lon/lat coordinate
 #' pair.
 #' @param destination Destination dataset that represents point coordinates
 #' that are to be routed to. The source dataset should be passed as a double
 #' nested dataframe or list with each row representing a x/y or lon/lat
-#' coordinate pair. Essentially both datasets should have the same format.
+#' coordinate pair.
 #' @param profile Character scalar. Means of transport as supported by
 #' OpenRouteService. For a list of active profiles, call
 #' \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}. For details
@@ -49,6 +49,13 @@ datensatz.b <- data.frame(
 #' features.
 #' @returns Dataframe with distances and travel durations between source and
 #' destination
+#' @details If `method = "directions"`, both datasets must have the same shape,
+#' i.e. the same number of rows. If `method = "matrix"`, both datasets are
+#' allowed to contain only one row. If one of both datasets contains only one
+#' row, one-to-many or many-to-one matrices are generated. In general, only
+#' one-to-many, many-to-one, one-to-one, or many-to-many combinations are
+#' allowed. If you pass a source dataset with 3 rows and a destination dataset
+#' with 5 rows, the function cannot know how to match the datasets.
 #'
 #' @export
 #'
@@ -86,6 +93,15 @@ get_route_lengths <- function(
       dplyr::bind_rows()
   }
 
+  source_shape <- cli::cli_vec(
+    dim(source),
+    style = list(vec_last = ":")
+  )
+  dest_shape <- cli::cli_vec(
+    dim(destination),
+    style = list(vec_last = ":")
+  )
+
   if (
     !identical(dim(source), dim(destination)) &&
     how != "matrix"
@@ -93,7 +109,11 @@ get_route_lengths <- function(
     # For directions calls, both datasets must have the same shape because
     # queries are made row-wise.
     cli::cli_abort(
-      "For directions calls, both datasets must have the same shape."
+      c(
+        "For directions calls, both datasets must have the same shape.",
+        "\nSource dataset shape: {dim(source_shape)}",
+        "\nDestination dataset shape: {dim(dest_shape)}"
+      )
     )
   } else if (identical(dim(source), dim(destination))) {
     # If both datasets have the same shape, prepare a rowwise iterator for pmap.
@@ -125,9 +145,13 @@ get_route_lengths <- function(
     # If datasets are something like 3 to 6, the function doesn't know which
     # rows to match.
     cli::cli_abort(
-      paste(
-        "For matrix calls, the datasets must be either one-to-many or",
-        "many-to-many (in the same shape)."
+      c(
+        paste(
+          "For matrix calls, the datasets must be either one-to-many or",
+          "many-to-many (in the same shape)."
+        ),
+        "Source dataset shape: {source_shape}",
+        "Destination dataset shape: {dest_shape}"
       )
     )
   }
@@ -394,12 +418,11 @@ get_shortest_routes <- function(
   source,
   poi_coords,
   profiles = c('driving-car', 'foot-walking'),
-  how = "directions",
   proximity_type = 'duration',
   port = 8080
 ) {
   source <- adjust_source_data(source)
-  poi_coords <- adjust_poi_data(poi_coords, nrow(source), how)
+  poi_coords <- adjust_poi_data(poi_coords, nrow(source))
 
   calculate.shortest.routes <- function (profile, point_number) {
     routes <- get_route_lengths(
@@ -478,7 +501,7 @@ adjust_source_data <- function(source) {
 }
 
 
-adjust_poi_data <- function(pois, number_of_points, how) {
+adjust_poi_data <- function(pois, number_of_points) {
   if (inherits(pois, c("sf", "sfc"))) {
     pois <- reformat_vectordata(pois)
   }
@@ -501,7 +524,6 @@ adjust_poi_data <- function(pois, number_of_points, how) {
     } else {
       multi_types <- lapply(elem_type, paste, collapse = "/") %>%
         cli::cli_vec(
-          elem_types,
           style = list(
             vec_sep = ", ",
             vec_last = ", ",
