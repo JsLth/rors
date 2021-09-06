@@ -122,8 +122,9 @@ ORSDockerInterface <- R6::R6Class(
       system(ensure_permission("docker-compose up -d"))
       if (wait) {
         private$.notify_when_ready()
+      } else {
+        setwd("..")
       }
-      on.exit(setwd(".."))
     },
 
     #' @description Deletes the image. Should only be used when the container
@@ -147,8 +148,9 @@ ORSDockerInterface <- R6::R6Class(
       system(ensure_permission("docker start ors-app"), ignore.stdout = TRUE)
       if (wait) {
         private$.notify_when_ready(interval = 2, shutup = TRUE)
+      } else {
+        setwd("..")
       }
-      on.exit(setwd(".."))
     },
 
     #' @description Stops the container.
@@ -291,7 +293,7 @@ ORSDockerInterface <- R6::R6Class(
       cli::cli_progress_step(
         "Starting service",
         spinner = TRUE,
-        msg_done = "Service setup done. ORS should not be ready to use.",
+        msg_done = "Service setup done. ORS should now be ready to use.",
         msg_failed = "Service setup failed."
       )
       while (!self$service_ready) {
@@ -352,20 +354,22 @@ ORSDockerInterface <- R6::R6Class(
       } else {
         cli::cli_abort("Wrong directory.")
       }
-      if (dir.exists("docker/logs") &&
+      if (
+        dir.exists("docker/logs") &&
         is.element(c("ors", "tomcat"), dir("docker/logs")) &&
         length(dir("docker/logs/ors")) != 0 &&
-        length(dir("docker/logs/tomcat")) != 0) {
-        current_date <- as.POSIXct(Sys.time(), tz = Sys.timezone()) %>%
-          format(tz = "Greenwich") %>%
+        length(dir("docker/logs/tomcat")) != 0
+      ) {
+        log_date <- file.info("docker/logs/ors/ors.log")$ctime %>%
+          format(tz = "UTC") %>%
           as.Date()
         logs <- c(
           # Logs from Apache Tomcats web container
           readLines("docker/logs/tomcat/catalina.%s.log" %>%
-            sprintf(current_date)),
+            sprintf(log_date)),
           # Logs from Apache Tomcats local host
           readLines("docker/logs/tomcat/localhost.%s.log" %>%
-            sprintf(current_date)),
+            sprintf(log_date)),
           # Logs from OpenRouteService (this sometimes stops logging)
           readLines("docker/logs/ors/ors.log"),
           # Output from Dockers logs command (this never stops logging)
@@ -376,7 +380,6 @@ ORSDockerInterface <- R6::R6Class(
             stderr = TRUE
           )
         )
-        setwd("docker")
         error_catcher <- function(log) {
           errors <- grep(
             "error | exception",
