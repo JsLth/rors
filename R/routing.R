@@ -69,23 +69,80 @@ get_route_lengths <- function(
   destination,
   profile,
   units = "m",
+  how = "directions",
   local = TRUE,
   port = 8080,
   api_key = NULL,
   geometry = FALSE
 ) {
-  if (!identical(dim(source), dim(destination))) {
-    stop("Both datasets must have the same shape.")
+  # TODO: Automate method choice
+  # (small dataset -> directions, large dataset -> matrix)
+  if (how == "directions" && nrow(source) == 1) {
+    source <- replicate(
+      nrow(destination),
+      source,
+      simplify = FALSE
+    ) %>%
+      dplyr::bind_rows()
   }
+
+  if (
+    !identical(dim(source), dim(destination)) &&
+    how != "matrix"
+  ) {
+    # For directions calls, both datasets must have the same shape because
+    # queries are made row-wise.
+    cli::cli_abort(
+      "For directions calls, both datasets must have the same shape."
+    )
+  } else if (identical(dim(source), dim(destination))) {
+    # If both datasets have the same shape, prepare a rowwise iterator for pmap.
+    zipped_locations <- data.frame(
+      source = source,
+      dest = destination
+    ) %>%
+      dplyr::group_split(
+        dplyr::row_number(),
+        .keep = FALSE
+      ) %>%
+      purrr::map_df(
+        tidyr::nest,
+        source = dplyr::starts_with("source"),
+        dest = dplyr::starts_with("dest"))
+
+    if (how == "matrix") {
+      cli::cli_warn(
+        paste(
+          "Row-wise matrix calculations use one-to-one matrices and are",
+          "therefore highly inefficient."
+        )
+      )
+    }
+  } else if (
+    !identical(dim(source), dim(destination)) &&
+    !any(sapply(list(source, destination), function(x) nrow(x) == 1))
+  ) {
+    # If datasets are something like 3 to 6, the function doesn't know which
+    # rows to match.
+    cli::cli_abort(
+      paste(
+        "For matrix calls, the datasets must be either one-to-many or",
+        "many-to-many (in the same shape)."
+      )
+    )
+  }
+
   if (local) {
-    url <- paste0("http://localhost:", port, "/ors/v2/directions/")
-  } else if (inherits(api_key, 'character')) {
-    url <- "https://api.openrouteservice.org/v2/directions/"
+    url <- paste0("http://localhost:%s/ors/v2/%s/") %>%
+      sprintf(port, how)
+  } else if (!missing(api_key)) {
+    url <- "https://api.openrouteservice.org/v2/%s/" %>%
+      sprintf(how)
   } else {
     stop("API key must be passed if queries are not local.")
   }
 
-  extract.lengths <- function(source, dest) {
+  extract_lengths.directions <- function(source, dest) {
     route <- query.ors.directions(
       source = source,
       destination = dest,
@@ -93,7 +150,8 @@ get_route_lengths <- function(
       url = url,
       units = units,
       api_key = api_key,
-      geometry = geometry)
+      geometry = geometry
+    )
     return(
       data.frame(
         distance = route$routes[[1]]$summary$distance,
@@ -102,27 +160,42 @@ get_route_lengths <- function(
     )
   }
 
-  zipped_locations <- data.frame(
-    source = source,
-    dest = destination
-  ) %>%
-    dplyr::group_split(
-      dplyr::row_number(),
-      .keep = FALSE
-    ) %>%
-    purrr::map_df(
-      tidyr::nest,
-      source = dplyr::starts_with("source"),
-      dest = dplyr::starts_with("dest"))
+  extract_lengths.matrix <- function(source, dest) {
+    route <- query.ors.matrix(
+      source = source,
+      destination = dest,
+      profile = profile,
+      url = url,
+      units = units,
+      api_key = api_key
+    )
+    return(
+      data.frame(
+        distance = unlist(route$distances[[1]]),
+        duration = unlist(route$durations[[1]])
+      )
+    )
+  }
 
-  # Routen für jedes Koordinatenpaar berechnen
-  route.list <- zipped_locations %>%
-    purrr::pmap(extract.lengths) %>%
-    dplyr::bind_rows()
-  return(route.list)
+  if (how == "directions") {
+    # Routen für jedes Koordinatenpaar berechnen
+    route_list <- zipped_locations %>%
+      purrr::pmap(extract_lengths.directions) %>%
+      dplyr::bind_rows()
+  } else if (how == "matrix") {
+    if (nrow(source) == 1 || nrow(destination) == 1) {
+      route_list <- extract_lengths.matrix(source, destination)
+    } else {
+      route_list <- zipped_locations %>%
+        purrr::pmap(extract_lengths.matrix) %>%
+        dplyr::bind_rows()
+    }
+  }
+
+  return(route_list)
 }
 
-# TODO: Implement one-to-many matrix?
+
 query.ors.directions <- function(
   source,
   destination,
@@ -171,6 +244,16 @@ query.ors.directions <- function(
       header
     ) %>%
     httr::content()
+
+  if (!is.null(routes$error)) {
+    cli::cli_abort(
+      c(
+        "ORS returned the following error:",
+        "x" = routes$error$message
+      )
+    )
+  }
+
   return(routes)
 }
 
@@ -183,6 +266,17 @@ query.ors.matrix <- function(
   units = "m",
   api_key = NULL
 ) {
+  if (
+    nrow(source) != 1 &&
+    nrow(destinations == 1)
+  ) {
+    # If many-to-one, swap source and destination
+    both <- list(source, destinations)
+    source <- both[[2]]
+    destinations <- both[[1]]
+  }
+
+  # Format source and destination
   destinations_list <- dplyr::group_by(destinations, dplyr::row_number()) %>%
     dplyr::group_split(.keep = FALSE) %>%
     as.list() %>%
@@ -205,7 +299,6 @@ query.ors.matrix <- function(
     auto_unbox = TRUE,
     digits = NA
   )
-
     header <- httr::add_headers(
     Accept = paste(
       "application/json",
@@ -219,7 +312,7 @@ query.ors.matrix <- function(
     `Content-Type` = "application/json; charset=utf-8"
   )
 
-    routes <- url %>%
+  routes <- url %>%
     paste0(profile) %>%
     httr::POST(
       body = body,
@@ -227,6 +320,20 @@ query.ors.matrix <- function(
       header
     ) %>%
     httr::content()
+
+  if (!is.null(routes$error)) {
+    cli::cli_abort(
+      c(
+        "ORS returned the following error:",
+        "x" = paste0(
+          routes$error$message,
+          " (Code ",
+          routes$error$code,
+          ")"
+        )
+      )
+    )
+  }
   return(routes)
 }
 
@@ -287,25 +394,21 @@ get_shortest_routes <- function(
   source,
   poi_coords,
   profiles = c('driving-car', 'foot-walking'),
+  how = "directions",
   proximity_type = 'duration',
   port = 8080
 ) {
-  source <- .adjust_source_data(source)
-  poi_coords <- .adjust_poi_data(poi_coords, nrow(source))
+  source <- adjust_source_data(source)
+  poi_coords <- adjust_poi_data(poi_coords, nrow(source), how)
+
   calculate.shortest.routes <- function (profile, point_number) {
     routes <- get_route_lengths(
-      replicate(
-        nrow(poi_coords[[point_number]]),
-        source[point_number, ],
-        simplify = FALSE
-      ) %>%
-        dplyr::bind_rows(),
+      source[point_number, ],
       poi_coords[[point_number]],
       profile = profile,
       local = TRUE,
       port = port
     )
-    # TODO: Implement dataframe conversion for non-nested POI data
     if (tolower(proximity_type) == "distance") {
       best_index <- match(
         min(routes[["distance"]]),
@@ -360,7 +463,7 @@ get_shortest_routes <- function(
 }
 
 
-.adjust_source_data <- function(source) {
+adjust_source_data <- function(source) {
   if (inherits(source, c("list", "matrix"))) {
     as.data.frame(data)
   } else if (inherits(source, c("sf", "sfc"))) {
@@ -375,7 +478,7 @@ get_shortest_routes <- function(
 }
 
 
-.adjust_poi_data <- function(pois, number_of_points) {
+adjust_poi_data <- function(pois, number_of_points, how) {
   if (inherits(pois, c("sf", "sfc"))) {
     pois <- reformat_vectordata(pois)
   }
@@ -414,6 +517,7 @@ get_shortest_routes <- function(
       )
     }
   } else if (inherits(pois, c("data.frame", "matrix"))) {
+    as.data.frame(pois)
     replicate(
       number_of_points,
       pois,
