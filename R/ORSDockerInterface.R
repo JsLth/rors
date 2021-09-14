@@ -365,20 +365,38 @@ ORSDockerInterface <- R6::R6Class(
           as.Date()
         logs <- c(
           # Logs from Apache Tomcats web container
-          readLines("docker/logs/tomcat/catalina.%s.log" %>%
-            sprintf(log_date)),
+          tryCatch(
+            expr = readLines("docker/logs/tomcat/catalina.%s.log" %>%
+              sprintf(log_date)),
+            error = function(e) "Log not available"
+          ),
           # Logs from Apache Tomcats local host
-          readLines("docker/logs/tomcat/localhost.%s.log" %>%
-            sprintf(log_date)),
+          tryCatch(
+            expr = readLines("docker/logs/tomcat/localhost.%s.log" %>%
+              sprintf(log_date)),
+            error = function(e) "Log not available"
+          ),
           # Logs from OpenRouteService (this sometimes stops logging)
-          readLines("docker/logs/ors/ors.log"),
+          tryCatch(
+            expr = readLines("docker/logs/ors/ors.log"),
+            error = function(e) "Log not available"
+          ),
           # Output from Dockers logs command (this never stops logging)
-          system2(
-            "docker",
-            args = "logs ors-app",
-            stdout = FALSE,
-            stderr = TRUE
-          )
+          if (Sys.info()["sysname"] == "Windows") {
+            system2(
+              "docker",
+              args = "logs ors-app",
+              stdout = FALSE,
+              stderr = TRUE
+            )
+          } else {
+            system2(
+              "sudo",
+              args = "docker logs ors-app",
+              stdout = FALSE,
+              stderr = TRUE
+            )
+          }
         )
         error_catcher <- function(log) {
           errors <- grep(
