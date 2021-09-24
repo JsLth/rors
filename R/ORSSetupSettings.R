@@ -307,7 +307,8 @@ ORSSetupSettings <- R6::R6Class(
           compose$
           services$
           `ors-app`$
-          environment[2]
+          environment[2],
+        type = "cmd"
       )
 
       self$
@@ -319,7 +320,8 @@ ORSSetupSettings <- R6::R6Class(
           compose$
           services$
           `ors-app`$
-          environment[3]
+          environment[3],
+        type = "cmd"
       )
 
       self$
@@ -331,7 +333,8 @@ ORSSetupSettings <- R6::R6Class(
           compose$
           services$
           `ors-app`$
-          user
+          user,
+        type = "cmd"
       )
 
       # Build yaml with indented bullet points

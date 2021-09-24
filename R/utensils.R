@@ -175,7 +175,7 @@ ensure_permission <- function(command) {
   paste0(
     switch(
       EXPR = Sys.info()["sysname"],
-      Linux = "sudo ",
+      Linux = "sudo -S ",
       Darwin = "sudo "
     ),
   command
