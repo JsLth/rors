@@ -43,7 +43,6 @@ datensatz.b <- data.frame(
 #' advised to setup a local service backend. To query the official web server,
 #' an API key has to be provided.
 #' @param port Integer scalar. Port that the local server is running on.
-#' @param api_key Character scalar. API key for the use of the official web
 #' server of OpenRouteService. Only necessary, if `local = FALSE`.
 #' @param geometry Specifies whether to return distance values or geometry
 #' features.
@@ -79,7 +78,6 @@ get_route_lengths <- function(
   how = "directions",
   local = TRUE,
   port = 8080,
-  api_key = NULL,
   geometry = FALSE
 ) {
   # TODO: Automate method choice
@@ -164,16 +162,6 @@ get_route_lengths <- function(
     )
   }
 
-  if (local) {
-    url <- paste0("http://localhost:%s/ors/v2/%s/") %>%
-      sprintf(port, how)
-  } else if (!missing(api_key)) {
-    url <- "https://api.openrouteservice.org/v2/%s/" %>%
-      sprintf(how)
-  } else {
-    stop("API key must be passed if queries are not local.")
-  }
-
   extract_lengths.directions <- function(source, dest) {
     route <- query.ors.directions(
       source = source,
@@ -181,7 +169,6 @@ get_route_lengths <- function(
       profile = profile,
       url = url,
       units = units,
-      api_key = api_key,
       geometry = geometry
     )
     if (!geometry) {
@@ -209,7 +196,6 @@ get_route_lengths <- function(
       profile = profile,
       url = url,
       units = units,
-      api_key = api_key
     )
     return(
       data.frame(
@@ -244,7 +230,6 @@ query.ors.directions <- function(
   profile,
   url,
   units,
-  api_key,
   geometry
 ) {
   # Get coordinates in shape
@@ -327,8 +312,7 @@ query.ors.matrix <- function(
   destinations,
   profile,
   url = "http://localhost:8080/ors/v2/matrix/",
-  units = "m",
-  api_key = NULL
+  units = "m"
 ) {
   if (
     nrow(source) != 1 &&
@@ -364,15 +348,7 @@ query.ors.matrix <- function(
     digits = NA
   )
     header <- httr::add_headers(
-    Accept = paste(
-      "application/json",
-      "application/geo+json",
-      "application/gpx+xml",
-      "img/png; charset=utf-8",
-      sep = ", "
-    ),
-    # Will not be passed if api_key = NULL
-    Authorization = api_key,
+    Accept = "application/json; charset=utf-8",
     `Content-Type` = "application/json; charset=utf-8"
   )
 
