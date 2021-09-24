@@ -184,12 +184,22 @@ get_route_lengths <- function(
       api_key = api_key,
       geometry = geometry
     )
-    return(
-      data.frame(
-        distance = route$routes[[1]]$summary$distance,
-        duration = route$routes[[1]]$summary$duration
+    if (!geometry) {
+      return(
+        data.frame(
+          distance = route$routes[[1]]$summary$distance,
+          duration = route$routes[[1]]$summary$duration
+        )
       )
-    )
+    } else {
+      return(
+        data.frame(
+          distance = route$features$properties$summary$distance,
+          duration = route$features$properties$summary$duration,
+          geometry = route$features$geometry
+        )
+      )
+    }
   }
 
   extract_lengths.matrix <- function(source, dest) {
