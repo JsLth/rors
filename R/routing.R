@@ -93,6 +93,14 @@ get_route_lengths <- function(
       dplyr::bind_rows()
   }
 
+  if (inherits(source, c("sf", "sfc"))) {
+    source <- reformat_vectordata(source)[, c("X", "Y")]
+  }
+
+  if (inherits(destination, c("sf", "sfc"))) {
+    destination <- reformat_vectordata(destination)[, c("X", "Y")]
+  }
+
   source_shape <- cli::cli_vec(
     dim(source),
     style = list(vec_last = ":")
@@ -111,8 +119,8 @@ get_route_lengths <- function(
     cli::cli_abort(
       c(
         "For directions calls, both datasets must have the same shape.",
-        "\nSource dataset shape: {dim(source_shape)}",
-        "\nDestination dataset shape: {dim(dest_shape)}"
+        "\nSource dataset shape: {source_shape}",
+        "\nDestination dataset shape: {dest_shape}"
       )
     )
   } else if (identical(dim(source), dim(destination))) {
@@ -247,38 +255,60 @@ query.ors.directions <- function(
     digits = NA
   )
   header <- httr::add_headers(
-    Accept = paste(
-      "application/json",
-      "application/geo+json",
-      "application/gpx+xml",
-      "img/png; charset=utf-8",
-      sep = ", "
-    ),
-    # Will not be passed if api_key = NULL
-    Authorization = api_key,
+    Accept = "application/%s; charset=utf-8" %>%
+      sprintf(
+        ifelse(geometry, "geo+json", "json")
+      ),
     `Content-Type` = "application/json; charset=utf-8"
   )
 
+  url <- httr::modify_url(
+    "http://localhost:8080/",
+    path = paste0("ors/v2/directions/", profile, if (geometry) "/geojson")
+  )
+
   # Calculate routes for every profile
-  routes <- url %>%
-    paste0(profile) %>%
+  response <- url %>%
     httr::POST(
       body = body,
-      encode = paste0(rep('geo', geometry), 'json'),
+      encode = "json",
       header
     ) %>%
-    httr::content()
+    httr::content(
+      as = "text",
+      type = "application/json",
+      encoding = "UTF-8"
+    )
 
-  if (!is.null(routes$error)) {
+  parsed_response <- jsonlite::fromJSON(response)
+
+  if (!is.null(parsed_response$error)) {
     cli::cli_abort(
       c(
         "ORS returned the following error:",
-        "x" = routes$error$message
+        "!" = paste0(
+          "Code ",
+          parsed_response$error$code,
+          ": ",
+          parsed_response$error$message
+        )
       )
     )
   }
 
-  return(routes)
+  if (!geometry) {
+    return(parsed_response)
+  } else {
+    parsed_response$
+      features$
+      geometry <- sf::st_multilinestring(
+      parsed_response$
+        features$
+        geometry$
+        coordinates
+    ) %>% sf::st_sfc()
+    return(parsed_response)
+  }
 }
 
 
@@ -336,30 +366,42 @@ query.ors.matrix <- function(
     `Content-Type` = "application/json; charset=utf-8"
   )
 
-  routes <- url %>%
+  url <- httr::modify_url(
+    "http://localhost:8080/",
+    path = paste0("ors/v2/matrix/", profile)
+  )
+
+  response <- url %>%
     paste0(profile) %>%
     httr::POST(
       body = body,
       encode = 'json',
       header
     ) %>%
-    httr::content()
+    httr::content(
+      as = "parsed",
+      type = "application/json",
+      encoding = "UTF-8"
+    )
 
-  if (!is.null(routes$error)) {
+  if (!is.null(response$error)) {
     cli::cli_abort(
       c(
         "ORS returned the following error:",
-        "x" = paste0(
-          routes$error$message,
-          " (Code ",
-          routes$error$code,
-          ")"
+        "!" = paste0(
+          "Code ",
+          parsed_response$error$code,
+          ": ",
+          parsed_response$error$message
         )
       )
     )
   }
-  return(routes)
+  return(response)
 }
+
+
+
 
 
 #' Calculate shortest routes to nearby points of interest
@@ -419,16 +461,29 @@ get_shortest_routes <- function(
   poi_coords,
   profiles = c('driving-car', 'foot-walking'),
   proximity_type = 'duration',
+  how = "directions",
   port = 8080
 ) {
   source <- adjust_source_data(source)
   poi_coords <- adjust_poi_data(poi_coords, nrow(source))
+
+  if (
+    missing(how) &&
+    (
+      inherits(source, "data.frame") ||
+      inherits(poi_coords, "data.frame")
+    )
+  ) {
+    how <- "matrix"
+
+  }
 
   calculate.shortest.routes <- function (profile, point_number) {
     routes <- get_route_lengths(
       source[point_number, ],
       poi_coords[[point_number]],
       profile = profile,
+      how = how,
       local = TRUE,
       port = port
     )
@@ -510,7 +565,7 @@ adjust_poi_data <- function(pois, number_of_points) {
       unique()
     if (length(elem_type) == 1) {
       elem_type <- unlist(elem_type, recursive = FALSE)
-      if (any(is.element(elem_type, c("sf", "sfc", "sfg")))) {
+      if (any(is.element(elem_type, c("sf", "sfc")))) {
         lapply(pois, reformat_vectordata)
       } else if (any(is.element(elem_type, c("matrix", "list")))) {
         lapply(pois, as.data.frame)
