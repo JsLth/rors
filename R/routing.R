@@ -37,15 +37,10 @@ datensatz.b <- data.frame(
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
 #' @param units Distance unit for distance calculations ('m', 'km' or 'mi',
 #' default: meters)
-#' @param local Logical scalar. Specifies whether requests should be sent to
-#' the official web server of OpenRouteService or to the local Docker server
-#' set up by \code{\link{ORSInstance}}. For the use with larger datasets, it is
-#' advised to setup a local service backend. To query the official web server,
-#' an API key has to be provided.
-#' @param port Integer scalar. Port that the local server is running on.
-#' server of OpenRouteService. Only necessary, if `local = FALSE`.
 #' @param geometry Specifies whether to return distance values or geometry
 #' features.
+#' @param port Integer scalar. Port that the local server is running on.
+#' server of OpenRouteService. Only necessary, if `local = FALSE`.
 #' @returns Dataframe with distances and travel durations between source and
 #' destination
 #' @details If `method = "directions"`, both datasets must have the same shape,
@@ -76,9 +71,8 @@ get_route_lengths <- function(
   profile,
   units = "m",
   how = "directions",
-  local = TRUE,
-  port = 8080,
-  geometry = FALSE
+  geometry = FALSE,
+  port = 8080
 ) {
   # TODO: Automate method choice
   # (small dataset -> directions, large dataset -> matrix)
@@ -167,15 +161,15 @@ get_route_lengths <- function(
       source = source,
       destination = dest,
       profile = profile,
-      url = url,
       units = units,
-      geometry = geometry
+      geometry = geometry,
+      port = port
     )
     if (!geometry) {
       return(
         data.frame(
-          distance = route$routes[[1]]$summary$distance,
-          duration = route$routes[[1]]$summary$duration
+          distance = route$routes$summary$distance,
+          duration = route$routes$summary$duration
         )
       )
     } else {
@@ -194,8 +188,8 @@ get_route_lengths <- function(
       source = source,
       destination = dest,
       profile = profile,
-      url = url,
       units = units,
+      port = port
     )
     return(
       data.frame(
@@ -230,7 +224,8 @@ query.ors.directions <- function(
   profile,
   url,
   units,
-  geometry
+  geometry,
+  port
 ) {
   # Get coordinates in shape
   locations <- list(
@@ -258,7 +253,7 @@ query.ors.directions <- function(
   )
 
   url <- httr::modify_url(
-    "http://localhost:8080/",
+    sprintf("http://localhost:%s/", port),
     path = paste0("ors/v2/directions/", profile, if (geometry) "/geojson")
   )
 
@@ -311,8 +306,8 @@ query.ors.matrix <- function(
   source,
   destinations,
   profile,
-  url = "http://localhost:8080/ors/v2/matrix/",
-  units = "m"
+  units,
+  port
 ) {
   if (
     nrow(source) != 1 &&
@@ -339,7 +334,11 @@ query.ors.matrix <- function(
   body <- jsonlite::toJSON(
     list(
       locations = locations,
-      destinations = seq(length(locations) - 1),
+      destinations = if (length(locations) > 2) {
+        seq(length(locations) - 1)
+      } else {
+        list(1)
+      },
       sources = list(0),
       metrics = list("distance", "duration"),
       units = units
@@ -353,12 +352,11 @@ query.ors.matrix <- function(
   )
 
   url <- httr::modify_url(
-    "http://localhost:8080/",
+    sprintf("http://localhost:%s/", port),
     path = paste0("ors/v2/matrix/", profile)
   )
 
   response <- url %>%
-    paste0(profile) %>%
     httr::POST(
       body = body,
       encode = 'json',
@@ -376,9 +374,9 @@ query.ors.matrix <- function(
         "ORS returned the following error:",
         "!" = paste0(
           "Code ",
-          parsed_response$error$code,
+          response$error$code,
           ": ",
-          parsed_response$error$message
+          response$error$message
         )
       )
     )
