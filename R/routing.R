@@ -214,7 +214,11 @@ get_route_lengths <- function(
     }
   }
 
-  return(route_list)
+  if (is.null(route_list$geometry)) {
+    return(route_list)
+  } else {
+    return(sf::st_as_sf(route_list))
+  }
 }
 
 
@@ -355,7 +359,6 @@ query.ors.matrix <- function(
     sprintf("http://localhost:%s/", port),
     path = paste0("ors/v2/matrix/", profile)
   )
-
   response <- url %>%
     httr::POST(
       body = body,
@@ -446,17 +449,16 @@ get_shortest_routes <- function(
   profiles = c('driving-car', 'foot-walking'),
   proximity_type = 'duration',
   how = "directions",
+  units = "m",
+  geometry = FALSE,
   port = 8080
 ) {
   source <- adjust_source_data(source)
-  poi_coords <- adjust_poi_data(poi_coords, nrow(source))
+  #poi_coords <- adjust_poi_data(poi_coords, nrow(source))
 
   if (
     missing(how) &&
-    (
-      inherits(source, "data.frame") ||
-      inherits(poi_coords, "data.frame")
-    )
+    inherits(poi_coords, "data.frame")
   ) {
     how <- "matrix"
 
@@ -464,11 +466,16 @@ get_shortest_routes <- function(
 
   calculate.shortest.routes <- function (profile, point_number) {
     routes <- get_route_lengths(
-      source[point_number, ],
-      poi_coords[[point_number]],
+      source = source[point_number, ],
+      destination = if (inherits(poi_coords, "data.frame")) {
+        poi_coords
+      } else if (inherits(poi_coords, "list")) {
+        poi_coords[[point_number]]
+      },
       profile = profile,
       how = how,
-      local = TRUE,
+      units = "m",
+      geometry = geometry,
       port = port
     )
     if (tolower(proximity_type) == "distance") {
@@ -489,11 +496,8 @@ get_shortest_routes <- function(
         )
       )
     }
-    best_route <- purrr::map(
-      seq_len(ncol(routes)),
-      ~routes[best_index, ..1]
-    ) %>%
-      c(best_index, .)
+    best_route <- routes[best_index,] %>%
+      cbind(best_index, .)
   }
   nested_iterator <- list(
     profiles = profiles,
@@ -505,7 +509,6 @@ get_shortest_routes <- function(
     nested_iterator,
     ~calculate.shortest.routes(..1, ..2)
   ) %>%
-    cbind() %>%
     do.call(rbind, .) %>%
     as.data.frame() %>%
     cbind(
@@ -518,10 +521,18 @@ get_shortest_routes <- function(
     "route_type",
     "poi_number",
     "distance",
-    "duration"
+    "duration",
+    if (geometry) "geometry"
   )
   colnames(route_list) <- output_cols
-  return(route_list)
+  rownames(route_list) <- NULL
+
+  if (!geometry) {
+    return(route_list)
+  } else {
+    return(sf::st_as_sf(route_list))
+  }
+
 }
 
 
