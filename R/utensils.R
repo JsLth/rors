@@ -16,11 +16,12 @@ centroids_from_polygons <- function(polygons, as_sf = FALSE) {
     # Zentroide wieder zu altem CRS transformieren
     lonlat_to_utm(crs, reverse = TRUE)
   if (as_sf) {
-    return(centroids)
+    st_geometry(polygons) <- centroids
+    return(polygons)
   } else {
-    return(centroids %>%
-      sf::st_coordinates() %>%
-      as.data.frame())
+    centroid_coords <- as.data.frame(sf::st_coordinates(centroids))
+    st_geometry(polygons) <- NULL
+    return(cbind(centroid_coords, polygons))
   }
 
 }

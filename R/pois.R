@@ -27,6 +27,8 @@
 #' \code{\link[osmdata]{opq}. If an sf object, a named vector, or a source
 #' dataset is passed, this value can be estimated. For any other format, the
 #' timeout is fixed to 100 seconds and may need adjustment for larger queries.
+#' @param as_sf If TRUE, returns an sf dataframe containing point geometries.
+#' If FALSE, returns a dataframe containing coordinates.
 #' @returns
 #' If a source dataset is provided, either as sf or coordinate pairs, the
 #' function will generate bounding boxes from buffers generated around each
@@ -51,7 +53,10 @@
 #' get_osm_pois(test_poly, amenity = "post_box", building = "residential", trim = FALSE)
 #'
 #' test_bbox <- as.numeric(sf::st_bbox(test_poly))
-#' get_osm_pois(test_bbox, amenity = "marketplace")
+#' get_osm_pois(test_bbox, amenity = "marketplace", as_sf = TRUE)
+#'
+#' test_place <- "Cologne"
+#' get_osm_pois(test_place, landuse = "allotments", timeout = 200, as_sf = TRUE)
 
 get_osm_pois <- function(
   source,
@@ -59,7 +64,8 @@ get_osm_pois <- function(
   radius = 5000,
   crs = NA,
   trim = TRUE,
-  timeout = NULL
+  timeout = NULL,
+  as_sf = FALSE
 ) {
   if (!missing(...)) {
     named_values <- list(...)
@@ -93,7 +99,6 @@ get_osm_pois <- function(
       sf::st_is(source, c("POINT", "MULTIPOINT"))
     )
   ) {
-    print("hi")
     source_coords <- as.data.frame(source_coords)
     verify_crs(source_coords, crs)
 
@@ -102,7 +107,7 @@ get_osm_pois <- function(
       pmap(c)
 
     # Estimate the timeout for point data
-    timeout <- 10 + (nrow(source_coords) * radius / 1000)
+    timeout <- round(10 + (nrow(source_coords) * radius / 1000))
   } else {
     bbox <- list(source_coords)
     if(
@@ -111,7 +116,7 @@ get_osm_pois <- function(
     ) {
       # Estimate the timeout for polygon data
       area <- as.numeric(sf::st_area(source))
-      timeout <- sqrt(area / 1000000)
+      timeout <- round(sqrt(area / 1000000))
     } else if (!is.null(names(source))) {
       # Estimate the timeout for named vector bboxes
       area <- sf::st_bbox(source) %>%
@@ -119,7 +124,7 @@ get_osm_pois <- function(
         sf::st_sf(crs = crs) %>%
         sf::st_area() %>%
         as.numeric()
-      timeout <- sqrt(area / 1000000)
+      timeout <- round(sqrt(area / 1000000))
     } else {
       # Fix the timeout for strings, matrices or unnamed vectors
       if (is.null(timeout)) {
@@ -127,7 +132,9 @@ get_osm_pois <- function(
       }
     }
   }
-  print(timeout)
+
+  if (timeout < 25) timeout <- 25
+
   # Function that queries points of interest within a bbox
   query.osm <- function(bbox) {
     osm_data <- osmdata::opq(
@@ -150,11 +157,10 @@ get_osm_pois <- function(
   response <- lapply(bbox, query.osm)
 
   # Calculate the centroids of each output multipolygon
-  pois <- lapply(response, function(r) { # TODO: Extract not only polygons
-      centroids_from_polygons(r$osm_polygons) %>%
-      as.data.frame()
+  pois <- lapply(response, function(r) {
+      centroids_from_polygons(r$osm_polygons, as_sf = as_sf)
     }
-    )
+  )
 
   if (length(pois) == 1) pois <- pois[[1]]
 
