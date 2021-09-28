@@ -162,6 +162,21 @@ lonlat_to_utm <- function(
 }
 
 
+crs_fits <- function(data, crs) {
+  wkt <- sf::st_crs(crs)["wkt"] %>%
+    unlist() %>%
+    strsplit("\n")
+  crs_bbox <- sapply(wkt, function(x) grep("BBOX", x, value = TRUE)) %>%
+    gsub("\\s+|[A-Z]+|\\[|\\]+,", "", ., perl = TRUE) %>%
+    strsplit(",") %>%
+    unlist() %>%
+    as.numeric()
+  x_ok <- sapply(data[, 1], dplyr::between, crs_bbox[1], crs_bbox[3])
+  y_ok <- sapply(data[, 2], dplyr::between, crs_bbox[2], crs_bbox[4])
+  return(all(c(x_ok, y_ok)))
+}
+
+
 relativePath <- function(absolute_path) {
   relative_path <- gsub(sprintf("%s|%s/", getwd(), getwd()), "", absolute_path)
   if (relative_path == "") {

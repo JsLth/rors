@@ -280,16 +280,17 @@ ORSDockerInterface <- R6::R6Class(
         }
       }
     },
-    .notify_when_ready = function(interval = 10, shutup = FALSE) {
+    .notify_when_ready = function(interval = 10, silently = FALSE) {
       # Checks the service status and gives out a visual and audible
-      #' notification when the server is ready. Also watches out for errors
-      #' in the log files.
-      cli::cli_inform(
-        paste(
-        "The container is being set up and started now. You can stop the",
-        "process now or let it run and get notified when the service is ready."
+      # notification when the server is ready. Also watches out for errors
+      # in the log files.
+      if (!silently)
+        cli::cli_inform(
+          paste(
+          "The container is being set up and started now. You can stop the",
+          "process now or let it run and get notified when the service is ready."
+          )
         )
-      )
       cli::cli_progress_step(
         "Starting service",
         spinner = TRUE,
@@ -312,7 +313,7 @@ ORSDockerInterface <- R6::R6Class(
         }
       }
       cli::cli_progress_done()
-      if (!shutup) {
+      if (!silently) {
         switch(
           Sys.info()["sysname"],
           Windows = {

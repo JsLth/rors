@@ -32,7 +32,7 @@ datensatz.b <- data.frame(
 #' coordinate pair.
 #' @param profile Character scalar. Means of transport as supported by
 #' OpenRouteService. For a list of active profiles, call
-#' \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}. For details
+#' \code{\link[ORSRouting::ORSConfig]{ORSConfig$active_profiles}}. For details
 #' on all profiles, refer to the
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
 #' @param units Distance unit for distance calculations ('m', 'km' or 'mi',
@@ -102,6 +102,16 @@ get_route_lengths <- function(
     style = list(vec_last = ":")
   )
 
+  if (geometry && how == "matrix") {
+    how <- "directions"
+    cli::cli_warn(
+      paste(
+        "Matrix calls cannot return geometries.",
+        "Calculations will be done using the directions service."
+      )
+    )
+  }
+
   if (
     !identical(dim(source), dim(destination)) &&
     how != "matrix"
@@ -131,12 +141,7 @@ get_route_lengths <- function(
         dest = dplyr::starts_with("dest"))
 
     if (how == "matrix") {
-      cli::cli_warn(
-        paste(
-          "Row-wise matrix calculations use one-to-one matrices and are",
-          "therefore highly inefficient."
-        )
-      )
+      how <- "directions"
     }
   } else if (
     !identical(dim(source), dim(destination)) &&
@@ -147,8 +152,8 @@ get_route_lengths <- function(
     cli::cli_abort(
       c(
         paste(
-          "For matrix calls, the datasets must be either one-to-many or",
-          "many-to-many (in the same shape)."
+          "For many-to-many matrix calls, datasets must have an equal amount",
+          "of rows. Otherwise the function cannot know which rows to match."
         ),
         "Source dataset shape: {source_shape}",
         "Destination dataset shape: {dest_shape}"
@@ -372,6 +377,21 @@ query.ors.matrix <- function(
     )
 
   if (!is.null(response$error)) {
+
+    error_tip <- NULL
+
+    if (
+      response$error$code == 6099 &&
+      any(sapply(c("walking", "hiking", "cycling"), grepl, profile)
+      )
+    ) {
+      error_tip <- paste(
+        "This error code typically occurs with with walking or cycling",
+        "profiles. Try increasing {.val maximum_visited_nodes} in the",
+        "ORS configuration file."
+      )
+    }
+
     cli::cli_abort(
       c(
         "ORS returned the following error:",
@@ -380,7 +400,8 @@ query.ors.matrix <- function(
           response$error$code,
           ": ",
           response$error$message
-        )
+        ),
+        "i" = error_tip
       )
     )
   }

@@ -8,15 +8,28 @@
 #' @description Makes Overpass requests to extract points of interest in the proximity of the source
 #' dataset.
 #'
-#' @param source Source dataset that represents point coordinates that are to be routed
-#' from. The source dataset should be passed as a dataframe or plain nested list with
-#' each row representing a x/y or lon/lat coordinate pair.
-#' @param key Character scalar. OpenStreetMap Map Feature key (e.g. amenity, building)
-#' @param value Character scalar. OpenStreetMap Map Feature value (e.g. hospital, hotel)
-#' @param radius Numeric scalar. Radius in which POIs are to be searched for
-#' @param crs Any object that is recognized by \code{\link[sf]{st_crs}}. Coordinate reference system to determine
-#' the coordinate notation of the source dataset
+#' @param source Either (1) a source dataset as used for
+#' \code{\link{get_route_lengths}}, (2) a character string of a place or
+#' region, (3) a spatial polygon as an sf or sfc object or (4) any bbox format
+#' supported by \code{\link[osmdata]{opq}}. The source argument is passed to
+#' osmdata to derive a bounding box for the Overpass query.
+#' @param keys Character vector. OpenStreetMap Map Feature keys (e.g. amenity,
+#' building)
+#' @param value Character scalar. OpenStreetMap Map Feature values (e.g.
+#' hospital, hotel)
+#' @param radius Numeric scalar. Specifies the buffer size if a source dataset
+#' is passed (see details).
+#' @param crs Any object that is recognized by \code{\link[sf]{st_crs}}.
+#' Specifies the coordinate notation of the source dataset, if it is provided
+#' (see details).
 #' @returns List of dataframes that contain coordinate pairs of nearby points of interest
+#' @details
+#' If a source dataset is provided, the function will generate bounding boxes
+#' from buffers generated around each coordinate pair in the dataframe. This
+#' results in a list of dataframes with each element corresponding one
+#' coordinate pair in the source dataset.
+#' If any other format is provided, the function will return a single dataframe
+#' containing all points of interest within the provided area.
 #'
 #' @export
 #'
@@ -41,8 +54,31 @@
 #' # ...
 
 get_osm_pois <- function(source, key, value, radius = 5000, crs = 4326) {
+  if (inherits(source, c("sf", "sfc"))) {
+    if (st_crs(source) != 4326) source <- st_transform(source, 4326)
+    source <- st_geometry(source) %>%
+      st_coordinates() %>%
+      .[, c(1,2)]
+  }
+
+  if (
+    inherits(source, "data.frame") &&
+    !inherits(source, c("sf", "sfc"))
+  ) {
+    if (crs_fits(source, crs)) {
+      point.bbox <- buffer_bbox_from_coordinates(source, radius, crs)
+    } else {
+      cli::cli_alert_warning(
+        paste(
+          "It appears that the coordinate notation of the source dataset does",
+          "not match EPSG {.val {sf::st_crs(crs)$epsg}}. Make sure to pass a",
+          "valid CRS."
+        )
+      )
+    }
+  }
   # Generate a buffer for each point in the source dataset
-  point.bbox <- buffer_bbox_from_coordinates(source, radius, crs)
+
   # Function that queries points of interest within a buffer
   query.osm <- function(point) {
     osmdata::opq(bbox = point, timeout = 10 + (nrow(source) * radius / 1000)) %>%
@@ -50,7 +86,7 @@ get_osm_pois <- function(source, key, value, radius = 5000, crs = 4326) {
       osmdata::osmdata_sf()
   }
   # Apply `query.osm` to each point in the dataset
-  response <- point.bbox %>% apply(1, query.osm)
+  response <- apply(point.bbox, 1, query.osm)
   # Calculate the centroids of each output multipolygon
   pois <- response %>%
     lapply(function(response) { # TODO: Extract not only polygons
