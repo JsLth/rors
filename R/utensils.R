@@ -126,7 +126,7 @@ lonlat_to_utm <- function(
     from_crs_props <- crs$proj4string %>%
       parse_proj4string()
     if (is.null(zone)) {
-      get.zone <- function(longitudes) {
+      get_zone <- function(longitudes) {
         longitude_median <- median(longitudes)
         floor((longitude_median + 180) / 6) + 1
       }
@@ -134,7 +134,7 @@ lonlat_to_utm <- function(
         sf::st_coordinates() %>%
         .[, 1] %>%
         as.vector() %>%
-        get.zone()
+        get_zone()
     }
     to_crs_wkt <- "+proj=utm +zone=%s +datum=%s +units=m" %>%
       sprintf(zone, from_crs_props$`+datum`) %>%

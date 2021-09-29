@@ -6,19 +6,6 @@
 # Created on: 17.04.2021
 
 
-# Testdatensatz A
-datensatz.a <- data.frame(
-  lon = c(6.92632,7.00196,7.03162,6.99624,6.91885),
-  lat = c(51.02972,50.88385,50.98915,51.00625,50.91935)
-)
-
-# Testdatensatz B
-datensatz.b <- data.frame(
-  lon = c(7.00524, 6.88638, 6.93490, 6.89956, 6.95876),
-  lat = c(50.99847, 50.95235, 51.00619, 51.05668, 50.88194)
-)
-
-
 #' Routing between two dataframes
 #' @description Calculates the routing distance between two datasets.
 #'
@@ -39,8 +26,6 @@ datensatz.b <- data.frame(
 #' default: meters)
 #' @param geometry Specifies whether to return distance values or geometry
 #' features.
-#' @param port Integer scalar. Port that the local server is running on.
-#' server of OpenRouteService. Only necessary, if `local = FALSE`.
 #' @returns Dataframe with distances and travel durations between source and
 #' destination
 #' @details If `method = "directions"`, both datasets must have the same shape,
@@ -56,14 +41,27 @@ datensatz.b <- data.frame(
 #' @importFrom magrittr %>%
 #'
 #' @examples
-#' route_lengths <- get_route_lengths(datensatz.a, datensatz.b, 'driving-car')
-#' route_lengths
-#' #   distance duration
-#' # 1  12379.8    798.0
-#' # 2  17667.3   1703.2
-#' # 3  11659.2   1445.1
-#' # 4  14933.1   1522.8
-#' # 5   7926.0    876.8
+#' source <- ors_sample(5)
+#' dest <- ors_sample(5)
+#'
+#' rowwise <- get_route_lengths(source, dest, "driving-car")
+#' rowwise
+#'   distance duration
+#' 1  30190.7   1872.4 -> A1 to B1
+#' 2  32061.1   2898.6 -> A2 to B2
+#' 3  28219.9   1901.5 -> A3 to B3
+#' 4 126467.0   5763.3 -> A4 to B4
+#' 5 131494.0   5634.1 -> A5 to B5
+#'
+#' one_to_many <- get_route_lengths(source[1], dest, "driving-car", how = "matrix")
+#' one_to_many
+#'   distance duration
+#' 1 30190.73  1872.42 -> A1 to B1
+#' 2 99046.71  4158.36 -> A1 to B2
+#' 3 47517.33  2975.49 -> A1 to B3
+#' 4 17426.51  1402.07 -> A1 to B4
+#' 5  9695.32   822.68 -> A1 to B5
+#'
 
 get_route_lengths <- function(
   source,
@@ -71,18 +69,12 @@ get_route_lengths <- function(
   profile,
   units = "m",
   how = "directions",
-  geometry = FALSE,
-  port = 8080
+  geometry = FALSE
 ) {
   # TODO: Automate method choice
   # (small dataset -> directions, large dataset -> matrix)
-  if (how == "directions" && nrow(source) == 1) {
-    source <- replicate(
-      nrow(destination),
-      source,
-      simplify = FALSE
-    ) %>%
-      dplyr::bind_rows()
+  if (!ors_ready()) {
+    cli::cli_abort("ORS service is not reachable.")
   }
 
   if (inherits(source, c("sf", "sfc"))) {
@@ -91,6 +83,15 @@ get_route_lengths <- function(
 
   if (inherits(destination, c("sf", "sfc"))) {
     destination <- reformat_vectordata(destination)[, c("X", "Y")]
+  }
+
+  if (how == "directions" && nrow(source) == 1) {
+    source <- replicate(
+      nrow(destination),
+      source,
+      simplify = FALSE
+    ) %>%
+      dplyr::bind_rows()
   }
 
   source_shape <- cli::cli_vec(
@@ -160,6 +161,8 @@ get_route_lengths <- function(
       )
     )
   }
+
+  port <- get_ors_port()
 
   extract_lengths.directions <- function(source, dest) {
     route <- query.ors.directions(
@@ -278,10 +281,12 @@ query.ors.directions <- function(
       type = "application/json",
       encoding = "UTF-8"
     )
-
   parsed_response <- jsonlite::fromJSON(response)
 
-  if (!is.null(parsed_response$error)) {
+  if (
+    !is.null(parsed_response$error) &&
+    !is.null(parsed_response$error$message)
+  ) {
     cli::cli_abort(
       c(
         "ORS returned the following error:",
@@ -434,7 +439,6 @@ query.ors.matrix <- function(
 #' @param proximity_type Type of proximity that the calculations should be
 #' based on. If `distance`, the shortest physical distance will be calculated
 #' and if `duration`, the shortest temporal distance will be calculated.
-#' @param port Integer scalar. Port that the local server is running on.
 #' @returns Dataframe with distances, travel durations and the index number of
 #' the point of interest with the shortest distance to the respective place of
 #' the source dataset.
@@ -444,13 +448,10 @@ query.ors.matrix <- function(
 #' @importFrom magrittr %>%
 #'
 #' @examples
-#' pois <- query.osm.pois(
-#'      datensatz.a,
-#'      key = 'amenity',
-#'      value = 'hospital',
-#'      radius = 5000
-#' )
-#' shortest_routes <- get_shortest_routes(datensatz.a, pois)
+#' source <- ors_sample(5)
+#' pois <- get_osm_pois(sf::st_bbox(source), amenity = "hospital")
+#'
+#' shortest_routes <- get_shortest_routes(source, pois, profiles = c("driving-car", "foot-walking"))
 #' shortest_routes
 #' #    point_number   route_type poi_number distance duration
 #' # 1             1  driving-car          1   7617.6    685.4
@@ -466,20 +467,19 @@ query.ors.matrix <- function(
 
 get_shortest_routes <- function(
   source,
-  poi_coords,
-  profiles = c('driving-car', 'foot-walking'),
+  pois,
+  profiles = get_ors_info(only_profiles = TRUE),
   proximity_type = 'duration',
   how = "directions",
   units = "m",
-  geometry = FALSE,
-  port = 8080
+  geometry = FALSE
 ) {
   source <- adjust_source_data(source)
-  #poi_coords <- adjust_poi_data(poi_coords, nrow(source))
+  pois <- adjust_poi_data(pois, nrow(source))
 
   if (
     missing(how) &&
-    inherits(poi_coords, "data.frame")
+    inherits(pois, "data.frame")
   ) {
     how <- "matrix"
 
@@ -488,16 +488,15 @@ get_shortest_routes <- function(
   calculate.shortest.routes <- function (profile, point_number) {
     routes <- get_route_lengths(
       source = source[point_number, ],
-      destination = if (inherits(poi_coords, "data.frame")) {
-        poi_coords
-      } else if (inherits(poi_coords, "list")) {
-        poi_coords[[point_number]]
+      destination = if (inherits(pois, "data.frame")) {
+        pois
+      } else if (inherits(pois, "list")) {
+        pois[[point_number]]
       },
       profile = profile,
       how = how,
       units = "m",
-      geometry = geometry,
-      port = port
+      geometry = geometry
     )
     if (tolower(proximity_type) == "distance") {
       best_index <- match(
@@ -559,9 +558,9 @@ get_shortest_routes <- function(
 
 adjust_source_data <- function(source) {
   if (inherits(source, c("list", "matrix"))) {
-    as.data.frame(data)
+    as.data.frame(source)
   } else if (inherits(source, c("sf", "sfc"))) {
-    reformat_vectordata(data)
+    reformat_vectordata(source)
   } else if (inherits(source, "data.frame")) {
     source
   } else {
@@ -611,6 +610,7 @@ adjust_poi_data <- function(pois, number_of_points) {
     }
   } else if (inherits(pois, c("data.frame", "matrix"))) {
     as.data.frame(pois)
+    pois <- pois[, c(1,2)]
     replicate(
       number_of_points,
       pois,

@@ -84,6 +84,7 @@ get_osm_pois <- function(
     source_coords <- st_geometry(source) %>%
       st_coordinates() %>%
       .[, c(1,2)]
+    crs <- st_crs(source)
   } else {
     source_coords <- source
   }
