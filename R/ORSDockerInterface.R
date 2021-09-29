@@ -147,7 +147,7 @@ ORSDockerInterface <- R6::R6Class(
       setwd("docker")
       system(ensure_permission("docker start ors-app"), ignore.stdout = TRUE)
       if (wait) {
-        private$.notify_when_ready(interval = 2, shutup = TRUE)
+        private$.notify_when_ready(interval = 2, silently = TRUE)
       } else {
         setwd("..")
       }
