@@ -92,8 +92,8 @@ get_ors_dir <- function() {
 }
 
 
-identify_extract <- function() {
-  if (is.null(pkg_cache$extract_path)) {
+identify_extract <- function(force = FALSE) {
+  if (is.null(pkg_cache$extract_path) || force) {
     # Save docker working directory
     mdir <- get_ors_dir()
 
