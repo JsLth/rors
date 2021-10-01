@@ -119,20 +119,20 @@ ORSSetupSettings <- R6::R6Class(
     #' can be changed by assigning values to them.
     compose = NULL,
 
-    #' @field init_memory Initial memory to be allocated to the docker
-    #' container. The container will start with this amount of memory and will
-    #' increase its memory usage if necessary.
-    init_memory = NULL,
-
-    #' @field max_memory Maximum memory to be allocated to the docker container.
-    #' The container is not allowed to exceed this memory limit.
-    max_memory = NULL,
+    #' @field memory List of varius memory infos. Total and free memory refer
+    #' to your system, init and max memory refer to the allocated memory of
+    #' ORS.
+    memory = list(
+      total_memory = memuse::Sys.meminfo()$totalram@size,
+      free_memory = memuse::Sys.meminfo()$freeram@size,
+      init_memory = NULL,
+      max_memory = NULL
+    ),
 
     #' @description Initializes the `ORSSetupSettings` class. Reads the
     #' `docker-compose.yml` and adjusts the `Dockerfile`.
     initialize = function() {
       self$compose <- private$.read_dockercompose()
-      self$config_path <- "docker/data/ors-config.json"
       private$.disable_auto_deletion()
       self$graph_building <- NA
       invisible(self)
@@ -189,8 +189,8 @@ ORSSetupSettings <- R6::R6Class(
           )
         )
       }
-      self$init_memory <- paste(as.character(init), "GB")
-      self$max_memory <- paste(as.character(max), "GB")
+      self$memory$init_memory <- init
+      self$memory$max_memory <- max
       self$save_compose()
     },
 

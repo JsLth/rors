@@ -60,14 +60,15 @@ ORSInstance <- R6::R6Class(
   classname = "ORSInstance",
   active = list(
 
-    #' @field Path to the ORS main directory
+    #' @field dir Path to the ORS main directory
     dir = function(...) {
       if (missing(...)) {
         pkg_cache$mdir
       }
     },
 
-    #' @field ORSExtract environment. Refer to \code{\link{ORSExtract}}.
+    #' @field extract ORSExtract environment. Refer to
+    #' \code{\link{ORSExtract}}.
     extract = function() {
       if (
         is.null(private$.subclasses$ORSExtract)) {
@@ -76,7 +77,8 @@ ORSInstance <- R6::R6Class(
       return(private$.subclasses$ORSExtract)
     },
 
-    #' @field ORSConfig environment. Refer to \code{\link{ORSConfig}}.
+    #' @field config ORSConfig environment. Refer to
+    #' \code{\link{ORSConfig}}.
     config = function() {
       if (
         is.null(private$.subclasses$ORSConfig) ||
@@ -87,7 +89,7 @@ ORSInstance <- R6::R6Class(
       return(private$.subclasses$ORSConfig)
     },
 
-    #' @field ORSSetupSettings environment. Refer to
+    #' @field setup_settings ORSSetupSettings environment. Refer to
     #' \code{\link{ORSSetupSettings}}.
     setup_settings = function() {
       if (
@@ -98,7 +100,7 @@ ORSInstance <- R6::R6Class(
       return(private$.subclasses$ORSSetupSettings)
     },
 
-    #' @field ORSDockerInterface environment. Refer to
+    #' @field docker ORSDockerInterface environment. Refer to
     #' \code{\link{ORSDockerInterface}}.
     docker = function() {
       if(
@@ -121,13 +123,11 @@ ORSInstance <- R6::R6Class(
       if (!is.null(dir)) {
         private$.clone_ors_repo(dir)
       } else {
-        private$.clone_ors_repo()
-        dir <- getwd()
+        dir <- private$.clone_ors_repo()
       }
-
       assign("mdir", dir, envir = pkg_cache)
 
-      setwd(self$dir)
+      setwd(dir)
     },
 
     #' @description Changes the necessary settings and configurations for the
@@ -251,6 +251,7 @@ ORSInstance <- R6::R6Class(
         file.remove(zip_file)
         cli::cli_progress_done()
       }
+      file.path(dir, basedir)
     }
   ),
   cloneable = FALSE
