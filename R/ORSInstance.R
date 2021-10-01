@@ -60,14 +60,14 @@ ORSInstance <- R6::R6Class(
   classname = "ORSInstance",
   active = list(
 
-    #' @field dir ORS directory, either passed as a parameter or automatically
-    #' set after calling `$new` or `$initialize`.
+    #' @field Path to the ORS main directory
     dir = function(...) {
       if (missing(...)) {
         pkg_cache$mdir
       }
     },
 
+    #' @field ORSExtract environment. Refer to \code{\link{ORSExtract}}.
     extract = function() {
       if (
         is.null(private$.subclasses$ORSExtract)) {
@@ -76,6 +76,7 @@ ORSInstance <- R6::R6Class(
       return(private$.subclasses$ORSExtract)
     },
 
+    #' @field ORSConfig environment. Refer to \code{\link{ORSConfig}}.
     config = function() {
       if (
         is.null(private$.subclasses$ORSConfig) ||
@@ -86,6 +87,8 @@ ORSInstance <- R6::R6Class(
       return(private$.subclasses$ORSConfig)
     },
 
+    #' @field ORSSetupSettings environment. Refer to
+    #' \code{\link{ORSSetupSettings}}.
     setup_settings = function() {
       if (
         is.null(private$.subclasses$ORSSetupSettings)
@@ -95,6 +98,8 @@ ORSInstance <- R6::R6Class(
       return(private$.subclasses$ORSSetupSettings)
     },
 
+    #' @field ORSDockerInterface environment. Refer to
+    #' \code{\link{ORSDockerInterface}}.
     docker = function() {
       if(
         is.null(private$.subclasses$ORSDockerInterface)
