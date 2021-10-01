@@ -14,6 +14,7 @@
 
 ORSDockerInterface <- R6::R6Class(
   classname = "ORSDockerInterface",
+  inherit = ORSInstance,
   active = list(
 
     #' @field docker_running Checks if the Docker daemon is running.

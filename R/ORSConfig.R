@@ -23,6 +23,7 @@
 
 ORSConfig <- R6::R6Class(
   classname = "ORSConfig",
+  inherit = ORSInstance,
   active = list(
 
     #' @field active_profiles Currently active profiles in the config file.

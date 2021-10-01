@@ -77,22 +77,18 @@ ORSInstance <- R6::R6Class(
         private$.clone_ors_repo()
         self$dir <- getwd()
       }
-      self$extract <- ORSExtract$new()
-      self$get_config()
+      self$init_extract()
+      self$init_config()
+      self$init_setup_settings()
       self$init_docker()
-    },
-
-    #' @description
-    #' If necessary, stops the current ORS container when the class instance is
-    #' removed.
-    finalize = function() {
-      if (!is.null(self$docker) && self$docker$container_running) {
-        self$docker$stop_container()
-      }
     },
 
     #' @field extract `ORSExtract` environment. See \code{\link{ORSExtract}}.
     extract = NULL,
+
+    init_extract = function() {
+      self$extract <- ORSExtract$new()
+    },
 
     #' @field config `ORSConfig` environment. See \code{\link{ORSConfig}}.
     config = NULL,
@@ -100,8 +96,27 @@ ORSInstance <- R6::R6Class(
     #' @description
     #' Initializes \code{\link{ORSConfig}} as an environment field. Call this
     #' if the config path changes (e.g. after the initial ORS setup).
-    get_config = function() {
+    init_config = function() {
       self$config <- ORSConfig$new()
+    },
+
+    #' @field setup_settings `ORSSetupSettings` environment. See
+    #' \code{\link{ORSSetupSettings}}.
+    setup_settings = NULL,
+
+    #' @description
+    #' Initializes \code{\link{ORSSetupSettings}} as an environment field and
+    #' prepares the necessary changes to the `Dockerfile` and
+    #' `docker-compose.yml`
+    #' @param init_memory Initial memory to be allocated to the docker
+    #' container.
+    #' @param max_memory Maximum memory to be allocated to the docker
+    #' container. The container will start with the initial memory and increases
+    #' the memory usage up to the maximum memory if necessary.
+    init_setup_settings = function() {
+      self$setup_settings <- ORSSetupSettings$new(
+          self$config$active_profiles
+      )
     },
 
     #' @field docker `ORSDockerInterface` environment. See
@@ -123,26 +138,6 @@ ORSInstance <- R6::R6Class(
         port <- 8080
       }
       self$docker <- ORSDockerInterface$new(port = port)
-    },
-
-    #' @field setup_settings `ORSSetupSettings` environment. See
-    #' \code{\link{ORSSetupSettings}}.
-    setup_settings = NULL,
-
-    #' @description
-    #' Initializes \code{\link{ORSSetupSettings}} as an environment field and
-    #' prepares the necessary changes to the `Dockerfile` and
-    #' `docker-compose.yml`
-    #' @param init_memory Initial memory to be allocated to the docker
-    #' container.
-    #' @param max_memory Maximum memory to be allocated to the docker
-    #' container. The container will start with the initial memory and increases
-    #' the memory usage up to the maximum memory if necessary.
-    get_setup_settings = function() {
-      self$setup_settings <- ORSSetupSettings$new(
-          self$extract$path,
-          self$config$active_profiles
-      )
     },
 
     #' @description Changes the necessary settings and configurations for the
@@ -180,7 +175,7 @@ ORSInstance <- R6::R6Class(
     #' from the nearest road. However, removing this limit might cause
     #' inaccuracies in the distance and time calculations as points can be
     #' instantly snapped to a road kilometers away.
-    init_setup = function(
+    initial_setup = function(
       profiles = "car",
       extract_path = self$extract$path,
       init_memory = NULL,

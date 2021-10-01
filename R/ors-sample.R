@@ -10,7 +10,6 @@ read_extract_boundaries <- function(force_new_extract = FALSE) {
     extract_path <- identify_extract(force = force_new_extract)
     extract_data <- osmextract::oe_read(
       extract_path,
-      layer = "multipolygons",
       query = paste(
         "SELECT geometry FROM \"multipolygons\"",
         "WHERE boundary = \"administrative\"",

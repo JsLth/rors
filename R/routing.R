@@ -12,14 +12,13 @@
 #' @param source Source dataset that represents point coordinates that are to
 #' be routed from. The source dataset should be passed as a double nested
 #' dataframe with each row representing a x/y or lon/lat coordinate
-#' pair.
+#' pair or as an \code{sf} or \code{sfc} object containing point geometries.
 #' @param destination Destination dataset that represents point coordinates
-#' that are to be routed to. The source dataset should be passed as a double
-#' nested dataframe or list with each row representing a x/y or lon/lat
-#' coordinate pair.
+#' that are to be routed to. The destination dataset follows the same format
+#' requirements as the source dataset.
 #' @param profile Character scalar. Means of transport as supported by
 #' OpenRouteService. For a list of active profiles, call
-#' \code{\link[ORSRouting::ORSConfig]{ORSConfig$active_profiles}}. For details
+#' \code{\link{get_}}. For details
 #' on all profiles, refer to the
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
 #' @param units Distance unit for distance calculations ('m', 'km' or 'mi',
@@ -77,11 +76,11 @@ get_route_lengths <- function(
     cli::cli_abort("ORS service is not reachable.")
   }
 
-  if (inherits(source, c("sf", "sfc"))) {
+  if (is.sf(source)) {
     source <- reformat_vectordata(source)[, c("X", "Y")]
   }
 
-  if (inherits(destination, c("sf", "sfc"))) {
+  if (is.sf(destination)) {
     destination <- reformat_vectordata(destination)[, c("X", "Y")]
   }
 
@@ -114,7 +113,7 @@ get_route_lengths <- function(
   }
 
   if (
-    !identical(dim(source), dim(destination)) &&
+    !identical(nrow(source), nrow(destination)) &&
     how != "matrix"
   ) {
     # For directions calls, both datasets must have the same shape because
@@ -122,11 +121,11 @@ get_route_lengths <- function(
     cli::cli_abort(
       c(
         "For directions calls, both datasets must have the same shape.",
-        "\nSource dataset shape: {source_shape}",
-        "\nDestination dataset shape: {dest_shape}"
+        "\nSource dataset rows: {source_shape}",
+        "\nDestination dataset rows: {dest_shape}"
       )
     )
-  } else if (identical(dim(source), dim(destination))) {
+  } else if (identical(row(source), row(destination))) {
     # If both datasets have the same shape, prepare a rowwise iterator for pmap.
     zipped_locations <- data.frame(
       source = source,
@@ -145,7 +144,7 @@ get_route_lengths <- function(
       how <- "directions"
     }
   } else if (
-    !identical(dim(source), dim(destination)) &&
+    !identical(nrow(source), nrow(destination)) &&
     !any(sapply(list(source, destination), function(x) nrow(x) == 1))
   ) {
     # If datasets are something like 3 to 6, the function doesn't know which
@@ -427,18 +426,19 @@ query.ors.matrix <- function(
 #' be routed from. The source dataset should be passed as a double nested
 #' dataframe or list with each row representing a x/y or lon/lat coordinate
 #' pair.
-#' @param poi_coords Dataset containing dataframes of points of interest that
-#' are to be routed to. Each list element matches a row in the source dataset
-#' and each element in one of the dataframes represents the x/y or lon/lat
-#' coordinate pairs of one point of interest.
+#' @param poi_coords Dataset containing points of interest that should be
+#' routed to. The POI dataset can either be passed as a single dataframe or as
+#' a list of dataframes. If a list is passed, each list element corresponds to
+#' one row in the source dataset. If a dataframe, an \code{sf} object or an
+#' \code{sfc} object is passed, each row in the source dataset feeds from the
+#' entire dataframe.
 #' @param profiles Character vector or list. Means of transport as supported by
-#' OpenRouteService. For a list of active profiles, call
-#' \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}. For details
-#' on all profiles, refer to the
-#' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
+#' OpenRouteService. For details, see \code{\link{get_route_lengths}}. This
+#' function supports
 #' @param proximity_type Type of proximity that the calculations should be
 #' based on. If `distance`, the shortest physical distance will be calculated
 #' and if `duration`, the shortest temporal distance will be calculated.
+#' @param ... Passed to \code{\link{get_route_lengths}}
 #' @returns Dataframe with distances, travel durations and the index number of
 #' the point of interest with the shortest distance to the respective place of
 #' the source dataset.
@@ -453,50 +453,40 @@ query.ors.matrix <- function(
 #'
 #' shortest_routes <- get_shortest_routes(source, pois, profiles = c("driving-car", "foot-walking"))
 #' shortest_routes
-#' #    point_number   route_type poi_number distance duration
-#' # 1             1  driving-car          1   7617.6    685.4
-#' # 2             1 foot-walking          3   4734.4   3408.7
-#' # 3             2  driving-car          4   5050.8    665.1
-#' # 4             2 foot-walking          4   4211.4   3032.2
-#' # 5             3  driving-car          5   5986.3    635.9
-#' # 6             3 foot-walking          4   3931.1   2830.4
-#' # 7             4  driving-car         11   4144.4      505
-#' # 8             4 foot-walking         11   3587.9   2583.3
-#' # 9             5  driving-car         11   1393.1    196.1
-#' # 10            5 foot-walking          2    926.9    667.4
+#'    point_number   route_type poi_number distance duration
+#' 1             1  driving-car          4  23479.2   1394.6
+#' 2             1 foot-walking         53  13806.2   9940.4
+#' 3             2  driving-car         59   6783.0    649.9
+#' 4             2 foot-walking         60   6047.9   4354.4
+#' 5             3  driving-car         34   8751.6    788.4
+#' 6             3 foot-walking         35   9093.1   6547.0
+#' 7             4  driving-car         19   3009.7    405.3
+#' 8             4 foot-walking         20   2320.2   1670.5
+#' 9             5  driving-car         13  16882.8   1294.3
+#' 10            5 foot-walking         53  13636.7   9818.3
+
 
 get_shortest_routes <- function(
   source,
   pois,
-  profiles = get_ors_info(only_profiles = TRUE),
+  profiles = get_profiles(),
   proximity_type = 'duration',
-  how = "directions",
-  units = "m",
-  geometry = FALSE
+  ...
 ) {
   source <- adjust_source_data(source)
   pois <- adjust_poi_data(pois, nrow(source))
 
-  if (
-    missing(how) &&
-    inherits(pois, "data.frame")
-  ) {
-    how <- "matrix"
-
-  }
 
   calculate.shortest.routes <- function (profile, point_number) {
     routes <- get_route_lengths(
       source = source[point_number, ],
-      destination = if (inherits(pois, "data.frame")) {
+      destination = if (is.data.frame(pois)) {
         pois
-      } else if (inherits(pois, "list")) {
+      } else if (is.list(pois)) {
         pois[[point_number]]
       },
       profile = profile,
-      how = how,
-      units = "m",
-      geometry = geometry
+      ...
     )
     if (tolower(proximity_type) == "distance") {
       best_index <- match(
@@ -557,11 +547,11 @@ get_shortest_routes <- function(
 
 
 adjust_source_data <- function(source) {
-  if (inherits(source, c("list", "matrix"))) {
+  if (is.list(source) || is.matrix(source)) {
     as.data.frame(source)
-  } else if (inherits(source, c("sf", "sfc"))) {
+  } else if (is.sf(source)) {
     reformat_vectordata(source)
-  } else if (inherits(source, "data.frame")) {
+  } else if (is.data.frame(source)) {
     source
   } else {
     cli::cli_abort(
@@ -572,10 +562,10 @@ adjust_source_data <- function(source) {
 
 
 adjust_poi_data <- function(pois, number_of_points) {
-  if (inherits(pois, c("sf", "sfc"))) {
+  if (is.sf(pois)) {
     pois <- reformat_vectordata(pois)
   }
-  if (inherits(pois, "list")) {
+  if (is.list(pois)) {
     elem_type <- lapply(pois, class) %>%
       unique()
     if (length(elem_type) == 1) {
@@ -608,7 +598,7 @@ adjust_poi_data <- function(pois, number_of_points) {
         )
       )
     }
-  } else if (inherits(pois, c("data.frame", "matrix"))) {
+  } else if (is.data.frame(pois) || is.matrix(pois)) {
     as.data.frame(pois)
     pois <- pois[, c(1,2)]
     replicate(

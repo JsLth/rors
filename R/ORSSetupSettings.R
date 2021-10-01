@@ -14,6 +14,7 @@
 
 ORSSetupSettings <- R6::R6Class(
   classname = "ORSSetupSettings",
+  inherit = ORSInstance,
   active = list(
     #' @field Specifices whether the image is built for the first time or if
     #' the OSM extract is being changed. If `build` is assigned to the field,
@@ -45,11 +46,10 @@ ORSSetupSettings <- R6::R6Class(
           return(NA)
         }
       } else {
-        if(is.null(self$extract_path) && !is.na(mode)) {
+        if(is.null(super$extract$path) && !is.na(mode)) {
           cli::cli_warn(
             paste(
-              "Please set an extract before calling {.var $graph_building}",
-              "or assign a path to {.var $extract_path}"
+              "Please set an extract before calling {.var $graph_building}"
             )
           )
           return(NA)
@@ -74,7 +74,7 @@ ORSSetupSettings <- R6::R6Class(
               context = "../",
               args = list(
                 ORS_CONFIG = "./%s" %>% sprintf(self$config_path),
-                OSM_FILE = "./%s" %>% sprintf(self$extract_path)
+                OSM_FILE = "./%s" %>% sprintf(super$extract$path)
               )
             )
           )
@@ -91,7 +91,7 @@ ORSSetupSettings <- R6::R6Class(
         } else if (identical(mode, "change")) {
           private$.force_graphbuilding(handle = TRUE)
           change_node <- "./%s:/ors-core/data/osm_file.pbf" %>%
-            sprintf(self$extract_path)
+            sprintf(super$extract$path)
 
           self$
           compose$
@@ -126,9 +126,6 @@ ORSSetupSettings <- R6::R6Class(
     #' The container is not allowed to exceed this memory limit.
     max_memory = NULL,
 
-    #' @field extract_path Path where the OSM extract is saved.
-    extract_path = NULL,
-
     #' @field config_path Path where the config file is saved.
     config_path = NULL,
 
@@ -141,22 +138,20 @@ ORSSetupSettings <- R6::R6Class(
     #' container. The container will start with the initial memory and
     #' increases the memory usage up to the maximum memory if necessary.
     #' @param profiles Active profiles as set in the config file
-    initialize = function(
-      extract_path,
-      profiles = NULL
-    ) {
+    initialize = function() {
+      super$extract <- super$init_extract()
+      super$config <- super$init_config()
+
       self$compose <- private$.read_dockercompose()
-      if(!is.null(extract_path)) {
-        self$extract_path <- extract_path
-        private$.extract_size <- file.info(self$extract_path)$size * 0.000001
-      }
+
       if (!is.null(profiles)) {
         private$.profiles <- length(profiles)
       }
+
       self$config_path <- "docker/data/ors-config.json"
       private$.disable_auto_deletion()
       self$graph_building <- NA
-      return(self)
+      invisible(self)
     },
 
     #' @description Specifies the amount of memory to be allocated. If only the
@@ -178,8 +173,8 @@ ORSSetupSettings <- R6::R6Class(
         init <- max / 2
         private$.write_memory(init, max)
       } else if (is.null(init) && is.null(max)) {
-        if (!is.null(private$.extract_size) && !is.null(private$.profiles)) {
-          max <- round(private$.extract_size, -2) * 2.5 * private$.profiles / 1000
+        if (!is.null(super$extract$size) && !is.null(private$.profiles)) {
+          max <- round(super$extract$size, -2) * 2.5 * private$.profiles / 1000
           init <- max / 2
           private$.write_memory(init, max)
         } else {
@@ -224,7 +219,6 @@ ORSSetupSettings <- R6::R6Class(
     }
   ),
   private = list(
-    .extract_size = NULL,
     .profiles = NULL,
     .write_memory = function(init, max) {
       java_options <- self$compose$services$`ors-app`$environment[2]

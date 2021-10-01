@@ -18,6 +18,7 @@
 
 ORSExtract <- R6::R6Class(
   classname = "ORSExtract",
+  inherit = ORSInstance,
   public = list(
 
     #' @field path Relative path to the extract.
@@ -26,9 +27,6 @@ ORSExtract <- R6::R6Class(
     #' @field place Name or coordinates of the place that is passed for the
     #' extract download.
     place = NULL,
-
-    #' @field level Hierarchical level of the extraxt to be matched.
-    level = NULL,
 
     #' @field size Size of the extract file in megabytes
     size = NULL,
@@ -53,6 +51,7 @@ ORSExtract <- R6::R6Class(
           )
         )
       }
+      invisible(self)
     },
 
     #' @description Downloads an OSM extract.

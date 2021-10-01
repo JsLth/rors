@@ -62,10 +62,9 @@ buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326) {
 
 #' @importFrom magrittr %>%
 
-reformat_vectordata <- function(data, crs = 4326) {
+reformat_vectordata <- function(data) {
   # Extract coordinates from geometries
   data %>%
-    sf::st_transform(crs = crs) %>%
     sf::st_coordinates() %>%
     as.data.frame() %>%
     return()
@@ -103,14 +102,15 @@ parse_proj4string <- function(proj4_string) {
   return(crs_props)
 }
 
-#' @importFrom magrittr %>%
+
 
 lonlat_to_utm <- function(
   coordinates,
   crs = NULL,
   reverse = FALSE,
-  zone = NULL) {
-  sf_check <- inherits(coordinates, c("sf", "sfc"))
+  zone = NULL
+) {
+  sf_check <- is.sf(coordinates)
   if (!reverse) {
     if (!sf_check) {
       coordinates <- sf::st_as_sf(coordinates, coords = c(1, 2), crs = crs)
@@ -163,8 +163,6 @@ lonlat_to_utm <- function(
 }
 
 
-#' @importFrom magrittr %>%
-
 verify_crs <- function(data, crs, silent = FALSE) {
   parsed_crs <- sf::st_crs(crs)
   if (is.na(parsed_crs$wkt)) {
@@ -193,6 +191,11 @@ verify_crs <- function(data, crs, silent = FALSE) {
     )
   }
   return(crs_ok)
+}
+
+
+is.sf <- function(x) {
+  return(inherits(x, c("sf", "sfc")))
 }
 
 

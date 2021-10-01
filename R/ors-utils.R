@@ -31,34 +31,24 @@ get_container_info <- function() {
 }
 
 
-get_ors_info <- function(only_profiles = NA) {
-  if (
-    (is.null(pkg_cache$ors_info) && isFALSE(only_profiles)) ||
-    (is.null(pkg_cache$profiles) && isTRUE(only_profiles))
-  ) {
+get_profiles <- function() {
+  if (is.null(pkg_cache$profiles)) {
     if (ors_ready()) {
       url <- sprintf("http://localhost:%s/ors/v2/status", get_ors_port())
     } else {
       cli::cli_abort("ORS service is not reachable.")
     }
 
-    ors_info <- httr::GET(url) %>%
+    status_response <- httr::GET(url) %>%
       httr::content(as = "text", type = "application/json", encoding = "UTF-8")
+    ors_info <- jsonlite::fromJSON(status_response)
 
-    ors_info <- jsonlite::fromJSON(ors_info)
-
-    if (isTRUE(only_profiles)) {
-      profiles <- sapply(ors_info$profiles, function(x) x$profiles)
-      assign("profiles", profiles, envir = pkg_cache)
-      return(unname(profiles))
-    } else {
-      assign("ors_info", ors_info, envir = pkg_cache)
-      return(ors_info)
-    }
+    profiles <- sapply(ors_info$profiles, function(x) x$profiles)
+    assign("profiles", profiles, envir = pkg_cache)
+    return(unname(profiles))
   } else {
     return(pkg_cache$ors_info)
   }
-
 }
 
 
