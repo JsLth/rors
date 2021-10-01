@@ -20,7 +20,12 @@ ORSDockerInterface <- R6::R6Class(
     #' @field docker_running Checks if the Docker daemon is running.
     docker_running = function(v) {
       if (missing(v)) {
-        private$.docker_running()
+        docker_check <- system(
+          ensure_permission("docker ps"),
+          ignore.stdout = TRUE,
+          ignore.stderr = TRUE
+        )
+        docker_check == 0
       } else {
         cli::cli_abort("{.var $docker_running} is read only.")
       }
@@ -29,7 +34,15 @@ ORSDockerInterface <- R6::R6Class(
     #' @field image_built Checks if the openrouteservice:latest image exists.
     image_built = function(v) {
       if (missing(v)) {
-        private$.image_built()
+        image_name <- system(
+          ensure_permission(
+            paste(
+              "docker images \"openrouteservice/openrouteservice\"",
+              "--format {{.Repository}}"
+            )
+          ), intern = TRUE
+        )
+        length(image_name) > 0
       } else {
         cli::cli_abort("{.var $image_built} is read only.")
       }
@@ -38,7 +51,15 @@ ORSDockerInterface <- R6::R6Class(
     #' @field container_exists Checks if the container ors-app exists.
     container_exists = function(v) {
       if (missing(v)) {
-        private$.container_exists()
+        if (self$docker_running) {
+          system(
+            ensure_permission(
+              "docker ps -a --format \"{{.Names}}\" --filter name=^/ors-app$"
+            ),
+            intern = TRUE
+          ) %>%
+            identical("ors-app")
+        }
       } else {
         cli::cli_abort("{.var $container_exists} is read only.")
       }
@@ -47,7 +68,25 @@ ORSDockerInterface <- R6::R6Class(
     #' @field container_running Checks if the the container ors-app is running.
     container_running = function(v) {
       if (missing(v)) {
-        private$.container_running()
+        if (
+          self$docker_running &&
+          self$image_built &&
+          self$container_exists
+        ) {
+          container_status <- suppressWarnings(
+            system(
+              ensure_permission(
+                paste(
+                  "docker container ls -a --format \"{{.State}}\"",
+                  "--filter name=^/ors-app$"
+                )
+              ), intern = TRUE, ignore.stderr = TRUE
+            )
+          )
+          identical(container_status, "running")
+        } else {
+          FALSE
+        }
       } else {
         cli::cli_abort("{.var $container_running} is read only.")
       }
@@ -57,7 +96,16 @@ ORSDockerInterface <- R6::R6Class(
     #' this field is `TRUE`, the service can be queried and used.
     service_ready = function(v) {
       if (missing(v)) {
-        private$.service_ready()
+        if (
+          self$docker_running &&
+          self$image_built &&
+          self$container_exists &&
+          self$container_running
+        ) {
+          ors_ready(force = TRUE)
+        } else {
+          FALSE
+        }
       } else {
         cli::cli_abort("{.var $service_ready} is read only.")
       }
@@ -94,7 +142,7 @@ ORSDockerInterface <- R6::R6Class(
     #' @description Initializes ORSDockerInterface, starts the Docker daemon
     #' and specifies the port.
     #' @param port Integer scalar. Port that the server should run on.
-    initialize = function(port = 8080) {
+    initialize = function() {
       if (Sys.info()["sysname"] == "Linux") {
         cli::cli_alert_warning(
           "{.cls ORSInstance} needs superuser permissions to communicate with Docker"
@@ -106,8 +154,7 @@ ORSDockerInterface <- R6::R6Class(
         )
       }
       private$.start_docker()
-      private$.port <- port
-      return(self)
+      invisible(self)
     },
 
     #' @description Builds the image, starts the container and issues a system
@@ -118,22 +165,66 @@ ORSDockerInterface <- R6::R6Class(
     #' container and then stop. To check the server status, you can then call
     #' `$service_ready` from the class \code{\link{ORSDockerInterface}}.
     image_up = function(wait = TRUE) {
+      if (!self$docker_running) {
+        cli::cli_abort("Docker is not running.")
+      }
+
+      owd <- getwd()
+      setwd(super$dir)
+      on.exit(setwd(owd))
+
       self$error_log <- NULL
-      setwd("docker")
-      system(ensure_permission("docker-compose up -d"))
+      private$.set_port()
+
+      system(
+        ensure_permission(
+          paste(
+            "docker compose -f",
+            normalizePath("docker/docker-compose.yml"),
+            "up -d"
+          )
+        )
+      )
+
       if (wait) {
         private$.notify_when_ready()
-      } else {
-        setwd("..")
       }
+
+
+      super$setup_settings$graph_building <- NA
     },
 
     #' @description Deletes the image. Should only be used when the container
     #' does not exist.
     image_down = function() {
-      setwd("docker")
-      system(ensure_permission("docker-compose down --rmi 'all'"))
-      on.exit(setwd(".."))
+      if (!self$docker_running) {
+        cli::cli_abort("Docker is not running.")
+      }
+
+      if (!self$container_exists) {
+        owd <- getwd()
+        setwd(super$dir)
+        on.exit(setwd(owd))
+
+        system(
+          ensure_permission(
+            "docker compose -f",
+            normalizePath("docker/docker-compose.yml"),
+            "down --rmi 'all'"
+          )
+        )
+      } else {
+        cli::cli_abort(
+          "Remove the container first before taking down the image"
+        )
+      }
+    },
+
+    remove_container = function() {
+      if (self$container_exists) {
+        self$stop_container()
+        system(ensure_permission("docker rm ors-app"))
+      }
     },
 
     #' @description Starts the container and issues a system notification when
@@ -144,95 +235,33 @@ ORSDockerInterface <- R6::R6Class(
     #' container and then stop. To check the server status, you can then call
     #' `$service_ready` from the class \code{\link{ORSDockerInterface}}.
     start_container = function(wait = TRUE) {
-      self$error_log <- NULL
-      setwd("docker")
-      system(ensure_permission("docker start ors-app"), ignore.stdout = TRUE)
-      if (wait) {
-        private$.notify_when_ready(interval = 2, silently = TRUE)
-      } else {
-        setwd("..")
+      if (self$container_exists) {
+        self$error_log <- NULL
+
+        system(ensure_permission("docker start ors-app"), ignore.stdout = TRUE)
+
+        if (wait) {
+          private$.notify_when_ready(interval = 2, silently = TRUE)
+        }
       }
     },
 
     #' @description Stops the container.
     stop_container = function() {
-      setwd("docker")
       system(ensure_permission("docker stop ors-app"), ignore.stdout = TRUE)
-      on.exit(setwd(".."))
     }
   ),
   private = list(
-    .port = NULL,
-    .service_ready = function() {
-      health_url <- "http://localhost:%s/ors/health" %>% sprintf(private$.port)
-      if (private$.docker_running() &&
-         private$.image_built() &&
-         private$.container_exists() &&
-         private$.container_running()) {
-        health <- tryCatch(
-          httr::GET(health_url) %>% httr::content(),
-          error = function(e) list(status = e)
-        )
-        identical(health$status, "ready")
-      } else {
-        FALSE
-      }
-    },
-    .container_exists = function() {
-      container_exists <- system(
-        ensure_permission(
-          "docker ps -a --format \"{{.Names}}\" --filter name=^/ors-app$"
-        ),
-        intern = TRUE
-      ) %>%
-        identical("ors-app")
-    },
-    .container_running = function() {
-      container_status <- suppressWarnings(
-          paste(
-            "docker container ls -a --format \"{{.State}}\"",
-            "--filter name=^/ors-app$"
-          ) %>%
-          ensure_permission() %>%
-          system(intern = TRUE, ignore.stderr = TRUE) %>%
-          identical("running")
-      )
-    },
-    .image_built = function() {
-      image_name <- paste(
-        "docker images \"openrouteservice/openrouteservice\"",
-        "--format {{.Repository}}"
-      ) %>%
-      ensure_permission() %>%
-      system(intern = TRUE)
-
-      if (length(image_name) > 0) {
-        return(TRUE)
-      } else {
-        return(FALSE)
-      }
-    },
-    .docker_running = function() {
-      docker_check <- system(ensure_permission("docker ps"),
-                             ignore.stdout = TRUE,
-                             ignore.stderr = TRUE)
-      if (docker_check == 0) {
-        return(TRUE)
-      } else if (docker_check == 1) {
-        return(FALSE)
-      } else if (docker_check == -1) {
-        cli::cli_abort(
-          paste(
-            "Docker is not recognized as a command.",
-            "Is it properly installed?"
-          )
-        )
-      } else {
-        cli::cli_abort("Cannot check Docker status for some reason.")
-      }
-    },
-    .start_docker = function() {
-      if (!private$.docker_running()) {
+  .set_port = function() {
+    port <- super$setup_settings$compose$services$`ors-app`$ports[1] %>%
+      strsplit(":") %>%
+      unlist() %>%
+      unique() %>%
+      as.numeric()
+    assign("port", port, envir = pkg_cache)
+  },
+  .start_docker = function() {
+      if (!self$docker_running) {
         if (Sys.info()["sysname"] == "Windows") {
           docker_path <- system("where docker.exe", intern = TRUE)
           docker_desktop <- docker_path %>%
@@ -242,7 +271,7 @@ ORSDockerInterface <- R6::R6Class(
             append("Docker Desktop.exe") %>%
             paste(collapse = "/") %>%
             shQuote()
-          scode <- shell(docker_desktop, wait = FALSE)
+          scode <- file.open(docker_desktop, wait = FALSE)
           # If Docker is installed, it will try to open
           if (scode == 0) {
             timer <- 0
@@ -276,11 +305,12 @@ ORSDockerInterface <- R6::R6Class(
           } else {
             cli::cli_abort("Something went wrong while starting Docker.")
           }
-        } else if (Sys.info()["sysname"] == "Linux") {
+        } else if (.Platform$OS.type == "unix") {
           system(ensure_permission("systemctl start docker"))
         }
       }
     },
+
     .notify_when_ready = function(interval = 10, silently = FALSE) {
       # Checks the service status and gives out a visual and audible
       # notification when the server is ready. Also watches out for errors
@@ -345,6 +375,7 @@ ORSDockerInterface <- R6::R6Class(
       # TODO: Implement a function that cleans up if an error occurred
       invisible(NULL)
     },
+
     .watch_for_error = function() {
       # Searches the OpenRouteService logs for the keyword 'error' and returns
       # their error messages. The function might be called before logs are

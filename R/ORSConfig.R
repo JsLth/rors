@@ -31,7 +31,7 @@ ORSConfig <- R6::R6Class(
     #' in the config file.
     active_profiles = function(profiles) {
       if (missing(profiles)) {
-        self$ors_config$ors$services$routing$profiles$active
+        profiles <- self$ors_config$ors$services$routing$profiles$active
       } else {
         if (is.character(profiles)) {
           profiles <- private$.translate_profiles(profiles) %>%
@@ -48,6 +48,7 @@ ORSConfig <- R6::R6Class(
         }
         self$save_config()
       }
+      assign("profiles", profiles, envir = pkg_cache)
     }
   ),
   public = list(
@@ -90,7 +91,7 @@ ORSConfig <- R6::R6Class(
           "{.cls ORSConfig} must be initialized from the ORS main directory."
         )
       }
-      return(self)
+      invisible(self)
     },
 
     #' @description Saves the config changes by overwriting the config files

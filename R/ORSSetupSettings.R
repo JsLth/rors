@@ -55,6 +55,11 @@ ORSSetupSettings <- R6::R6Class(
           return(NA)
         }
 
+        if (is.na(mode)) {
+          private$.force_graphbuilding(handle = FALSE)
+          return(NA)
+        }
+
         self$
           compose$
           services$
@@ -99,9 +104,6 @@ ORSSetupSettings <- R6::R6Class(
           `ors-app`$
           volumes[6] <- change_node
           return(mode)
-        } else if (is.na(mode) || is.null(mode)) {
-          private$.force_graphbuilding(handle = FALSE)
-          return(NA)
         } else {
           cli::cli_abort(
             "{.var $graph_building} expects a character scalar or NA"
@@ -130,17 +132,8 @@ ORSSetupSettings <- R6::R6Class(
     config_path = NULL,
 
     #' @description Initializes the `ORSSetupSettings` class. Reads the
-    #' `docker-compose.yml`, adjusts the `Dockerfile` and allocates memory.
-    #' @param extract_name File name of the extract
-    #' @param init_memory Initial memory to be allocated to the docker
-    #' container.
-    #' @param max_memory Maximum memory to be allocated to the docker
-    #' container. The container will start with the initial memory and
-    #' increases the memory usage up to the maximum memory if necessary.
-    #' @param profiles Active profiles as set in the config file
+    #' `docker-compose.yml` and adjusts the `Dockerfile`.
     initialize = function() {
-      super$extract <- super$init_extract()
-      super$config <- super$init_config()
       self$compose <- private$.read_dockercompose()
       self$config_path <- "docker/data/ors-config.json"
       private$.disable_auto_deletion()

@@ -58,10 +58,53 @@ options(
 
 ORSInstance <- R6::R6Class(
   classname = "ORSInstance",
-  public = list(
+  active = list(
+
     #' @field dir ORS directory, either passed as a parameter or automatically
     #' set after calling `$new` or `$initialize`.
-    dir = NULL,
+    dir = function(...) {
+      if (missing(...)) {
+        pkg_cache$mdir
+      }
+    },
+
+    extract = function() {
+      if (
+        is.null(private$.subclasses$ORSExtract)) {
+        private$.get_subclass(ORSExtract)
+      }
+      return(private$.subclasses$ORSExtract)
+    },
+
+    config = function() {
+      if (
+        is.null(private$.subclasses$ORSConfig) ||
+        self$docker$container_exists
+      ) {
+        private$.get_subclass(ORSConfig)
+      }
+      return(private$.subclasses$ORSConfig)
+    },
+
+    setup_settings = function() {
+      if (
+        is.null(private$.subclasses$ORSSetupSettings)
+      ) {
+        private$.get_subclass(ORSSetupSettings)
+      }
+      return(private$.subclasses$ORSSetupSettings)
+    },
+
+    docker = function() {
+      if(
+        is.null(private$.subclasses$ORSDockerInterface)
+      ) {
+        private$.get_subclass(ORSDockerInterface)
+      }
+      return(private$.subclasses$ORSDockerInterface)
+    }
+  ),
+  public = list(
 
     #' @description
     #' Initialize \code{\link{ORSInstance}} as well as \code{\link{ORSExtract}},
@@ -72,65 +115,11 @@ ORSInstance <- R6::R6Class(
     initialize = function(dir = NULL) {
       if (!is.null(dir)) {
         private$.clone_ors_repo(dir)
-        self$dir <- dir
       } else {
         private$.clone_ors_repo()
-        self$dir <- getwd()
+        dir <- getwd()
       }
-      self$init_extract()
-      self$init_config()
-      self$init_setup_settings()
-      self$init_docker()
-    },
-
-    #' @field extract `ORSExtract` environment. See \code{\link{ORSExtract}}.
-    extract = NULL,
-
-    init_extract = function() {
-      self$extract <- ORSExtract$new()
-    },
-
-    #' @field config `ORSConfig` environment. See \code{\link{ORSConfig}}.
-    config = NULL,
-
-    #' @description
-    #' Initializes \code{\link{ORSConfig}} as an environment field. Call this
-    #' if the config path changes (e.g. after the initial ORS setup).
-    init_config = function() {
-      self$config <- ORSConfig$new()
-    },
-
-    #' @field setup_settings `ORSSetupSettings` environment. See
-    #' \code{\link{ORSSetupSettings}}.
-    setup_settings = NULL,
-
-    #' @description
-    #' Initializes \code{\link{ORSSetupSettings}} as an environment field and
-    #' prepares the necessary changes to the `Dockerfile` and
-    #' `docker-compose.yml`
-    init_setup_settings = function() {
-      self$setup_settings <- ORSSetupSettings$new()
-    },
-
-    #' @field docker `ORSDockerInterface` environment. See
-    #' \code{\link{ORSDockerInterface}}.
-    docker = NULL,
-
-    #' @description
-    #' Initializes \code{\link{ORSDockerInterface}} as an environment field.
-    #' This method starts docker and delivers and interface to interact with
-    #' docker.
-    init_docker = function() {
-      if (!is.null(self$setup_ettings)) {
-        port <- self$setup_settings$ors_config$services$`ors-app`$ports[1] %>%
-          strsplit(":") %>%
-          unlist() %>%
-          unique() %>%
-          as.numeric()
-      } else {
-        port <- 8080
-      }
-      self$docker <- ORSDockerInterface$new(port = port)
+      assign("mdir", dir, envir = pkg_cache)
     },
 
     #' @description Changes the necessary settings and configurations for the
@@ -250,6 +239,13 @@ ORSInstance <- R6::R6Class(
     }
   ),
   private = list(
+    .subclasses = list(),
+
+    .get_subclass = function(env) {
+      env_name <- deparse(substitute(env))
+      private$.subclasses[[env_name]] <- env$new()
+    },
+
     .set_ors_wd = function(dir = NULL) {
       basedir <- "openrouteservice-master"
       pkg_path <- system.file(package = "ORSRouting")

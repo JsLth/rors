@@ -52,14 +52,15 @@ get_profiles <- function() {
 }
 
 
-ors_ready <- function() {
-  if (is.null(pkg_cache$ors_ready)) {
+ors_ready <- function(force = TRUE) {
+  if (is.null(pkg_cache$ors_ready) || force) {
     ready <- tryCatch(
       httr::GET(
         sprintf("http://localhost:%s/ors/health", get_ors_port())
       ) %>%
-        httr::status_code() %>%
-        identical(200L),
+        content(as = "text", type = "application/json", encoding = "UTF-8") %>%
+        .$status %>%
+        identical("ready"),
       error = function(e) FALSE
     )
     assign("ors_ready", ready, envir = pkg_cache)

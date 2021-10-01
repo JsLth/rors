@@ -24,15 +24,8 @@ ORSExtract <- R6::R6Class(
     #' @field path Relative path to the extract.
     path = NULL,
 
-    #' @field place Name or coordinates of the place that is passed for the
-    #' extract download.
-    place = NULL,
-
     #' @field size Size of the extract file in megabytes
     size = NULL,
-
-    #' @field provider Provider of the extract size.
-    provider = NULL,
 
     #' @description Initializes \code{\link{ORSExtract}} and looks for an
     #' existing extract in data path.
@@ -164,6 +157,8 @@ ORSExtract <- R6::R6Class(
       self$place <- place
       self$size <- round(size, 2)
       self$provider <- providers[i]
+      assign("extract_path", path, envir = pkg_cache)
+      return(path)
     },
 
     #' @description Moves a given OSM extract to the ORS data directory
@@ -177,6 +172,8 @@ ORSExtract <- R6::R6Class(
       } else {
         cli::cli_abort("{.file {extract_path}} does not exist.")
       }
+      assign("extract_path", extract_path, envir = pkg_cache)
+      return(extract_path)
     }
   ),
   private = list(
