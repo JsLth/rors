@@ -141,13 +141,7 @@ ORSSetupSettings <- R6::R6Class(
     initialize = function() {
       super$extract <- super$init_extract()
       super$config <- super$init_config()
-
       self$compose <- private$.read_dockercompose()
-
-      if (!is.null(profiles)) {
-        private$.profiles <- length(profiles)
-      }
-
       self$config_path <- "docker/data/ors-config.json"
       private$.disable_auto_deletion()
       self$graph_building <- NA
@@ -173,8 +167,13 @@ ORSSetupSettings <- R6::R6Class(
         init <- max / 2
         private$.write_memory(init, max)
       } else if (is.null(init) && is.null(max)) {
-        if (!is.null(super$extract$size) && !is.null(private$.profiles)) {
-          max <- round(super$extract$size, -2) * 2.5 * private$.profiles / 1000
+        if (
+          !is.null(super$extract$size) &&
+          !is.null(super$config$active_profiles)
+        ) {
+          max <- round(super$extract$size, -2) *
+            2.5 *
+            length(super$config$active_profiles) / 1000
           init <- max / 2
           private$.write_memory(init, max)
         } else {
@@ -215,11 +214,10 @@ ORSSetupSettings <- R6::R6Class(
     #' @description Opens the raw compose file to allow manual changes. Useful
     #' if you find the list structure of the parsed yaml impractical.
     open_compose = function() {
-      shell(normalizePath("docker/docker-compose.yml", winslash = "\\"))
+      file.open(normalizePath("docker/docker-compose.yml", winslash = "/"))
     }
   ),
   private = list(
-    .profiles = NULL,
     .write_memory = function(init, max) {
       java_options <- self$compose$services$`ors-app`$environment[2]
       java_mem <- strsplit(java_options, " ") %>%

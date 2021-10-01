@@ -112,7 +112,7 @@ ORSConfig <- R6::R6Class(
     #' @description Opens the raw config file to allow manual changes. Useful
     #' if you find the list structure of the parsed JSON impractical.
     open_config = function() {
-      shell(normalizePath(self$path, winslash = "\\"))
+      file.open(normalizePath(self$path, winslash = "/"))
     }
   ),
   private = list(

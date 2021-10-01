@@ -65,10 +65,10 @@ ORSInstance <- R6::R6Class(
 
     #' @description
     #' Initialize \code{\link{ORSInstance}} as well as \code{\link{ORSExtract}},
-    #' \code{\link{ORSConfig}} and' \code{\link{ORSDockerInterface}}.
+    #' \code{\link{ORSConfig}}, \code{\link{ORSSetupSettings}} and
+    #' \code{\link{ORSDockerInterface}}.
     #' @param dir Custom ORS directory. If not specified, the directory will be
-    #' downloaded from the
-    #' \href{https://github.com/GIScience/openrouteservice}{official GitHub repository}
+    #' downloaded to the package directory.
     initialize = function(dir = NULL) {
       if (!is.null(dir)) {
         private$.clone_ors_repo(dir)
@@ -108,15 +108,8 @@ ORSInstance <- R6::R6Class(
     #' Initializes \code{\link{ORSSetupSettings}} as an environment field and
     #' prepares the necessary changes to the `Dockerfile` and
     #' `docker-compose.yml`
-    #' @param init_memory Initial memory to be allocated to the docker
-    #' container.
-    #' @param max_memory Maximum memory to be allocated to the docker
-    #' container. The container will start with the initial memory and increases
-    #' the memory usage up to the maximum memory if necessary.
     init_setup_settings = function() {
-      self$setup_settings <- ORSSetupSettings$new(
-          self$config$active_profiles
-      )
+      self$setup_settings <- ORSSetupSettings$new()
     },
 
     #' @field docker `ORSDockerInterface` environment. See
