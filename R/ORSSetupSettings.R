@@ -128,9 +128,6 @@ ORSSetupSettings <- R6::R6Class(
     #' The container is not allowed to exceed this memory limit.
     max_memory = NULL,
 
-    #' @field config_path Path where the config file is saved.
-    config_path = NULL,
-
     #' @description Initializes the `ORSSetupSettings` class. Reads the
     #' `docker-compose.yml` and adjusts the `Dockerfile`.
     initialize = function() {

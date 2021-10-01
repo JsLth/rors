@@ -5,9 +5,9 @@
 
 
 options(
-  cli.spinner = "dots8",
-  cli.spinner_unicode = "dots8",
-  cli.spinner_ascii = "dots8"
+  cli.spinner = "line",
+  cli.spinner_unicode = "line",
+  cli.spinner_ascii = "line"
 )
 
 
@@ -124,7 +124,10 @@ ORSInstance <- R6::R6Class(
         private$.clone_ors_repo()
         dir <- getwd()
       }
+
       assign("mdir", dir, envir = pkg_cache)
+
+      setwd(self$dir)
     },
 
     #' @description Changes the necessary settings and configurations for the
@@ -144,8 +147,6 @@ ORSInstance <- R6::R6Class(
     #' container. The container will start with the initial memory and increases
     #' the memory usage up to the maximum memory if necessary.
     #' Passed to \code{\link{ORSSetupSettings}}.
-    #' @param snapping_radius Integer. Radius within which points are snapped
-    #' to the nearest roads. See details.
     #' @param wait Logical. If `TRUE`, the function will not stop running after
     #' the container is being started and will give out a notification as soon
     #' as the service is ready. If `FALSE`, the function will start the
@@ -155,19 +156,12 @@ ORSInstance <- R6::R6Class(
     #' @param run Locial. If `TRUE`, returns `TRUE` if the initial setup is done
     #' and runs the setup if not. If `FALSE`, only returns logicals to check
     #' whether the initial setup is done or not.
-    #' @details The default setup removes the maximum snapping radius meaning
-    #' that points are snapped to the nearest road irrespective of their
-    #' distance to the road. The ORS default lies at 350 meters. Limitting the
-    #' snapping radius might cause errors for points that are over 350 meters
-    #' from the nearest road. However, removing this limit might cause
-    #' inaccuracies in the distance and time calculations as points can be
-    #' instantly snapped to a road kilometers away.
+
     initial_setup = function(
       profiles = "car",
       extract_path = self$extract$path,
       init_memory = NULL,
       max_memory = NULL,
-      snapping_radius = -1,
       wait = TRUE,
       run = TRUE) {
         if (
@@ -195,8 +189,7 @@ ORSInstance <- R6::R6Class(
           }
         }
 
-        # Initialize config ---------------------------------------------------
-        self$get_config()
+        # Set up config ---------------------------------------------------
         self$
           config$
           ors_config$
@@ -205,39 +198,15 @@ ORSInstance <- R6::R6Class(
           routing$
           profiles$
           active <- as.list(profiles)
-        self$
-          config$
-          ors_config$
-          ors$
-          services$
-          routing$
-          profiles$
-          default_params$
-          maximum_snapping_radius <- snapping_radius
-        self$
-          config$
-          ors_config$
-          ors$
-          services$
-          routing$
-          profiles$
-          `profile-car`$
-          parameters$
-          maximum_snapping_radius <- snapping_radius
         self$config$save_config()
 
         # Set up Docker -------------------------------------------------------
-        self$get_setup_settings()
         self$setup_settings$graph_building <- "build"
         self$setup_settings$allocate_memory(init_memory, max_memory)
         self$setup_settings$save_compose()
 
         # Start the service ---------------------------------------------------
-        self$init_docker()
         self$docker$image_up(wait)
-
-        # Update the config file
-        self$get_config()
 
         # Turn off graph building
         self$setup_settings$graph_building <- NA
@@ -251,50 +220,13 @@ ORSInstance <- R6::R6Class(
       private$.subclasses[[env_name]] <- env$new()
     },
 
-    .set_ors_wd = function(dir = NULL) {
+    .clone_ors_repo = function(dir = NA) {
       basedir <- "openrouteservice-master"
-      pkg_path <- system.file(package = "ORSRouting")
-      if(dir.exists(pkg_path)) {
-        setwd(pkg_path)
-      }
-      # If no path is given, set the default path as the working dir
-      if (is.null(dir) && !grepl(basedir, getwd())) {
+      download_url <- paste0(
+        "https://github.com/",
+        "GIScience/openrouteservice/archive/refs/heads/master.zip"
+      )
 
-         # If both directories exist, set both as the working dir
-        if (dir.exists(basedir)) {
-          setwd(basedir)
-        # If only the first exists, don't do anything and print a warning
-        } else {
-            cli::cli_abort(
-              paste(
-               "The OpenRouteService directory does not seem to exist.",
-               "Verify that the service backend was downloaded or pass a",
-               "custom directory."
-              )
-            )
-        }
-      # If a path is passed that is not part of the current working directory
-      } else if (!is.null(dir) && !grepl(dir, getwd())) {
-        if (dir.exists(dir)) {
-          setwd(dir)
-        } else {
-          cli::cli_abort("The custom directory does not seem to exist.")
-        }
-      # If the ORS path or one of its children is set as a working directory
-      } else {
-        # go up the directories until the ORS path is the current working
-        # directory
-        while (tail(unlist(strsplit(getwd(), "/")), 1) != basedir) {
-          setwd("..")
-        }
-      }
-    },
-    .dir_download_url = paste0(
-      "https://github.com/",
-      "GIScience/openrouteservice/archive/refs/heads/master.zip"
-    ),
-    .clone_ors_repo = function(dir = getwd()) {
-      basedir <- "openrouteservice-master"
       if (!missing(dir) && dir.exists(dir)) {
         setwd(dir)
       } else {
@@ -302,21 +234,23 @@ ORSInstance <- R6::R6Class(
         if(dir.exists(pkg_path)) {
           dir <- pkg_path
           setwd(dir)
+        } else {
+          cli::cli_abort("Could not find the target directory.")
         }
       }
-      if (!dir.exists(basedir) && !grepl(basedir, getwd())) {
+
+      if (!dir.exists(basedir)) {
         zip_file <- "openrouteservice.zip"
         cli::cli_progress_step(
           "Downloading service backend from GitHub repository...",
           msg_done = "Successfully downloaded the service backend.",
           msg_failed = "Failed to download the service backend."
         )
-        download.file(private$.dir_download_url, zip_file)
+        download.file(download_url, zip_file)
         unzip(zip_file, exdir = dir)
         file.remove(zip_file)
         cli::cli_progress_done()
       }
-      private$.set_ors_wd()
     }
   ),
   cloneable = FALSE

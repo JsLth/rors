@@ -18,8 +18,8 @@ ORSDockerInterface <- R6::R6Class(
   active = list(
 
     #' @field docker_running Checks if the Docker daemon is running.
-    docker_running = function(v) {
-      if (missing(v)) {
+    docker_running = function(...) {
+      if (missing(...)) {
         docker_check <- system(
           ensure_permission("docker ps"),
           ignore.stdout = TRUE,
@@ -32,8 +32,8 @@ ORSDockerInterface <- R6::R6Class(
     },
 
     #' @field image_built Checks if the openrouteservice:latest image exists.
-    image_built = function(v) {
-      if (missing(v)) {
+    image_built = function(...) {
+      if (missing(...)) {
         image_name <- system(
           ensure_permission(
             paste(
@@ -49,8 +49,8 @@ ORSDockerInterface <- R6::R6Class(
     },
 
     #' @field container_exists Checks if the container ors-app exists.
-    container_exists = function(v) {
-      if (missing(v)) {
+    container_exists = function(...) {
+      if (missing(...)) {
         if (self$docker_running) {
           system(
             ensure_permission(
@@ -66,8 +66,8 @@ ORSDockerInterface <- R6::R6Class(
     },
 
     #' @field container_running Checks if the the container ors-app is running.
-    container_running = function(v) {
-      if (missing(v)) {
+    container_running = function(...) {
+      if (missing(...)) {
         if (
           self$docker_running &&
           self$image_built &&
@@ -94,8 +94,8 @@ ORSDockerInterface <- R6::R6Class(
 
     #' @field service_ready Checks if the container service is ready to use. If
     #' this field is `TRUE`, the service can be queried and used.
-    service_ready = function(v) {
-      if (missing(v)) {
+    service_ready = function(...) {
+      if (missing(...)) {
         if (
           self$docker_running &&
           self$image_built &&
@@ -113,8 +113,8 @@ ORSDockerInterface <- R6::R6Class(
 
     #' @field error_log Returns all errors from the logs. If `NULL`, no errors
     #' occurred.
-    error_log = function(v) {
-      if (missing(v)) {
+    error_log = function(...) {
+      if (missing(...)) {
         private$.watch_for_error()
       } else {
         if (is.null(v) || is.na(v)) {
@@ -147,23 +147,34 @@ ORSDockerInterface <- R6::R6Class(
         cli::cli_alert_warning(
           "{.cls ORSInstance} needs superuser permissions to communicate with Docker"
         )
-        system(
-          "pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY ls",
-          ignore.stdout = TRUE,
-          ignore.stderr = FALSE
-        )
+
+        if (Sys.getenv("RSTUDIO") == 1) {
+          system(
+            "sudo -S ls",
+            ignore.stdout = TRUE,
+            ignore.stderr = FALSE,
+            input = rstudioapi::askForPassword()
+          )
+        } else {
+          system(
+            "pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY ls",
+           ignore.stdout = TRUE,
+           ignore.stderr = FALSE
+          )
+        }
       }
+
       private$.start_docker()
       invisible(self)
     },
 
     #' @description Builds the image, starts the container and issues a system
     #' notification when the service is ready to be used.
-    #' @param wait Logical. If `TRUE`, the function will not stop running after
-    #' the container is being started and will give out a notification as soon
-    #' as the service is ready. If `FALSE`, the function will start the
-    #' container and then stop. To check the server status, you can then call
-    #' `$service_ready` from the class \code{\link{ORSDockerInterface}}.
+    #' @param wait Logical. If \code{TRUE}, the function will not stop running
+    #' after the container is being started and will give out a notification as
+    #' soon as the service is ready. If \code{FALSE}, the function will start
+    #' the container and then stop. To check the server status, you can then
+    #' call \code{$service_ready} or \code{\link{ors_ready}}.
     image_up = function(wait = TRUE) {
       if (!self$docker_running) {
         cli::cli_abort("Docker is not running.")
@@ -189,7 +200,6 @@ ORSDockerInterface <- R6::R6Class(
       if (wait) {
         private$.notify_when_ready()
       }
-
 
       super$setup_settings$graph_building <- NA
     },
@@ -220,20 +230,23 @@ ORSDockerInterface <- R6::R6Class(
       }
     },
 
+    #' @description Removes the container after stopping it if necessary.
     remove_container = function() {
       if (self$container_exists) {
-        self$stop_container()
+        if (self$container_running) {
+          self$stop_container()
+        }
         system(ensure_permission("docker rm ors-app"))
       }
     },
 
-    #' @description Starts the container and issues a system notification when
-    #' the service is ready to be used.
-    #' @param wait Logical. If `TRUE`, the function will not stop running after
-    #' the container is being started and will give out a notification as soon
-    #' as the service is ready. If `FALSE`, the function will start the
-    #' container and then stop. To check the server status, you can then call
-    #' `$service_ready` from the class \code{\link{ORSDockerInterface}}.
+    #' @description Starts the container.
+    #' @param wait Logical. If \code{TRUE}, the function will not stop running
+    #' after the container is being started and will give out a notification
+    #' as soon as the service is ready. If \code{FALSE}, the function will
+    #' start the container and then stop. To check the server status, you can
+    #' then call \code{$service_ready} or \code{\link{ors_ready}}.
+    #'
     start_container = function(wait = TRUE) {
       if (self$container_exists) {
         self$error_log <- NULL
@@ -251,7 +264,9 @@ ORSDockerInterface <- R6::R6Class(
       system(ensure_permission("docker stop ors-app"), ignore.stdout = TRUE)
     }
   ),
+
   private = list(
+
   .set_port = function() {
     port <- super$setup_settings$compose$services$`ors-app`$ports[1] %>%
       strsplit(":") %>%
@@ -260,6 +275,7 @@ ORSDockerInterface <- R6::R6Class(
       as.numeric()
     assign("port", port, envir = pkg_cache)
   },
+
   .start_docker = function() {
       if (!self$docker_running) {
         if (Sys.info()["sysname"] == "Windows") {
