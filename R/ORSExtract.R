@@ -153,7 +153,7 @@ ORSExtract <- R6::R6Class(
           )
         )
       }
-      self$path <- path
+      self$path <- relativePath(path)
       self$size <- round(size, 2)
       assign("extract_path", path, envir = pkg_cache)
       return(path)
@@ -189,7 +189,7 @@ ORSExtract <- R6::R6Class(
     .rm_old_extracts = function() {
       path <- normalizePath("docker/data", winslash = "/")
       extract_occurences <- dir(path) %>%
-        grepl(".pbf|.osm.gz|.osm.zip|.osm", .)
+        grepl(".pbf|.osm.gz|.osm.zip|.osm|.gpkg", .)
       if (sum(extract_occurences) > 0) {
         cli::cli_alert_info("Removing old extracts...")
         for (extract in dir(path)[extract_occurences]) {

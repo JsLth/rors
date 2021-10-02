@@ -21,10 +21,11 @@
 #' \code{\link{get_}}. For details
 #' on all profiles, refer to the
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
-#' @param units Distance unit for distance calculations ('m', 'km' or 'mi',
-#' default: meters)
-#' @param geometry Specifies whether to return distance values or geometry
+#' @param units Distance unit for distance calculations ('m', 'km' or 'mi')
+#' @param geometry Specifies whether to return distance measures or geometry
 #' features.
+#' @param options Ignored. Could be added in the future to add ORS query
+#' options, e.g. avoid_polygons or maximum_speed.
 #' @returns Dataframe with distances and travel durations between source and
 #' destination
 #' @details If `method = "directions"`, both datasets must have the same shape,
@@ -68,11 +69,12 @@ get_route_lengths <- function(
   profile,
   units = "m",
   how = "directions",
-  geometry = FALSE
+  geometry = FALSE,
+  options = list()
 ) {
   # TODO: Automate method choice
   # (small dataset -> directions, large dataset -> matrix)
-  if (!ors_ready()) {
+  if (!ors_ready(force = FALSE)) {
     cli::cli_abort("ORS service is not reachable.")
   }
 

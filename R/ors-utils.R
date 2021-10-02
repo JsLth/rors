@@ -37,8 +37,15 @@ get_container_info <- function() {
 }
 
 
-get_profiles <- function() {
-  if (is.null(pkg_cache$profiles)) {
+#' Get active ORS profiles
+#' @description Returns a list of active profiles from the cache or local host.
+#' @param force If \code{TRUE}, function must query the local host. If
+#' \code{FALSE}, profiles will be read from the cache if possible.
+#'
+#' @export
+
+get_profiles <- function(force = FALSE) {
+  if (is.null(pkg_cache$profiles) || isTRUE(force)) {
     if (ors_ready()) {
       url <- sprintf("http://localhost:%s/ors/v2/status", get_ors_port())
     } else {
@@ -57,6 +64,13 @@ get_profiles <- function() {
   }
 }
 
+
+#' Is ORS usable?
+#' @description States whether the ORS service is set up and ready to use.
+#' @param force If \code{TRUE}, function must query local host. If
+#' \code{FALSE}, the status will be read from the cache if possible.
+#'
+#' @export
 
 ors_ready <- function(force = TRUE) {
   if (is.null(pkg_cache$ors_ready) || force) {
@@ -78,8 +92,8 @@ ors_ready <- function(force = TRUE) {
 }
 
 
-get_ors_dir <- function() {
-  if (is.null(pkg_cache$mdir)) {
+get_ors_dir <- function(force = TRUE) {
+  if (is.null(pkg_cache$mdir) || isTRUE(force)) {
     container_info <- get_container_info()
     mdir <- container_info$Config$Labels$com.docker.compose.project.working_dir
     mdir <- normalizePath(mdir, winslash = "/")
@@ -119,8 +133,9 @@ identify_extract <- function(force = FALSE) {
 
         # As a last resort, check if we can just pick it up from the data folder
         if (sum(osm_file_occurences) == 1) {
-          extract_path <- dir(paste0(mdir, "/data")[osm_file_occurences]
-          )
+          extract_path <- dir(
+            paste0(mdir, "/docker/data")
+          )[osm_file_occurences]
         } else {
           cli::cli_abort(
             paste(
@@ -132,8 +147,9 @@ identify_extract <- function(force = FALSE) {
     }
     # Convert relative to absolute path
     extract_path <- basename(extract_path) %>%
-      paste(mdir, "data", ., sep = "/") %>%
+      paste(mdir, "/docker/data", ., sep = "/") %>%
       normalizePath(winslash = "/")
+
     assign("extract_path", extract_path, envir = pkg_cache)
     return(extract_path)
   } else {
