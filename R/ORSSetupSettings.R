@@ -24,24 +24,39 @@ ORSSetupSettings <- R6::R6Class(
     #' indicates that no changes should be made and that graph building should
     #' not be forced.
     graph_building = function(mode) {
-      build <- "build" %in% names(
-        self$
-          compose$
-          services$
-          `ors-app`
+      build <- is.element(
+        "build",
+        names(
+          self$
+            compose$
+            services$
+            `ors-app`
+        )
       )
+
       change <- !is.na(
         self$
           compose$
           services$
           `ors-app`$
-          environment[6]
+          volumes[6]
       )
+
+      gb <- self$compose$services$`ors-app`$environment[1] %>%
+        strsplit("=") %>%
+        unlist() %>%
+        .[2] %>%
+        as.logical()
+
       if(missing(mode)) {
-        if(build) {
+        if(change) {
+          if (gb) {
+            return("change")
+          } else {
+            return(NA)
+          }
+        } else if(build) {
           return("build")
-        } else if(change) {
-          return("change")
         } else {
           return(NA)
         }
@@ -54,9 +69,9 @@ ORSSetupSettings <- R6::R6Class(
           )
           return(NA)
         }
-
         if (is.na(mode)) {
           private$.force_graphbuilding(handle = FALSE)
+          self$save_compose()
           return(NA)
         }
 
@@ -78,12 +93,11 @@ ORSSetupSettings <- R6::R6Class(
             build = list(
               context = "../",
               args = list(
-                ORS_CONFIG = "./%s" %>% sprintf(self$config_path),
+                ORS_CONFIG = "./%s" %>% sprintf("docker/data/ors-config.json"),
                 OSM_FILE = "./%s" %>% sprintf(super$extract$path)
               )
             )
           )
-
           self$
             compose$
             services$
@@ -92,6 +106,7 @@ ORSSetupSettings <- R6::R6Class(
             build_branch,
             after = 3
           )
+          self$save_compose()
           return(mode)
         } else if (identical(mode, "change")) {
           private$.force_graphbuilding(handle = TRUE)
@@ -99,17 +114,17 @@ ORSSetupSettings <- R6::R6Class(
             sprintf(super$extract$path)
 
           self$
-          compose$
-          services$
-          `ors-app`$
-          volumes[6] <- change_node
+            compose$
+            services$
+            `ors-app`$
+            volumes[6] <- change_node
+          self$save_compose()
           return(mode)
         } else {
           cli::cli_abort(
             "{.var $graph_building} expects a character scalar or NA"
           )
         }
-        self$save_settings()
       }
     }
   ),
@@ -227,6 +242,7 @@ ORSSetupSettings <- R6::R6Class(
       )
       self$compose$services$`ors-app`$environment[2] <- java_options
     },
+
     .force_graphbuilding = function(handle) {
       handle <- tolower(as.character(handle))
       substr(handle, 1, 1) <- toupper(substr(handle, 1, 1))
@@ -237,6 +253,7 @@ ORSSetupSettings <- R6::R6Class(
         `ors-app`$
         environment[1] <- build_graphs_string
     },
+
     .disable_auto_deletion = function() {
       # Don't delete any profiles. Setup every profile at first start.
       dockerfile <- readLines("Dockerfile", warn = FALSE)

@@ -18,8 +18,8 @@ ORSDockerInterface <- R6::R6Class(
   active = list(
 
     #' @field docker_running Checks if the Docker daemon is running.
-    docker_running = function(...) {
-      if (missing(...)) {
+    docker_running = function(arg) {
+      if (missing(arg)) {
         docker_check <- system(
           ensure_permission("docker ps"),
           ignore.stdout = TRUE,
@@ -32,8 +32,8 @@ ORSDockerInterface <- R6::R6Class(
     },
 
     #' @field image_built Checks if the openrouteservice:latest image exists.
-    image_built = function(...) {
-      if (missing(...)) {
+    image_built = function(arg) {
+      if (missing(arg)) {
         image_name <- system(
           ensure_permission(
             paste(
@@ -49,8 +49,8 @@ ORSDockerInterface <- R6::R6Class(
     },
 
     #' @field container_exists Checks if the container ors-app exists.
-    container_exists = function(...) {
-      if (missing(...)) {
+    container_exists = function(arg) {
+      if (missing(arg)) {
         if (self$docker_running) {
           system(
             ensure_permission(
@@ -66,8 +66,8 @@ ORSDockerInterface <- R6::R6Class(
     },
 
     #' @field container_running Checks if the the container ors-app is running.
-    container_running = function(...) {
-      if (missing(...)) {
+    container_running = function(arg) {
+      if (missing(arg)) {
         if (
           self$docker_running &&
           self$image_built &&
@@ -94,8 +94,8 @@ ORSDockerInterface <- R6::R6Class(
 
     #' @field service_ready Checks if the container service is ready to use. If
     #' this field is `TRUE`, the service can be queried and used.
-    service_ready = function(...) {
-      if (missing(...)) {
+    service_ready = function(arg) {
+      if (missing(arg)) {
         if (
           self$docker_running &&
           self$image_built &&
@@ -113,11 +113,11 @@ ORSDockerInterface <- R6::R6Class(
 
     #' @field error_log Returns all errors from the logs. If `NULL`, no errors
     #' occurred.
-    error_log = function(...) {
-      if (missing(...)) {
+    error_log = function(arg) {
+      if (missing(arg)) {
         private$.watch_for_error()
       } else {
-        if (is.null(v) || is.na(v)) {
+        if (is.null(arg) || is.na(arg)) {
           if (dir.exists("docker/logs")) {
             code <- unlink("docker/logs", recursive = TRUE, force = TRUE)
             if (code == 0) {
@@ -163,7 +163,6 @@ ORSDockerInterface <- R6::R6Class(
           )
         }
       }
-
       private$.start_docker()
       invisible(self)
     },
@@ -287,7 +286,7 @@ ORSDockerInterface <- R6::R6Class(
             append("Docker Desktop.exe") %>%
             paste(collapse = "/") %>%
             shQuote()
-          scode <- file.open(docker_desktop, wait = FALSE)
+          scode <- file.open(docker_desktop)
           # If Docker is installed, it will try to open
           if (scode == 0) {
             timer <- 0
@@ -331,13 +330,14 @@ ORSDockerInterface <- R6::R6Class(
       # Checks the service status and gives out a visual and audible
       # notification when the server is ready. Also watches out for errors
       # in the log files.
-      if (!silently)
+      if (!silently) {
         cli::cli_inform(
           paste(
           "The container is being set up and started now. You can stop the",
           "process now or let it run and get notified when the service is ready."
           )
         )
+      }
       cli::cli_progress_step(
         "Starting service",
         spinner = TRUE,

@@ -36,13 +36,16 @@ ORSConfig <- R6::R6Class(
         if (is.character(profiles)) {
           profiles <- private$.translate_profiles(profiles) %>%
             .[!duplicated(.)]
-          self$
-            ors_config$
-            ors$
-            services$
-            routing$
-            profiles$
-            active <- as.list(profiles)
+
+          if (length(profiles) > 0) {
+            self$
+              ors_config$
+              ors$
+              services$
+              routing$
+              profiles$
+              active <- as.list(profiles)
+          }
         } else {
           cli::cli_abort("Pass a valid vector of profiles.")
         }

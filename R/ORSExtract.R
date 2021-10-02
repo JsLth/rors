@@ -154,9 +154,7 @@ ORSExtract <- R6::R6Class(
         )
       }
       self$path <- path
-      self$place <- place
       self$size <- round(size, 2)
-      self$provider <- providers[i]
       assign("extract_path", path, envir = pkg_cache)
       return(path)
     },
@@ -168,7 +166,7 @@ ORSExtract <- R6::R6Class(
     set_extract = function(extract_path) {
       if (file.exists(extract_path)) {
         self$path <- relativePath(private$.move_extract(extract_path))
-        self$size <- file.info(extract_path)$size * 0.000001
+        self$size <- round(file.info(extract_path)$size * 0.000001, 2)
       } else {
         cli::cli_abort("{.file {extract_path}} does not exist.")
       }

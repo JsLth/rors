@@ -8,7 +8,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
+# TODO: Rework vignette (preferably with working knitr)
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,

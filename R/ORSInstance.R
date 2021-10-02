@@ -69,9 +69,8 @@ ORSInstance <- R6::R6Class(
 
     #' @field extract ORSExtract environment. Refer to
     #' \code{\link{ORSExtract}}.
-    extract = function() {
-      if (
-        is.null(private$.subclasses$ORSExtract)) {
+    extract = function(arg) {
+      if (is.null(private$.subclasses$ORSExtract)) {
         private$.get_subclass(ORSExtract)
       }
       return(private$.subclasses$ORSExtract)
@@ -79,10 +78,16 @@ ORSInstance <- R6::R6Class(
 
     #' @field config ORSConfig environment. Refer to
     #' \code{\link{ORSConfig}}.
-    config = function() {
+    config = function(arg) {
+      if (!missing(arg) && is.character(arg)) {
+        refresh <- identical(..., "refresh")
+      } else {
+        refresh <- FALSE
+      }
+
       if (
         is.null(private$.subclasses$ORSConfig) ||
-        self$docker$container_exists
+        isTRUE(refresh)
       ) {
         private$.get_subclass(ORSConfig)
       }
@@ -91,10 +96,15 @@ ORSInstance <- R6::R6Class(
 
     #' @field setup_settings ORSSetupSettings environment. Refer to
     #' \code{\link{ORSSetupSettings}}.
-    setup_settings = function() {
+    setup_settings = function(arg) {
+      if (!missing(arg) && is.character(arg)) {
+        refresh <- identical(arg, "refresh")
+      } else {
+        refresh <- FALSE
+      }
+
       if (
-        is.null(private$.subclasses$ORSSetupSettings)
-      ) {
+        is.null(private$.subclasses$ORSSetupSettings) || isTRUE(refresh)) {
         private$.get_subclass(ORSSetupSettings)
       }
       return(private$.subclasses$ORSSetupSettings)
@@ -102,10 +112,8 @@ ORSInstance <- R6::R6Class(
 
     #' @field docker ORSDockerInterface environment. Refer to
     #' \code{\link{ORSDockerInterface}}.
-    docker = function() {
-      if(
-        is.null(private$.subclasses$ORSDockerInterface)
-      ) {
+    docker = function(arg) {
+      if(is.null(private$.subclasses$ORSDockerInterface)) {
         private$.get_subclass(ORSDockerInterface)
       }
       return(private$.subclasses$ORSDockerInterface)
@@ -126,8 +134,9 @@ ORSInstance <- R6::R6Class(
         dir <- private$.clone_ors_repo()
       }
       assign("mdir", dir, envir = pkg_cache)
-
       setwd(dir)
+
+      self$docker
     },
 
     #' @description Changes the necessary settings and configurations for the

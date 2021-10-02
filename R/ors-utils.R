@@ -8,6 +8,12 @@
 pkg_cache <- new.env(parent = emptyenv())
 
 
+clear_cache <- function() {
+  cache_items <- ls(pkg_cache)
+  remove(list = cache_items, envir = pkg_cache)
+}
+
+
 get_container_info <- function() {
   if (is.null(pkg_cache$container_info)) {
     container_info <- system(
@@ -59,6 +65,7 @@ ors_ready <- function(force = TRUE) {
         sprintf("http://localhost:%s/ors/health", get_ors_port())
       ) %>%
         content(as = "text", type = "application/json", encoding = "UTF-8") %>%
+        jsonlite::fromJSON() %>%
         .$status %>%
         identical("ready"),
       error = function(e) FALSE
@@ -75,6 +82,15 @@ get_ors_dir <- function() {
   if (is.null(pkg_cache$mdir)) {
     container_info <- get_container_info()
     mdir <- container_info$Config$Labels$com.docker.compose.project.working_dir
+    mdir <- normalizePath(mdir, winslash = "/")
+
+    while(!basename(mdir) == "openrouteservice-master") {
+      mdir <- strsplit(mdir, "/") %>%
+        unlist() %>%
+        head(-1) %>%
+        paste0(collapse = "/")
+    }
+
     assign("mdir", mdir, envir = pkg_cache)
     return(mdir)
   } else {
@@ -89,12 +105,12 @@ identify_extract <- function(force = FALSE) {
     mdir <- get_ors_dir()
 
     # Read extract file location from compose file
-    compose <- yaml::yaml.load_file(paste0(mdir, "/docker-compose.yml"))
+    compose <- yaml::yaml.load_file(paste0(mdir, "/docker/docker-compose.yml"))
     extract_path <- compose$services$`ors-app`$build$args$OSM_FILE
 
     # Check if build argument is set
     if (is.null(extract_path)) {
-      extract_path <- compose$services$`ors-app`$volumes[6]
+      change_extract <- compose$services$`ors-app`$volumes[6]
 
       # If not, check if change volume is set
       if (is.na(change_extract)) {
