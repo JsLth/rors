@@ -38,13 +38,13 @@ ORSExtract <- R6::R6Class(
 
       # If exactly one file is an extract, set it
       if (sum(osm_file_occurences) == 1) {
-        path <- paste0(
+        path <- file.path(
           data_dir,
           dir(data_dir)[osm_file_occurences]
         )
         self$path <- path
         self$size <- file.info(path)$size * 0.000001
-
+        assign("extract_path", path, envir = pkg_cache)
       # If more than one file is an extract, can't choose one.
       } else if (sum(osm_file_occurences) > 1) {
         cli::cli_alert_warning(
@@ -156,7 +156,7 @@ ORSExtract <- R6::R6Class(
       # older files and download a new one
       } else {
         private$.rm_old_extracts()
-        path <- paste0(data_dir, "/", providers[i], "_", file_name)
+        path <- file.path(data_dir, paste0(providers[i], "_", file_name))
 
         cli::cli_progress_step(
           "Downloading the OSM extract...",
@@ -189,10 +189,10 @@ ORSExtract <- R6::R6Class(
       }
 
       # Set the extract
-      self$path <- data_dir
+      self$path <- path
       self$size <- round(size, 2)
       assign("extract_path", path, envir = pkg_cache)
-      return(path)
+      invisible(path)
     },
 
     #' @description Moves a given OSM extract to the ORS data directory
@@ -205,8 +205,8 @@ ORSExtract <- R6::R6Class(
       self$path <- private$.move_extract(extract_path)
       self$size <- round(file.info(extract_path)$size * 0.000001, 2)
 
-      assign("extract_path", extract_path, envir = pkg_cache)
-      return(extract_path)
+      assign("extract_path", self$path, envir = pkg_cache)
+      return(self$path)
     }
   ),
 
@@ -233,7 +233,7 @@ ORSExtract <- R6::R6Class(
       if (sum(extract_occurences) > 0) {
         cli::cli_alert_info("Removing old extracts...")
         for (extract in dir(data_dir)[extract_occurences]) {
-          file.remove(paste0(data_dir, extract))
+          file.remove(file.path(data_dir, extract))
         }
       }
     }

@@ -284,10 +284,13 @@ query.ors.directions <- function(
     )
   parsed_response <- jsonlite::fromJSON(response)
 
-  if (
-    !is.null(parsed_response$error) &&
-    !is.null(parsed_response$error$message)
-  ) {
+  if (!is.null(parsed_response$error)) {
+
+    if (is.null(parsed_response$error$message))
+      parsed_response$
+        error$
+        message <- fill_empty_error_message(parsed_response$error$code)
+
     cli::cli_abort(
       c(
         "ORS returned the following error:",
@@ -296,7 +299,8 @@ query.ors.directions <- function(
           parsed_response$error$code,
           ": ",
           parsed_response$error$message
-        )
+        ),
+        "i" = get_error_tip(parsed_response$error$code)
       )
     )
   }
@@ -377,41 +381,28 @@ query.ors.matrix <- function(
       header
     ) %>%
     httr::content(
-      as = "parsed",
+      as = "text",
       type = "application/json",
       encoding = "UTF-8"
     )
+  parsed_response <- jsonlite::fromJSON(response)
 
-  if (!is.null(response$error)) {
-
-    error_tip <- NULL
-
-    if (
-      response$error$code == 6099 &&
-      any(sapply(c("walking", "hiking", "cycling"), grepl, profile)
-      )
-    ) {
-      error_tip <- paste(
-        "This error code typically occurs with with walking or cycling",
-        "profiles. Try increasing {.val maximum_visited_nodes} in the",
-        "ORS configuration file."
-      )
-    }
+  if (!is.null(parsed_response$error)) {
 
     cli::cli_abort(
       c(
         "ORS returned the following error:",
         "!" = paste0(
           "Code ",
-          response$error$code,
+          parsed_response$error$code,
           ": ",
-          response$error$message
+          parsed_response$error$message
         ),
-        "i" = error_tip
+        "i" = get_error_tip(parsed_response$error$code)
       )
     )
   }
-  return(response)
+  return(parsed_response)
 }
 
 

@@ -137,7 +137,7 @@ ORSDockerInterface <- R6::R6Class(
     #' and specifies the port.
     #' @param port Integer scalar. Port that the server should run on.
     initialize = function() {
-      if (is.unix()) {
+      if (is.linux()) {
         cli::cli_alert_warning(
           "{.cls ORSInstance} needs superuser permissions to communicate with Docker"
         )
@@ -162,7 +162,7 @@ ORSDockerInterface <- R6::R6Class(
     #' soon as the service is ready. If \code{FALSE}, the function will start
     #' the container and then stop. To check the server status, you can then
     #' call \code{$service_ready} or \code{\link{ors_ready}}.
-    image_up = function(wait = TRUE) {
+    image_up = function(wait = TRUE, verbose = TRUE) {
       if (!self$docker_running) {
         cli::cli_abort("Docker is not running.")
       }
@@ -174,11 +174,21 @@ ORSDockerInterface <- R6::R6Class(
       self$error_log <- NULL
       private$.set_port()
 
-      auth_system(
+      ecode <- auth_system(
         paste("docker compose -f",
               file.path(super$dir, "docker/docker-compose.yml"),
-              "up -d")
+              "up -d"),
+        stdout = if (isTRUE(verbose)) "" else FALSE,
+        stderr = if (isTRUE(verbose)) "" else FALSE
       )
+
+      if (!is.na(ecode)) {
+        cli::cli_abort(
+          c("The container setup encountered an error.",
+            paste("Error code", ecode)
+          )
+        )
+      }
 
       if (wait) {
         private$.notify_when_ready()
@@ -202,7 +212,7 @@ ORSDockerInterface <- R6::R6Class(
         auth_system(
           paste("docker compose -f",
                 file.path(super$dir, "docker/docker-compose.yml"),
-                "down --rmi 'all'"
+                "down"
           )
         )
       } else {
@@ -306,7 +316,7 @@ ORSDockerInterface <- R6::R6Class(
           } else {
             cli::cli_abort("Something went wrong while starting Docker.")
           }
-        } else if (is.unix()) {
+        } else if (is.linux()) {
           auth_system("systemctl start docker")
         }
       }
@@ -351,30 +361,7 @@ ORSDockerInterface <- R6::R6Class(
       cli::cli_progress_done()
 
       if (!silently) {
-        switch(
-          Sys.info()["sysname"],
-          Windows = {
-            system("rundll32 user32.dll, MessageBeep -1")
-            system("msg * \"ORS Service is ready!\"")
-          },
-          Darwin = {
-            system(
-              paste("osascript -e 'display notification",
-                    "\"ORS Service is ready!\"",
-                    "with title",
-                    "\"Message from R\"")
-            )
-          },
-          Linux = {
-            system(
-              "paplay /usr/share/sounds/freedesktop/stereo/complete.oga"
-            )
-            system(
-              paste("notify-send \"ORS Service is ready!\"",
-                    "\"Message from R\"")
-            )
-          }
-        )
+        notify("ORS Service is ready.")
       }
       # TODO: Implement a function that cleans up if an error occurred
       invisible(NULL)

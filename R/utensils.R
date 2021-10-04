@@ -209,8 +209,10 @@ file.open <- function(file) {
 }
 
 
-relativePath <- function(absolute_path) {
-  relative_path <- gsub(sprintf("%s|%s/", getwd(), getwd()), "", absolute_path)
+relativePath <- function(targetdir, basedir = getwd()) {
+  relative_path <- gsub(pattern = sprintf("%s|%s/", basedir, basedir),
+                        replacement = "",
+                        x = targetdir)
   if (relative_path == "") {
     relative_path <- "."
   }
@@ -218,15 +220,30 @@ relativePath <- function(absolute_path) {
 }
 
 
-ensure_permission <- function(command) {
-  paste0(
-    switch(
-      EXPR = Sys.info()["sysname"],
-      Linux = "sudo -S ",
-      Darwin = "sudo "
-    ),
-  command
-  )
+notify <- function(msg) {
+  if (is.windows()) {
+    system("rundll32 user32.dll, MessageBeep -1")
+    system(sprintf("msg * \"%s\"", msg))
+
+  } else if (is.linux()) {
+    system(
+      "paplay /usr/share/sounds/freedesktop/stereo/complete.oga"
+    )
+    system(
+      paste(sprintf("notify-send \"%s\"", msg),
+            "\"Message from R\"")
+    )
+
+  } else if (is.macos()) {
+
+    system(
+      paste("osascript -e 'display notification",
+            sprintf("\"%s\"", msg),
+            "with title",
+            "\"Message from R\"")
+    )
+  }
+  invisible(NULL)
 }
 
 
@@ -240,8 +257,12 @@ is.windows <- function() {
 }
 
 
-is.unix <- function() {
-  .Platform$OS.type == "unix"
+is.linux <- function() {
+  Sys.info()["sysname"] == "Linux"
+}
+
+is.macos <- function() {
+  Sys.info()["sysname"] == "Darwin"
 }
 
 
@@ -249,11 +270,18 @@ auth_system <- function(command, ...) {
   if (is.windows()) {
     cmd <- unlist(strsplit(command, " "))
     flags <- paste0(tail(cmd, -1), collapse = " ")
-    return(system2(command = cmd[1], args = flags, ...))
-  } else if (is.unix()) {
-    return(system2(command = "sudo",
-                   args = paste("-S", command),
-                   input = if (is.rstudio()) rstudioapi::askForPassword()))
+    return(
+      system2(command = cmd[1],
+              args = flags,
+              ...)
+    )
+  } else if (is.linux()) {
+    return(
+      system2(command = "sudo",
+              args = paste("-S", command),
+              input = if (is.rstudio()) rstudioapi::askForPassword(),
+              ...)
+    )
   }
 }
 

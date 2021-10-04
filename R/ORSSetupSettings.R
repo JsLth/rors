@@ -61,7 +61,7 @@ ORSSetupSettings <- R6::R6Class(
           return(NA)
         }
       } else {
-        if(is.null(super$extract$path) && !is.na(mode)) {
+        if(is.null(pkg_cache$extract_path) && !is.na(mode)) {
           cli::cli_warn(
             paste(
               "Please set an extract before calling {.var $graph_building}"
@@ -93,8 +93,11 @@ ORSSetupSettings <- R6::R6Class(
             build = list(
               context = "../",
               args = list(
-                ORS_CONFIG = sprintf("./%s", "docker/data/ors-config.json"),
-                OSM_FILE = sprintf("./%s", relativePath(super$extract$path))
+                ORS_CONFIG = sprintf("./%s",
+                                     "docker/data/ors-config.json"),
+                OSM_FILE = sprintf("./%s",
+                                   relativePath(pkg_cache$extract_path,
+                                                super$dir))
               )
             )
           )
@@ -114,7 +117,8 @@ ORSSetupSettings <- R6::R6Class(
         } else if (identical(mode, "change")) {
           private$.force_graphbuilding(handle = TRUE)
           change_node <- sprintf("./%s:/ors-core/data/osm_file.pbf",
-                                 relativePath(super$extract$path))
+                                 relativePath(pkg_cache$extract_path,
+                                              file.path(super$dir, "docker")))
 
           self$
             compose$
@@ -182,10 +186,10 @@ ORSSetupSettings <- R6::R6Class(
         private$.write_memory(init, max)
       } else if (is.null(init) && is.null(max)) {
         if (
-          !is.null(super$extract$size) &&
+          !is.null(file.info(pkg_cache$extract_path)$size * 0.000001) &&
           !is.null(super$config$active_profiles)
         ) {
-          max <- round(super$extract$size, -2) *
+          max <- round(file.info(pkg_cache$extract_path)$size * 0.000001, -2) *
             2.5 *
             length(super$config$active_profiles) / 1000
           init <- max / 2

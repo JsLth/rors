@@ -16,11 +16,9 @@ clear_cache <- function() {
 
 get_container_info <- function() {
   if (is.null(pkg_cache$container_info)) {
-    container_info <- system(
-      ensure_permission(
-        "docker container inspect ors-app"
-      ),
-      intern = TRUE
+    container_info <- auth_system(
+      "docker container inspect ors-app",
+      stdout = TRUE
     ) %>%
       paste0(collapse = "\n") %>%
       jsonlite::fromJSON()
@@ -163,4 +161,42 @@ get_ors_port <- function() {
   } else {
     return(pkg_cache$port)
   }
+}
+
+
+fill_empty_error_message <- function(code) {
+  switch(
+    as.character(code),
+    `2000` = "Unable to parse JSON request.",
+    `2001` = "Required parameter is missing.",
+    `2002` = "Invalid parameter format.",
+    `2003` = "Invalid parameter value.",
+    `2004` = "Parameter value exceeds the maximum allowed limit.",
+    `2006` = "Unable to parse the request to the export handler.",
+    `2007` = "Unsupported export format.",
+    `2008` = "Empty Element.",
+    `2009` = "Route could not be found between locations.",
+    `2099` = "Unknown internal error.",
+    `6000` = "Unable to parse JSON request.",
+    `6001` = "Required parameter is missing.",
+    `6002` = "Invalid parameter format.",
+    `6003` = "Invalid parameter value.",
+    `6004` = "Parameter value exceeds the maximum allowed limit.",
+    `6006` = "Unable to parse the request to the export handler.",
+    `6007` = "Unsupported export format.",
+    `6008` = "Empty Element.",
+    `6099` = "Unknown internal error."
+  )
+}
+
+
+get_error_tip <- function(code) {
+  switch(
+    as.character(code),
+    `2099` = paste("This error code might indicate that some or all input",
+                  "coordinates fall outside of the extract coverage."),
+    `6099` = paste("This error code typically occurs with with walking or",
+                  "cycling profiles and matrix queries. Try increasing",
+                  "{.val maximum_visited_nodes} in the ORS configuration file.")
+  )
 }
