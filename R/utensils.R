@@ -228,3 +228,13 @@ ensure_permission <- function(command) {
   command
   )
 }
+
+
+system3 <- function() {
+
+}
+
+
+errorifnot <- function() {
+
+}

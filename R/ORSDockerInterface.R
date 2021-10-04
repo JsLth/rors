@@ -118,8 +118,9 @@ ORSDockerInterface <- R6::R6Class(
         private$.watch_for_error()
       } else {
         if (is.null(arg) || is.na(arg)) {
-          if (dir.exists("docker/logs")) {
-            code <- unlink("docker/logs", recursive = TRUE, force = TRUE)
+          logs_dir <- file.path(super$dir, "docker/logs")
+          if (dir.exists(logs_dir)) {
+            code <- unlink(logs_dir, recursive = TRUE, force = TRUE)
             if (code == 0) {
               private$.watch_for_error()
             } else {
@@ -190,7 +191,7 @@ ORSDockerInterface <- R6::R6Class(
         ensure_permission(
           paste(
             "docker compose -f",
-            normalizePath("docker/docker-compose.yml"),
+            normalizePath(file.path(super$dir, "docker/docker-compose.yml")),
             "up -d"
           )
         )
@@ -218,7 +219,7 @@ ORSDockerInterface <- R6::R6Class(
         system(
           ensure_permission(
             "docker compose -f",
-            normalizePath("docker/docker-compose.yml"),
+            normalizePath(file.path(super$dir, "docker/docker-compose.yml")),
             "down --rmi 'all'"
           )
         )
@@ -286,7 +287,9 @@ ORSDockerInterface <- R6::R6Class(
             append("Docker Desktop.exe") %>%
             paste(collapse = "/") %>%
             shQuote()
+
           scode <- file.open(docker_desktop)
+
           # If Docker is installed, it will try to open
           if (scode == 0) {
             timer <- 0
@@ -296,6 +299,7 @@ ORSDockerInterface <- R6::R6Class(
               msg_done = "Docker Desktop is now running.",
               msg_failed = "The Docker startup has timed out."
             )
+
             # Check if Docker is usable by running a Docker command
             while (
               system(
@@ -338,12 +342,14 @@ ORSDockerInterface <- R6::R6Class(
           )
         )
       }
+
       cli::cli_progress_step(
         "Starting service",
         spinner = TRUE,
         msg_done = "Service setup done. ORS should now be ready to use.",
         msg_failed = "Service setup failed."
       )
+
       while (!self$service_ready) {
         for (i in seq_len(interval * 10)) {
           cli::cli_progress_update()
@@ -359,7 +365,9 @@ ORSDockerInterface <- R6::R6Class(
           )
         }
       }
+
       cli::cli_progress_done()
+
       if (!silently) {
         switch(
           Sys.info()["sysname"],
@@ -403,31 +411,34 @@ ORSDockerInterface <- R6::R6Class(
       } else {
         cli::cli_abort("Wrong directory.")
       }
+
+      logs_dir <- file.path(super$dir, "docker/logs")
+
       if (
-        dir.exists("docker/logs") &&
-        is.element(c("ors", "tomcat"), dir("docker/logs")) &&
-        length(dir("docker/logs/ors")) != 0 &&
-        length(dir("docker/logs/tomcat")) != 0
+        dir.exists(logs_dir) &&
+        is.element(c("ors", "tomcat"), dir(logs_dir)) &&
+        length(dir(file.path(logs_dir, "ors"))) != 0 &&
+        length(dir(file.path(logs_dir, "tomcat"))) != 0
       ) {
-        log_date <- file.info("docker/logs/ors/ors.log")$ctime %>%
+        log_date <- file.info(file.path(logs_dir, "ors/ors.log"))$ctime %>%
           format(tz = "UTC") %>%
           as.Date()
         logs <- c(
           # Logs from Apache Tomcats web container
           tryCatch(
-            expr = readLines("docker/logs/tomcat/catalina.%s.log" %>%
-              sprintf(log_date)),
+            expr = readLines(file.path(logs_dir, "tomcat/catalina.%s.log" %>%
+              sprintf(log_date))),
             error = function(e) "Log not available"
           ),
           # Logs from Apache Tomcats local host
           tryCatch(
-            expr = readLines("docker/logs/tomcat/localhost.%s.log" %>%
-              sprintf(log_date)),
+            expr = readLines(file.path(logs_dir, "tomcat/localhost.%s.log" %>%
+              sprintf(log_date))),
             error = function(e) "Log not available"
           ),
           # Logs from OpenRouteService (this sometimes stops logging)
           tryCatch(
-            expr = readLines("docker/logs/ors/ors.log"),
+            expr = readLines(file.path(logs_dir, "ors/ors.log")),
             error = function(e) "Log not available"
           ),
           # Output from Dockers logs command (this never stops logging)

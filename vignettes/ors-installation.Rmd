@@ -47,10 +47,10 @@ ors
 
 Generally, the workflow to install the ORS backup consists of four steps:
 
-- Set or get an extract
-- Adjust the configurations in ors-config.json
-- Change the default setup settings in docker-compose.yml
-- Build the image and start the container
+- Set or get an extract (`$extract`)
+- Adjust the configurations in ors-config.json (`$config`)
+- Change the default setup settings in docker-compose.yml (`$setup_settings`)
+- Build the image and start the container (`$docker`)
 
 All of these steps can be done manually, however the method `$init_setup` is happy to take over steps 2-4.
 

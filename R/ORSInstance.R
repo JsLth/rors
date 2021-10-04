@@ -61,10 +61,8 @@ ORSInstance <- R6::R6Class(
   active = list(
 
     #' @field dir Path to the ORS main directory
-    dir = function(...) {
-      if (missing(...)) {
-        pkg_cache$mdir
-      }
+    dir = function() {
+      pkg_cache$mdir
     },
 
     #' @field extract ORSExtract environment. Refer to
@@ -134,9 +132,11 @@ ORSInstance <- R6::R6Class(
         dir <- private$.clone_ors_repo()
       }
       assign("mdir", dir, envir = pkg_cache)
-      setwd(dir)
 
       self$docker
+      self$extract
+      self$setup_settings
+      self$config
     },
 
     #' @description Changes the necessary settings and configurations for the
@@ -236,17 +236,10 @@ ORSInstance <- R6::R6Class(
         "GIScience/openrouteservice/archive/refs/heads/master.zip"
       )
 
-      if (!missing(dir) && dir.exists(dir)) {
-        setwd(dir)
-      } else {
-        pkg_path <- system.file(package = "ORSRouting")
-        if(dir.exists(pkg_path)) {
-          dir <- pkg_path
-          setwd(dir)
-        } else {
-          cli::cli_abort("Could not find the target directory.")
-        }
+      if (missing(dir)) {
+        dir <- system.file(package = "ORSRouting")
       }
+      stopifnot(dir.exists(dir))
 
       if (!dir.exists(basedir)) {
         zip_file <- "openrouteservice.zip"

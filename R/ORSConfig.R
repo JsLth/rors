@@ -68,32 +68,34 @@ ORSConfig <- R6::R6Class(
     #' @description Initializes the `ORSConfig` class. Specifies the config
     #' path, copies the config files if necessary and reads them.
     initialize = function() {
-      if (basename(getwd()) == "openrouteservice-master") {
-        if (dir.exists("docker/conf")) {
-          config <- jsonlite::read_json("docker/conf/ors-config.json")
-          self$path <- "docker/conf/ors-config.json"
-        } else if (file.exists("docker/data/ors-config.json")) {
-          config <- jsonlite::read_json("docker/data/ors-config.json")
-          self$path <- "docker/data/ors-config.json"
-        } else {
-          file.copy(
-            "openrouteservice/src/main/resources/ors-config-sample.json",
-            "docker/data"
-          )
-          file.rename(
-            "docker/data/ors-config-sample.json",
-            "docker/data/ors-config.json"
-          )
-          config <- jsonlite::read_json("docker/data/ors-config.json")
-          self$path <- "docker/data/ors-config.json"
-        }
-        self$ors_config <- config
-        self$save_config()
+      conf_dir <- file.path(super$dir, "docker/conf")
+      data_dir <- file.path(super$dir, "docker/data")
+
+      if (dir.exists(conf_dir)) {
+        config <- jsonlite::read_json(file.path(conf_dir,
+                                                "ors-config.json"))
+        self$path <- file.path(conf_dir, "ors-config.json")
+      } else if (file.exists(file.path(data_dir, "ors-config.json"))) {
+        config <- jsonlite::read_json(file.path(data_dir, "ors-config.json"))
+        self$path <- file.path(data_dir, "ors-config.json")
       } else {
-        cli::cli_abort(
-          "{.cls ORSConfig} must be initialized from the ORS main directory."
+        file.copy(
+          file.path(
+            super$dir,
+            "openrouteservice/src/main/resources/ors-config-sample.json"
+          ),
+          data_dir
         )
+        file.rename(
+          file.path(data_dir, "ors-config-sample.json"),
+          file.path(data_dir, "ors-config.json")
+        )
+        config <- jsonlite::read_json(file.path(data_dir, "ors-config.json"))
+        self$path <- file.path(data_dir, "ors-config.json")
       }
+
+      self$ors_config <- config
+
       invisible(self)
     },
 
@@ -101,15 +103,19 @@ ORSConfig <- R6::R6Class(
     #' with all changed fields. This should be run each time after changing
     #' any configurations.
     save_config = function() {
+      conf_dir <- file.path(super$dir, "docker/conf")
+      data_dir <- file.path(super$dir, "docker/data")
+
       config_json <- jsonlite::toJSON(
         self$ors_config,
         auto_unbox = TRUE,
         pretty = TRUE
       )
-      if (dir.exists("docker/conf")) {
-        cat(config_json, file = "docker/conf/ors-config.json")
+
+      if (dir.exists(conf_dir)) {
+        cat(config_json, file = file.path(conf_dir, "ors-config.json"))
       } else {
-        cat(config_json, file = "docker/data/ors-config.json")
+        cat(config_json, file = file.path(data_dir, "ors-config.json"))
       }
     },
 
@@ -119,6 +125,7 @@ ORSConfig <- R6::R6Class(
       file.open(normalizePath(self$path, winslash = "/"))
     }
   ),
+
   private = list(
     .translate_profiles = function(profiles) {
       translator <- data.frame(
@@ -132,6 +139,7 @@ ORSConfig <- R6::R6Class(
           "bike-electric", "walking", "hiking", "wheelchair"
         )
       )
+
       translate <- function(profile) {
         if (profile %in% translator$normal_names) {
           translator$config_names[translator$normal_names == profile]
@@ -147,6 +155,7 @@ ORSConfig <- R6::R6Class(
           NULL
         }
       }
+
       translated_profiles <- lapply(profiles, translate) %>%
         purrr::discard(is.null) %>%
         unname()

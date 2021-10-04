@@ -19,6 +19,15 @@
 ORSExtract <- R6::R6Class(
   classname = "ORSExtract",
   inherit = ORSInstance,
+  active = list(
+    data_dir = function() {
+      if (is.null(private$.dir_storage)) {
+        private$.dir_storage <- file.path(super$dir, "docker/data")
+      }
+      private$.dir_storage
+    }
+  ),
+
   public = list(
 
     #' @field path Relative path to the extract.
@@ -30,10 +39,15 @@ ORSExtract <- R6::R6Class(
     #' @description Initializes \code{\link{ORSExtract}} and looks for an
     #' existing extract in data path.
     initialize = function() {
-      osm_file_occurences <- dir("docker/data") %>%
+      data_dir <- file.path(super$dir, "docker/data")
+
+      osm_file_occurences <- dir(data_dir) %>%
         grepl(".pbf|.osm.gz|.osm.zip|.osm", .)
       if (sum(osm_file_occurences) == 1) {
-        path <- paste0("docker/data/", dir("docker/data")[osm_file_occurences])
+        path <- paste0(
+          data_dir,
+          dir(data_dir)[osm_file_occurences]
+        )
         self$path <- path
         self$size <- file.info(path)$size * 0.000001
       } else if (sum(osm_file_occurences) > 1) {
@@ -60,12 +74,13 @@ ORSExtract <- R6::R6Class(
     #' \code{\link{ORSSetupSettings}} to process the extract. This directory is
     #' not mutable because Docker expects a relative path to its main directory.
     get_extract = function(place, ...) {
-      download_path <- "docker/data"
+      data_dir <- file.path(super$dir, "docker/data")
       ok <- TRUE
       i <- 0
       providers <- suppressMessages({
         osmextract::oe_providers()$available_providers
       })
+
       cli::cli_alert_info("Trying different extract providers...")
       while (ok && i < length(providers)) {
         i <- i + 1
@@ -111,7 +126,7 @@ ORSExtract <- R6::R6Class(
         )
         invokeRestart("abort")
       }
-      file_occurences <- grepl(file_name, dir(download_path))
+      file_occurences <- grepl(file_name, dir(data_dir))
       if (sum(file_occurences) == 1) {
         cli::cli_alert_info(
           paste(
@@ -120,14 +135,14 @@ ORSExtract <- R6::R6Class(
           )
         )
         path <- paste(
-          download_path,
-          dir(download_path)[file_occurences],
+          data_dir,
+          dir(data_dir)[file_occurences],
           sep = "/"
         )
         cli::cli_text("Download path: {.file {path}}")
       } else {
         private$.rm_old_extracts()
-        path <- paste0(download_path, "/", providers[i], "_", file_name)
+        path <- paste0(data_dir, "/", providers[i], "_", file_name)
         cli::cli_progress_step(
           "Downloading the OSM extract...",
           msg_done = paste(
@@ -139,7 +154,7 @@ ORSExtract <- R6::R6Class(
         osmextract::oe_download(
           place_match$url,
           provider = providers[i],
-          download_directory = normalizePath(download_path, winslash = "/"),
+          download_directory = data_dir,
           quiet = TRUE
         )
         cli::cli_progress_done()
@@ -153,7 +168,7 @@ ORSExtract <- R6::R6Class(
           )
         )
       }
-      self$path <- relativePath(path)
+      self$path <- data_dir
       self$size <- round(size, 2)
       assign("extract_path", path, envir = pkg_cache)
       return(path)
@@ -165,7 +180,7 @@ ORSExtract <- R6::R6Class(
     #' or `.osm.zip`.
     set_extract = function(extract_path) {
       if (file.exists(extract_path)) {
-        self$path <- relativePath(private$.move_extract(extract_path))
+        self$path <- private$.move_extract(extract_path)
         self$size <- round(file.info(extract_path)$size * 0.000001, 2)
       } else {
         cli::cli_abort("{.file {extract_path}} does not exist.")
@@ -174,8 +189,11 @@ ORSExtract <- R6::R6Class(
       return(extract_path)
     }
   ),
+
   private = list(
+
     .move_extract = function(extract_path) {
+      data_dir <- file.path(super$dir, "docker/data")
       # Derive file name from file path
       file_name <- extract_path %>%
       strsplit("/") %>%
@@ -183,17 +201,18 @@ ORSExtract <- R6::R6Class(
       tail(1)
 
       # Move extract to ./docker/data
-      file.copy(extract_path, "docker/data")
-      paste("docker/data", file_name, sep = "/")
+      file.copy(extract_path, data_dir)
+      file.path(data_dir, file_name)
     },
+
     .rm_old_extracts = function() {
-      path <- normalizePath("docker/data", winslash = "/")
-      extract_occurences <- dir(path) %>%
+      data_dir <- file.path(super$dir, "docker/data")
+      extract_occurences <- dir(data_dir) %>%
         grepl(".pbf|.osm.gz|.osm.zip|.osm|.gpkg", .)
       if (sum(extract_occurences) > 0) {
         cli::cli_alert_info("Removing old extracts...")
-        for (extract in dir(path)[extract_occurences]) {
-          file.remove(paste0("docker/data/", extract))
+        for (extract in dir(data_dir)[extract_occurences]) {
+          file.remove(paste0(data_dir, extract))
         }
       }
     }

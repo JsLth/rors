@@ -93,11 +93,12 @@ ORSSetupSettings <- R6::R6Class(
             build = list(
               context = "../",
               args = list(
-                ORS_CONFIG = "./%s" %>% sprintf("docker/data/ors-config.json"),
-                OSM_FILE = "./%s" %>% sprintf(super$extract$path)
+                ORS_CONFIG = sprintf("./%s", "docker/data/ors-config.json"),
+                OSM_FILE = sprintf("./%s", relativePath(super$extract$path))
               )
             )
           )
+
           self$
             compose$
             services$
@@ -106,20 +107,24 @@ ORSSetupSettings <- R6::R6Class(
             build_branch,
             after = 3
           )
+
           self$save_compose()
           return(mode)
+
         } else if (identical(mode, "change")) {
           private$.force_graphbuilding(handle = TRUE)
-          change_node <- "./%s:/ors-core/data/osm_file.pbf" %>%
-            sprintf(super$extract$path)
+          change_node <- sprintf("./%s:/ors-core/data/osm_file.pbf",
+                                 relativePath(super$extract$path))
 
           self$
             compose$
             services$
             `ors-app`$
             volumes[6] <- change_node
+
           self$save_compose()
           return(mode)
+
         } else {
           cli::cli_abort(
             "{.var $graph_building} expects a character scalar or NA"
@@ -128,6 +133,7 @@ ORSSetupSettings <- R6::R6Class(
       }
     }
   ),
+
   public = list(
 
     #' @field compose `docker-compose.yml`, parsed as a list. Blocks and items
@@ -183,11 +189,11 @@ ORSSetupSettings <- R6::R6Class(
           private$.write_memory(init, max)
         } else {
           cli::cli_abort(
-            paste(
-              "Initialize {.cls ORSExtract} and {.cls ORSConfig} before",
-              "changing the setup settings or pass a fixed amount of memory.",
-              "The memory estimation is based on the extract size and the",
-              "number of active profiles."
+            c(
+              paste("Set an extract and the active profiles or pass a",
+                    "fixed amount of memory to be allocated."),
+              paste("The memory estimation is based on the extract size and",
+                    "the number of profiles.")
             )
           )
         }
@@ -219,10 +225,12 @@ ORSSetupSettings <- R6::R6Class(
     #' @description Opens the raw compose file to allow manual changes. Useful
     #' if you find the list structure of the parsed yaml impractical.
     open_compose = function() {
-      file.open(normalizePath("docker/docker-compose.yml", winslash = "/"))
+      file.open(file.path(super$dir, "docker/data/docker-compose.yml"))
     }
   ),
+
   private = list(
+
     .write_memory = function(init, max) {
       java_options <- self$compose$services$`ors-app`$environment[2]
       java_mem <- strsplit(java_options, " ") %>%
@@ -256,25 +264,33 @@ ORSSetupSettings <- R6::R6Class(
 
     .disable_auto_deletion = function() {
       # Don't delete any profiles. Setup every profile at first start.
-      dockerfile <- readLines("Dockerfile", warn = FALSE)
+      dockerfile_path <- file.path(super$dir, "Dockerfile")
+
+      dockerfile <- readLines(dockerfile_path, warn = FALSE)
       delete_line <- grep("Delete all profiles but car", dockerfile)
+
       if (length(delete_line) > 0) {
         lines_to_be_deleted <- c(delete_line,
                                delete_line + 1,
                                delete_line + 2)
+
         dockerfile[seq(delete_line - 2, delete_line - 1)] <- gsub(
         " && \\\\",
         "",
         dockerfile[seq(delete_line - 2, delete_line - 1)]
         )
+
       dockerfile <- dockerfile[-lines_to_be_deleted] %>%
         paste0(collapse = "\n")
-      cat(dockerfile, file = "Dockerfile")
+
+      cat(dockerfile, file = dockerfile_path)
       }
     },
+
     .read_dockercompose = function() {
-      yaml::read_yaml("docker/docker-compose.yml")
+      yaml::read_yaml(file.path(super$dir, "docker/docker-compose.yml"))
     },
+
     .write_dockercompose = function() {
       # Preserve options before they get put in quotes to not mess up the
       # parsed yaml after saving the settings
@@ -353,7 +369,7 @@ ORSSetupSettings <- R6::R6Class(
       # Write new yaml to old yaml file
       cat(
         corrected_yml_string,
-        file = "docker/docker-compose.yml"
+        file = file.path(super$dir, "docker/docker-compose.yml")
       )
 
       self$

@@ -96,14 +96,11 @@ get_ors_dir <- function(force = TRUE) {
   if (is.null(pkg_cache$mdir) || isTRUE(force)) {
     container_info <- get_container_info()
     mdir <- container_info$Config$Labels$com.docker.compose.project.working_dir
-    mdir <- normalizePath(mdir, winslash = "/")
-
-    while(!basename(mdir) == "openrouteservice-master") {
-      mdir <- strsplit(mdir, "/") %>%
-        unlist() %>%
-        head(-1) %>%
-        paste0(collapse = "/")
-    }
+    mdir <- normalizePath(mdir, winslash = "/") %>%
+      strsplit(mdir, "/") %>%
+      unlist() %>%
+      head(-1) %>%
+      paste0(collapse = "/")
 
     assign("mdir", mdir, envir = pkg_cache)
     return(mdir)
