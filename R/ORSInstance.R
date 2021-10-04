@@ -176,7 +176,7 @@ ORSInstance <- R6::R6Class(
         if (
           (self$docker$service_ready == "TRUE" ||
           self$docker$image_built == "TRUE" ||
-          dir.exists("docker/graphs")) &&
+          dir.exists(file.path(self$dir, "docker/graphs"))) &&
           is.null(self$docker$error_log)
         ) {
           return(TRUE)
@@ -239,7 +239,7 @@ ORSInstance <- R6::R6Class(
       if (missing(dir)) {
         dir <- system.file(package = "ORSRouting")
       }
-      stopifnot(dir.exists(dir))
+      cli_abortifnot(dir.exists(dir))
 
       if (!dir.exists(basedir)) {
         zip_file <- "openrouteservice.zip"

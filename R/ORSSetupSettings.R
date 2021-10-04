@@ -169,6 +169,9 @@ ORSSetupSettings <- R6::R6Class(
     #' The' container will start with the initial memory and increases the
     #' memory usage up to the maximum memory if necessary.
     allocate_memory = function(init = NULL, max = NULL) {
+      cli_abortifnot(is.null(init) || is.numeric(init))
+      cli_abortifnot(is.null(max) || is.numeric(max))
+
       if (is.numeric(init) && is.numeric(max)) {
         private$.write_memory(init, max)
       } else if (is.numeric(init) && is.null(max)) {
@@ -197,11 +200,11 @@ ORSSetupSettings <- R6::R6Class(
             )
           )
         }
-      } else {
-        cli::cli_abort("Either pass a numeric or nothing.")
       }
+
       gc(verbose = FALSE)
       free_mem <- memuse::Sys.meminfo()$freeram@size
+
       if (free_mem * 0.8 - max <= 0) {
         cli::cli_warn(
           paste(
@@ -210,6 +213,7 @@ ORSSetupSettings <- R6::R6Class(
           )
         )
       }
+
       self$memory$init_memory <- init
       self$memory$max_memory <- max
       self$save_compose()
@@ -263,7 +267,7 @@ ORSSetupSettings <- R6::R6Class(
     },
 
     .disable_auto_deletion = function() {
-      # Don't delete any profiles. Setup every profile at first start.
+      # Don't delete any profiles. Set up every profile at first start.
       dockerfile_path <- file.path(super$dir, "Dockerfile")
 
       dockerfile <- readLines(dockerfile_path, warn = FALSE)

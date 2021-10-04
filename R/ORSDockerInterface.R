@@ -20,10 +20,10 @@ ORSDockerInterface <- R6::R6Class(
     #' @field docker_running Checks if the Docker daemon is running.
     docker_running = function(arg) {
       if (missing(arg)) {
-        docker_check <- system(
-          ensure_permission("docker ps"),
-          ignore.stdout = TRUE,
-          ignore.stderr = TRUE
+        docker_check <- auth_system(
+          "docker ps",
+          stdout = FALSE,
+          stderr = FALSE
         )
         docker_check == 0
       } else {
@@ -34,13 +34,10 @@ ORSDockerInterface <- R6::R6Class(
     #' @field image_built Checks if the openrouteservice:latest image exists.
     image_built = function(arg) {
       if (missing(arg)) {
-        image_name <- system(
-          ensure_permission(
-            paste(
-              "docker images \"openrouteservice/openrouteservice\"",
-              "--format {{.Repository}}"
-            )
-          ), intern = TRUE
+        image_name <- auth_system(
+          paste("docker images \"openrouteservice/openrouteservice\"",
+                "--format {{.Repository}}"),
+          stdout = TRUE
         )
         length(image_name) > 0
       } else {
@@ -52,11 +49,9 @@ ORSDockerInterface <- R6::R6Class(
     container_exists = function(arg) {
       if (missing(arg)) {
         if (self$docker_running) {
-          system(
-            ensure_permission(
-              "docker ps -a --format \"{{.Names}}\" --filter name=^/ors-app$"
-            ),
-            intern = TRUE
+          auth_system(
+            "docker ps -a --format \"{{.Names}}\" --filter name=^/ors-app$",
+            stdout = TRUE
           ) %>%
             identical("ors-app")
         }
@@ -74,13 +69,11 @@ ORSDockerInterface <- R6::R6Class(
           self$container_exists
         ) {
           container_status <- suppressWarnings(
-            system(
-              ensure_permission(
-                paste(
-                  "docker container ls -a --format \"{{.State}}\"",
-                  "--filter name=^/ors-app$"
-                )
-              ), intern = TRUE, ignore.stderr = TRUE
+            auth_system(
+              paste("docker container ls -a --format \"{{.State}}\"",
+                    "--filter name=^/ors-app$"),
+              stdout = TRUE,
+              stderr = FALSE
             )
           )
           identical(container_status, "running")
@@ -144,19 +137,12 @@ ORSDockerInterface <- R6::R6Class(
     #' and specifies the port.
     #' @param port Integer scalar. Port that the server should run on.
     initialize = function() {
-      if (Sys.info()["sysname"] == "Linux") {
+      if (is.unix()) {
         cli::cli_alert_warning(
           "{.cls ORSInstance} needs superuser permissions to communicate with Docker"
         )
 
-        if (Sys.getenv("RSTUDIO") == 1) {
-          system(
-            "sudo -S ls",
-            ignore.stdout = TRUE,
-            ignore.stderr = FALSE,
-            input = rstudioapi::askForPassword()
-          )
-        } else {
+        if (!is.rstudio()) {
           system(
             "pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY ls",
            ignore.stdout = TRUE,
@@ -164,6 +150,7 @@ ORSDockerInterface <- R6::R6Class(
           )
         }
       }
+
       private$.start_docker()
       invisible(self)
     },
@@ -187,14 +174,10 @@ ORSDockerInterface <- R6::R6Class(
       self$error_log <- NULL
       private$.set_port()
 
-      system(
-        ensure_permission(
-          paste(
-            "docker compose -f",
-            normalizePath(file.path(super$dir, "docker/docker-compose.yml")),
-            "up -d"
-          )
-        )
+      auth_system(
+        paste("docker compose -f",
+              file.path(super$dir, "docker/docker-compose.yml"),
+              "up -d")
       )
 
       if (wait) {
@@ -216,11 +199,10 @@ ORSDockerInterface <- R6::R6Class(
         setwd(super$dir)
         on.exit(setwd(owd))
 
-        system(
-          ensure_permission(
-            "docker compose -f",
-            normalizePath(file.path(super$dir, "docker/docker-compose.yml")),
-            "down --rmi 'all'"
+        auth_system(
+          paste("docker compose -f",
+                file.path(super$dir, "docker/docker-compose.yml"),
+                "down --rmi 'all'"
           )
         )
       } else {
@@ -236,7 +218,7 @@ ORSDockerInterface <- R6::R6Class(
         if (self$container_running) {
           self$stop_container()
         }
-        system(ensure_permission("docker rm ors-app"))
+        auth_system("docker rm ors-app")
       }
     },
 
@@ -251,7 +233,7 @@ ORSDockerInterface <- R6::R6Class(
       if (self$container_exists) {
         self$error_log <- NULL
 
-        system(ensure_permission("docker start ors-app"), ignore.stdout = TRUE)
+        auth_system("docker start ors-app", stdout = FALSE)
 
         if (wait) {
           private$.notify_when_ready(interval = 2, silently = TRUE)
@@ -261,7 +243,7 @@ ORSDockerInterface <- R6::R6Class(
 
     #' @description Stops the container.
     stop_container = function() {
-      system(ensure_permission("docker stop ors-app"), ignore.stdout = TRUE)
+      auth_system("docker stop ors-app", stdout = FALSE)
     }
   ),
 
@@ -279,7 +261,7 @@ ORSDockerInterface <- R6::R6Class(
   .start_docker = function() {
       if (!self$docker_running) {
         if (Sys.info()["sysname"] == "Windows") {
-          docker_path <- system("where docker.exe", intern = TRUE)
+          docker_path <- auth_system("where docker.exe", stdout = TRUE)
           docker_desktop <- docker_path %>%
             strsplit("\\\\") %>%
             unlist() %>%
@@ -302,10 +284,10 @@ ORSDockerInterface <- R6::R6Class(
 
             # Check if Docker is usable by running a Docker command
             while (
-              system(
+              auth_system(
                 "docker ps",
-                ignore.stdout = TRUE,
-                ignore.stderr = TRUE
+                stdout = FALSE,
+                stderr = FALSE
               ) != 0
             ) {
               for (i in 1:100) {
@@ -324,8 +306,8 @@ ORSDockerInterface <- R6::R6Class(
           } else {
             cli::cli_abort("Something went wrong while starting Docker.")
           }
-        } else if (.Platform$OS.type == "unix") {
-          system(ensure_permission("systemctl start docker"))
+        } else if (is.unix()) {
+          auth_system("systemctl start docker")
         }
       }
     },
@@ -377,21 +359,19 @@ ORSDockerInterface <- R6::R6Class(
           },
           Darwin = {
             system(
-              paste(
-                "osascript -e 'display notification",
-                "\"ORS Service is ready!\"",
-                "with title",
-                "\"Message from R\""
-              )
+              paste("osascript -e 'display notification",
+                    "\"ORS Service is ready!\"",
+                    "with title",
+                    "\"Message from R\"")
             )
           },
           Linux = {
-            system("paplay /usr/share/sounds/freedesktop/stereo/complete.oga")
             system(
-              paste(
-                "notify-send \"ORS Service is ready!\"",
-                "\"Message from R\""
-              )
+              "paplay /usr/share/sounds/freedesktop/stereo/complete.oga"
+            )
+            system(
+              paste("notify-send \"ORS Service is ready!\"",
+                    "\"Message from R\"")
             )
           }
         )
@@ -404,14 +384,6 @@ ORSDockerInterface <- R6::R6Class(
       # Searches the OpenRouteService logs for the keyword 'error' and returns
       # their error messages. The function might be called before logs are
       # created. If this is the case, don't stop, just don't return anything.
-      if (grepl("openrouteservice-master", getwd())) {
-        while (basename(getwd()) != "openrouteservice-master") {
-          setwd("..")
-        }
-      } else {
-        cli::cli_abort("Wrong directory.")
-      }
-
       logs_dir <- file.path(super$dir, "docker/logs")
 
       if (
@@ -442,21 +414,9 @@ ORSDockerInterface <- R6::R6Class(
             error = function(e) "Log not available"
           ),
           # Output from Dockers logs command (this never stops logging)
-          if (Sys.info()["sysname"] == "Windows") {
-            system2(
-              "docker",
-              args = "logs ors-app",
-              stdout = FALSE,
-              stderr = TRUE
-            )
-          } else {
-            system2(
-              "sudo",
-              args = "docker logs ors-app",
-              stdout = FALSE,
-              stderr = TRUE
-            )
-          }
+          auth_system("docker logs ors-app",
+                      stdout = FALSE,
+                      stderr = TRUE)
         )
         error_catcher <- function(log) {
           errors <- grep(

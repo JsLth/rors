@@ -19,15 +19,6 @@
 ORSExtract <- R6::R6Class(
   classname = "ORSExtract",
   inherit = ORSInstance,
-  active = list(
-    data_dir = function() {
-      if (is.null(private$.dir_storage)) {
-        private$.dir_storage <- file.path(super$dir, "docker/data")
-      }
-      private$.dir_storage
-    }
-  ),
-
   public = list(
 
     #' @field path Relative path to the extract.
@@ -41,8 +32,11 @@ ORSExtract <- R6::R6Class(
     initialize = function() {
       data_dir <- file.path(super$dir, "docker/data")
 
+      # Get logical vector of OSM extracts (TRUE = extract)
       osm_file_occurences <- dir(data_dir) %>%
         grepl(".pbf|.osm.gz|.osm.zip|.osm", .)
+
+      # If exactly one file is an extract, set it
       if (sum(osm_file_occurences) == 1) {
         path <- paste0(
           data_dir,
@@ -50,6 +44,8 @@ ORSExtract <- R6::R6Class(
         )
         self$path <- path
         self$size <- file.info(path)$size * 0.000001
+
+      # If more than one file is an extract, can't choose one.
       } else if (sum(osm_file_occurences) > 1) {
         cli::cli_alert_warning(
           paste(
@@ -73,6 +69,7 @@ ORSExtract <- R6::R6Class(
     #' also be the directory that is passed to the
     #' \code{\link{ORSSetupSettings}} to process the extract. This directory is
     #' not mutable because Docker expects a relative path to its main directory.
+
     get_extract = function(place, ...) {
       data_dir <- file.path(super$dir, "docker/data")
       ok <- TRUE
@@ -82,6 +79,9 @@ ORSExtract <- R6::R6Class(
       })
 
       cli::cli_alert_info("Trying different extract providers...")
+
+      # While there are providers left to try out, keep trying until
+      # an extract provider is chosen
       while (ok && i < length(providers)) {
         i <- i + 1
         place_match <- osmextract::oe_match(
@@ -90,7 +90,9 @@ ORSExtract <- R6::R6Class(
           quiet = TRUE,
           ...
         )
-        file_name <- strsplit(place_match$url, "/") %>% .[[1]] %>% tail(1)
+
+        file_name <- basename(place_match$url)
+
         cli::cli_alert_info(
           paste(
             "The extract {.file {file_name}} is",
@@ -98,6 +100,7 @@ ORSExtract <- R6::R6Class(
             "and will be downloaded from {.field {providers[i]}}."
           )
         )
+
         if (providers[i] == "bbbike") {
           cli::cli_alert_warning(
             paste(
@@ -106,17 +109,22 @@ ORSExtract <- R6::R6Class(
             )
           )
         }
+
         input <- tolower(
           readline(
             "Should a different provider be tried? (Yes/No/Cancel)"
           )
         )
+
+        # If neither yes or no is given as input, cancel the function
         if (!input %in% c("yes", "no")) {
           cli::cli_alert_danger("Function cancelled.")
           invokeRestart("abort")
         }
         ok <- input == "yes"
       }
+
+      # If the while loop exits and the last answer given is yes, exit
       if (ok) {
         cli::cli_alert_warning(
           paste(
@@ -126,6 +134,8 @@ ORSExtract <- R6::R6Class(
         )
         invokeRestart("abort")
       }
+
+      # If a file with the same name already exists, skip the download
       file_occurences <- grepl(file_name, dir(data_dir))
       if (sum(file_occurences) == 1) {
         cli::cli_alert_info(
@@ -134,15 +144,20 @@ ORSExtract <- R6::R6Class(
             "Download will be skipped."
           )
         )
+
         path <- paste(
           data_dir,
           dir(data_dir)[file_occurences],
           sep = "/"
         )
         cli::cli_text("Download path: {.file {path}}")
+
+      # If no file or several files with the same name exist, remove all
+      # older files and download a new one
       } else {
         private$.rm_old_extracts()
         path <- paste0(data_dir, "/", providers[i], "_", file_name)
+
         cli::cli_progress_step(
           "Downloading the OSM extract...",
           msg_done = paste(
@@ -151,14 +166,18 @@ ORSExtract <- R6::R6Class(
           ),
           msg_failed = "Extract could not be downloaded."
         )
+
         osmextract::oe_download(
           place_match$url,
           provider = providers[i],
           download_directory = data_dir,
           quiet = TRUE
         )
+
         cli::cli_progress_done()
       }
+
+      # If the size is over 6 GB in size, give out a warning
       size <- file.info(path)$size / 1024 / 1024
       if (size >= 6000) {
         cli::cli_alert_warning(
@@ -168,6 +187,8 @@ ORSExtract <- R6::R6Class(
           )
         )
       }
+
+      # Set the extract
       self$path <- data_dir
       self$size <- round(size, 2)
       assign("extract_path", path, envir = pkg_cache)
@@ -176,15 +197,14 @@ ORSExtract <- R6::R6Class(
 
     #' @description Moves a given OSM extract to the ORS data directory
     #' @param extract_path Character scalar. Path to an OSM extract formatted
-    #' as `.pbf`, `.osm`, `.osm.gz`
-    #' or `.osm.zip`.
+    #' as `.pbf`, `.osm`, `.osm.gz` or `.osm.zip`.
+
     set_extract = function(extract_path) {
-      if (file.exists(extract_path)) {
-        self$path <- private$.move_extract(extract_path)
-        self$size <- round(file.info(extract_path)$size * 0.000001, 2)
-      } else {
-        cli::cli_abort("{.file {extract_path}} does not exist.")
-      }
+      cli_abortifnot(file.exists(extract_path))
+
+      self$path <- private$.move_extract(extract_path)
+      self$size <- round(file.info(extract_path)$size * 0.000001, 2)
+
       assign("extract_path", extract_path, envir = pkg_cache)
       return(extract_path)
     }
@@ -194,6 +214,7 @@ ORSExtract <- R6::R6Class(
 
     .move_extract = function(extract_path) {
       data_dir <- file.path(super$dir, "docker/data")
+
       # Derive file name from file path
       file_name <- extract_path %>%
       strsplit("/") %>%

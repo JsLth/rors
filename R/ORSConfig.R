@@ -29,25 +29,24 @@ ORSConfig <- R6::R6Class(
     #' @field active_profiles Currently active profiles in the config file.
     #' By assigning a character vector, the field changes the active profiles
     #' in the config file.
+
     active_profiles = function(profiles) {
       if (missing(profiles)) {
         profiles <- self$ors_config$ors$services$routing$profiles$active
       } else {
-        if (is.character(profiles)) {
-          profiles <- private$.translate_profiles(profiles) %>%
-            .[!duplicated(.)]
+        cli_abortifnot(is.character(profiles))
 
-          if (length(profiles) > 0) {
-            self$
-              ors_config$
-              ors$
-              services$
-              routing$
-              profiles$
-              active <- as.list(profiles)
-          }
-        } else {
-          cli::cli_abort("Pass a valid vector of profiles.")
+        profiles <- private$.translate_profiles(profiles) %>%
+          .[!duplicated(.)]
+
+        if (length(profiles) > 0) {
+          self$
+            ors_config$
+            ors$
+            services$
+            routing$
+            profiles$
+            active <- as.list(profiles)
         }
         self$save_config()
       }
@@ -58,26 +57,36 @@ ORSConfig <- R6::R6Class(
 
     #' @field ors_config JSON config file, parsed as a list. Objects and items
     #' can be changed by assigning values to them.
+
     ors_config = NULL,
 
     #' @field path Path to the config file. Usually, this is either docker/conf
     #' if the ORS image was already built or docker/data if the image is yet to
     #' be built for the first time.
+
     path = NULL,
 
     #' @description Initializes the `ORSConfig` class. Specifies the config
     #' path, copies the config files if necessary and reads them.
+
     initialize = function() {
       conf_dir <- file.path(super$dir, "docker/conf")
       data_dir <- file.path(super$dir, "docker/data")
 
+      # If docker/conf exists, ORS uses it when the docker container
+      # is started -> Prefer the conf directory
       if (dir.exists(conf_dir)) {
         config <- jsonlite::read_json(file.path(conf_dir,
                                                 "ors-config.json"))
         self$path <- file.path(conf_dir, "ors-config.json")
+
+      # If docker/conf does not exist, check if a config file is in
+      # docker/data.
       } else if (file.exists(file.path(data_dir, "ors-config.json"))) {
         config <- jsonlite::read_json(file.path(data_dir, "ors-config.json"))
         self$path <- file.path(data_dir, "ors-config.json")
+
+      # If all fails, copy the sample config from the ORS backend
       } else {
         file.copy(
           file.path(
@@ -102,6 +111,7 @@ ORSConfig <- R6::R6Class(
     #' @description Saves the config changes by overwriting the config files
     #' with all changed fields. This should be run each time after changing
     #' any configurations.
+
     save_config = function() {
       conf_dir <- file.path(super$dir, "docker/conf")
       data_dir <- file.path(super$dir, "docker/data")
@@ -112,15 +122,12 @@ ORSConfig <- R6::R6Class(
         pretty = TRUE
       )
 
-      if (dir.exists(conf_dir)) {
-        cat(config_json, file = file.path(conf_dir, "ors-config.json"))
-      } else {
-        cat(config_json, file = file.path(data_dir, "ors-config.json"))
-      }
+      cat(config_json, file = self$path)
     },
 
     #' @description Opens the raw config file to allow manual changes. Useful
     #' if you find the list structure of the parsed JSON impractical.
+
     open_config = function() {
       file.open(normalizePath(self$path, winslash = "/"))
     }

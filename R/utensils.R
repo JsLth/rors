@@ -230,11 +230,38 @@ ensure_permission <- function(command) {
 }
 
 
-system3 <- function() {
-
+is.rstudio <- function() {
+  Sys.getenv("RSTUDIO") == 1
 }
 
 
-errorifnot <- function() {
+is.windows <- function() {
+  .Platform$OS.type == "windows"
+}
 
+
+is.unix <- function() {
+  .Platform$OS.type == "unix"
+}
+
+
+auth_system <- function(command, ...) {
+  if (is.windows()) {
+    cmd <- unlist(strsplit(command, " "))
+    flags <- paste0(tail(cmd, -1), collapse = " ")
+    return(system2(command = cmd[1], args = flags, ...))
+  } else if (is.unix()) {
+    return(system2(command = "sudo",
+                   args = paste("-S", command),
+                   input = if (is.rstudio()) rstudioapi::askForPassword()))
+  }
+}
+
+
+cli_abortifnot <- function(expr) {
+  if (isFALSE(expr)) {
+    uneval_expr <- deparse(substitute(expr))
+    cli::cli_abort("{.code {uneval_expr}} is {.val {FALSE}}.",
+                   call = sys.call(-1))
+  }
 }
