@@ -58,7 +58,7 @@ ors_sample <- function(size, ..., as_sf = FALSE, force_new_extract = FALSE) {
   if (isTRUE(as_sf)) {
     return(sample)
   } else {
-    coordinate_sample <- sf::st_coordinates() %>%
+    coordinate_sample <- sf::st_coordinates(sample) %>%
       as.data.frame()
     return(coordinate_sample)
   }
