@@ -251,7 +251,7 @@ ors$docker$remove_container()
 # Get a new extract and set graph building to "change".
 # This allows Docker to overwrite the graphs directory
 # using the new extract.
-ors$extract$get_extract("Cologne")
+ors$extract$get_extract("Cologne", provider = "geofabrik")
 ors$setup_settings$graph_building <- "change"
 
 # Finally, start the container again.

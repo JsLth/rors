@@ -64,24 +64,27 @@ ORSExtract <- R6::R6Class(
     #' the providers listed in \code{\link[osmextract]{oe_providers}}. The
     #' geographic scale can be adjusted by changing the parameter `level`. For
     #' details, refer to \code{\link[osmextract]{oe_match}}.
-    #' @param ... Passed to \code{\link[osmextract]{oe_match}}.
+    #' @param provider Character vector of OSM extract provider(s) that should
+    #' be searched for extracts.
+    #' @param ... Passed to \code{\link[osmextract]{oe_match}}. This can
+    #' include anything except \code{quiet}.
     #' @details The extract is downloaded directly to docker/data. This will
     #' also be the directory that is passed to the
     #' \code{\link{ORSSetupSettings}} to process the extract. This directory is
     #' not mutable because Docker expects a relative path to its main directory.
 
-    get_extract = function(place, ...) {
+    get_extract = function(place, provider = NULL, ...) {
       data_dir <- file.path(super$dir, "docker/data")
       ok <- TRUE
       i <- 0
-      if (is.null(list(...)$provider)) {
+
+      if (is.null(provider)) {
         providers <- suppressMessages({
           osmextract::oe_providers()$available_providers
         })
       } else {
-        providers <- list(...)$provider
+        providers <- provider
       }
-
 
       cli::cli_alert_info("Trying different extract providers...")
 
@@ -89,12 +92,10 @@ ORSExtract <- R6::R6Class(
       # an extract provider is chosen
       while (ok && i < length(providers)) {
         i <- i + 1
-        place_match <- osmextract::oe_match(
-          place,
-          provider = providers[i],
-          quiet = TRUE,
-          ...
-        )
+        place_match <- osmextract::oe_match(place = place,
+                                            provider = providers[i],
+                                            quiet = TRUE,
+                                            ...)
 
         file_name <- basename(place_match$url)
 
@@ -178,7 +179,6 @@ ORSExtract <- R6::R6Class(
 
         osmextract::oe_download(
           place_match$url,
-          provider = providers[i],
           download_directory = data_dir,
           quiet = TRUE
         )
