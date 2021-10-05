@@ -36,8 +36,8 @@ read_extract_boundaries <- function(force_new_extract = FALSE) {
 #' ORS extract.
 #'
 #' @param size Number of points to be sampled
-#' @param ... Passed to \code{\link[sf]{st_sample}, which passes it to
-#' \code{\link[base]{sample} or \code{\link[spatstat.core]{rThomas}.
+#' @param ... Passed to \code{\link[sf]{st_sample}}, which passes it to
+#' \code{\link[base]{sample}} or \code{\link[spatstat.core]{rThomas}}.
 #' @param as_sf If \code{TRUE}, returns an \code{sfc} object, if \code{FALSE},
 #' returns a dataframe containing coordinates.
 #' @param force_new_extract If \code{TRUE}, forces the cached extract path to

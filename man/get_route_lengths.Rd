@@ -2,61 +2,78 @@
 % Please edit documentation in R/routing.R
 \name{get_route_lengths}
 \alias{get_route_lengths}
-\title{Rowwise routing between two dataframes}
+\title{Routing between two dataframes}
 \usage{
 get_route_lengths(
   source,
   destination,
   profile,
   units = "m",
-  local = TRUE,
-  port = 8080,
-  api_key = NULL,
-  geometry = FALSE
+  how = "directions",
+  geometry = FALSE,
+  options = list()
 )
 }
 \arguments{
-\item{source}{Source dataset that represents point coordinates that are to be routed
-from. The source dataset should be passed as a double nested dataframe or list with
-each row representing a x/y or lon/lat coordinate pair.}
+\item{source}{Source dataset that represents point coordinates that are to
+be routed from. The source dataset should be passed as a double nested
+dataframe with each row representing a x/y or lon/lat coordinate
+pair or as an \code{sf} or \code{sfc} object containing point geometries.}
 
-\item{destination}{Destination dataset that represents point coordinates that are to be
-routed to. The source dataset should be passed as a double nested dataframe or list with
-each row representing a x/y or lon/lat coordinate pair. Essentially both datasets should
-have the same format.}
+\item{destination}{Destination dataset that represents point coordinates
+that are to be routed to. The destination dataset follows the same format
+requirements as the source dataset.}
 
-\item{profile}{Character scalar. Means of transport as supported by OpenRouteService. For
-a list of active profiles, call \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}.
-For details on all profiles, refer to the
+\item{profile}{Character scalar. Means of transport as supported by
+OpenRouteService. For a list of active profiles, call
+\code{\link{get_}}. For details
+on all profiles, refer to the
 \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
-\item{units}{Distance unit for distance calculations ('m', 'km' or 'mi', default: meters)}
+\item{units}{Distance unit for distance calculations ('m', 'km' or 'mi')}
 
-\item{local}{Logical scalar. Specifies whether requests should be sent to the official web
-server of OpenRouteService or to the local Docker server set up by \code{\link{ORSInstance}}.
-For the use with larger datasets, it is advised to setup a local service backend. To query the
-official web server, an API key has to be provided.}
+\item{geometry}{Specifies whether to return distance measures or geometry
+features.}
 
-\item{port}{Integer scalar. Port that the local server is running on.}
-
-\item{api_key}{Character scalar. API key for the use of the official web server of
-OpenRouteService. Only necessary, if \code{local = FALSE}.}
-
-\item{geometry}{Specifies whether to return distance values or geometry features.}
+\item{options}{Ignored. Could be added in the future to add ORS query
+options, e.g. avoid_polygons or maximum_speed.}
 }
 \value{
-Dataframe with distances and travel durations between source and destination
+Dataframe with distances and travel durations between source and
+destination
 }
 \description{
 Calculates the routing distance between two datasets.
 }
+\details{
+If \code{method = "directions"}, both datasets must have the same shape,
+i.e. the same number of rows. If \code{method = "matrix"}, both datasets are
+allowed to contain only one row. If one of both datasets contains only one
+row, one-to-many or many-to-one matrices are generated. In general, only
+one-to-many, many-to-one, one-to-one, or many-to-many combinations are
+allowed. If you pass a source dataset with 3 rows and a destination dataset
+with 5 rows, the function cannot know how to match the datasets.
+}
 \examples{
-route_lengths <- get_route_lengths(datensatz.a, datensatz.b, 'driving-car')
-route_lengths
-#   distance duration
-# 1  12379.8    798.0
-# 2  17667.3   1703.2
-# 3  11659.2   1445.1
-# 4  14933.1   1522.8
-# 5   7926.0    876.8
+source <- ors_sample(5)
+dest <- ors_sample(5)
+
+rowwise <- get_route_lengths(source, dest, "driving-car")
+rowwise
+  distance duration
+1  30190.7   1872.4 -> A1 to B1
+2  32061.1   2898.6 -> A2 to B2
+3  28219.9   1901.5 -> A3 to B3
+4 126467.0   5763.3 -> A4 to B4
+5 131494.0   5634.1 -> A5 to B5
+
+one_to_many <- get_route_lengths(source[1], dest, "driving-car", how = "matrix")
+one_to_many
+  distance duration
+1 30190.73  1872.42 -> A1 to B1
+2 99046.71  4158.36 -> A1 to B2
+3 47517.33  2975.49 -> A1 to B3
+4 17426.51  1402.07 -> A1 to B4
+5  9695.32   822.68 -> A1 to B5
+
 }

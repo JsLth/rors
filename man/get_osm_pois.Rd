@@ -4,44 +4,74 @@
 \alias{get_osm_pois}
 \title{Extract points of interest from OpenStreetMap}
 \usage{
-get_osm_pois(source, key, value, radius = 5000, crs = 4326)
+get_osm_pois(
+  source,
+  ...,
+  radius = 5000,
+  crs = NA,
+  trim = TRUE,
+  timeout = NULL,
+  as_sf = FALSE
+)
 }
 \arguments{
-\item{source}{Source dataset that represents point coordinates that are to be routed
-from. The source dataset should be passed as a dataframe or plain nested list with
-each row representing a x/y or lon/lat coordinate pair.}
+\item{source}{Either (1) a source dataset as used for
+\code{\link{get_route_lengths}}, (2) a character string of a place or
+region, (3) a spatial polygon as an sf or sfc object or (4) any bbox format
+supported by \code{\link[osmdata]{opq}}. The source argument is passed to
+osmdata to derive a bounding box for the Overpass query.}
 
-\item{key}{Character scalar. OpenStreetMap Map Feature key (e.g. amenity, building)}
+\item{...}{Can be used to pass key-value combinations of OSM map features.
+Map features are passed as arguments: key = value. For a list of features,
+refer to the
+\href{https://wiki.openstreetmap.org/wiki/Map_features}\link{documentation}.}
 
-\item{value}{Character scalar. OpenStreetMap Map Feature value (e.g. hospital, hotel)}
+\item{radius}{Numeric scalar. Specifies the buffer size if a source dataset
+is passed (see details).}
 
-\item{radius}{Numeric scalar. Radius in which POIs are to be searched for}
+\item{crs}{Any object that is recognized by \code{\link[sf]{st_crs}}.
+Specifies the coordinate notation of the source dataset, if it is provided
+(see details).}
 
-\item{crs}{Any object that is recognized by \code{\link[sf]{st_crs}}. Coordinate reference system to determine
-the coordinate notation of the source dataset}
+\item{trim}{If TRUE and if a spatial polygon is passed as \code{source}, trim
+the output data to the provided polygon shape.}
+
+\item{timeout}{Timeout limit for the Overpass query. See
+\code{\link[osmdata]{opq}}. If an sf object, a named vector, or a source
+dataset is passed, this value can be estimated. For any other format, the
+timeout is fixed to 100 seconds and may need adjustment for larger queries.}
+
+\item{as_sf}{If TRUE, returns an sf dataframe containing point geometries.
+If FALSE, returns a dataframe containing coordinates.}
 }
 \value{
-List of dataframes that contain coordinate pairs of nearby points of interest
+If a source dataset is provided, either as sf or coordinate pairs, the
+function will generate bounding boxes from buffers generated around each
+coordinate pair in the dataframe. This results in a list of dataframes with
+each element corresponding one coordinate pair in the source dataset.
+If any other format is provided, the function will return a single dataframe
+containing all points of interest within the provided area.
 }
 \description{
-Makes Overpass requests to extract points of interest in the proximity of the source
-dataset.
+Makes Overpass requests to extract points of interest within
+a specified area or list of areas.
+}
+\details{
+The function tries to transform coordinate notations according to
+the passed CRS. For vectors or matrices, this does not currently work. So
+if you need to pass a vecorized bbox, make sure to pass geographic
+coordinates, preferably EPSG:4326.
 }
 \examples{
-pois <- query.osm.pois(datensatz.a, key = 'amenity', value = 'hospital', radius = 5000)
-pois
-# [[1]]
-#          X        Y
-# 1 6.960451 50.98735
-# 2 6.924774 50.99160
-# 3 6.975410 51.03098
-#
-# [[2]]
-#          X        Y
-# 1 6.957034 50.92491
-# 2 7.042753 50.89777
-# 3 7.050427 50.89228
-# 4 6.966869 50.91035
-#
-# ...
+pois_source <- get_osm_pois(datensatz.a, amenity = "hospital", radius = 5000, crs = 4326)
+
+test_sf <- sf::st_as_sf(datensatz.a, coords = c(1,2), crs = 4326)
+test_poly <- sf::st_convex_hull(st_union(test_sf))
+get_osm_pois(test_poly, amenity = "post_box", building = "residential", trim = FALSE)
+
+test_bbox <- as.numeric(sf::st_bbox(test_poly))
+get_osm_pois(test_bbox, amenity = "marketplace", as_sf = TRUE)
+
+test_place <- "Cologne"
+get_osm_pois(test_place, landuse = "allotments", timeout = 200, as_sf = TRUE)
 }

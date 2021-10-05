@@ -9,36 +9,38 @@ get_nearest_pois(
   pois,
   number_of_points = NULL,
   radius = NULL,
-  pois_crs = NULL
+  crs = NA
 )
 }
 \arguments{
-\item{source}{Source dataset that represents point coordinates that are to be routed
-from. The source dataset should be passed as a dataframe or plain nested list with
-each row representing a x/y or lon/lat coordinate pair.}
+\item{source}{Source dataset that represents point coordinates that are to
+be routed from. The source dataset should be passed as a dataframe or plain
+nested list with each row representing a x/y or lon/lat coordinate pair.}
 
-\item{pois}{Dataset that represents a list of points of interest to be routed to
-for each coordinate pair in the source dataset. The POI dataset can either be passed as a
-dataframe or plain nested list with each row representing a x/y or lon/lat coordinate pair,
-or, alternatively, as a simple features object. If radius is not \code{NULL}, the POI dataset
-will be converted to an sf object if it is not already.}
+\item{pois}{Dataset that represents a list of points of interest to be
+routed to for each coordinate pair in the source dataset. The POI dataset
+can either be passed as a dataframe or plain nested list with each row
+representing a x/y or lon/lat coordinate pair, or, alternatively, as a
+simple features object. If radius is not \code{NULL}, the POI dataset will be
+converted to an sf object if it is not already.}
 
 \item{number_of_points}{Integer scalar. Number of points to be returned.}
 
-\item{radius}{Numeric scalar. Buffer radius that will select points of interest that fall
-within it.}
+\item{radius}{Numeric scalar. Specifies the buffer size to select points of
+interest by distance}
 
-\item{pois_crs}{Any object that is recognized by \code{\link[sf]{st_crs}}. Coordinate reference system
-to determine the coordinate notation of the \code{source} and \code{pois} dataset. It is assumed that
-both datasets share the same CRS.}
+\item{crs}{Any object that is recognized by \code{\link[sf]{st_crs}}.
+Specifies the coordinate notation of the source and pois dataset, if it they
+are provided as simple coordinates.}
 }
 \value{
-List of dataframes with each dataframe containing all points of interest
-in a given type of proximity to the respective source point.
+List of dataframes with each dataframe containing all points of
+interest in a given type of proximity to the respective source point.
 }
 \description{
-Returns points of interest in the proximity of the source dataset. Unlike
-\code{\link{get_osm_pois}}, this function requires a local dataset of points of interest.
+Returns points of interest in the proximity of the source
+dataset. Unlike \code{\link{get_osm_pois}}, this function requires a local
+dataset of points of interest.
 }
 \details{
 The proximity can either be defined by the number of points to be selected, by a

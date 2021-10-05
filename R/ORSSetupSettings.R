@@ -16,13 +16,14 @@ ORSSetupSettings <- R6::R6Class(
   classname = "ORSSetupSettings",
   inherit = ORSInstance,
   active = list(
-    #' @field Specifices whether the image is built for the first time or if
-    #' the OSM extract is being changed. If `build` is assigned to the field,
-    #' indiciates that the graphs are built for the first time. If `change` is
-    #' assigned, indicates that the extract file was changed and the existing
-    #' graphs should be overwritten using the new extract. If `NA` is assigned,
-    #' indicates that no changes should be made and that graph building should
-    #' not be forced.
+
+    #' @field graph_building Specifices whether the image is built for the
+    #' first time or if the OSM extract is being changed. If `build` is
+    #' assigned to the field, indiciates that the graphs are built for the
+    #' first time. If `change` is assigned, indicates that the extract file
+    #' was changed and the existing graphs should be overwritten using the new
+    #' extract. If `NA` is assigned, indicates that no changes should be made
+    #' and that graph building should not be forced.
     graph_building = function(mode) {
       build <- is.element(
         "build",

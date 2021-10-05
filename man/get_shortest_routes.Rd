@@ -6,54 +6,61 @@
 \usage{
 get_shortest_routes(
   source,
-  poi_coords,
-  profiles = c("driving-car", "foot-walking"),
+  pois,
+  profiles = get_profiles(),
   proximity_type = "duration",
-  port = 8080
+  ...
 )
 }
 \arguments{
-\item{source}{Source dataset that represents point coordinates that are to be routed
-from. The source dataset should be passed as a double nested dataframe or list with
-each row representing a x/y or lon/lat coordinate pair.}
+\item{source}{Source dataset that represents point coordinates that are to
+be routed from. The source dataset should be passed as a double nested
+dataframe or list with each row representing a x/y or lon/lat coordinate
+pair.}
 
-\item{poi_coords}{Dataset containing dataframes of points of interest that are to be routed
-to. Each list element matches a row in the source dataset and each element in one of the
-dataframes represents the x/y or lon/lat coordinate pairs of one point of interest.}
+\item{profiles}{Character vector or list. Means of transport as supported by
+OpenRouteService. For details, see \code{\link{get_route_lengths}}. This
+function supports}
 
-\item{profiles}{Character vector or list. Means of transport as supported by OpenRouteService.
-For a list of active profiles, call \code{\link[ORSRouting:ORSConfig]{ORSConfig$active_profiles}}. For
-details on all profiles, refer to the \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
+\item{proximity_type}{Type of proximity that the calculations should be
+based on. If \code{distance}, the shortest physical distance will be calculated
+and if \code{duration}, the shortest temporal distance will be calculated.}
 
-\item{proximity_type}{Type of proximity that the calculations should be based on. If
-\code{distance}, the shortest physical distance will be calculated and if \code{duration}, the shortest
-temporal distance will be calculated.}
+\item{...}{Passed to \code{\link{get_route_lengths}}}
 
-\item{port}{Integer scalar. Port that the local server is running on.}
+\item{poi_coords}{Dataset containing points of interest that should be
+routed to. The POI dataset can either be passed as a single dataframe or as
+a list of dataframes. If a list is passed, each list element corresponds to
+one row in the source dataset. If a dataframe, an \code{sf} object or an
+\code{sfc} object is passed, each row in the source dataset feeds from the
+entire dataframe.}
 }
 \value{
-Dataframe with distances, travel durations and the index number of the point of
-interest with the shortest distance to the respective place of the source dataset.
+Dataframe with distances, travel durations and the index number of
+the point of interest with the shortest distance to the respective place of
+the source dataset.
 }
 \description{
-Calculates the shortest routes from a source dataset to the points of interest
-of each coordinate pair. This function is a wrapper around \code{get_route_lengths} that matches
-each coordinate pair to a list of points of interest and returns the route with the shortest
-distance.
+Calculates the shortest routes from a source dataset to the
+points of interest of each coordinate pair. This function is a wrapper
+around \code{get_route_lengths} that matches each coordinate pair to a list of
+points of interest and returns the route with the shortest distance.
 }
 \examples{
-pois <- query.osm.pois(datensatz.a, key = 'amenity', value = 'hospital', radius = 5000)
-shortest_routes <- get_shortest_routes(datensatz.a, pois)
+source <- ors_sample(5)
+pois <- get_osm_pois(sf::st_bbox(source), amenity = "hospital")
+
+shortest_routes <- get_shortest_routes(source, pois, profiles = c("driving-car", "foot-walking"))
 shortest_routes
-#    point_number   route_type poi_number distance duration
-# 1             1  driving-car          1   7617.6    685.4
-# 2             1 foot-walking          3   4734.4   3408.7
-# 3             2  driving-car          4   5050.8    665.1
-# 4             2 foot-walking          4   4211.4   3032.2
-# 5             3  driving-car          5   5986.3    635.9
-# 6             3 foot-walking          4   3931.1   2830.4
-# 7             4  driving-car         11   4144.4      505
-# 8             4 foot-walking         11   3587.9   2583.3
-# 9             5  driving-car         11   1393.1    196.1
-# 10            5 foot-walking          2    926.9    667.4
+   point_number   route_type poi_number distance duration
+1             1  driving-car          4  23479.2   1394.6
+2             1 foot-walking         53  13806.2   9940.4
+3             2  driving-car         59   6783.0    649.9
+4             2 foot-walking         60   6047.9   4354.4
+5             3  driving-car         34   8751.6    788.4
+6             3 foot-walking         35   9093.1   6547.0
+7             4  driving-car         19   3009.7    405.3
+8             4 foot-walking         20   2320.2   1670.5
+9             5  driving-car         13  16882.8   1294.3
+10            5 foot-walking         53  13636.7   9818.3
 }

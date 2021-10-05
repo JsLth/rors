@@ -162,6 +162,8 @@ ORSDockerInterface <- R6::R6Class(
     #' soon as the service is ready. If \code{FALSE}, the function will start
     #' the container and then stop. To check the server status, you can then
     #' call \code{$service_ready} or \code{\link{ors_ready}}.
+    #' @param verbose Logical. If \code{TRUE}, prints Docker logs for container
+    #' setup.
     image_up = function(wait = TRUE, verbose = TRUE) {
       if (!self$docker_running) {
         cli::cli_abort("Docker is not running.")

@@ -25,7 +25,7 @@
 #' @param trim If TRUE and if a spatial polygon is passed as `source`, trim
 #' the output data to the provided polygon shape.
 #' @param timeout Timeout limit for the Overpass query. See
-#' \code{\link[osmdata]{opq}. If an sf object, a named vector, or a source
+#' \code{\link[osmdata]{opq}}. If an sf object, a named vector, or a source
 #' dataset is passed, this value can be estimated. For any other format, the
 #' timeout is fixed to 100 seconds and may need adjustment for larger queries.
 #' @param as_sf If TRUE, returns an sf dataframe containing point geometries.
