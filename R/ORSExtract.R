@@ -179,6 +179,7 @@ ORSExtract <- R6::R6Class(
 
         osmextract::oe_download(
           place_match$url,
+          provider = providers[i],
           download_directory = data_dir,
           quiet = TRUE
         )
