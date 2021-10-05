@@ -74,9 +74,14 @@ ORSExtract <- R6::R6Class(
       data_dir <- file.path(super$dir, "docker/data")
       ok <- TRUE
       i <- 0
-      providers <- suppressMessages({
-        osmextract::oe_providers()$available_providers
-      })
+      if (is.null(list(...)$provider)) {
+        providers <- suppressMessages({
+          osmextract::oe_providers()$available_providers
+        })
+      } else {
+        providers <- list(...)$provider
+      }
+
 
       cli::cli_alert_info("Trying different extract providers...")
 
@@ -110,11 +115,15 @@ ORSExtract <- R6::R6Class(
           )
         }
 
-        input <- tolower(
-          readline(
-            "Should a different provider be tried? (Yes/No/Cancel)"
+        if (length(providers) > 1) {
+          input <- tolower(
+            readline(
+              "Should a different provider be tried? (Yes/No/Cancel)"
+            )
           )
-        )
+        } else {
+          input <- "no"
+        }
 
         # If neither yes or no is given as input, cancel the function
         if (!input %in% c("yes", "no")) {
