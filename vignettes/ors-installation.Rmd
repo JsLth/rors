@@ -223,7 +223,7 @@ This will forward the heavy work to docker-compose. If `wait` is set to `TRUE`, 
 
 Now, that we successfully set up the ORS service, let's try it out in action:
 
-```{r}
+```{r, error = TRUE, purl = FALSE}
 test_dataset_b <- data.frame(
   lon = c(6.92632,7.00196,7.03162,6.99624,6.91885),
   lat = c(51.02972,50.88385,50.98915,51.00625,50.91935)
@@ -255,16 +255,16 @@ ors$setup_settings$graph_building <- "change"
 ors$docker$image_up(verbose = FALSE)
 ```
 
-Great. To make sure I don't mess up the coordinates again, I'll use the ORS sampling function `ors_sample`. It's simply a wrapper around `sf::st_sample` that uses the current extract to generate a point sample.
+Great. To make sure I don't mess up the coordinates again, I'll use the ORS dependent sampling function `ors_sample`. It's simply a wrapper around `sf::st_sample` that uses the current extract to generate a point sample.
 
-```{r}
+```{r, error = TRUE, purl = FALSE}
 # This may take a while
 sample_a <- ors_sample(size = 100)
 
 # This'll be a lot faster
 sample_b <- ors_sample(size = 100)
 
-get_route_lengths(sample_a, sample_b, profile = "driving-car", how = "matrix")
+get_route_lengths(sample_a, sample_b, profile = "driving-car")
 ```
 
 Dang it! Luckily, changing the service configurations doesn't take very long. Since it's not necessary to alter the compose file in order to change the service configs, we don't need to remove the container entirely, but can just turn it off.
