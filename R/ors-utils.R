@@ -76,7 +76,7 @@ ors_ready <- function(force = TRUE) {
       httr::GET(
         sprintf("http://localhost:%s/ors/health", get_ors_port())
       ) %>%
-        content(as = "text", type = "application/json", encoding = "UTF-8") %>%
+        httr::content(as = "text", type = "application/json", encoding = "UTF-8") %>%
         jsonlite::fromJSON() %>%
         .$status %>%
         identical("ready"),

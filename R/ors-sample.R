@@ -38,8 +38,10 @@ read_extract_boundaries <- function(force_new_extract = FALSE) {
 #' @param size Number of points to be sampled
 #' @param ... Passed to \code{\link[sf]{st_sample}, which passes it to
 #' \code{\link[base]{sample} or \code{\link[spatstat.core]{rThomas}.
-#' @param force_new_extract If TRUE, forces the cached extract path to be
-#' overwritten.
+#' @param as_sf If \code{TRUE}, returns an \code{sfc} object, if \code{FALSE},
+#' returns a dataframe containing coordinates.
+#' @param force_new_extract If \code{TRUE}, forces the cached extract path to
+#' be overwritten.
 #' @returns \code{sfc} object containing the sampled \code{POINT} geometries
 #' @details The function reads the extract file as an \code{sf} object.
 #' Depending on the file, this can take a while. The unionized boundaries are
@@ -47,11 +49,18 @@ read_extract_boundaries <- function(force_new_extract = FALSE) {
 #'
 #' @export
 
-ors_sample <- function(size, ..., force_new_extract = FALSE) {
+ors_sample <- function(size, ..., as_sf = FALSE, force_new_extract = FALSE) {
   extract <- read_extract_boundaries(force_new_extract) %>%
     lonlat_to_utm()
   sample <- sf::st_sample(extract, size, ...) %>%
-    st_transform(4326) %>%
-    st_geometry()
-  return(sample)
+    sf::st_transform(4326) %>%
+    sf::st_geometry()
+  if (isTRUE(as_sf)) {
+    return(sample)
+  } else {
+    coordinate_sample <- sf::st_coordinates() %>%
+      as.data.frame()
+    return(coordinate_sample)
+  }
+
 }

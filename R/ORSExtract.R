@@ -86,6 +86,12 @@ ORSExtract <- R6::R6Class(
         providers <- provider
       }
 
+      if (!interactive() && length(providers) > 1) {
+        cli::cli_abort(
+          "In batch mode, explicitly pass a single provider name."
+        )
+      }
+
       cli::cli_alert_info("Trying different extract providers...")
 
       # While there are providers left to try out, keep trying until

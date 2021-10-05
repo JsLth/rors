@@ -49,11 +49,11 @@ ORSDockerInterface <- R6::R6Class(
     container_exists = function(arg) {
       if (missing(arg)) {
         if (self$docker_running) {
-          auth_system(
+          container_status <- auth_system(
             "docker ps -a --format \"{{.Names}}\" --filter name=^/ors-app$",
             stdout = TRUE
-          ) %>%
-            identical("ors-app")
+          )
+          identical(container_status, "ors-app")
         }
       } else {
         cli::cli_abort("{.var $container_exists} is read only.")
@@ -166,10 +166,6 @@ ORSDockerInterface <- R6::R6Class(
       if (!self$docker_running) {
         cli::cli_abort("Docker is not running.")
       }
-
-      owd <- getwd()
-      setwd(super$dir)
-      on.exit(setwd(owd))
 
       self$error_log <- NULL
       private$.set_port()
@@ -373,12 +369,10 @@ ORSDockerInterface <- R6::R6Class(
       # created. If this is the case, don't stop, just don't return anything.
       logs_dir <- file.path(super$dir, "docker/logs")
 
-      if (
-        dir.exists(logs_dir) &&
-        is.element(c("ors", "tomcat"), dir(logs_dir)) &&
-        length(dir(file.path(logs_dir, "ors"))) != 0 &&
-        length(dir(file.path(logs_dir, "tomcat"))) != 0
-      ) {
+      if (dir.exists(logs_dir) &&
+          is.element(c("ors", "tomcat"), dir(logs_dir)) &&
+          length(dir(file.path(logs_dir, "ors"))) != 0 &&
+          length(dir(file.path(logs_dir, "tomcat"))) != 0) {
         log_date <- file.info(file.path(logs_dir, "ors/ors.log"))$ctime %>%
           format(tz = "UTC") %>%
           as.Date()
@@ -405,6 +399,7 @@ ORSDockerInterface <- R6::R6Class(
                       stdout = FALSE,
                       stderr = TRUE)
         )
+
         error_catcher <- function(log) {
           errors <- grep(
             "error | exception",

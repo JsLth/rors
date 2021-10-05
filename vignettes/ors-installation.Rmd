@@ -32,12 +32,11 @@ By default, ORS is queryable over the [official webserver](https://api.openroute
 Instead, the ORS backend can be installed locally via Docker. The R6 class `ORSInstance` controls both the installation and customization of the backend. The installation requires Docker, a raw OpenStreetMap extract (i.e., `.pbf` or `.osm`) of the required region, and the source code of OpenStreetMap. Of these, only [Docker needs to be installed beforehand](https://www.docker.com/products/docker-desktop).
 
 After installing Docker, a new ORS instance can be initialized. If necessary, this will download the ORS GitHub repository and start the Docker daemon. Most importantly though, it allows access to a bunch of new methods.
+
 ```{r init-topclass}
 ors <- ORSInstance$new()
 ors
 ```
-
-
 
 Generally, the workflow to install the ORS backup consists of four steps:
 
@@ -69,6 +68,7 @@ OpenStreetMap extracts contain all elements mapped by OSM contributors within a 
 
 Extracts are controlled by the class `ORSExtract` that can be accessed with `$extract`.
 If you already have an extract, you can mount it here:
+
 ```{r set-extract}
 path_to_extract <- paste(tempdir(), "osm_file.osm.pbf", sep = "/")
 download.file("https://download.geofabrik.de/europe/germany/nordrhein-westfalen/arnsberg-regbez-latest.osm.pbf",
@@ -78,6 +78,7 @@ ors$extract$path
 ```
 
 If you don't have an extract, `$get_extract` provides a way to download extracts from known providers:
+
 ```{r get-extract}
 ors$extract$get_extract("Arnsberg", provider = "geofabrik")
 ```
@@ -91,6 +92,7 @@ At this point, you can just run `$init_setup` and let R do the rest. If you need
 
 The ORS configurations are managed inside the file `ors-config.json`. It is accessible using `$config`. If you're not into nested list structures, you can also open the raw file using `$open_config`.
 The config file is documented in the [ORS documentation](https://giscience.github.io/openrouteservice/installation/Configuration.html).
+
 ```{r init-config}
 ors$config
 ```
@@ -110,6 +112,7 @@ The most important setting to be changed are the active profiles. Profiles repre
 or their respective synonyms according to the ORS config file.
 
 Profiles can be changed by assigning character vectors to the active binding `active_profiles`:
+
 ```{r active-profiles}
 ors$config$active_profiles <- c("car", "bike-regular", "walking")
 ors$config$ors_config$ors$services$routing$profiles$active
@@ -117,6 +120,7 @@ ors$config$ors_config$ors$services$routing$profiles$active
 
 
 In the same way, all configurations can be changed under `$ors_config`:
+
 ```{r parsed-config}
 # Setting the maximum snapping radius to -1 removes the limit for coordinates to be snapped to a
 # nearby geometry edge. For coordinates that are far off from ways or streets, this is especially
@@ -185,6 +189,7 @@ If there are any other things you want to change, you can do so by assigning val
 The final step is to instruct Docker to build the image and start the container. As soon as the container is running, the service is being prepared. Depending on the size of the extract and the number of profiles, this can take between a few minutes and a few hours.
 
 Docker can be accessed and controlled using `$docker`.
+
 ```{r init-docker}
 ors$docker
 ```
@@ -215,6 +220,7 @@ data.frame(
 If you already built the image and started the container, but encountered an error, you can view the error logs using `$error_log`. Preferably, this should return NULL.
 
 In order to build the image and start the container, simply call
+
 ```{r image-up}
 ors$docker$image_up(verbose = FALSE)
 ```
@@ -227,7 +233,7 @@ This will forward the heavy work to docker-compose. If `wait` is set to `TRUE`, 
 Now, that we successfully set up the ORS service, let's try it out in action:
 
 ```{r wrong-extract, error = TRUE, purl = FALSE}
-test_dataset_b <- data.frame(
+test_dataset_a <- data.frame(
   lon = c(6.92632,7.00196,7.03162,6.99624,6.91885),
   lat = c(51.02972,50.88385,50.98915,51.00625,50.91935)
 )
