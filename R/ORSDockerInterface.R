@@ -182,7 +182,7 @@ ORSDockerInterface <- R6::R6Class(
         stderr = if (isTRUE(verbose)) "" else FALSE
       )
 
-      if (!is.na(ecode) || identical(ecode, 0)) {
+      if (!is.na(ecode) || !identical(ecode, 0)) {
         cli::cli_abort(
           c("The container setup encountered an error.",
             paste("Error code", ecode)
