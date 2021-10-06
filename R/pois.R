@@ -147,9 +147,9 @@ get_osm_pois <- function(
       osmdata::osmdata_sf()
 
     if (
+      isTRUE(trim) &&
       is.sf(source) &&
-      sf::st_is(source, c("POLYGON", "MULTIPOLYGON")) &&
-      trim
+      sf::st_is(source, c("POLYGON", "MULTIPOLYGON"))
     ) {
       osm_data <- trim_osmdata(osm_data, bbox)
     }

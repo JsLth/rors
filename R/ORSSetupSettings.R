@@ -61,6 +61,7 @@ ORSSetupSettings <- R6::R6Class(
         } else {
           return(NA)
         }
+
       } else {
         if(is.null(pkg_cache$extract_path) && !is.na(mode)) {
           cli::cli_warn(

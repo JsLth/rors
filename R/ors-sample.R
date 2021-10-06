@@ -17,7 +17,7 @@ read_extract_boundaries <- function(force_new_extract = FALSE) {
          "WHERE boundary = \"administrative\"",
          "AND admin_level IS NOT NULL"
         ),
-        quiet = FALSE
+        quiet = TRUE
       )
     ) %>%
       sf::st_geometry() %>%

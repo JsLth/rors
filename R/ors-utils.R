@@ -95,7 +95,7 @@ get_ors_dir <- function(force = TRUE) {
     container_info <- get_container_info()
     mdir <- container_info$Config$Labels$com.docker.compose.project.working_dir
     mdir <- normalizePath(mdir, winslash = "/") %>%
-      strsplit(mdir, "/") %>%
+      strsplit("/") %>%
       unlist() %>%
       head(-1) %>%
       paste0(collapse = "/")
@@ -114,23 +114,25 @@ identify_extract <- function(force = FALSE) {
     mdir <- get_ors_dir()
 
     # Read extract file location from compose file
-    compose <- yaml::yaml.load_file(paste0(mdir, "/docker/docker-compose.yml"))
+    compose <- yaml::yaml.load_file(file.path(mdir, "docker/docker-compose.yml"))
     extract_path <- compose$services$`ors-app`$build$args$OSM_FILE
 
     # Check if build argument is set
     if (is.null(extract_path)) {
-      change_extract <- compose$services$`ors-app`$volumes[6]
+      volume <- compose$services$`ors-app`$volumes[6]
+      print(volume)
+      extract_path <- gsub("\\./", "", strsplit(volume, ":")[[1]][1])
+      print(extract_path)
 
       # If not, check if change volume is set
-      if (is.na(change_extract)) {
+      if (is.null(extract_path)) {
         osm_file_occurences <- dir("docker/data") %>%
           grepl(".pbf|.osm.gz|.osm.zip|.osm", .)
 
         # As a last resort, check if we can just pick it up from the data folder
         if (sum(osm_file_occurences) == 1) {
-          extract_path <- dir(
-            paste0(mdir, "/docker/data")
-          )[osm_file_occurences]
+          extract_path <- dir(file.path(mdir,
+                                        "docker/data"))[osm_file_occurences]
         } else {
           cli::cli_abort(
             paste(
@@ -140,9 +142,10 @@ identify_extract <- function(force = FALSE) {
         }
       }
     }
+    print(extract_path)
     # Convert relative to absolute path
     extract_path <- basename(extract_path) %>%
-      paste(mdir, "/docker/data", ., sep = "/") %>%
+      file.path(mdir, "docker/data", .) %>%
       normalizePath(winslash = "/")
 
     assign("extract_path", extract_path, envir = pkg_cache)

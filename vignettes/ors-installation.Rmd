@@ -35,6 +35,7 @@ After installing Docker, a new ORS instance can be initialized. If necessary, th
 
 ```{r init-topclass}
 ors <- ORSInstance$new()
+
 ors
 ```
 
@@ -143,7 +144,7 @@ ors$
         profiles$
         `profile-car`$
         parameters$
-        maximum_snapping_radius <- -1
+        maximum_snapping_radius <- NULL
 ```
 
 After making any direct adjustments to the configurations file, the changes have to be saved to the config file using.
@@ -152,7 +153,7 @@ After making any direct adjustments to the configurations file, the changes have
 ors$config$save_config()
 ```
 
-If you make changes through a provided method or by changing the raw file, this step is not necessary. However, if you change the raw file, note, that the R6 class can't keep track on its own and needs to be refreshed after saving raw changes by calling `$config <- "refresh"`. The solution of minimal effort and error proneness is making use of the built-in R6 methods since they save changes on their own.
+If you make changes through a provided method or by changing the raw file, this step is not necessary. However, if you change the raw file, note, that the R6 class can't keep track on its own and needs to be refreshed after saving raw changes by calling `$config <- "refresh"`. Therefore, the solution of minimal effort and error proneness is making use of a built-in R6 method since they save changes on their own.
 
 
 ## Change the default setup settings in docker-compose.yml
@@ -160,7 +161,7 @@ If you make changes through a provided method or by changing the raw file, this 
 Let's start this section with some basic Docker concepts.
 Docker is a service that runs software from isolated, standardized and portable instances called containers. Docker uses a compose file called `docker-compose.yml` to create images. Images are used to build containers. A container is an environment that is capable of running software provided by the image. While the software itself (including the configuration file from above) is set up as soon as the container is running, the compose file is evaluated only when the container is built. The following steps are concerned with adjusting the compose file in order to fine-tune the container.
 
-The Docker Compose file manages ports, the assignment of OSM files and config files as well as volumes and settings for Tomcat and Java. Thus, the most important changes to be made to the Docker Compose file are assigning the extract and the config file, and allocating enough memory for building the profile graphs.
+The compose file manages ports, the assignment of OSM files and config files as well as volumes and settings for Tomcat and Java. Thus, the most important changes to be made to the Docker Compose file are assigning the extract and the config file, and allocating enough memory for building the profile graphs.
 
 The Docker Compose file can be read and accessed using `$setup_settings`.
 

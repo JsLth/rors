@@ -73,6 +73,8 @@ get_route_lengths <- function(
 ) {
   # TODO: Automate method choice
   # (small dataset -> directions, large dataset -> matrix)
+
+  # Check if ORS is ready to use
   if (!ors_ready(force = FALSE)) {
     cli::cli_abort("ORS service is not reachable.")
   }
@@ -85,140 +87,136 @@ get_route_lengths <- function(
     destination <- reformat_vectordata(destination)[, c("X", "Y")]
   }
 
-  if (how == "directions" && nrow(source) == 1) {
-    source <- replicate(
-      nrow(destination),
-      source,
-      simplify = FALSE
-    ) %>%
-      dplyr::bind_rows()
+  # If directions is the method of choice but the input suggests one-to-many,
+  # replicate the one-element dataframe `nrow` times
+  if (how == "directions") {
+
+    if (nrow(source) == 1) {
+      source <- dplyr::bind_rows(replicate(nrow(destination),
+                                           source,
+                                           simplify = FALSE))
+
+    } else if (nrow(destination)) {
+      destination <- dplyr::bind_rows(replicate(nrow(destination),
+                                                source,
+                                                simplify = FALSE))
+    }
   }
 
-  source_shape <- cli::cli_vec(
-    dim(source),
-    style = list(vec_last = ":")
-  )
-  dest_shape <- cli::cli_vec(
-    dim(destination),
-    style = list(vec_last = ":")
-  )
+  source_shape <- cli::cli_vec(nrow(source), style = list(vec_last = ":"))
+  dest_shape <- cli::cli_vec(nrow(destination), style = list(vec_last = ":"))
 
+  # Case: Matrix is the method of choice. Matrix calls can't return geometries,
+  # therefore switch to Directions
   if (geometry && how == "matrix") {
+
     how <- "directions"
+
     cli::cli_warn(
-      paste(
-        "Matrix calls cannot return geometries.",
-        "Calculations will be done using the directions service."
-      )
+      paste("Matrix calls cannot return geometries.",
+            "Calculations will be done using the directions service.")
     )
   }
 
-  if (
-    !identical(nrow(source), nrow(destination)) &&
-    how != "matrix"
-  ) {
-    # For directions calls, both datasets must have the same shape because
-    # queries are made row-wise.
+  # Case: Source and destination datasets have different number of rows. This
+  # is valid for matrix calls, but not for directions calls
+  if (!identical(nrow(source), nrow(destination)) &&
+      how == "directions") {
+
     cli::cli_abort(
-      c(
-        "For directions calls, both datasets must have the same shape.",
+      c("For directions calls, both datasets must have the same shape.",
         "\nSource dataset rows: {source_shape}",
-        "\nDestination dataset rows: {dest_shape}"
-      )
+        "\nDestination dataset rows: {dest_shape}")
     )
+
   } else if (identical(row(source), row(destination))) {
     # If both datasets have the same shape, prepare a rowwise iterator for pmap.
-    zipped_locations <- data.frame(
-      source = source,
-      dest = destination
-    ) %>%
-      dplyr::group_split(
-        dplyr::row_number(),
-        .keep = FALSE
-      ) %>%
-      purrr::map_df(
-        tidyr::nest,
-        source = dplyr::starts_with("source"),
-        dest = dplyr::starts_with("dest"))
+    zipped_locations <- data.frame(source = source, dest = destination) %>%
+      dplyr::group_split(dplyr::row_number(), .keep = FALSE) %>%
+      purrr::map_df(tidyr::nest,
+                    source = dplyr::starts_with("source"),
+                    dest = dplyr::starts_with("dest"))
 
     if (how == "matrix") {
       how <- "directions"
     }
+
   } else if (
     !identical(nrow(source), nrow(destination)) &&
     !any(sapply(list(source, destination), function(x) nrow(x) == 1))
   ) {
+
     # If datasets are something like 3 to 6, the function doesn't know which
     # rows to match.
     cli::cli_abort(
-      c(
-        paste(
-          "For many-to-many matrix calls, datasets must have an equal amount",
-          "of rows. Otherwise the function cannot know which rows to match."
-        ),
+      c(paste("For many-to-many matrix calls, datasets must have an equal amount",
+              "of rows. Otherwise the function cannot know which rows to match."),
         "Source dataset shape: {source_shape}",
-        "Destination dataset shape: {dest_shape}"
-      )
+        "Destination dataset shape: {dest_shape}")
     )
   }
 
   port <- get_ors_port()
 
   extract_lengths.directions <- function(source, dest) {
-    route <- query.ors.directions(
-      source = source,
-      destination = dest,
-      profile = profile,
-      units = units,
-      geometry = geometry,
-      port = port
-    )
+    route <- query.ors.directions(source = source,
+                                  destination = dest,
+                                  profile = profile,
+                                  units = units,
+                                  geometry = geometry,
+                                  port = port)
+
     if (!geometry) {
-      return(
-        data.frame(
-          distance = route$routes$summary$distance,
-          duration = route$routes$summary$duration
-        )
-      )
+
+      return(data.frame(distance = route$routes$summary$distance,
+                        duration = route$routes$summary$duration))
+
     } else {
-      return(
-        data.frame(
-          distance = route$features$properties$summary$distance,
-          duration = route$features$properties$summary$duration,
-          geometry = route$features$geometry
-        )
+
+      return(data.frame(distance = route$features$properties$summary$distance,
+                        duration = route$features$properties$summary$duration,
+                        geometry = route$features$geometry)
       )
+
     }
   }
 
   extract_lengths.matrix <- function(source, dest) {
-    route <- query.ors.matrix(
-      source = source,
-      destination = dest,
-      profile = profile,
-      units = units,
-      port = port
-    )
-    return(
-      data.frame(
-        distance = unlist(route$distances[[1]]),
-        duration = unlist(route$durations[[1]])
-      )
-    )
+    route <- query.ors.matrix(source = source,
+                              destination = dest,
+                              profile = profile,
+                              units = units,
+                              port = port)
+
+    return(data.frame(distance = unlist(route$distances[[1]]),
+                      duration = unlist(route$durations[[1]])))
   }
 
   if (how == "directions") {
-    # Routen für jedes Koordinatenpaar berechnen
+
+    # Case: Directions is the method of choice
+    # Apply a directions query to each row
     route_list <- zipped_locations %>%
       purrr::pmap(extract_lengths.directions) %>%
       dplyr::bind_rows()
+
   } else if (how == "matrix") {
     if (nrow(source) == 1 || nrow(destination) == 1) {
+
+      # Case: Matrix is the method of choice and at least one dataframe
+      # contains only one one row
+      # Call a matrix query
       route_list <- extract_lengths.matrix(source, destination)
+
     } else {
+
+      # Case: Matrix is the method of choice, but operations have to be done
+      # rowwise
+      # Apply a matrix query to each row
       route_list <- zipped_locations %>%
         purrr::pmap(extract_lengths.matrix) %>%
         dplyr::bind_rows()
+
     }
   }
 
@@ -244,26 +242,24 @@ query.ors.directions <- function(
     c(as.numeric(source[1]), as.numeric(source[2])),
     c(as.numeric(destination[1]), as.numeric(destination[2]))
   )
+
   # Create http body of the request
   body <- jsonlite::toJSON(
-    list(
-      coordinates = locations,
-      # Remove the clipping distance limit
-      radiuses = rep(list(-1), length(locations)),
-      units = units,
-      geometry = geometry
-    ),
+    list(coordinates = locations,
+         units = units,
+         geometry = geometry),
     auto_unbox = TRUE,
     digits = NA
   )
+
+  # Create request headers
   header <- httr::add_headers(
     Accept = "application/%s; charset=utf-8" %>%
-      sprintf(
-        ifelse(geometry, "geo+json", "json")
-      ),
+      sprintf(ifelse(geometry, "geo+json", "json")),
     `Content-Type` = "application/json; charset=utf-8"
   )
 
+  # Prepare the url
   url <- httr::modify_url(
     sprintf("http://localhost:%s/", port),
     path = paste0("ors/v2/directions/", profile, if (geometry) "/geojson")
@@ -271,16 +267,13 @@ query.ors.directions <- function(
 
   # Calculate routes for every profile
   response <- url %>%
-    httr::POST(
-      body = body,
-      encode = "json",
-      header
-    ) %>%
-    httr::content(
-      as = "text",
-      type = "application/json",
-      encoding = "UTF-8"
-    )
+    httr::POST(body = body,
+               encode = "json",
+               header) %>%
+    httr::content(as = "text",
+                  type = "application/json",
+                  encoding = "UTF-8")
+
   parsed_response <- jsonlite::fromJSON(response)
 
   if (!is.null(parsed_response$error)) {
@@ -291,16 +284,12 @@ query.ors.directions <- function(
         message <- fill_empty_error_message(parsed_response$error$code)
 
     cli::cli_abort(
-      c(
-        "ORS returned the following error:",
-        "!" = paste0(
-          "Code ",
-          parsed_response$error$code,
-          ": ",
-          parsed_response$error$message
-        ),
-        "i" = get_error_tip(parsed_response$error$code)
-      )
+      c("ORS returned the following error:",
+        "!" = paste0("Code ",
+                     parsed_response$error$code,
+                     ": ",
+                     parsed_response$error$message),
+        "i" = get_error_tip(parsed_response$error$code))
     )
   }
 
@@ -327,10 +316,9 @@ query.ors.matrix <- function(
   units,
   port
 ) {
-  if (
-    nrow(source) != 1 &&
-    nrow(destinations == 1)
-  ) {
+  if (nrow(source) != 1 &&
+      nrow(destinations == 1)) {
+
     # If many-to-one, swap source and destination
     both <- list(source, destinations)
     source <- both[[2]]
@@ -343,69 +331,63 @@ query.ors.matrix <- function(
     as.list() %>%
     map(as.numeric)
 
-  locations <- append(
-    destinations_list,
-    list(as.numeric(source)),
-    after = 0
-  )
+  # Coerce destinations and source
+  locations <- append(destinations_list,
+                      list(as.numeric(source)),
+                      after = 0)
 
+  # Create http body of the request
   body <- jsonlite::toJSON(
-    list(
-      locations = locations,
-      destinations = if (length(locations) > 2) {
-        seq(length(locations) - 1)
-      } else {
-        list(1)
-      },
-      sources = list(0),
-      metrics = list("distance", "duration"),
-      units = units
+    list(locations = locations,
+         destinations = if (length(locations) > 2) {
+           seq(length(locations) - 1)
+         } else {
+           list(1)
+         },
+         sources = list(0),
+         metrics = list("distance", "duration"),
+         units = units
     ),
     auto_unbox = TRUE,
     digits = NA
   )
-    header <- httr::add_headers(
+
+  # Create request headers
+  header <- httr::add_headers(
     Accept = "application/json; charset=utf-8",
     `Content-Type` = "application/json; charset=utf-8"
   )
 
+  # Prepare th url
   url <- httr::modify_url(
     sprintf("http://localhost:%s/", port),
     path = paste0("ors/v2/matrix/", profile)
   )
+
   response <- url %>%
-    httr::POST(
-      body = body,
-      encode = 'json',
-      header
-    ) %>%
-    httr::content(
-      as = "text",
-      type = "application/json",
-      encoding = "UTF-8"
-    )
+    httr::POST(body = body,
+               encode = 'json',
+               header) %>%
+    httr::content(as = "text",
+                  type = "application/json",
+                  encoding = "UTF-8")
+
   parsed_response <- jsonlite::fromJSON(response)
 
   if (!is.null(parsed_response$error)) {
 
     cli::cli_abort(
-      c(
-        "ORS returned the following error:",
-        "!" = paste0(
-          "Code ",
-          parsed_response$error$code,
-          ": ",
-          parsed_response$error$message
-        ),
-        "i" = get_error_tip(parsed_response$error$code)
-      )
+      c("ORS returned the following error:",
+        "!" = paste0("Code ",
+                     parsed_response$error$code,
+                     ": ",
+                     parsed_response$error$message),
+        "i" = get_error_tip(parsed_response$error$code))
     )
+
   }
   return(parsed_response)
 }
-
-
-
 
 
 #' Calculate shortest routes to nearby points of interest
@@ -418,7 +400,7 @@ query.ors.matrix <- function(
 #' be routed from. The source dataset should be passed as a double nested
 #' dataframe or list with each row representing a x/y or lon/lat coordinate
 #' pair.
-#' @param poi_coords Dataset containing points of interest that should be
+#' @param pois Dataset containing points of interest that should be
 #' routed to. The POI dataset can either be passed as a single dataframe or as
 #' a list of dataframes. If a list is passed, each list element corresponds to
 #' one row in the source dataset. If a dataframe, an \code{sf} object or an
@@ -465,8 +447,83 @@ get_shortest_routes <- function(
   proximity_type = 'duration',
   ...
 ) {
-  source <- adjust_source_data(source)
-  pois <- adjust_poi_data(pois, nrow(source))
+
+  cli_abortifnot(is.character(profiles))
+  cli_abortifnot(is.character(proximity_type))
+
+  # --- Adjust source data
+  if (is.list(source) || is.matrix(source)) {
+
+    # Case: Source data is passed as list or matrix
+    source <- as.data.frame(source)
+
+  } else if (is.sf(source)) {
+
+    # Case: Source data is passed as sf or sfc object
+    source <- reformat_vectordata(source)
+
+  } else {
+    cli::cli_abort(
+      "Source datasets of type {.cls {class(source)}} are not (yet) supported."
+    )
+  }
+
+  # --- Adjust POI data
+  if (inherits(pois, "list")) {
+
+    # Case: POI data is passed as list
+    # Check data type of elements
+    elem_type <- lapply(pois, class) %>%
+      unique()
+
+    if (length(elem_type) == 1) {
+
+      # Case: List contains only one unique type
+      elem_type <- unlist(elem_type, recursive = FALSE)
+
+      if (any(is.element(elem_type, c("sf", "sfc")))) {
+
+        # Case: List elements are sf or sfc objects
+        pois <- lapply(pois, reformat_vectordata)
+
+      } else if (any(is.element(elem_type, c("matrix", "list")))) {
+
+        # Case: List elements are matrices or lists
+        pois <- lapply(pois, as.data.frame)
+
+      } else {
+        cli::cli_abort(
+      "POI datasets of type {.cls {elem_type}} are not (yet) supported."
+        )
+      }
+    } else {
+
+      # Case: List contains multiple type - give out error and list all types
+      multi_types <- lapply(elem_type, paste, collapse = "/") %>%
+        cli::cli_vec(style = list(vec_sep = ", ",
+                                  vec_last = ", ",
+                                  vec_trunc = 8))
+
+      cli::cli_abort(c("Input POI list contains multiple data types:",
+                        "{multi_types}",
+                       "Cannot handle lists with varying data types."))
+
+    }
+  } else if (is.list(pois) || is.matrix(pois)) {
+
+    # Case: POI data is passed as matrix
+    pois <- as.data.frame(pois)
+
+  } else if (is.sf(pois)) {
+
+    # Case: POI data is passed as sf or sfc object
+    pois <- reformat_vectordata(pois)
+
+  } else {
+    cli::cli_abort(
+      "POI datasets of type {.cls {class(pois)}} are not (yet) supported."
+    )
+  }
 
 
   calculate.shortest.routes <- function (profile, point_number) {
@@ -480,16 +537,15 @@ get_shortest_routes <- function(
       profile = profile,
       ...
     )
-    if (tolower(proximity_type) == "distance") {
-      best_index <- match(
-        min(routes[["distance"]]),
-        routes[["distance"]]
-      )
-    } else if (tolower(proximity_type) == 'duration') {
-      best_index <- match(
-        min(routes[["duration"]]),
-        routes[["duration"]]
-      )
+
+    if (identical(tolower(proximity_type), "distance")) {
+      best_index <- match(min(routes[["distance"]]),
+                          routes[["distance"]])
+
+    } else if (identical(tolower(proximity_type), 'duration')) {
+      best_index <- match(min(routes[["duration"]]),
+                          routes[["duration"]])
+
     } else {
       cli::cli_abort(
         paste(
@@ -498,34 +554,38 @@ get_shortest_routes <- function(
         )
       )
     }
+
     best_route <- routes[best_index,] %>%
       cbind(best_index, .)
   }
+
+  # Create a nested iterator that iterates through every point number for each
+  # profile
   nested_iterator <- list(
     profiles = profiles,
     point_number = seq_len(nrow(source))
   ) %>%
     expand.grid()
 
+  # Find shortest route for each coordinate pair
   route_list <- purrr::pmap(
     nested_iterator,
     ~calculate.shortest.routes(..1, ..2)
   ) %>%
     do.call(rbind, .) %>%
     as.data.frame() %>%
-    cbind(
-      nested_iterator[["point_number"]],
-      nested_iterator[["profiles"]], .
-    )
+    cbind(nested_iterator[["point_number"]],
+          nested_iterator[["profiles"]], .)
 
-  output_cols <- c(
-    "point_number",
-    "route_type",
-    "poi_number",
-    "distance",
-    "duration",
-    if (geometry) "geometry"
-  )
+  geometry <- isTRUE(list(...)$geometry)
+
+  output_cols <- c("point_number",
+                   "route_type",
+                   "poi_number",
+                   "distance",
+                   "duration",
+                   if (geometry) "geometry")
+
   colnames(route_list) <- output_cols
   rownames(route_list) <- NULL
 
@@ -533,74 +593,5 @@ get_shortest_routes <- function(
     return(route_list)
   } else {
     return(sf::st_as_sf(route_list))
-  }
-
-}
-
-
-adjust_source_data <- function(source) {
-  if (is.list(source) || is.matrix(source)) {
-    as.data.frame(source)
-  } else if (is.sf(source)) {
-    reformat_vectordata(source)
-  } else if (is.data.frame(source)) {
-    source
-  } else {
-    cli::cli_abort(
-      "Source datasets of type {.cls {class(source)}} are not (yet) supported."
-    )
-  }
-}
-
-
-adjust_poi_data <- function(pois, number_of_points) {
-  if (is.sf(pois)) {
-    pois <- reformat_vectordata(pois)
-  }
-  if (is.list(pois)) {
-    elem_type <- lapply(pois, class) %>%
-      unique()
-    if (length(elem_type) == 1) {
-      elem_type <- unlist(elem_type, recursive = FALSE)
-      if (any(is.element(elem_type, c("sf", "sfc")))) {
-        lapply(pois, reformat_vectordata)
-      } else if (any(is.element(elem_type, c("matrix", "list")))) {
-        lapply(pois, as.data.frame)
-      } else if (identical(elem_type, "data.frame")) {
-        pois
-      } else {
-        cli::cli_abort(
-      "POI datasets of type {.cls {elem_type}} are not (yet) supported."
-        )
-      }
-    } else {
-      multi_types <- lapply(elem_type, paste, collapse = "/") %>%
-        cli::cli_vec(
-          style = list(
-            vec_sep = ", ",
-            vec_last = ", ",
-            vec_trunc = 8
-          )
-        )
-      cli::cli_abort(
-        c(
-          "Input POI list contains multiple data types:",
-          "{multi_types}",
-          "Cannot handle lists with varying data types."
-        )
-      )
-    }
-  } else if (is.data.frame(pois) || is.matrix(pois)) {
-    as.data.frame(pois)
-    pois <- pois[, c(1,2)]
-    replicate(
-      number_of_points,
-      pois,
-      simplify = FALSE
-    )
-  } else {
-    cli::cli_abort(
-      "POI datasets of type {.cls {class(pois)}} are not (yet) supported."
-    )
   }
 }
