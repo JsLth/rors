@@ -26,8 +26,7 @@ requirements as the source dataset.}
 
 \item{profile}{Character scalar. Means of transport as supported by
 OpenRouteService. For a list of active profiles, call
-\code{\link{get_}}. For details
-on all profiles, refer to the
+\code{\link{get_profiles}}. For details on all profiles, refer to the
 \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
 \item{units}{Distance unit for distance calculations ('m', 'km' or 'mi')}

@@ -16,7 +16,7 @@
 #' @param ... Can be used to pass key-value combinations of OSM map features.
 #' Map features are passed as arguments: key = value. For a list of features,
 #' refer to the
-#' \href{https://wiki.openstreetmap.org/wiki/Map_features}[documentation].
+#' \href{https://wiki.openstreetmap.org/wiki/Map_features}{documentation}.
 #' @param radius Numeric scalar. Specifies the buffer size if a source dataset
 #' is passed (see details).
 #' @param crs Any object that is recognized by \code{\link[sf]{st_crs}}.

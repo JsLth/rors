@@ -24,7 +24,7 @@ osmdata to derive a bounding box for the Overpass query.}
 \item{...}{Can be used to pass key-value combinations of OSM map features.
 Map features are passed as arguments: key = value. For a list of features,
 refer to the
-\href{https://wiki.openstreetmap.org/wiki/Map_features}\link{documentation}.}
+\href{https://wiki.openstreetmap.org/wiki/Map_features}{documentation}.}
 
 \item{radius}{Numeric scalar. Specifies the buffer size if a source dataset
 is passed (see details).}

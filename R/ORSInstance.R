@@ -50,7 +50,7 @@ options(
 #' \code{\link{ORSExtract}},
 #' \code{\link{ORSConfig}},
 #' \code{\link{ORSDockerInterface}},
-#' \code{\link{ORSSSetupSettings}}
+#' \code{\link{ORSSetupSettings}}
 #'
 #' @importFrom magrittr %>%
 #'

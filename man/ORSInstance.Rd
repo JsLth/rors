@@ -43,7 +43,7 @@ stop. For details refer to the
 \code{\link{ORSExtract}},
 \code{\link{ORSConfig}},
 \code{\link{ORSDockerInterface}},
-\code{\link{ORSSSetupSettings}}
+\code{\link{ORSSetupSettings}}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
