@@ -73,8 +73,7 @@ If you already have an extract, you can mount it here:
 path_to_extract <- paste(tempdir(), "osm_file.osm.pbf", sep = "/")
 download.file("https://download.geofabrik.de/europe/germany/nordrhein-westfalen/arnsberg-regbez-latest.osm.pbf",
               destfile = path_to_extract)
-ors$extract$set_extract(path_to_extract)
-ors$extract$path
+file.path("openrouteservice-master/docker/data", basename(ors$extract$set_extract(path_to_extract)))
 ```
 
 If you don't have an extract, `$get_extract` provides a way to download extracts from known providers:
@@ -91,7 +90,8 @@ At this point, you can just run `$init_setup` and let R do the rest. If you need
 ## Adjust the configurations in ors-config.json
 
 The ORS configurations are managed inside the file `ors-config.json`. It is accessible using `$config`. If you're not into nested list structures, you can also open the raw file using `$open_config`.
-The config file is documented in the [ORS documentation](https://giscience.github.io/openrouteservice/installation/Configuration.html).
+
+Configuring ORS constitutes a way to handle processing and memory load as well as routing capabilities. The config file is documented in the [ORS documentation](https://giscience.github.io/openrouteservice/installation/Configuration.html).
 
 ```{r init-config}
 ors$config
@@ -111,7 +111,7 @@ The most important setting to be changed are the active profiles. Profiles repre
 
 or their respective synonyms according to the ORS config file.
 
-Profiles can be changed by assigning character vectors to the active binding `active_profiles`:
+Profiles can be changed by assigning character vectors to the active binding `$active_profiles`:
 
 ```{r active-profiles}
 ors$config$active_profiles <- c("car", "bike-regular", "walking")
@@ -146,17 +146,21 @@ ors$
         maximum_snapping_radius <- -1
 ```
 
-After changing any direct changes to the configurations file, the changes have to be saved to the config file using.
+After making any direct adjustments to the configurations file, the changes have to be saved to the config file using.
 
 ```{r save-config}
 ors$config$save_config()
 ```
 
-If you make changes through a provided method or by changing the raw file, this step is not necessary.
+If you make changes through a provided method or by changing the raw file, this step is not necessary. However, if you change the raw file, note, that the R6 class can't keep track on its own and needs to be refreshed after saving raw changes by calling `$config <- "refresh"`. The solution of minimal effort and error proneness is making use of the built-in R6 methods since they save changes on their own.
+
 
 ## Change the default setup settings in docker-compose.yml
 
-The Docker Compose file manages ports, the assignment of OSM files and config files, volumes, and settings for Tomcat and Java. Thus, the most important changes to be made to the Docker Compose file are assigning the extract and the config file, and allocating enough memory for building the profile graphs.
+Let's start this section with some basic Docker concepts.
+Docker is a service that runs software from isolated, standardized and portable instances called containers. Docker uses a compose file called `docker-compose.yml` to create images. Images are used to build containers. A container is an environment that is capable of running software provided by the image. While the software itself (including the configuration file from above) is set up as soon as the container is running, the compose file is evaluated only when the container is built. The following steps are concerned with adjusting the compose file in order to fine-tune the container.
+
+The Docker Compose file manages ports, the assignment of OSM files and config files as well as volumes and settings for Tomcat and Java. Thus, the most important changes to be made to the Docker Compose file are assigning the extract and the config file, and allocating enough memory for building the profile graphs.
 
 The Docker Compose file can be read and accessed using `$setup_settings`.
 
@@ -186,9 +190,7 @@ If there are any other things you want to change, you can do so by assigning val
 
 ## Build the image and start the container
 
-The final step is to instruct Docker to build the image and start the container. As soon as the container is running, the service is being prepared. Depending on the size of the extract and the number of profiles, this can take between a few minutes and a few hours.
-
-Docker can be accessed and controlled using `$docker`.
+In the final step, Docker builds the image and runs the container. This can be accomplished using an ad-hoc Docker interface, which can be accessed and controlled with `$docker`.
 
 ```{r init-docker}
 ors$docker
@@ -196,7 +198,7 @@ ors$docker
 
 `ORSDockerInterface` is divided into two functionalities: Checking the service status and controlling the image and container.
 
-Checking the service status works using six 'green lights'. `$docker_running` should always be green after you initialized `ORSDockerInterface`. `$image_built` checks if the Docker image `openrouteservice:latest` exists. `$container_exists` then verifies the existence of a container named `ors-app`. `$container_running` checks if `ors-app` is running. Finally, `$service_ready` sends a `GET` request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of `ORSDockerInterface`, all lights but the first are probably off.
+Checking the service status works using six 'green lights'. `$docker_running` should always be `TRUE` after you initialized `ORSDockerInterface`. `$image_built` checks if the Docker image `openrouteservice:latest` exists. `$container_exists` then verifies the existence of a container named `ors-app`. `$container_running` checks if `ors-app` is running. Finally, `$service_ready` sends a `GET` request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of `ORSDockerInterface`, all lights but the first are probably off.
 
 ```{r green-lights}
 data.frame(
@@ -217,15 +219,13 @@ data.frame(
 )
 ```
 
-If you already built the image and started the container, but encountered an error, you can view the error logs using `$error_log`. Preferably, this should return NULL.
+If you already built the image and started the container, but encountered an error, you can view the error logs using `$error_log` and clean up after yourself using `$cleanup`. Preferably, this should return NULL.
 
-In order to build the image and start the container, simply call
+Finally, it is time to start an OpenRouteService instance by creating the container and setting up the service. While the container creation can be done relatively quickly, depending on the extract size and the number of active profiles, the service setup can take between a few minutes and a few hours. In order to build the image and start the container, simply call `$image_up`. This will forward the heavy work to docker-compose. If `wait` is set to `TRUE`, you will get a notification as soon as the process is done.
 
 ```{r image-up}
-ors$docker$image_up(verbose = FALSE)
+ors$docker$image_up(wait = TRUE, verbose = FALSE)
 ```
-
-This will forward the heavy work to docker-compose. If `wait` is set to `TRUE`, you will get a notification as soon as the process is done.
 
 
 ## Change OSM data
@@ -244,11 +244,9 @@ test_dataset_b <- data.frame(
 )
 
 get_route_lengths(test_dataset_a, test_dataset_b, profile = "driving-car")
-
-
 ```
 
-That doesn't seem to work. Looks like I accidentally tried to route between coordinates in Cologne, although I mounted an extract of Arnsberg. This mistake can be fixed by taking down the image:
+That doesn't seem to work. Looks like I accidentally tried to route between coordinates in Cologne, although I mounted an extract of Arnsberg. This mistake can be fixed by taking down the container:
 
 ```{r change-extract}
 # Remove container
@@ -316,7 +314,7 @@ sample_b <- ors_sample(size = 100)
 get_route_lengths(sample_a, sample_b, profile = "driving-car")
 ```
 
-Seems to work! However, errors lurk everywhere. If we were to pass a different profile or increase the sample size to 101, we would be faced with new errors. So be sure to take care of your configurations and change them if necessary.
+Seems to work! However, errors lurk everywhere. If we were to pass a different profile or increase the sample size, we would be faced with new errors. So be sure to take care of your configurations and change them if necessary.
 
 Three takeaways can be formulated for this vignette:
 

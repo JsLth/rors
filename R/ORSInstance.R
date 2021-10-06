@@ -175,7 +175,6 @@ ORSInstance <- R6::R6Class(
       run = TRUE) {
         if (
           (self$docker$service_ready == "TRUE" ||
-          self$docker$image_built == "TRUE" ||
           dir.exists(file.path(self$dir, "docker/graphs"))) &&
           is.null(self$docker$error_log)
         ) {
@@ -219,6 +218,9 @@ ORSInstance <- R6::R6Class(
 
         # Turn off graph building
         self$setup_settings$graph_building <- NA
+
+        # Upddate ORSConfig
+        self$config <- "refresh"
     }
   ),
   private = list(

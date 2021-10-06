@@ -285,7 +285,7 @@ ORSDockerInterface <- R6::R6Class(
             timer <- 0
             cli::cli_progress_step(
               "Starting Docker...",
-              spinner = TRUE,
+              spinner = interactive(),
               msg_done = "Docker Desktop is now running.",
               msg_failed = "The Docker startup has timed out."
             )
@@ -335,7 +335,7 @@ ORSDockerInterface <- R6::R6Class(
 
       cli::cli_progress_step(
         "Starting service",
-        spinner = TRUE,
+        spinner = interactive(),
         msg_done = "Service setup done. ORS should now be ready to use.",
         msg_failed = "Service setup failed."
       )
