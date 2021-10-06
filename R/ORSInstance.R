@@ -78,7 +78,7 @@ ORSInstance <- R6::R6Class(
     #' \code{\link{ORSConfig}}.
     config = function(arg) {
       if (!missing(arg) && is.character(arg)) {
-        refresh <- identical(..., "refresh")
+        refresh <- identical(arg, "refresh")
       } else {
         refresh <- FALSE
       }

@@ -287,6 +287,9 @@ Dang it! Luckily, changing the service configurations doesn't take very long. Si
 # Stop the container
 ors$docker$stop_container()
 
+# Re-initialize ORSConfig to get the active config file
+ors$config <- "refresh"
+
 # Change the default maximum distance. This only changes the maximum distance
 # for profiles that don't have their own distance limit.
 ors$config$ors_config$ors$services$routing$profiles$default_params$maximum_distance <- 1000000
