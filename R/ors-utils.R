@@ -120,12 +120,10 @@ identify_extract <- function(force = FALSE) {
     # Check if build argument is set
     if (is.null(extract_path)) {
       volume <- compose$services$`ors-app`$volumes[6]
-      print(volume)
       extract_path <- gsub("\\./", "", strsplit(volume, ":")[[1]][1])
-      print(extract_path)
 
       # If not, check if change volume is set
-      if (is.null(extract_path)) {
+      if (is.null(extract_path) || is.na(extract_path)) {
         osm_file_occurences <- dir("docker/data") %>%
           grepl(".pbf|.osm.gz|.osm.zip|.osm", .)
 
@@ -142,7 +140,7 @@ identify_extract <- function(force = FALSE) {
         }
       }
     }
-    print(extract_path)
+
     # Convert relative to absolute path
     extract_path <- basename(extract_path) %>%
       file.path(mdir, "docker/data", .) %>%
