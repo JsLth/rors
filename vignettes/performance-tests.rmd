@@ -1,0 +1,46 @@
+---
+title: "Testing routing performance"
+author: Jonas Lieth
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Testing routing performance}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, echo = FALSE}
+library(ORSRouting)
+library(callr)
+```
+
+```{r docker-logging}
+stats_logging <- function(output_file) {
+  while(TRUE) {
+    system2(command = "docker",
+            args = paste("stats --no-stream --format",
+                         "\"{{.CPUPerc}},{{.MemPerc}}\"",
+                         "ors-app"),
+            stdout = output_file,
+            wait = TRUE)
+    Sys.sleep(3)
+  }
+}
+
+log_file <- file.path(normalizePath(tempdir(), winslash = "/"), "docker_stats.txt")
+
+logger <- callr::r_bg(stats_logging, args = list(log_file))
+```
+
+Prepare sample datasets:
+
+```{r}
+sample_a <- ors_sample(100)
+sample_b <- ors_sample(100)
+```
+
+
+
+```{r}
+microbenchmark::microbenchmark()
+```

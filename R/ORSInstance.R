@@ -243,6 +243,8 @@ ORSInstance <- R6::R6Class(
       }
       cli_abortifnot(dir.exists(dir))
 
+      basedir <- file.path(dir, basedir)
+
       if (!dir.exists(basedir)) {
         zip_file <- "openrouteservice.zip"
         cli::cli_progress_step(
