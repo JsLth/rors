@@ -245,6 +245,8 @@ ORSInstance <- R6::R6Class(
 
       basedir <- file.path(dir, basedir)
 
+      print(basedir)
+
       if (!dir.exists(basedir)) {
         zip_file <- "openrouteservice.zip"
         cli::cli_progress_step(
@@ -257,7 +259,7 @@ ORSInstance <- R6::R6Class(
         file.remove(zip_file)
         cli::cli_progress_done()
       }
-      file.path(dir, basedir)
+      basedir
     }
   ),
   cloneable = FALSE
