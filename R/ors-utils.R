@@ -146,6 +146,10 @@ identify_extract <- function(force = FALSE) {
       file.path(mdir, "docker/data", .) %>%
       normalizePath(winslash = "/")
 
+    if (!dir.exists(extract_path)) {
+      cli::cli_abort("The current ORS container directory does not exist")
+    }
+
     assign("extract_path", extract_path, envir = pkg_cache)
     return(extract_path)
   } else {

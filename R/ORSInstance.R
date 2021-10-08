@@ -124,7 +124,11 @@ ORSInstance <- R6::R6Class(
     #' \code{\link{ORSConfig}}, \code{\link{ORSSetupSettings}} and
     #' \code{\link{ORSDockerInterface}}.
     #' @param dir Custom ORS directory. If not specified, the directory will be
-    #' downloaded to the package directory.
+    #' downloaded to the system's home directory.
+    #' @details It is recommended to pass a directory that is stable. If the
+    #' Docker container is set up and the source directory is removed, a number
+    #' of problems can emerge ranging from broken ORSRouting functions to the
+    #' necessity to force-delete the container.
     initialize = function(dir = NULL) {
       if (!is.null(dir)) {
         private$.clone_ors_repo(dir)
@@ -239,7 +243,7 @@ ORSInstance <- R6::R6Class(
       )
 
       if (missing(dir)) {
-        dir <- system.file(package = "ORSRouting")
+        dir <- path.expand("~")
       }
       cli_abortifnot(dir.exists(dir))
 
