@@ -100,6 +100,10 @@ get_ors_dir <- function(force = TRUE) {
       head(-1) %>%
       paste0(collapse = "/")
 
+    if (!dir.exists(mdir)) {
+      cli::cli_abort("The current ORS container directory does not exist")
+    }
+
     assign("mdir", mdir, envir = pkg_cache)
     return(mdir)
   } else {
@@ -145,10 +149,6 @@ identify_extract <- function(force = FALSE) {
     extract_path <- basename(extract_path) %>%
       file.path(mdir, "docker/data", .) %>%
       normalizePath(winslash = "/")
-
-    if (!dir.exists(extract_path)) {
-      cli::cli_abort("The current ORS container directory does not exist")
-    }
 
     assign("extract_path", extract_path, envir = pkg_cache)
     return(extract_path)

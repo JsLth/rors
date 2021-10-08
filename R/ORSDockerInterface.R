@@ -197,27 +197,28 @@ ORSDockerInterface <- R6::R6Class(
 
     #' @description Deletes the image. Should only be used when the container
     #' does not exist.
-    image_down = function() {
+    image_down = function(force = TRUE) {
       if (!self$docker_running) {
         cli::cli_abort("Docker is not running.")
       }
 
       if (!self$container_exists) {
-        owd <- getwd()
-        setwd(super$dir)
-        on.exit(setwd(owd))
 
-        auth_system(
-          paste("docker compose -f",
-                file.path(super$dir, "docker/docker-compose.yml"),
-                "down"
-          )
-        )
+        if (isFALSE(force)) {
+          auth_system(paste("docker compose -f",
+                            file.path(super$dir, "docker/docker-compose.yml"),
+                            "down"))
+        } else {
+          auth_system(paste("docker rmi --force",
+                            "openrouteservice/openrouteservice:latest"))
+        }
+
       } else {
         cli::cli_abort(
           "Remove the container first before taking down the image"
         )
       }
+      invisible(NULL)
     },
 
     #' @description Removes the container after stopping it if necessary.
