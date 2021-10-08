@@ -124,13 +124,13 @@ identify_extract <- function(force = FALSE) {
 
       # If not, check if change volume is set
       if (is.null(extract_path) || is.na(extract_path)) {
-        osm_file_occurences <- dir("docker/data") %>%
+        data_dir <- file.path(mdir, "docker/data")
+        osm_file_occurences <- dir(data_dir) %>%
           grepl(".pbf|.osm.gz|.osm.zip|.osm", .)
 
         # As a last resort, check if we can just pick it up from the data folder
         if (sum(osm_file_occurences) == 1) {
-          extract_path <- dir(file.path(mdir,
-                                        "docker/data"))[osm_file_occurences]
+          extract_path <- dir(data_dir)[osm_file_occurences]
         } else {
           cli::cli_abort(
             paste(

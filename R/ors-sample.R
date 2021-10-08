@@ -6,7 +6,7 @@
 
 
 read_extract_boundaries <- function(force_new_extract = FALSE) {
-    if (is.null(pkg_cache$extract_boundaries)) {
+  if (is.null(pkg_cache$extract_boundaries) || force_new_extract) {
     extract_path <- identify_extract(force = force_new_extract)
     extract_data <- suppressWarnings(
       osmextract::oe_read(

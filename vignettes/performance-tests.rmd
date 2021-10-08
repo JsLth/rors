@@ -12,22 +12,40 @@ vignette: >
 ```{r setup, echo = FALSE}
 library(ORSRouting)
 library(callr)
+library(ggplot2)
+```
+
+First off, the system specifications that the following performance tests are done on:
+
+```{r, echo = FALSE}
+cpu_name <- benchmarkme::get_cpu()$model_name
+cpu_cores <- benchmarkme::get_cpu()$no_of_cores
+tram <- round(memuse::Sys.meminfo()$totalram@size, 1)
+fram <- round(memuse::Sys.meminfo()$freeram@size, 1)
+os <- Sys.info()["sysname"]
+
+data.frame(Specification = c(cpu_name, cpu_cores, tram, fram, os),
+           row.names = c("CPU model", "Cores", "Total RAM", "Free RAM", "OS"))
 ```
 
 ```{r docker-logging}
 stats_logging <- function(output_file) {
   while(TRUE) {
-    system2(command = "docker",
-            args = paste("stats --no-stream --format",
-                         "\"{{.CPUPerc}},{{.MemPerc}}\"",
-                         "ors-app"),
-            stdout = output_file,
-            wait = TRUE)
+    shell(paste("docker stats --no-stream --format",
+                "\"{{.CPUPerc}},{{.MemPerc}}\"",
+                "ors-app",
+                "| sed s/%//g >>",
+                output_file),
+          wait = TRUE)
     Sys.sleep(3)
   }
 }
 
 log_file <- file.path(normalizePath(tempdir(), winslash = "/"), "docker_stats.txt")
+
+if (file.exists(log_file)) unlink(log_file)
+
+cat("CPU,Memory", file = log_file)
 
 logger <- callr::r_bg(stats_logging, args = list(log_file))
 ```
@@ -42,5 +60,67 @@ sample_b <- ors_sample(100)
 
 
 ```{r}
-microbenchmark::microbenchmark()
+iterator <- seq(0, 100, by = 5)
+iterator[1] <- 1
+
+rowwise_directions <- map(
+        iterator,
+        ~ microbenchmark::microbenchmark(get_route_lengths(sample_a[seq_len(..1), ],
+                                                           sample_b[seq_len(..1), ],
+                                                           "driving-car",
+                                                           how = "directions"))
+)
+
+rowwise_matrix <- map(
+        iterator,
+        ~ microbenchmark::microbenchmark(get_route_lengths(sample_a[seq_len(..1), ],
+                                                           sample_b[seq_len(..1), ],
+                                                           "driving-car",
+                                                           how = "directions"))
+)
+
+logger$kill()
+```
+
+```{r}
+rowwise_directions_mean <- map(rowwise_directions, ~mean(..1$time) / 1000000000) %>% unlist()
+rowwise_directions_min <- map(rowwise_directions, ~min(..1$time) / 1000000000) %>% unlist()
+rowwise_directions_max <- map(rowwise_directions, ~max(..1$time) / 1000000000) %>% unlist()
+rowwise_matrix_mean <- map(rowwise_matrix, ~mean(..1$time) / 1000000000) %>% unlist()
+rowwise_matrix_min <- map(rowwise_matrix, ~min(..1$time) / 1000000000) %>% unlist()
+rowwise_matrix_max <- map(rowwise_matrix, ~max(..1$time) / 1000000000) %>% unlist()
+
+rowwise_directions <- data.frame(elements = iterator,
+                                 mean = rowwise_directions_mean,
+                                 max = rowwise_directions_max,
+                                 min = rowwise_directions_min)
+
+rowwise_matrix <- data.frame(elements = iterator,
+                             mean = rowwise_matrix_mean,
+                             max = rowwise_matrix_max,
+                             min = rowwise_matrix_min)
+
+rowwise_directions$type <- "orange4"
+rowwise_matrix$type <- "mediumpurple4"
+
+rowwise <- rbind(rowwise_directions, rowwise_matrix)
+
+g <- ggplot(data = rowwise, aes(fill = type, linetype = type)) +
+        geom_line(aes(x = elements, y = mean), size = 1) +
+        geom_ribbon(aes(x = elements, y = mean, ymin = min, ymax = max), alpha = 0.3) +
+        labs(x = "Time (in s)",
+             y = "Mean processing time (in s)",
+             title = "Matrix vs. Directions (rowwise)") +
+        scale_fill_discrete(labels = c("Matrix", "Directions"), name = "Method") +
+        scale_linetype_discrete(labels = c("Matrix", "Directions"), name = "Method") +
+        scale_x_continuous(expand = c(0, 0), limits = c(0, NA)) +
+        scale_y_continuous(expand = c(0, 0), limits = c(0, NA))
+
+plot(g)
+```
+
+```{r}
+parsed_log <- read.csv(log_file, header = TRUE)
+system_usage <- data.frame(CPU = parsed_log$CPU,
+                           Memory = parsed_log$Memory)
 ```

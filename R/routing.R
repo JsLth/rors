@@ -96,7 +96,7 @@ get_route_lengths <- function(
                                            source,
                                            simplify = FALSE))
 
-    } else if (nrow(destination)) {
+    } else if (nrow(destination) == 1) {
       destination <- dplyr::bind_rows(replicate(nrow(destination),
                                                 source,
                                                 simplify = FALSE))
