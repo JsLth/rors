@@ -135,6 +135,7 @@ ORSInstance <- R6::R6Class(
       } else {
         dir <- private$.clone_ors_repo()
       }
+      dir <- normalizePath(dir, winshlash = "/")
       assign("mdir", dir, envir = pkg_cache)
 
       self$docker

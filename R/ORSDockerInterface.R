@@ -227,6 +227,7 @@ ORSDockerInterface <- R6::R6Class(
           self$stop_container()
         }
         auth_system("docker rm ors-app")
+        invisible(NULL)
       }
     },
 
@@ -252,6 +253,7 @@ ORSDockerInterface <- R6::R6Class(
     #' @description Stops the container.
     stop_container = function() {
       auth_system("docker stop ors-app", stdout = FALSE)
+      invisible(NULL)
     }
   ),
 
