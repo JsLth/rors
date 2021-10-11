@@ -195,8 +195,10 @@ ORSDockerInterface <- R6::R6Class(
       super$setup_settings$graph_building <- NA
     },
 
-    #' @description Deletes the image. Should only be used when the container
-    #' does not exist.
+    #' @description Deletes the image
+    #' @param force If \code{TRUE}, forces the image to removed. If
+    #' \code{FALSE}, the command will fail if the compose file does not exist.
+    #' Keep \code{TRUE}, if the main directory has a stable path.
     image_down = function(force = TRUE) {
       if (!self$docker_running) {
         cli::cli_abort("Docker is not running.")
@@ -344,15 +346,21 @@ ORSDockerInterface <- R6::R6Class(
       )
 
       while (!self$service_ready) {
+
         for (i in seq_len(interval * 10)) {
           cli::cli_progress_update()
           Sys.sleep(0.1)
         }
+
+        if (!self$container_running) {
+          cli::cli_abort("Container was stopped during setup.")
+        }
+
         errors <- private$.watch_for_error()
+
         if (!is.null(errors)) {
           cli::cli_abort(
-            c(
-              "The service ran into the following errors:",
+            c("The service ran into the following errors:",
               cli::cli_vec(errors, style = list(vec_sep = "\n"))
             )
           )
