@@ -195,25 +195,23 @@ ORSDockerInterface <- R6::R6Class(
       super$setup_settings$graph_building <- NA
     },
 
-    #' @description Deletes the image
-    #' @param force If \code{TRUE}, forces the image to removed. If
-    #' \code{FALSE}, the command will fail if the compose file does not exist.
-    #' Keep \code{TRUE}, if the main directory has a stable path.
-    image_down = function(force = TRUE) {
+    #' @description Deletes the image.
+    #' @param force Specifies if the image should be forcibly removed, even
+    #' if the container is still running or the source directory cannot be
+    #' found. Use with caution.
+    rm_image = function(force = TRUE) {
       if (!self$docker_running) {
         cli::cli_abort("Docker is not running.")
       }
 
       if (!self$container_exists) {
 
-        if (isFALSE(force)) {
-          auth_system(paste("docker compose -f",
-                            file.path(super$dir, "docker/docker-compose.yml"),
-                            "down"))
-        } else {
-          auth_system(paste("docker rmi --force",
-                            "openrouteservice/openrouteservice:latest"))
-        }
+        processx::run(command = "docker",
+                      args = c("rmi",
+                               ifelse(force, "--force", ""),
+                               "openrouteservice/openrouteservice:latest"),
+                      error_on_status = TRUE,
+                      spinner = TRUE)
 
       } else {
         cli::cli_abort(
@@ -224,13 +222,16 @@ ORSDockerInterface <- R6::R6Class(
     },
 
     #' @description Removes the container after stopping it if necessary.
-    remove_container = function() {
+    container_down = function() {
       if (self$container_exists) {
-        if (self$container_running) {
-          self$stop_container()
-        }
-        auth_system("docker rm ors-app")
-        invisible(NULL)
+        
+        processx::run(command = "docker-compose",
+                      args = "down",
+                      error_on_status = TRUE,
+                      wd = super$dir,
+                      spinner = TRUE)
+        
+        invisible()
       }
     },
 
@@ -346,21 +347,15 @@ ORSDockerInterface <- R6::R6Class(
       )
 
       while (!self$service_ready) {
-
         for (i in seq_len(interval * 10)) {
           cli::cli_progress_update()
           Sys.sleep(0.1)
         }
-
-        if (!self$container_running) {
-          cli::cli_abort("Container was stopped during setup.")
-        }
-
         errors <- private$.watch_for_error()
-
         if (!is.null(errors)) {
           cli::cli_abort(
-            c("The service ran into the following errors:",
+            c(
+              "The service ran into the following errors:",
               cli::cli_vec(errors, style = list(vec_sep = "\n"))
             )
           )

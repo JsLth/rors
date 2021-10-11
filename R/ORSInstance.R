@@ -130,6 +130,12 @@ ORSInstance <- R6::R6Class(
     #' of problems can emerge ranging from broken ORSRouting functions to the
     #' necessity to force-delete the container.
     initialize = function(dir = NULL) {
+      if (!grant_docker_privileges(run = FALSE)) {
+        cli::cli_abort(paste("To use {.cls ORSInstance}, Docker needs to be",
+                             "accessible as a non-root user. Refer to the",
+                             "function {.fn grant_docker_privileges}"))
+      }
+      
       if (!is.null(dir)) {
         private$.clone_ors_repo(dir)
       } else {
