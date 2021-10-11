@@ -201,11 +201,23 @@ is.sf <- function(x) {
 
 file.open <- function(file) {
   os <- .Platform$OS.type
+  file <- shQuote(file)
   if (os == "unix") {
     system2("xdg-open", file, wait = FALSE)
   } else if (os == "windows") {
     system2("open", file, wait = FALSE)
   }
+}
+
+
+file_path_up <- function(path, times_back = NULL) {
+  new_path <- normalizePath(path, winslash = "/") %>%
+    strsplit("/") %>%
+    unlist() %>%
+    head(-times_back) %>%
+    as.list() %>%
+    do.call(file.path, .)
+  return(new_path)
 }
 
 

@@ -20,12 +20,14 @@ ORSDockerInterface <- R6::R6Class(
     #' @field docker_running Checks if the Docker daemon is running.
     docker_running = function(arg) {
       if (missing(arg)) {
-        docker_check <- auth_system(
-          "docker ps",
-          stdout = FALSE,
-          stderr = FALSE
-        )
-        docker_check == 0
+        cmd <- "ps"
+
+        docker_check <- system2(command = "docker",
+                                args = cmd,
+                                stdout = FALSE,
+                                stderr = FALSE)
+
+        identical(docker_check, 0L)
       } else {
         cli::cli_abort("{.var $docker_running} is read only.")
       }
@@ -34,11 +36,13 @@ ORSDockerInterface <- R6::R6Class(
     #' @field image_built Checks if the openrouteservice:latest image exists.
     image_built = function(arg) {
       if (missing(arg)) {
-        image_name <- auth_system(
-          paste("docker images \"openrouteservice/openrouteservice\"",
-                "--format {{.Repository}}"),
-          stdout = TRUE
-        )
+        cmd <- c("images \"openrouteservice/openrouteservice\"",
+                 "--format {{.Repository}}")
+
+        image_name <- system2(command = "docker",
+                              args = cmd,
+                              stdout = TRUE)
+
         length(image_name) > 0
       } else {
         cli::cli_abort("{.var $image_built} is read only.")
@@ -49,10 +53,14 @@ ORSDockerInterface <- R6::R6Class(
     container_exists = function(arg) {
       if (missing(arg)) {
         if (self$docker_running) {
-          container_status <- auth_system(
-            "docker ps -a --format \"{{.Names}}\" --filter name=^/ors-app$",
-            stdout = TRUE
-          )
+          cmd <- c("ps -a",
+                   "--format \"{{.Names}}\"",
+                   "--filter name=^/ors-app$")
+
+          container_status <- system2(command = "docker",
+                                      args = cmd,
+                                      stdout = TRUE)
+
           identical(container_status, "ors-app")
         }
       } else {
@@ -68,14 +76,15 @@ ORSDockerInterface <- R6::R6Class(
           self$image_built &&
           self$container_exists
         ) {
-          container_status <- suppressWarnings(
-            auth_system(
-              paste("docker container ls -a --format \"{{.State}}\"",
-                    "--filter name=^/ors-app$"),
-              stdout = TRUE,
-              stderr = FALSE
-            )
-          )
+          cmd <- c("container ls -a",
+                   "--format \"{{.State}}\"",
+                   "--filter name=^/ors-app$")
+
+          container_status <- suppressWarnings(system2(command = "docker",
+                                                       args = cmd,
+                                                       stdout = TRUE,
+                                                       stderr = FALSE))
+
           identical(container_status, "running")
         } else {
           FALSE
@@ -137,20 +146,6 @@ ORSDockerInterface <- R6::R6Class(
     #' and specifies the port.
     #' @param port Integer scalar. Port that the server should run on.
     initialize = function() {
-      if (is.linux()) {
-        cli::cli_alert_warning(
-          "{.cls ORSInstance} needs superuser permissions to communicate with Docker"
-        )
-
-        if (!is.rstudio()) {
-          system(
-            "pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY ls",
-           ignore.stdout = TRUE,
-           ignore.stderr = FALSE
-          )
-        }
-      }
-
       private$.start_docker()
       invisible(self)
     },
@@ -172,18 +167,19 @@ ORSDockerInterface <- R6::R6Class(
       self$error_log <- NULL
       private$.set_port()
 
-      ecode <- auth_system(
-        paste("docker compose -f",
-              file.path(super$dir, "docker/docker-compose.yml"),
-              "up -d"),
-        stdout = if (isTRUE(verbose)) "" else FALSE,
-        stderr = if (isTRUE(verbose)) "" else FALSE
-      )
+      cmd <- c("compose -f",
+                file.path(super$dir, "docker/docker-compose.yml"),
+               "up -d")
 
-      if (!is.na(ecode) && ecode != 0) {
+      status <- system2(command = "docker",
+                        args = cmd,
+                        stdout = if (isTRUE(verbose)) "" else FALSE,
+                        stderr = if (isTRUE(verbose)) "" else FALSE)
+
+      if (!is.na(status) && !identical(status, 0L)) {
         cli::cli_abort(
           c("The container setup encountered an error.",
-            paste("Error code", ecode)
+            paste("Error code", status)
           )
         )
       }
@@ -206,16 +202,20 @@ ORSDockerInterface <- R6::R6Class(
 
       if (!self$container_exists) {
 
-        processx::run(command = "docker",
-                      args = c("rmi",
-                               ifelse(force, "--force", ""),
-                               "openrouteservice/openrouteservice:latest"),
-                      error_on_status = TRUE,
-                      spinner = TRUE)
+        cmd <- c("rmi",
+                 ifelse(force, "--force", ""),
+                 "openrouteservice/openrouteservice:latest")
+
+        status <- system2(command = "docker", args = cmd)
+
+        if (!identical(status, 0L)) {
+          cli::cli_abort(c("The docker command encountered an error",
+                           paste("Error code", status)))
+        }
 
       } else {
         cli::cli_abort(
-          "Remove the container first before taking down the image"
+          "Remove the container before removing the image"
         )
       }
       invisible(NULL)
@@ -224,12 +224,18 @@ ORSDockerInterface <- R6::R6Class(
     #' @description Removes the container after stopping it if necessary.
     container_down = function() {
       if (self$container_exists) {
-        
-        processx::run(command = "docker-compose",
-                      args = "down",
-                      error_on_status = TRUE,
-                      wd = super$dir,
-                      spinner = TRUE)
+
+        cmd <- c("compose",
+                 "-f",
+                 file.path(super$dir, "docker/docker-compose.yml"),
+                 "down")
+
+        status <- system2(command = "docker", args = cmd)
+
+        if (!identical(status, 0L)) {
+          cli::cli_abort(c("The docker command encountered an error",
+                           paste("Error code", status)))
+        }
         
         invisible()
       }
@@ -246,18 +252,35 @@ ORSDockerInterface <- R6::R6Class(
       if (self$container_exists) {
         self$error_log <- NULL
 
-        auth_system("docker start ors-app", stdout = FALSE)
+        cmd <- "start ors-app"
+
+        system2(command = "docker", args = cmd, stdout = FALSE)
+
+        if (!identical(status, 0L)) {
+          cli::cli_abort(c("The docker command encountered an error",
+                           paste("Error code", status)))
+        }
 
         if (wait) {
           private$.notify_when_ready(interval = 2, silently = TRUE)
         }
       }
+      NULL
     },
 
     #' @description Stops the container.
     stop_container = function() {
-      auth_system("docker stop ors-app", stdout = FALSE)
-      invisible(NULL)
+      if (self$container_running) {
+        cmd <- "stop ors-app"
+
+        status <- system2(command = "docker", args = cmd, stdout = FALSE)
+
+        if (!identical(status, 0L)) {
+          cli::cli_abort(c("The docker command encountered an error",
+                           paste("Error code", status)))
+        }
+      }
+      NULL
     }
   ),
 
@@ -275,53 +298,40 @@ ORSDockerInterface <- R6::R6Class(
   .start_docker = function() {
       if (!self$docker_running) {
         if (Sys.info()["sysname"] == "Windows") {
-          docker_path <- auth_system("where docker.exe", stdout = TRUE)
-          docker_desktop <- docker_path %>%
-            strsplit("\\\\") %>%
-            unlist() %>%
-            head(-3) %>%
-            append("Docker Desktop.exe") %>%
-            paste(collapse = "/") %>%
-            shQuote()
+          docker_path <- Sys.which("docker")
+          docker_desktop <- file.path(file_path_up(docker_path, 3),
+                                      "Docker Desktop.exe")
 
-          scode <- file.open(docker_desktop)
+          scode <- file.open(shQuote(docker_desktop))
 
           # If Docker is installed, it will try to open
           if (scode == 0) {
             timer <- 0
             cli::cli_progress_step(
               "Starting Docker...",
-              spinner = interactive(),
+              spinner = TRUE,
               msg_done = "Docker Desktop is now running.",
               msg_failed = "The Docker startup has timed out."
             )
 
             # Check if Docker is usable by running a Docker command
-            while (
-              auth_system(
-                "docker ps",
-                stdout = FALSE,
-                stderr = FALSE
-              ) != 0
-            ) {
+            while (system2(command = "docker",
+                              args = "ps",
+                           stdout = FALSE,
+                           stderr = FALSE,
+                           timeout = 180) != 0) {
+
               for (i in 1:100) {
                 cli::cli_progress_update()
                 Sys.sleep(0.01)
-              }
-              timer <- timer + 1
-              if (timer == 180) {
-                cli::cli_abort("The Docker startup has timed out.")
+
               }
             }
-          } else if (scode == -1) {
-            cli::cli_abort(
-              "Docker does not seem to be installed on your system."
-            )
           } else {
             cli::cli_abort("Something went wrong while starting Docker.")
           }
         } else if (is.linux()) {
-          auth_system("systemctl start docker")
+          system2(command = "systemctl", args = "start docker")
         }
       }
     },
@@ -333,15 +343,15 @@ ORSDockerInterface <- R6::R6Class(
       if (!silently) {
         cli::cli_inform(
           paste(
-          "The container is being set up and started now. You can stop the",
-          "process now or let it run and get notified when the service is ready."
+            "The container is being set up and started now. You can stop the",
+            "process now or let it run and get notified when the service is ready."
           )
         )
       }
 
       cli::cli_progress_step(
         "Starting service",
-        spinner = interactive(),
+        spinner = TRUE,
         msg_done = "Service setup done. ORS should now be ready to use.",
         msg_failed = "Service setup failed."
       )
