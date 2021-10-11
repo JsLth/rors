@@ -98,7 +98,7 @@ setup.}
 Deletes the image. Should only be used when the container
 does not exist.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$image_down()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$image_down(force = TRUE)}\if{html}{\out{</div>}}
 }
 
 }

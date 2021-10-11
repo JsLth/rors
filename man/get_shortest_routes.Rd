@@ -18,6 +18,13 @@ be routed from. The source dataset should be passed as a double nested
 dataframe or list with each row representing a x/y or lon/lat coordinate
 pair.}
 
+\item{pois}{Dataset containing points of interest that should be
+routed to. The POI dataset can either be passed as a single dataframe or as
+a list of dataframes. If a list is passed, each list element corresponds to
+one row in the source dataset. If a dataframe, an \code{sf} object or an
+\code{sfc} object is passed, each row in the source dataset feeds from the
+entire dataframe.}
+
 \item{profiles}{Character vector or list. Means of transport as supported by
 OpenRouteService. For details, see \code{\link{get_route_lengths}}. This
 function supports}
@@ -27,13 +34,6 @@ based on. If \code{distance}, the shortest physical distance will be calculated
 and if \code{duration}, the shortest temporal distance will be calculated.}
 
 \item{...}{Passed to \code{\link{get_route_lengths}}}
-
-\item{poi_coords}{Dataset containing points of interest that should be
-routed to. The POI dataset can either be passed as a single dataframe or as
-a list of dataframes. If a list is passed, each list element corresponds to
-one row in the source dataset. If a dataframe, an \code{sf} object or an
-\code{sfc} object is passed, each row in the source dataset feeds from the
-entire dataframe.}
 }
 \value{
 Dataframe with distances, travel durations and the index number of

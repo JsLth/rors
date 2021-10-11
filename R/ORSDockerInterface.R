@@ -195,23 +195,23 @@ ORSDockerInterface <- R6::R6Class(
       super$setup_settings$graph_building <- NA
     },
 
-    #' @description Deletes the image. Should only be used when the container
-    #' does not exist.
-    image_down = function(force = TRUE) {
+    #' @description Deletes the image.
+    #' @param force Specifies if the image should be forcibly removed, even
+    #' if the container is still running or the source directory cannot be
+    #' found. Use with caution.
+    rm_image = function(force = TRUE) {
       if (!self$docker_running) {
         cli::cli_abort("Docker is not running.")
       }
 
       if (!self$container_exists) {
 
-        if (isFALSE(force)) {
-          auth_system(paste("docker compose -f",
-                            file.path(super$dir, "docker/docker-compose.yml"),
-                            "down"))
-        } else {
-          auth_system(paste("docker rmi --force",
-                            "openrouteservice/openrouteservice:latest"))
-        }
+        processx::run(command = "docker",
+                      args = c("rmi",
+                               ifelse(force, "--force", ""),
+                               "openrouteservice/openrouteservice:latest"),
+                      error_on_status = TRUE,
+                      spinner = TRUE)
 
       } else {
         cli::cli_abort(
@@ -222,13 +222,16 @@ ORSDockerInterface <- R6::R6Class(
     },
 
     #' @description Removes the container after stopping it if necessary.
-    remove_container = function() {
+    container_down = function() {
       if (self$container_exists) {
-        if (self$container_running) {
-          self$stop_container()
-        }
-        auth_system("docker rm ors-app")
-        invisible(NULL)
+        
+        processx::run(command = "docker-compose",
+                      args = "down",
+                      error_on_status = TRUE,
+                      wd = super$dir,
+                      spinner = TRUE)
+        
+        invisible()
       }
     },
 

@@ -17,18 +17,19 @@ LazyData: true
 Depends:
     R (>= 4.0.4)
 Imports:
-    httr (>= 1.4.2),
-    jsonlite (>= 1.7.2),
-    magrittr (>= 2.0.1),
-    purrr (>= 0.3.4),
-    R6 (>= 2.5.0),
-    sf (>= 0.9-8),
-    memuse (>= 4.1-0),
-    dplyr (>= 1.0.7),
-    osmdata (>= 0.1.5),
-    fields (>= 12.5),
-    tidyr (>= 1.1.3),
-    osmextract (>= 0.3.0)
+    httr,
+    jsonlite,
+    magrittr,
+    purrr,
+    R6,
+    sf,
+    memuse,
+    dplyr,
+    osmdata,
+    fields,
+    tidyr,
+    osmextract,
+    processx
 Suggests:
     rmarkdown (>= 2.7),
     knitr (>= 1.31)

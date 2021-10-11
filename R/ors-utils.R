@@ -205,3 +205,44 @@ get_error_tip <- function(code) {
                   "{.val maximum_visited_nodes} in the ORS configuration file.")
   )
 }
+
+
+#' Grant a non-root user permission to operate docker
+#' @description Creates a docker group and adds the current user to it in order
+#' to enable docker commands from within R. Doing this, either manually or by
+#' using this function, is a requirement for using \code{\link{ORSInstance}}.
+#' @param run If \code{FALSE}, the function will only return a logical vector
+#' and will not change group memberships.
+#' @details For details on what this function does and what security
+#' implications it might have, refer to Docker's
+#' \href{https://docs.docker.com/engine/install/linux-postinstall/}{post-installation guide}
+
+grant_docker_privileges <- function(run = TRUE) {
+  if (is.linux()) {
+    is_granted <- function() {
+      grepl("docker", system2("id", "-nG", stdout = TRUE))
+    }
+    
+    if (!is_granted() && isTRUE(run)) {
+      system2(command = "pkexec",
+              args = paste("env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c",
+                           "'sudo addgroup docker;",
+                           "sudo usermod -aG docker $USER'"),
+              stdout = "",
+              stderr = "")
+      processx::run("newgrp", "docker")
+    }
+  
+    if (!is_granted()) {
+      return(FALSE)
+    }
+    
+    works <- identical(processx::run("docker", "ps")$stderr, "")
+    if (!works) {
+      cli::cli_alert_warning(paste("You might have to restart your system to",
+                                   "re-evaluate group membership"))
+    }
+    
+    return(TRUE)
+  }
+}

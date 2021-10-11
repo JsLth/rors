@@ -86,10 +86,17 @@ Initialize \code{\link{ORSInstance}} as well as \code{\link{ORSExtract}},
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{dir}}{Custom ORS directory. If not specified, the directory will be
-downloaded to the package directory.}
+downloaded to the system's home directory.}
 }
 \if{html}{\out{</div>}}
 }
+\subsection{Details}{
+It is recommended to pass a directory that is stable. If the
+Docker container is set up and the source directory is removed, a number
+of problems can emerge ranging from broken ORSRouting functions to the
+necessity to force-delete the container.
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-initial_setup"></a>}}
