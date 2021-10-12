@@ -28,11 +28,11 @@ Imports:
     osmdata,
     fields,
     tidyr,
-    osmextract,
-    processx
+    osmextract
 Suggests:
     rmarkdown (>= 2.7),
-    knitr (>= 1.31)
+    knitr (>= 1.31),
+    sys
 SystemRequirements: Docker Engine on Linux systems, Docker Desktop on Windows (>= 20.10.6)
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)

@@ -230,7 +230,7 @@ grant_docker_privileges <- function(run = TRUE) {
                            "sudo usermod -aG docker $USER'"),
               stdout = "",
               stderr = "")
-      processx::run("newgrp", "docker")
+      sys::exec_internal("newgrp", "docker")
     }
   
     if (!is_granted()) {
