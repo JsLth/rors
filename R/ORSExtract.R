@@ -71,6 +71,7 @@ ORSExtract <- R6::R6Class(
 
 ORSExtract$funs <- new.env()
 
+# Public methods --------------------------------------------------------------
 
 ORSExtract$funs$get_extract <- function(self, private, place, provider = NULL, ...) {
   data_dir <- file.path(self$dir, "docker/data")
@@ -194,6 +195,8 @@ ORSConfig$funs$set_extract <- function(self, private, extract_path) {
   return(self$path)
 }
 
+
+# Private methods -------------------------------------------------------------
 
 ORSConfig$funs$move_extract <- function(self, extract_path) {
   data_dir <- file.path(self$dir, "docker/data")

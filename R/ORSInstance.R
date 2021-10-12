@@ -98,7 +98,7 @@ ORSInstance <- R6::R6Class(
                              "function {.fn grant_docker_privileges}"))
       }
 
-      dir <- normalizePath(private$.clone_ors_repo(dir), winslash = "/")
+      dir <- private$.clone_ors_repo(dir)
       assign("mdir", dir, envir = pkg_cache)
 
       self$docker
@@ -146,10 +146,8 @@ ORSInstance <- R6::R6Class(
   ),
   private = list(
     .subclasses = list(),
-
     .get_subclass = function(env) ORSInstance$funs$get_subclass(private, env),
-
-    .clone_ors_repo = function(dir = NULL) ORSInstance$funs$clone_ors_repo(self, dir)
+    .clone_ors_repo = function(dir) ORSInstance$funs$clone_ors_repo(self, dir)
   ),
   cloneable = FALSE
 )
@@ -157,6 +155,7 @@ ORSInstance <- R6::R6Class(
 
 ORSInstance$funs <- new.env()
 
+# Public methods --------------------------------------------------------------
 
 ORSInstance$funs$dir <- function() {
   pkg_cache$mdir
@@ -267,13 +266,15 @@ ORSInstance$funs$init_setup <- function(self,
 }
 
 
+# Private methods -------------------------------------------------------------
+
 ORSInstance$funs$get_subclass <- function(private, env) {
   env_name <- deparse(substitute(env, env = parent.frame()))
   private$.subclasses[[env_name]] <- env$new()
 }
 
 
-ORSInstance$funs$clone_ors_repo <- function(self, dir = NULL) {
+ORSInstance$funs$clone_ors_repo <- function(self, dir) {
   basedir <- "openrouteservice-master"
   download_url <- paste0("https://github.com/",
                          "GIScience/openrouteservice/archive/",

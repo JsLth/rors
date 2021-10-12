@@ -104,6 +104,7 @@ ORSConfig <- R6::R6Class(
 
 ORSConfig$funs <- new.env()
 
+# Public methods --------------------------------------------------------------
 
 ORSConfig$funs$active_profiles <- function(self, private, profiles) {
   if (missing(profiles)) {
@@ -136,6 +137,8 @@ ORSConfig$funs$open_config <- function(self) {
   file.open(normalizePath(self$path, winslash = "/"))
 }
 
+
+# Private methods -------------------------------------------------------------
 
 ORSConfig$funs$translate_profiles <- function(profiles) {
   translator <- data.frame(

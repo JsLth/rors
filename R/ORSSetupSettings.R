@@ -86,6 +86,7 @@ ORSSetupSettings <- R6::R6Class(
 
 ORSSetupSettings$funs <- new.env()
 
+# Public methods --------------------------------------------------------------
 
 ORSSetupSettings$funs$graph_building <- function(self, private, mode) {
   build <- is.element(
@@ -235,6 +236,8 @@ ORSSetupSettings$funs$open_compose <- function(self) {
   file.open(file.path(self$dir, "docker/data/docker-compose.yml"))
 }
 
+
+# Private methods -------------------------------------------------------------
 
 ORSSetupSettings$funs$write_memory <- function(self, init, max) {
   java_options <- self$compose$services$`ors-app`$environment[2]

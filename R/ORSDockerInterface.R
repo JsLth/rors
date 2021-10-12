@@ -94,6 +94,7 @@ ORSDockerInterface <- R6::R6Class(
 
 ORSDockerInterface$funs <- new.env()
 
+# Public methods --------------------------------------------------------------
 
 ORSDockerInterface$funs$docker_running <- function(arg) {
   if (missing(arg)) {
@@ -320,6 +321,8 @@ ORSDockerInterface$funs$stop_container <- function(self) {
   invisible()
 }
 
+
+# Private methods -------------------------------------------------------------
 
 ORSDockerInterface$funs$set_port <- function(self) {
   port <- self$setup_settings$compose$services$`ors-app`$ports[1] %>%
