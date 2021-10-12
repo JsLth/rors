@@ -74,8 +74,8 @@ ORSSetupSettings <- R6::R6Class(
   ),
 
   private = list(
-    .write_memory = function() ORSSetupSettings$funs$write_memory(self, init, max),
-    .force_graphbuilding = function() ORSSetupSettings$funs$force_graphbuilding(self, handle),
+    .write_memory = function(init, max) ORSSetupSettings$funs$write_memory(self, init, max),
+    .force_graphbuilding = function(handle) ORSSetupSettings$funs$force_graphbuilding(self, handle),
     .disable_auto_deletion = function() ORSSetupSettings$funs$disable_auto_deletion(self),
     .read_dockercompose = function() ORSSetupSettings$funs$read_dockercompose(self),
     .write_dockercompose = function() ORSSetupSettings$funs$write_dockercompose(self)
