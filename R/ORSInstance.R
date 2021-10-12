@@ -61,61 +61,23 @@ ORSInstance <- R6::R6Class(
   active = list(
 
     #' @field dir Path to the ORS main directory
-    dir = function() {
-      pkg_cache$mdir
-    },
+    dir = function() ORSInstance$funs$dir(),
 
     #' @field extract ORSExtract environment. Refer to
     #' \code{\link{ORSExtract}}.
-    extract = function(arg) {
-      if (is.null(private$.subclasses$ORSExtract)) {
-        private$.get_subclass(ORSExtract)
-      }
-      return(private$.subclasses$ORSExtract)
-    },
+    extract = function(arg) ORSInstance$funs$extract(private, arg),
 
     #' @field config ORSConfig environment. Refer to
     #' \code{\link{ORSConfig}}.
-    config = function(arg) {
-      if (!missing(arg) && is.character(arg)) {
-        refresh <- identical(arg, "refresh")
-      } else {
-        refresh <- FALSE
-      }
-
-      if (
-        is.null(private$.subclasses$ORSConfig) ||
-        isTRUE(refresh)
-      ) {
-        private$.get_subclass(ORSConfig)
-      }
-      return(private$.subclasses$ORSConfig)
-    },
+    config = function(arg) ORSInstance$funs$config(private, arg),
 
     #' @field setup_settings ORSSetupSettings environment. Refer to
     #' \code{\link{ORSSetupSettings}}.
-    setup_settings = function(arg) {
-      if (!missing(arg) && is.character(arg)) {
-        refresh <- identical(arg, "refresh")
-      } else {
-        refresh <- FALSE
-      }
-
-      if (
-        is.null(private$.subclasses$ORSSetupSettings) || isTRUE(refresh)) {
-        private$.get_subclass(ORSSetupSettings)
-      }
-      return(private$.subclasses$ORSSetupSettings)
-    },
+    setup_settings = function(arg) ORSInstance$funs$setup_settings(private, arg),
 
     #' @field docker ORSDockerInterface environment. Refer to
     #' \code{\link{ORSDockerInterface}}.
-    docker = function(arg) {
-      if(is.null(private$.subclasses$ORSDockerInterface)) {
-        private$.get_subclass(ORSDockerInterface)
-      }
-      return(private$.subclasses$ORSDockerInterface)
-    }
+    docker = function(arg) ORSInstance$funs$docker(private, arg)
   ),
   public = list(
 
@@ -135,13 +97,8 @@ ORSInstance <- R6::R6Class(
                              "accessible as a non-root user. Refer to the",
                              "function {.fn grant_docker_privileges}"))
       }
-      
-      if (!is.null(dir)) {
-        private$.clone_ors_repo(dir)
-      } else {
-        dir <- private$.clone_ors_repo()
-      }
-      dir <- normalizePath(dir, winslash = "/")
+
+      dir <- normalizePath(private$.clone_ors_repo(dir), winslash = "/")
       assign("mdir", dir, envir = pkg_cache)
 
       self$docker
@@ -177,99 +134,167 @@ ORSInstance <- R6::R6Class(
     #' and runs the setup if not. If `FALSE`, only returns logicals to check
     #' whether the initial setup is done or not.
 
-    initial_setup = function(
-      profiles = "car",
-      extract_path = self$extract$path,
-      init_memory = NULL,
-      max_memory = NULL,
-      wait = TRUE,
-      run = TRUE) {
-        if (
-          (self$docker$service_ready == "TRUE" ||
-          dir.exists(file.path(self$dir, "docker/graphs"))) &&
-          is.null(self$docker$error_log)
-        ) {
-          return(TRUE)
-        } else if (!run) {
-          return(FALSE)
-        }
-
-        # Initialize extract --------------------------------------------------
-        if (!missing(extract_path)) {
-          self$extract$set_extract(extract_path)
-        } else {
-          if (is.null(extract_path)) {
-            cli::cli_abort(
-              paste(
-                "Either pass an extract path or set an extract using",
-                "{.cls ORSExtract}"
-              )
-            )
-          }
-        }
-
-        # Set up config ---------------------------------------------------
-        self$
-          config$
-          ors_config$
-          ors$
-          services$
-          routing$
-          profiles$
-          active <- as.list(profiles)
-        self$config$save_config()
-
-        # Set up Docker -------------------------------------------------------
-        self$setup_settings$graph_building <- "build"
-        self$setup_settings$allocate_memory(init_memory, max_memory)
-        self$setup_settings$save_compose()
-
-        # Start the service ---------------------------------------------------
-        self$docker$image_up(wait)
-
-        # Turn off graph building
-        self$setup_settings$graph_building <- NA
-
-        # Upddate ORSConfig
-        self$config <- "refresh"
+    initial_setup = function(profiles = "car",
+                             extract = self$extract$path,
+                             init_memory = NULL,
+                             max_memory = NULL,
+                             wait = TRUE,
+                             run = TRUE) {
+      ORSInstance$funs$init_setup(self, profiles, extract, init_memory, max_memory, wait, run)
     }
+
   ),
   private = list(
     .subclasses = list(),
 
-    .get_subclass = function(env) {
-      env_name <- deparse(substitute(env))
-      private$.subclasses[[env_name]] <- env$new()
-    },
+    .get_subclass = function(env) ORSInstance$funs$get_subclass(private, env),
 
-    .clone_ors_repo = function(dir = NA) {
-      basedir <- "openrouteservice-master"
-      download_url <- paste0(
-        "https://github.com/",
-        "GIScience/openrouteservice/archive/refs/heads/master.zip"
-      )
-
-      if (missing(dir)) {
-        dir <- path.expand("~")
-      }
-      cli_abortifnot(dir.exists(dir))
-
-      basedir <- file.path(dir, basedir)
-
-      if (!dir.exists(basedir)) {
-        zip_file <- "openrouteservice.zip"
-        cli::cli_progress_step(
-          "Downloading service backend from GitHub repository...",
-          msg_done = "Successfully downloaded the service backend.",
-          msg_failed = "Failed to download the service backend."
-        )
-        download.file(download_url, zip_file)
-        unzip(zip_file, exdir = dir)
-        file.remove(zip_file)
-        cli::cli_progress_done()
-      }
-      basedir
-    }
+    .clone_ors_repo = function(dir = NULL) ORSInstance$funs$clone_ors_repo(self, dir)
   ),
   cloneable = FALSE
 )
+
+
+ORSInstance$funs <- new.env()
+
+
+ORSInstance$funs$dir <- function() {
+  pkg_cache$mdir
+}
+
+
+ORSInstance$funs$extract <- function(private, arg) {
+  if (!missing(arg) && is.character(arg)) {
+    refresh <- identical(arg, "refresh")
+  } else {
+    refresh <- FALSE
+  }
+
+  if (is.null(private$.subclasses$ORSExtract) || isTRUE(refresh)) {
+    private$.get_subclass(ORSExtract)
+  }
+  return(private$.subclasses$ORSExtract)
+}
+
+
+ORSInstance$funs$config <- function(private, arg) {
+  if (!missing(arg) && is.character(arg)) {
+    refresh <- identical(arg, "refresh")
+  } else {
+    refresh <- FALSE
+  }
+
+  if (is.null(private$.subclasses$ORSConfig) || isTRUE(refresh)) {
+    private$.get_subclass(ORSConfig)
+  }
+  return(private$.subclasses$ORSConfig)
+}
+
+
+ORSInstance$funs$setup_settings <- function(private, arg) {
+  if (!missing(arg) && is.character(arg)) {
+    refresh <- identical(arg, "refresh")
+  } else {
+    refresh <- FALSE
+  }
+
+  if (is.null(private$.subclasses$ORSSetupSettings) || isTRUE(refresh)) {
+    private$.get_subclass(ORSSetupSettings)
+  }
+  return(private$.subclasses$ORSSetupSettings)
+}
+
+
+ORSInstance$funs$docker <- function(private, arg) {
+  if (!missing(arg) && is.character(arg)) {
+    refresh <- identical(arg, "refresh")
+  } else {
+    refresh <- FALSE
+  }
+
+  if(is.null(private$.subclasses$ORSDockerInterface) || isTRUE(refresh)) {
+    private$.get_subclass(ORSDockerInterface)
+  }
+  return(private$.subclasses$ORSDockerInterface)
+}
+
+
+ORSInstance$funs$init_setup <- function(self,
+                                        profiles = "car",
+                                        extract = self$extract$path,
+                                        provider = "geofabrik",
+                                        init_memory = NULL,
+                                        max_memory = NULL,
+                                        wait = TRUE,
+                                        run = TRUE) {
+  if (self$docker$service_ready == "TRUE" ||
+      (dir.exists(file.path(self$dir, "docker/graphs")) &&
+       is.null(self$docker$error_log))) {
+    return(TRUE)
+  } else if (!run) {
+    return(FALSE)
+  }
+
+  # Initialize extract --------------------------------------------------
+  if (!missing(extract)) {
+    if (dir.exists(extract)) {
+      self$extract$set_extract(extract)
+    } else {
+      self$extract$get_extract(extract, provider = provider)
+    }
+  } else {
+    if (is.null(extract)) {
+      cli::cli_abort(paste("Either pass an extract path or set",
+                           "an extract using{.cls ORSExtract}"))
+    }
+  }
+
+  # Set up config ---------------------------------------------------
+  self$config$ors_config$ors$services$routing$profiles$active <- as.list(profiles)
+
+  self$config$save_config()
+
+  # Set up Docker -------------------------------------------------------
+  self$setup_settings$graph_building <- "build"
+  self$setup_settings$allocate_memory(init_memory, max_memory)
+  self$setup_settings$save_compose()
+
+  # Start the service ---------------------------------------------------
+  self$docker$image_up(wait)
+
+  # Upddate ORSConfig
+  self$config <- "refresh"
+}
+
+
+ORSInstance$funs$get_subclass <- function(private, env) {
+  env_name <- deparse(substitute(env, env = parent.frame()))
+  private$.subclasses[[env_name]] <- env$new()
+}
+
+
+ORSInstance$funs$clone_ors_repo <- function(self, dir = NULL) {
+  basedir <- "openrouteservice-master"
+  download_url <- paste0("https://github.com/",
+                         "GIScience/openrouteservice/archive/",
+                         "refs/heads/master.zip")
+
+  if (is.null(dir)) {
+    dir <- path.expand("~")
+  }
+  cli_abortifnot(dir.exists(dir))
+
+  basedir <- file.path(normalizePath(dir, winslash = "/"), basedir)
+
+  if (!dir.exists(basedir)) {
+    zip_file <- file.path(self$dir, "openrouteservice.zip")
+    cli::cli_progress_step("Downloading service backend from GitHub repository...",
+                           msg_done = "Successfully downloaded the service backend.",
+                           msg_failed = "Failed to download the service backend.")
+    httr::GET(download_url, write_disk(zip_file))
+    unzip(zip_file, exdir = dir)
+    file.remove(zip_file)
+    cli::cli_progress_done()
+  }
+  basedir
+}
