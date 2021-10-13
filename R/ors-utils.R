@@ -54,11 +54,11 @@ get_profiles <- function(force = FALSE) {
       httr::content(as = "text", type = "application/json", encoding = "UTF-8")
     ors_info <- jsonlite::fromJSON(status_response)
 
-    profiles <- sapply(ors_info$profiles, function(x) x$profiles)
+    profiles <- unname(sapply(ors_info$profiles, function(x) x$profiles))
     assign("profiles", profiles, envir = pkg_cache)
-    return(unname(profiles))
+    return(profiles)
   } else {
-    return(pkg_cache$ors_info)
+    return(pkg_cache$profiles)
   }
 }
 

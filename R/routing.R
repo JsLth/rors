@@ -422,8 +422,10 @@ get_shortest_routes <- function(source,
                            "({.val {\"duration\"}} or {.val {\"distance\"}})"))
     }
 
-    best_route <- routes[best_index,] %>%
-      cbind(best_index, .)
+    best_route <- cbind(best_index, routes[best_index,])
+
+    cli::cli_progress_update(.envir = parent.frame(3))
+    return(best_route)
   }
 
   # Create a nested iterator that iterates through every point number for each
@@ -434,15 +436,21 @@ get_shortest_routes <- function(source,
   ) %>%
     expand.grid()
 
+  cli::cli_progress_bar(name = "Calculating shortest routes...",
+                        total = nrow(source) * length(profiles),
+                        type = "iterator")
+
   # Find shortest route for each coordinate pair
   route_list <- purrr::pmap(
     nested_iterator,
-    ~calculate.shortest.routes(..1, ..2)
+    ~calculate.shortest.routes(.x, .y)
   ) %>%
     do.call(rbind, .) %>%
     as.data.frame() %>%
     cbind(nested_iterator[["point_number"]],
           nested_iterator[["profiles"]], .)
+
+  cli::cli_progress_done()
 
   geometry <- isTRUE(list(...)$geometry)
 

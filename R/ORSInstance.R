@@ -7,7 +7,10 @@
 options(
   cli.spinner = "line",
   cli.spinner_unicode = "line",
-  cli.spinner_ascii = "line"
+  cli.spinner_ascii = "line",
+  cli.progress_bar_style = "fillsquares",
+  cli.progress_bar_style_unicode = "fillsquares",
+  cli.progress_bar_style_ascii = "fillsquares"
 )
 
 
