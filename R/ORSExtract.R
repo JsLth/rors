@@ -116,8 +116,8 @@ ORSExtract$funs$get_extract <- function(self, private, place, provider = NULL, .
     }
 
     if (length(providers) > 1) {
-      input <- tolower(
-        readline("Should a different provider be tried? (Yes/No/Cancel)"))
+      input <- tolower(readline(paste("Should a different provider",
+                                      "be tried? (Yes/No/Cancel)")))
     } else {
       input <- "no"
     }

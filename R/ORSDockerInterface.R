@@ -74,10 +74,14 @@ ORSDockerInterface <- R6::R6Class(
     #' as soon as the service is ready. If \code{FALSE}, the function will
     #' start the container and then stop. To check the server status, you can
     #' then call \code{$service_ready} or \code{\link{ors_ready}}.
-    start_container = function(wait) ORSDockerInterface$funs$start_container(self, private, wait),
+    start_container = function(wait = FALSE) ORSDockerInterface$funs$start_container(self, private, wait),
 
     #' @description Stops the container.
-    stop_container = function() ORSDockerInterface$funs$stop_container(self)
+    stop_container = function() ORSDockerInterface$funs$stop_container(self),
+
+    #' @description Takes down the container, removes the image and deletes all
+    #' docker directories except /data
+    cleanup = function() ORSDockerInterface$funs$cleanup(self)
 
   ),
 
@@ -214,7 +218,10 @@ ORSDockerInterface$funs$image_up <- function(self, private, wait, verbose) {
     cli::cli_abort("Docker is not running.")
   }
 
-  self$error_log <- NULL
+  if (!self$container_exists) {
+    self$error_log <- NULL
+  }
+
   private$.set_port()
 
   cmd <- c("compose -f",
@@ -259,9 +266,7 @@ ORSDockerInterface$funs$rm_image <- function(self, force) {
     }
 
   } else {
-    cli::cli_abort(
-      "Remove the container before removing the image"
-    )
+    cli::cli_abort("Remove the container before removing the image")
   }
   invisible()
 }
@@ -287,12 +292,12 @@ ORSDockerInterface$funs$container_down <- function(self) {
 
 
 ORSDockerInterface$funs$start_container <- function(self, private, wait) {
-  if (self$container_exists) {
+  if (self$container_exists && !self$container_running) {
     self$error_log <- NULL
 
     cmd <- "start ors-app"
 
-    system2(command = "docker", args = cmd, stdout = FALSE)
+    status <- system2(command = "docker", args = cmd, stdout = FALSE)
 
     if (!identical(status, 0L)) {
       cli::cli_abort(c("The docker command encountered an error",
@@ -319,6 +324,20 @@ ORSDockerInterface$funs$stop_container <- function(self) {
     }
   }
   invisible()
+}
+
+
+ORSDockerInterface$funs$cleanup <- function(self) {
+  if (!self$service_ready) {
+    self$container_down()
+    self$rm_image()
+    conf_dir <- file.path(self$dir, "docker/conf")
+    elev_dir <- file.path(self$dir, "docker/elevation_cache")
+    grap_dir <- file.path(self$dir, "docker/graphs")
+    unlink(conf_dir, recursive = TRUE, force = FALSE)
+    unlink(elev_dir, recursive = TRUE, force = FALSE)
+    unlink(grap_dir, recursive = TRUE, force = FALSE)
+  }
 }
 
 
@@ -449,16 +468,11 @@ ORSDockerInterface$funs$watch_for_error <- function(self) {
     )
 
     error_catcher <- function(log) {
-      errors <- grep(
-        "error | exception",
-        log,
-        value = TRUE,
-        ignore.case = TRUE
-      ) %>%
-        unlist()
-      error_msgs <- errors %>%
-        strsplit(" - ") %>%
-        do.call(rbind, .)
+      errors <- unlist(grep("error | exception",
+                            log,
+                            value = TRUE,
+                            ignore.case = TRUE))
+      error_msgs <- do.call(rbind, strsplit(errors, " - "))
 
       # CLI logs are formatted differently and are therefore not split
       # by strsplit. If this is the case, just return the whole thing,

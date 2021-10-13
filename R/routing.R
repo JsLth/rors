@@ -67,13 +67,9 @@ get_route_lengths <- function(
   destination,
   profile,
   units = "m",
-  how = "directions",
   geometry = FALSE,
   options = list()
 ) {
-  # TODO: Automate method choice
-  # (small dataset -> directions, large dataset -> matrix)
-
   # Check if ORS is ready to use
   if (!ors_ready(force = FALSE)) {
     cli::cli_abort("ORS service is not reachable.")
@@ -89,34 +85,19 @@ get_route_lengths <- function(
 
   # If directions is the method of choice but the input suggests one-to-many,
   # replicate the one-element dataframe `nrow` times
-  if (how == "directions") {
+  if (nrow(source) == 1) {
+    source <- dplyr::bind_rows(replicate(nrow(destination),
+                                         source,
+                                         simplify = FALSE))
 
-    if (nrow(source) == 1) {
-      source <- dplyr::bind_rows(replicate(nrow(destination),
-                                           source,
-                                           simplify = FALSE))
-
-    } else if (nrow(destination) == 1) {
-      destination <- dplyr::bind_rows(replicate(nrow(destination),
-                                                source,
-                                                simplify = FALSE))
-    }
+  } else if (nrow(destination) == 1) {
+    destination <- dplyr::bind_rows(replicate(nrow(destination),
+                                              source,
+                                              simplify = FALSE))
   }
 
   source_shape <- cli::cli_vec(nrow(source), style = list(vec_last = ":"))
   dest_shape <- cli::cli_vec(nrow(destination), style = list(vec_last = ":"))
-
-  # Case: Matrix is the method of choice. Matrix calls can't return geometries,
-  # therefore switch to Directions
-  if (geometry && how == "matrix") {
-
-    how <- "directions"
-
-    cli::cli_warn(
-      paste("Matrix calls cannot return geometries.",
-            "Calculations will be done using the directions service.")
-    )
-  }
 
   # Case: Source and destination datasets have different number of rows. This
   # is valid for matrix calls, but not for directions calls
@@ -124,7 +105,7 @@ get_route_lengths <- function(
       how == "directions") {
 
     cli::cli_abort(
-      c("For directions calls, both datasets must have the same shape.",
+      c("Both datasets must have the same number of rows.",
         "\nSource dataset rows: {source_shape}",
         "\nDestination dataset rows: {dest_shape}")
     )

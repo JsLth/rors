@@ -89,18 +89,8 @@ ORSSetupSettings$funs <- new.env()
 # Public methods --------------------------------------------------------------
 
 ORSSetupSettings$funs$graph_building <- function(self, private, mode) {
-  build <- is.element(
-    "build",
-    names(
-      self$
-        compose$
-        services$
-        `ors-app`
-    )
-  )
-
+  build <- is.element("build", names(self$compose$services$`ors-app`))
   change <- !is.na(self$compose$services$`ors-app`$volumes[6])
-
   gb <- self$compose$services$`ors-app`$environment[1] %>%
     strsplit("=") %>%
     unlist() %>%
