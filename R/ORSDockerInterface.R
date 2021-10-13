@@ -242,6 +242,10 @@ ORSDockerInterface$funs$image_up <- function(self, private, wait, verbose) {
     private$.notify_when_ready(interval = 10, silently = FALSE)
   }
 
+  if (is.null(getOption("ors_url"))) {
+    options("ors_url" = sprintf("http://localhost:%s/"), pkg_cache$port)
+  }
+
   self$setup_settings$graph_building <- NA
   invisible()
 }

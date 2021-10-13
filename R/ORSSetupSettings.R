@@ -315,7 +315,7 @@ ORSSetupSettings$funs$write_dockercompose <- function(self) {
 
   # Build yaml with indented bullet points
   yml_as_string <- yaml::as.yaml(self$compose,
-                                  indent.mapping.sequence = TRUE)
+                                 indent.mapping.sequence = TRUE)
 
   # Remove single quotes that are somehow added by as.yaml when introducing
   # double quotes.

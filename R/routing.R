@@ -62,26 +62,20 @@
 #' 5  9695.32   822.68 -> A1 to B5
 #'
 
-get_route_lengths <- function(
-  source,
-  destination,
-  profile,
-  units = "m",
-  geometry = FALSE,
-  options = list()
-) {
+get_route_lengths <- function(source,
+                              destination,
+                              profile,
+                              units = "m",
+                              geometry = FALSE,
+                              options = list()) {
   # Check if ORS is ready to use
   if (!ors_ready(force = FALSE)) {
     cli::cli_abort("ORS service is not reachable.")
   }
 
-  if (is.sf(source)) {
-    source <- reformat_vectordata(source)[, c("X", "Y")]
-  }
-
-  if (is.sf(destination)) {
-    destination <- reformat_vectordata(destination)[, c("X", "Y")]
-  }
+  # Bring input data into shape
+  source <- format_input_data(source)
+  destination <- format_input_data(destination)
 
   # If directions is the method of choice but the input suggests one-to-many,
   # replicate the one-element dataframe `nrow` times
@@ -96,21 +90,7 @@ get_route_lengths <- function(
                                               simplify = FALSE))
   }
 
-  source_shape <- cli::cli_vec(nrow(source), style = list(vec_last = ":"))
-  dest_shape <- cli::cli_vec(nrow(destination), style = list(vec_last = ":"))
-
-  # Case: Source and destination datasets have different number of rows. This
-  # is valid for matrix calls, but not for directions calls
-  if (!identical(nrow(source), nrow(destination)) &&
-      how == "directions") {
-
-    cli::cli_abort(
-      c("Both datasets must have the same number of rows.",
-        "\nSource dataset rows: {source_shape}",
-        "\nDestination dataset rows: {dest_shape}")
-    )
-
-  } else if (identical(row(source), row(destination))) {
+  if (identical(row(source), row(destination))) {
     # If both datasets have the same shape, prepare a rowwise iterator for pmap.
     zipped_locations <- data.frame(source = source, dest = destination) %>%
       dplyr::group_split(dplyr::row_number(), .keep = FALSE) %>%
@@ -118,34 +98,29 @@ get_route_lengths <- function(
                     source = dplyr::starts_with("source"),
                     dest = dplyr::starts_with("dest"))
 
-    if (how == "matrix") {
-      how <- "directions"
-    }
+  } else {
+    source_shape <- cli::cli_vec(nrow(source), style = list(vec_last = ":"))
+    dest_shape <- cli::cli_vec(nrow(destination), style = list(vec_last = ":"))
 
-  } else if (
-    !identical(nrow(source), nrow(destination)) &&
-    !any(sapply(list(source, destination), function(x) nrow(x) == 1))
-  ) {
-
-    # If datasets are something like 3 to 6, the function doesn't know which
-    # rows to match.
-    cli::cli_abort(
-      c(paste("For many-to-many matrix calls, datasets must have an equal amount",
-              "of rows. Otherwise the function cannot know which rows to match."),
-        "Source dataset shape: {source_shape}",
-        "Destination dataset shape: {dest_shape}")
-    )
+    cli::cli_abort(c(paste("Datasets have non-matching number of rows.",
+                           "Can only handle one-to-many, many-to-many,",
+                           "or many-to-one calls."),
+                     "Source dataset rows: {source_shape}",
+                     "Destination dataset rows: {dest_shape}"))
   }
 
-  port <- get_ors_port()
+  options_url <- getOption("ors_url")
+  url <- ifelse(is.null(options_url),
+                sprintf("http://localhost:%s/", get_ors_port()),
+                options_url)
 
-  extract_lengths.directions <- function(source, dest) {
-    route <- query.ors.directions(source = source,
+  extract_lengths <- function(source, dest) {
+    route <- query_ors_directions(source = source,
                                   destination = dest,
                                   profile = profile,
                                   units = units,
                                   geometry = geometry,
-                                  port = port)
+                                  url = url)
 
     if (!geometry) {
 
@@ -156,50 +131,15 @@ get_route_lengths <- function(
 
       return(data.frame(distance = route$features$properties$summary$distance,
                         duration = route$features$properties$summary$duration,
-                        geometry = route$features$geometry)
-      )
+                        geometry = route$features$geometry))
 
     }
   }
 
-  extract_lengths.matrix <- function(source, dest) {
-    route <- query.ors.matrix(source = source,
-                              destination = dest,
-                              profile = profile,
-                              units = units,
-                              port = port)
-
-    return(data.frame(distance = unlist(route$distances[[1]]),
-                      duration = unlist(route$durations[[1]])))
-  }
-
-  if (how == "directions") {
-
-    # Case: Directions is the method of choice
-    # Apply a directions query to each row
-    route_list <- zipped_locations %>%
-      purrr::pmap(extract_lengths.directions) %>%
-      dplyr::bind_rows()
-
-  } else if (how == "matrix") {
-    if (nrow(source) == 1 || nrow(destination) == 1) {
-
-      # Case: Matrix is the method of choice and at least one dataframe
-      # contains only one one row
-      # Call a matrix query
-      route_list <- extract_lengths.matrix(source, destination)
-
-    } else {
-
-      # Case: Matrix is the method of choice, but operations have to be done
-      # rowwise
-      # Apply a matrix query to each row
-      route_list <- zipped_locations %>%
-        purrr::pmap(extract_lengths.matrix) %>%
-        dplyr::bind_rows()
-
-    }
-  }
+  # Apply a directions query to each row
+  route_list <- zipped_locations %>%
+    purrr::pmap(extract_lengths) %>%
+    dplyr::bind_rows()
 
   if (is.null(route_list$geometry)) {
     return(route_list)
@@ -209,15 +149,36 @@ get_route_lengths <- function(
 }
 
 
-query.ors.directions <- function(
-  source,
-  destination,
-  profile,
-  url,
-  units,
-  geometry,
-  port
-) {
+format_input_data <- function(data) {
+  if (is.sf(data)) {
+    data <- reformat_vectordata(data)[, c("X", "Y")]
+  } else {
+    if (is.matrix(data) || is.list(data)) {
+      data <- as.data.frame(data)
+    }
+    if (ncol(data) > 2) {
+      if (all(is.element(c("X", "Y"), colnames(data)))) {
+        data <- data[, c("X", "Y")]
+      } else if (all(is.element(c("Lon", "Lat"), colnames(data)))) {
+        data <- data[, c("Lon", "Lat")]
+      } else if (is.numeric(unlist(data[, c(1, 2)]))) {
+        data <- data[, c(1, 2)]
+      } else {
+        cli::cli_abort(paste("Cannot determine coordinate columns of",
+                             "dataframe {.var {deparse(substitute(data))}}"))
+      }
+    }
+  }
+  data
+}
+
+
+query_ors_directions <- function(source,
+                                 destination,
+                                 profile,
+                                 units,
+                                 geometry,
+                                 url) {
   # Get coordinates in shape
   locations <- list(
     c(as.numeric(source[1]), as.numeric(source[2])),
@@ -241,10 +202,10 @@ query.ors.directions <- function(
   )
 
   # Prepare the url
-  url <- httr::modify_url(
-    sprintf("http://localhost:%s/", port),
-    path = paste0("ors/v2/directions/", profile, if (geometry) "/geojson")
-  )
+  url <- httr::modify_url(url = url,
+                          path = paste0("ors/v2/directions/",
+                                        profile,
+                                        if (geometry) "/geojson"))
 
   # Calculate routes for every profile
   response <- url %>%
@@ -290,45 +251,46 @@ query.ors.directions <- function(
 }
 
 
-query.ors.matrix <- function(
-  source,
-  destinations,
-  profile,
-  units,
-  port
-) {
-  if (nrow(source) != 1 &&
-      nrow(destinations == 1)) {
-
-    # If many-to-one, swap source and destination
-    both <- list(source, destinations)
-    source <- both[[2]]
-    destinations <- both[[1]]
-  }
-
+query_ors_matrix <- function(source,
+                             destinations,
+                             profile,
+                             metrics,
+                             units,
+                             url) {
   # Format source and destination
+  source_list <- dplyr::group_by(source, dplyr::row_number()) %>%
+    dplyr::group_split(.keep = FALSE) %>%
+    map(as.numeric)
   destinations_list <- dplyr::group_by(destinations, dplyr::row_number()) %>%
     dplyr::group_split(.keep = FALSE) %>%
-    as.list() %>%
     map(as.numeric)
 
   # Coerce destinations and source
   locations <- append(destinations_list,
-                      list(as.numeric(source)),
+                      source_list,
                       after = 0)
+
+  dest_index <- if (nrow(destinations) > 1) {
+    seq(nrow(source), length(locations) - 1)
+  } else {
+    list(nrow(source))
+  }
+
+  source_index <- if (nrow(source) > 1) {
+    seq(0, nrow(source) - 1)
+  } else {
+    list(0)
+  }
+
+  if (length(metrics) == 1) metrics <- list(metrics)
 
   # Create http body of the request
   body <- jsonlite::toJSON(
     list(locations = locations,
-         destinations = if (length(locations) > 2) {
-           seq(length(locations) - 1)
-         } else {
-           list(1)
-         },
-         sources = list(0),
-         metrics = list("distance", "duration"),
-         units = units
-    ),
+         destinations = dest_index,
+         sources = source_index,
+         metrics = metrics,
+         units = units),
     auto_unbox = TRUE,
     digits = NA
   )
@@ -339,11 +301,10 @@ query.ors.matrix <- function(
     `Content-Type` = "application/json; charset=utf-8"
   )
 
-  # Prepare th url
-  url <- httr::modify_url(
-    sprintf("http://localhost:%s/", port),
-    path = paste0("ors/v2/matrix/", profile)
-  )
+  # Prepare the url
+  url <- httr::modify_url(url = url,
+                          path = paste0("ors/v2/matrix/",
+                                        profile))
 
   response <- url %>%
     httr::POST(body = body,
@@ -420,92 +381,21 @@ query.ors.matrix <- function(
 #' 9             5  driving-car         13  16882.8   1294.3
 #' 10            5 foot-walking         53  13636.7   9818.3
 
-
-get_shortest_routes <- function(
-  source,
-  pois,
-  profiles = get_profiles(),
-  proximity_type = 'duration',
-  ...
-) {
-
+get_shortest_routes <- function(source,
+                                pois,
+                                profiles = get_profiles(),
+                                proximity_type = 'duration',
+                                ...) {
   cli_abortifnot(is.character(profiles))
   cli_abortifnot(is.character(proximity_type))
 
-  # --- Adjust source data
-  if (is.list(source) || is.matrix(source)) {
+  source <- format_input_data(source)
 
-    # Case: Source data is passed as list or matrix
-    source <- as.data.frame(source)
-
-  } else if (is.sf(source)) {
-
-    # Case: Source data is passed as sf or sfc object
-    source <- reformat_vectordata(source)
-
-  } else {
-    cli::cli_abort(
-      "Source datasets of type {.cls {class(source)}} are not (yet) supported."
-    )
-  }
-
-  # --- Adjust POI data
   if (inherits(pois, "list")) {
-
-    # Case: POI data is passed as list
-    # Check data type of elements
-    elem_type <- lapply(pois, class) %>%
-      unique()
-
-    if (length(elem_type) == 1) {
-
-      # Case: List contains only one unique type
-      elem_type <- unlist(elem_type, recursive = FALSE)
-
-      if (any(is.element(elem_type, c("sf", "sfc")))) {
-
-        # Case: List elements are sf or sfc objects
-        pois <- lapply(pois, reformat_vectordata)
-
-      } else if (any(is.element(elem_type, c("matrix", "list")))) {
-
-        # Case: List elements are matrices or lists
-        pois <- lapply(pois, as.data.frame)
-
-      } else {
-        cli::cli_abort(
-      "POI datasets of type {.cls {elem_type}} are not (yet) supported."
-        )
-      }
-    } else {
-
-      # Case: List contains multiple type - give out error and list all types
-      multi_types <- lapply(elem_type, paste, collapse = "/") %>%
-        cli::cli_vec(style = list(vec_sep = ", ",
-                                  vec_last = ", ",
-                                  vec_trunc = 8))
-
-      cli::cli_abort(c("Input POI list contains multiple data types:",
-                        "{multi_types}",
-                       "Cannot handle lists with varying data types."))
-
-    }
-  } else if (is.list(pois) || is.matrix(pois)) {
-
-    # Case: POI data is passed as matrix
-    pois <- as.data.frame(pois)
-
-  } else if (is.sf(pois)) {
-
-    # Case: POI data is passed as sf or sfc object
-    pois <- reformat_vectordata(pois)
-
+    pois <- lapply(pois, format_input_data)
   } else {
-    cli::cli_abort(
-      "POI datasets of type {.cls {class(pois)}} are not (yet) supported."
-    )
+    pois <- format_input_data(pois)
   }
-
 
   calculate.shortest.routes <- function (profile, point_number) {
     routes <- get_route_lengths(
@@ -528,12 +418,8 @@ get_shortest_routes <- function(
                           routes[["duration"]])
 
     } else {
-      cli::cli_abort(
-        paste(
-          "Expected a proximity type",
-          "({.val {\"duration\"}} or {.val {\"distance\"}})"
-        )
-      )
+      cli::cli_abort(paste("Expected a proximity type",
+                           "({.val {\"duration\"}} or {.val {\"distance\"}})"))
     }
 
     best_route <- routes[best_index,] %>%
@@ -575,4 +461,43 @@ get_shortest_routes <- function(
   } else {
     return(sf::st_as_sf(route_list))
   }
+}
+
+
+create_dist_matrix <- function(source,
+                               destination,
+                               profile,
+                               proximity_type = "distance",
+                               units = "m") {
+  cli_abortifnot(is.character(proximity_type))
+  cli_abortifnot(is.character(units))
+
+  if (all(!is.element(proximity_type, c("distance", "duration")))) {
+    cli::cli_abort(paste("Expected a proximity type",
+                         "({.val {\"duration\"}} or {.val {\"distance\"}})"))
+  }
+
+  source <- format_input_data(source)
+  destination <- format_input_data(destination)
+
+  port <- get_ors_port()
+  options_url <- getOption("ors_url")
+  url <- ifelse(is.null(options_url),
+                sprintf("http://localhost:%s/", port),
+                options_url)
+
+  route <- query_ors_matrix(source = source,
+                            destination = destination,
+                            profile = profile,
+                            metrics = proximity_type,
+                            units = units,
+                            url = url)
+
+  if (length(proximity_type) == 1) {
+    matrix <- route[[paste0(proximity_type, "s")]]
+  } else {
+    matrix <- list(distances = route$distances,
+                   durations = route$durations)
+  }
+  return(matrix)
 }
