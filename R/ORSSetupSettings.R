@@ -251,8 +251,7 @@ ORSSetupSettings$funs$write_memory <- function(self, init, max) {
 
 
 ORSSetupSettings$funs$force_graphbuilding <- function(self, handle) {
-  handle <- tolower(as.character(handle))
-  substr(handle, 1, 1) <- toupper(substr(handle, 1, 1))
+  handle <- capitalizeChar(handle)
   build_graphs_string <- "BUILD_GRAPHS=%s" %>% sprintf(handle)
   self$compose$services$`ors-app`$environment[1] <- build_graphs_string
 }

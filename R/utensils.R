@@ -93,7 +93,7 @@ ctransform <- function(coordinates, from_crs, to_crs) {
 parse_proj4string <- function(proj4_string) {
   crs_props <- proj4_string %>%
     strsplit(" ") %>%
-    purrr::map(~strsplit(..1, "=")) %>%
+    purrr::map(~strsplit(., "=")) %>%
     purrr::flatten() %>%
     do.call(data.frame, .)
   names(crs_props) <- as.character(unlist(crs_props[1, ]))
@@ -229,6 +229,13 @@ relativePath <- function(targetdir, basedir = getwd()) {
     relative_path <- "."
   }
   relative_path
+}
+
+
+capitalizeChar <- function(string) {
+  cap_string <- tolower(as.character(string))
+  substr(cap_string, 1, 1) <- toupper(substr(string, 1, 1))
+  cap_string
 }
 
 

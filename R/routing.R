@@ -149,188 +149,6 @@ get_route_lengths <- function(source,
 }
 
 
-format_input_data <- function(data) {
-  if (is.sf(data)) {
-    data <- reformat_vectordata(data)[, c("X", "Y")]
-  } else {
-    if (is.matrix(data) || is.list(data)) {
-      data <- as.data.frame(data)
-    }
-    if (ncol(data) > 2) {
-      if (all(is.element(c("X", "Y"), colnames(data)))) {
-        data <- data[, c("X", "Y")]
-      } else if (all(is.element(c("Lon", "Lat"), colnames(data)))) {
-        data <- data[, c("Lon", "Lat")]
-      } else if (is.numeric(unlist(data[, c(1, 2)]))) {
-        data <- data[, c(1, 2)]
-      } else {
-        cli::cli_abort(paste("Cannot determine coordinate columns of",
-                             "dataframe {.var {deparse(substitute(data))}}"))
-      }
-    }
-  }
-  data
-}
-
-
-query_ors_directions <- function(source,
-                                 destination,
-                                 profile,
-                                 units,
-                                 geometry,
-                                 url) {
-  # Get coordinates in shape
-  locations <- list(
-    c(as.numeric(source[1]), as.numeric(source[2])),
-    c(as.numeric(destination[1]), as.numeric(destination[2]))
-  )
-
-  # Create http body of the request
-  body <- jsonlite::toJSON(
-    list(coordinates = locations,
-         units = units,
-         geometry = geometry),
-    auto_unbox = TRUE,
-    digits = NA
-  )
-
-  # Create request headers
-  header <- httr::add_headers(
-    Accept = "application/%s; charset=utf-8" %>%
-      sprintf(ifelse(geometry, "geo+json", "json")),
-    `Content-Type` = "application/json; charset=utf-8"
-  )
-
-  # Prepare the url
-  url <- httr::modify_url(url = url,
-                          path = paste0("ors/v2/directions/",
-                                        profile,
-                                        if (geometry) "/geojson"))
-
-  # Calculate routes for every profile
-  response <- url %>%
-    httr::POST(body = body,
-               encode = "json",
-               header) %>%
-    httr::content(as = "text",
-                  type = "application/json",
-                  encoding = "UTF-8")
-
-  parsed_response <- jsonlite::fromJSON(response)
-
-  if (!is.null(parsed_response$error)) {
-
-    if (is.null(parsed_response$error$message))
-      parsed_response$
-        error$
-        message <- fill_empty_error_message(parsed_response$error$code)
-
-    cli::cli_abort(
-      c("ORS returned the following error:",
-        "!" = paste0("Code ",
-                     parsed_response$error$code,
-                     ": ",
-                     parsed_response$error$message),
-        "i" = get_error_tip(parsed_response$error$code))
-    )
-  }
-
-  if (!geometry) {
-    return(parsed_response)
-  } else {
-    parsed_response$
-      features$
-      geometry <- sf::st_multilinestring(
-      parsed_response$
-        features$
-        geometry$
-        coordinates
-    ) %>% sf::st_sfc()
-    return(parsed_response)
-  }
-}
-
-
-query_ors_matrix <- function(source,
-                             destinations,
-                             profile,
-                             metrics,
-                             units,
-                             url) {
-  # Format source and destination
-  source_list <- dplyr::group_by(source, dplyr::row_number()) %>%
-    dplyr::group_split(.keep = FALSE) %>%
-    map(as.numeric)
-  destinations_list <- dplyr::group_by(destinations, dplyr::row_number()) %>%
-    dplyr::group_split(.keep = FALSE) %>%
-    map(as.numeric)
-
-  # Coerce destinations and source
-  locations <- append(destinations_list,
-                      source_list,
-                      after = 0)
-
-  dest_index <- if (nrow(destinations) > 1) {
-    seq(nrow(source), length(locations) - 1)
-  } else {
-    list(nrow(source))
-  }
-
-  source_index <- if (nrow(source) > 1) {
-    seq(0, nrow(source) - 1)
-  } else {
-    list(0)
-  }
-
-  if (length(metrics) == 1) metrics <- list(metrics)
-
-  # Create http body of the request
-  body <- jsonlite::toJSON(
-    list(locations = locations,
-         destinations = dest_index,
-         sources = source_index,
-         metrics = metrics,
-         units = units),
-    auto_unbox = TRUE,
-    digits = NA
-  )
-
-  # Create request headers
-  header <- httr::add_headers(
-    Accept = "application/json; charset=utf-8",
-    `Content-Type` = "application/json; charset=utf-8"
-  )
-
-  # Prepare the url
-  url <- httr::modify_url(url = url,
-                          path = paste0("ors/v2/matrix/",
-                                        profile))
-
-  response <- url %>%
-    httr::POST(body = body,
-               encode = 'json',
-               header) %>%
-    httr::content(as = "text",
-                  type = "application/json",
-                  encoding = "UTF-8")
-
-  parsed_response <- jsonlite::fromJSON(response)
-
-  if (!is.null(parsed_response$error)) {
-
-    cli::cli_abort(
-      c("ORS returned the following error:",
-        "!" = paste0("Code ",
-                     parsed_response$error$code,
-                     ": ",
-                     parsed_response$error$message),
-        "i" = get_error_tip(parsed_response$error$code))
-    )
-
-  }
-  return(parsed_response)
-}
-
 
 #' Calculate shortest routes to nearby points of interest
 #' @description Calculates the shortest routes from a source dataset to the
@@ -419,7 +237,7 @@ get_shortest_routes <- function(source,
 
     } else {
       cli::cli_abort(paste("Expected a proximity type",
-                           "({.val {\"duration\"}} or {.val {\"distance\"}})"))
+                           "({.val duration} or {.val distance})"))
     }
 
     best_route <- cbind(best_index, routes[best_index,])
@@ -441,14 +259,11 @@ get_shortest_routes <- function(source,
                         type = "iterator")
 
   # Find shortest route for each coordinate pair
-  route_list <- purrr::pmap(
-    nested_iterator,
-    ~calculate.shortest.routes(.x, .y)
-  ) %>%
+  route_list <- purrr::pmap(nested_iterator,
+                             ~calculate.shortest.routes(.x, .y)) %>%
     do.call(rbind, .) %>%
     as.data.frame() %>%
-    cbind(nested_iterator[["point_number"]],
-          nested_iterator[["profiles"]], .)
+    cbind(nested_iterator[["point_number"]], nested_iterator[["profiles"]], .)
 
   cli::cli_progress_done()
 
@@ -470,6 +285,7 @@ get_shortest_routes <- function(source,
     return(sf::st_as_sf(route_list))
   }
 }
+
 
 
 create_dist_matrix <- function(source,
@@ -509,3 +325,292 @@ create_dist_matrix <- function(source,
   }
   return(matrix)
 }
+
+
+
+format_input_data <- function(data) {
+  if (is.sf(data)) {
+    data <- reformat_vectordata(data)[, c("X", "Y")]
+  } else {
+    if (is.matrix(data) || is.list(data)) {
+      data <- as.data.frame(data)
+    }
+    if (ncol(data) > 2) {
+      if (all(is.element(c("X", "Y"), colnames(data)))) {
+        data <- data[, c("X", "Y")]
+      } else if (all(is.element(c("Lon", "Lat"), colnames(data)))) {
+        data <- data[, c("Lon", "Lat")]
+      } else if (is.numeric(unlist(data[, c(1, 2)]))) {
+        data <- data[, c(1, 2)]
+      } else {
+        cli::cli_abort(paste("Cannot determine coordinate columns of",
+                             "dataframe {.var {deparse(substitute(data))}}"))
+      }
+    }
+  }
+  data
+}
+
+
+
+format_ors_options <- function(options, profile) {
+  options_check <- NULL
+
+  if (!is.null(options$avoid_borders) ||
+      !is.null(options$avoid_countries) ||
+      !is.null(options$avoid_features) ||
+      !is.null(options$avoid_polygons) ||
+      !is.null(options$profile_params) ||
+      !is.null(options$vehicle_type)) {
+    if (is.character(options$avoid_borders) &&
+        length(options$avoid_borders) == 1 &&
+        is.element(options$avoid_borders, c("all", "controlled", "none"))) {
+      options_check["avoid_borders"] <- TRUE
+    }
+
+    if (is.numeric(options$avoid_countries)) {
+      options$avoid_countries <- list(options$avoid_countries)
+      options_check["avoid_countries"] <- TRUE
+    }
+
+    if (is.character(options$avoid_features)) {
+      options$avoid_features <- list(options$avoid_features)
+      options_check["avoid_features"] <- TRUE
+    }
+
+    if (is.sf(options$avoid_polygons) &&
+        sf::st_is(options$avoid_polygons, c("POLYGON", "MULTIPOLYGON"))) {
+      geom_type <- as.character(sf::st_geometry_type(options$avoid_polygons))
+      options$avoid_polygons <- jsonlite::toJSON(
+        list(type = capitalizeChar(geom_type),
+             coordinates = list(sf::st_coordinates(options$avoid_polygons))),
+        auto_unbox = TRUE
+      )
+      options_check["avoid_polygons"] <- TRUE
+    }
+
+    if (is.list(options$profile_params) && !identical(profile, "driving-car")) {
+      raw_profile <- strsplit(profile, "-")[[1]][1]
+      allowed_opts <- switch(raw_profile,
+                             wheelchair = c("maximum_incline",
+                                            "maximum_sloped_kerb",
+                                            "minimum_width",
+                                            "smoothness_type",
+                                            "surface_type",
+                                            "track_type"),
+                             hgv        = c("axleload",
+                                            "hazmat",
+                                            "height",
+                                            "length",
+                                            "weight",
+                                            "width"),
+                             cycling    = "steepness_difficulty",
+                             walking    = c("green", "quiet"))
+      opt_admitted <- purrr::map(options$profile_params,
+                                 ~is.element(names(.), allowed_opts))
+      options_check["profile_param"] <- all(unlist(opt_admitted))
+
+      if (any(opt_admitted$weightings)) {
+        weightings <- options$profile_params$weightings[opt_admitted$weightings] %>%
+          jsonlite::toJSON(auto_unbox = TRUE)
+      } else weightings <- NULL
+
+      if (any(opt_admitted$restrictions)) {
+        restrictions <- options$profile_params$restrictions[opt_admitted$restrictions] %>%
+          jsonlite::toJSON(auto_unbox = TRUE)
+      } else restrictions <- NULL
+
+      profile_param_list <- list(
+        weightings = weightings,
+        restrictions = restrictions
+      )
+
+      profile_param_list[["weightings"]] <- profile_param_list$weightings
+      profile_param_list[["restrictions"]] <- profile_param_list$restrictions
+      options$profile_params <- jsonlite::toJSON(profile_param_list, auto_unbox = TRUE)
+      print(options$profile_params)
+    }
+
+    options_list <- list(
+      avoid_borders   = options$avoid_borders,
+      avoid_countries = options$avoid_countries,
+      avoid_features  = options$avoid_features,
+      avoid_polygons  = options$avoid_polygons,
+      profile_param   = options$profile_params,
+      vehicle_type    = options$vehicle_type
+    )
+
+    for (element in names(options_list)) {
+      options_list[[element]] <- unlist(options_list[[element]],
+                                        recursive = FALSE)
+    }
+
+    options <- jsonlite::toJSON(options_list, auto_unbox = TRUE)
+  } else {
+    options <- NULL
+  }
+  options <- gsub("\\\\", "", options)
+  options
+}
+
+
+
+query_ors_directions <- function(source,
+                                 destination,
+                                 profile,
+                                 units,
+                                 geometry,
+                                 url) {
+  # Get coordinates in shape
+  locations <- list(
+    c(as.numeric(source[1]), as.numeric(source[2])),
+    c(as.numeric(destination[1]), as.numeric(destination[2]))
+  )
+
+  # Create http body of the request
+  body <- jsonlite::toJSON(
+    list(coordinates = locations,
+         units = units,
+         geometry = geometry),
+    auto_unbox = TRUE,
+    digits = NA
+  )
+
+  # Create request headers
+  header <- httr::add_headers(
+    Accept = "application/%s; charset=utf-8" %>%
+      sprintf(ifelse(geometry, "geo+json", "json")),
+    `Content-Type` = "application/json; charset=utf-8"
+  )
+
+  # Prepare the url
+  url <- httr::modify_url(url = url,
+                          path = paste0("ors/v2/directions/",
+                                        profile,
+                                        if (geometry) "/geojson"))
+
+  # Calculate routes for every profile
+  response <- url %>%
+    httr::POST(body = body,
+               encode = "json",
+               header) %>%
+    httr::content(as = "text",
+                  type = "application/json",
+                  encoding = "UTF-8")
+
+  parsed_response <- jsonlite::fromJSON(response)
+
+  if (!is.null(parsed_response$error)) {
+
+    if (is.null(parsed_response$error$message))
+      parsed_response$
+        error$
+        message <- fill_empty_error_message(parsed_response$error$code)
+
+    cli::cli_abort(
+      c("ORS returned the following error:",
+        "!" = paste0("Code ",
+                     parsed_response$error$code,
+                     ": ",
+                     parsed_response$error$message),
+        "i" = get_error_tip(parsed_response$error$code))
+    )
+  }
+
+  if (!geometry) {
+    return(parsed_response)
+  } else {
+    parsed_response$
+      features$
+      geometry <- sf::st_multilinestring(
+      parsed_response$
+        features$
+        geometry$
+        coordinates
+    ) %>% sf::st_sfc()
+    return(parsed_response)
+  }
+}
+
+
+
+query_ors_matrix <- function(source,
+                             destinations,
+                             profile,
+                             metrics,
+                             units,
+                             url) {
+  # Format source and destination
+  source_list <- dplyr::group_by(source, dplyr::row_number()) %>%
+    dplyr::group_split(.keep = FALSE) %>%
+    lapply(as.numeric)
+  destinations_list <- dplyr::group_by(destinations, dplyr::row_number()) %>%
+    dplyr::group_split(.keep = FALSE) %>%
+    lapply(as.numeric)
+
+  # Coerce destinations and source
+  locations <- append(destinations_list,
+                      source_list,
+                      after = 0)
+
+  dest_index <- if (nrow(destinations) > 1) {
+    seq(nrow(source), length(locations) - 1)
+  } else {
+    list(nrow(source))
+  }
+
+  source_index <- if (nrow(source) > 1) {
+    seq(0, nrow(source) - 1)
+  } else {
+    list(0)
+  }
+
+  if (length(metrics) == 1) metrics <- list(metrics)
+
+  # Create http body of the request
+  body <- jsonlite::toJSON(
+    list(locations = locations,
+         destinations = dest_index,
+         sources = source_index,
+         metrics = metrics,
+         units = units),
+    auto_unbox = TRUE,
+    digits = NA
+  )
+
+  # Create request headers
+  header <- httr::add_headers(
+    Accept = "application/json; charset=utf-8",
+    `Content-Type` = "application/json; charset=utf-8"
+  )
+
+  # Prepare the url
+  url <- httr::modify_url(url = url,
+                          path = paste0("ors/v2/matrix/",
+                                        profile))
+
+  response <- url %>%
+    httr::POST(body = body,
+               encode = 'json',
+               header) %>%
+    httr::content(as = "text",
+                  type = "application/json",
+                  encoding = "UTF-8")
+
+  parsed_response <- jsonlite::fromJSON(response)
+
+  if (!is.null(parsed_response$error)) {
+
+    cli::cli_abort(
+      c("ORS returned the following error:",
+        "!" = paste0("Code ",
+                     parsed_response$error$code,
+                     ": ",
+                     parsed_response$error$message),
+        "i" = get_error_tip(parsed_response$error$code))
+    )
+
+  }
+  return(parsed_response)
+}
+
