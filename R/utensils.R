@@ -239,6 +239,11 @@ capitalizeChar <- function(string) {
 }
 
 
+base_profile <- function(profile) {
+  strsplit(profile, "-")[[1]][1]
+}
+
+
 notify <- function(msg) {
   if (is.windows()) {
     system("rundll32 user32.dll, MessageBeep -1")

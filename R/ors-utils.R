@@ -237,7 +237,7 @@ grant_docker_privileges <- function(run = TRUE) {
       return(FALSE)
     }
     
-    works <- identical(processx::run("docker", "ps")$stderr, "")
+    works <- identical(system2("docker", "ps"), 0)
     if (!works) {
       cli::cli_alert_warning(paste("You might have to restart your system to",
                                    "re-evaluate group membership"))
