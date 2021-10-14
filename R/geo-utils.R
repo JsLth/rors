@@ -1,9 +1,9 @@
 # Title     : Auxiliary functions for data wrangling and geoprocessing
-# Objective : Do the heavy lifting for the main functions
+# Objective : Convert or process geo information from the main function
 # Created by: Jonas Lieth
-# Created on: 11.06.2021
+# Created on: 14.10.2021
 
-#' @importFrom magrittr %>%
+
 
 centroids_from_polygons <- function(polygons, as_sf = FALSE) {
   crs <- sf::st_crs(polygons)
@@ -26,7 +26,7 @@ centroids_from_polygons <- function(polygons, as_sf = FALSE) {
 
 }
 
-#' @importFrom magrittr %>%
+
 
 buffers_from_points <- function(
   points,
@@ -40,7 +40,7 @@ buffers_from_points <- function(
     lonlat_to_utm(crs = crs, reverse = TRUE)
 }
 
-#' @importFrom magrittr %>%
+
 
 buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326) {
   # Convert coordinates to metric points
@@ -60,7 +60,7 @@ buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326) {
   return(buffer_bbox)
 }
 
-#' @importFrom magrittr %>%
+
 
 reformat_vectordata <- function(data) {
   # Extract coordinates from geometries
@@ -71,12 +71,13 @@ reformat_vectordata <- function(data) {
 }
 
 
+
 swap_xy <- function(data) {
   data <- data[, c(2, 1)]
   return(data)
 }
 
-#' @importFrom magrittr %>%
+
 
 ctransform <- function(coordinates, from_crs, to_crs) {
   # Convert coordinates to sf features
@@ -88,13 +89,13 @@ ctransform <- function(coordinates, from_crs, to_crs) {
   return(transf_coordinates)
 }
 
-#' @importFrom magrittr %>%
+
 
 parse_proj4string <- function(proj4_string) {
   crs_props <- proj4_string %>%
     strsplit(" ") %>%
-    purrr::map(~strsplit(., "=")) %>%
-    purrr::flatten() %>%
+    purrr::lapply(strsplit, split = "=") %>%
+    unlist(recursive = FALSE) %>%
     do.call(data.frame, .)
   names(crs_props) <- as.character(unlist(crs_props[1, ]))
   crs_props <- crs_props[-1, ]
@@ -163,6 +164,7 @@ lonlat_to_utm <- function(
 }
 
 
+
 verify_crs <- function(data, crs, silent = FALSE) {
   parsed_crs <- sf::st_crs(crs)
   if (is.na(parsed_crs$wkt)) {
@@ -194,126 +196,7 @@ verify_crs <- function(data, crs, silent = FALSE) {
 }
 
 
+
 is.sf <- function(x) {
   return(inherits(x, c("sf", "sfc")))
-}
-
-
-file.open <- function(file) {
-  os <- .Platform$OS.type
-  file <- shQuote(file)
-  if (os == "unix") {
-    system2("xdg-open", file, wait = FALSE)
-  } else if (os == "windows") {
-    system2("open", file, wait = FALSE)
-  }
-}
-
-
-file_path_up <- function(path, times_back = NULL) {
-  new_path <- normalizePath(path, winslash = "/") %>%
-    strsplit("/") %>%
-    unlist() %>%
-    head(-times_back) %>%
-    as.list() %>%
-    do.call(file.path, .)
-  return(new_path)
-}
-
-
-relativePath <- function(targetdir, basedir = getwd()) {
-  relative_path <- gsub(pattern = sprintf("%s|%s/", basedir, basedir),
-                        replacement = "",
-                        x = targetdir)
-  if (relative_path == "") {
-    relative_path <- "."
-  }
-  relative_path
-}
-
-
-capitalizeChar <- function(string) {
-  cap_string <- tolower(as.character(string))
-  substr(cap_string, 1, 1) <- toupper(substr(string, 1, 1))
-  cap_string
-}
-
-
-base_profile <- function(profile) {
-  strsplit(profile, "-")[[1]][1]
-}
-
-
-notify <- function(msg) {
-  if (is.windows()) {
-    system("rundll32 user32.dll, MessageBeep -1")
-    system(sprintf("msg * \"%s\"", msg))
-
-  } else if (is.linux()) {
-    system(
-      "paplay /usr/share/sounds/freedesktop/stereo/complete.oga"
-    )
-    system(
-      paste(sprintf("notify-send \"%s\"", msg),
-            "\"Message from R\"")
-    )
-
-  } else if (is.macos()) {
-
-    system(
-      paste("osascript -e 'display notification",
-            sprintf("\"%s\"", msg),
-            "with title",
-            "\"Message from R\"")
-    )
-  }
-  invisible(NULL)
-}
-
-
-is.rstudio <- function() {
-  Sys.getenv("RSTUDIO") == 1
-}
-
-
-is.windows <- function() {
-  .Platform$OS.type == "windows"
-}
-
-
-is.linux <- function() {
-  Sys.info()["sysname"] == "Linux"
-}
-
-is.macos <- function() {
-  Sys.info()["sysname"] == "Darwin"
-}
-
-
-auth_system <- function(command, ...) {
-  if (is.windows()) {
-    cmd <- unlist(strsplit(command, " "))
-    flags <- paste0(tail(cmd, -1), collapse = " ")
-    return(
-      system2(command = cmd[1],
-              args = flags,
-              ...)
-    )
-  } else if (is.linux()) {
-    return(
-      system2(command = "sudo",
-              args = paste("-S", command),
-              input = if (is.rstudio()) rstudioapi::askForPassword(),
-              ...)
-    )
-  }
-}
-
-
-cli_abortifnot <- function(expr) {
-  if (isFALSE(expr)) {
-    uneval_expr <- deparse(substitute(expr))
-    cli::cli_abort("{.code {uneval_expr}} is {.val {FALSE}}.",
-                   call = sys.call(-1))
-  }
 }

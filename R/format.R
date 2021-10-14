@@ -36,7 +36,7 @@ format_ors_options <- function(options, profile) {
     if (isTRUE(options$geometry_simplify) ||
         isFALSE(options$geometry_simplify)) {
       options_check["geometry_simplify"] <- TRUE
-    }else {
+    } else {
       options_check["geometry_simplify"] <- FALSE
       options$geometry_simplify <- NULL
     }
