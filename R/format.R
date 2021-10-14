@@ -200,12 +200,13 @@ format_ors_options <- function(options, profile) {
     maximum_speed     = options$maximum_speed
   )
 
+  options_list <- options_list[lengths(options_list) > 0]
+
   if (!all(options_check)) {
     cli::cli_warn(paste("The following options are formatted incorrectly and",
                           "will be skipped:"))
     cli::cli_ul(items = names(options_check)[!options_check])
   }
 
-  options_list <- options_list[lengths(options_list) > 0]
   options_list
 }

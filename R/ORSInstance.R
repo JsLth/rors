@@ -116,11 +116,15 @@ ORSInstance <- R6::R6Class(
     #' after that should preferably be made manually.
     #' @param profiles Character vector. Modes of transport for which graphs
     #' should be build. Passed to \code{\link{ORSConfig}}.
-    #' @param extract_path Path to an OSM extract that is then passed to
-    #' \code{\link{ORSSetupSettings}}. Defaults to `$extract$path`. This means
-    #' that if you already set an extract using \code{\link{ORSExtract}}, you
-    #' do not need to specify this argument. If you did not set an extract
-    #' using ORSExtract, you can pass a path to a local extract here.
+    #' @param extract Path to an OSM extract that is then passed to
+    #' \code{\link{ORSSetupSettings}}. Can also be any value that can be
+    #' passed to \code{$extract$get_extract}. Defaults to `$extract$path`.
+    #' This means that if you already set an extract using
+    #' \code{\link{ORSExtract}}, you do not need to specify this argument. If
+    #' you did not set an extract using \code{ORSExtract}, you can pass a path
+    #' to a local extract here.
+    #' @param provider Character vector of OSM extract provider(s) that should
+    #' be searched for extracts.
     #' @param init_memory Initial memory to be allocated to the docker
     #' container. Passed to \code{\link{ORSSetupSettings}}.
     #' @param max_memory Maximum memory to be allocated to the docker
@@ -139,11 +143,12 @@ ORSInstance <- R6::R6Class(
 
     initial_setup = function(profiles = "car",
                              extract = self$extract$path,
+                             provider = NULL,
                              init_memory = NULL,
                              max_memory = NULL,
                              wait = TRUE,
                              run = TRUE) {
-      ORSInstance$funs$init_setup(self, profiles, extract, init_memory, max_memory, wait, run)
+      ORSInstance$funs$init_setup(self, profiles, extract, provider, init_memory, max_memory, wait, run)
     }
 
   ),

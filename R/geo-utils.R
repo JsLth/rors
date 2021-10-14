@@ -94,7 +94,7 @@ ctransform <- function(coordinates, from_crs, to_crs) {
 parse_proj4string <- function(proj4_string) {
   crs_props <- proj4_string %>%
     strsplit(" ") %>%
-    purrr::lapply(strsplit, split = "=") %>%
+    lapply(strsplit, split = "=") %>%
     unlist(recursive = FALSE) %>%
     do.call(data.frame, .)
   names(crs_props) <- as.character(unlist(crs_props[1, ]))
@@ -167,30 +167,33 @@ lonlat_to_utm <- function(
 
 verify_crs <- function(data, crs, silent = FALSE) {
   parsed_crs <- sf::st_crs(crs)
+
   if (is.na(parsed_crs$wkt)) {
     cli::cli_abort("CRS of type {.cls {class(crs)}} is invalid.")
   }
+
   wkt <- parsed_crs$wkt %>%
     unlist() %>%
     strsplit("\n")
+
   crs_bbox <- sapply(wkt, function(x) grep("BBOX", x, value = TRUE)) %>%
     gsub("\\s+|[A-Z]+|\\[|\\]+,", "", ., perl = TRUE) %>%
     strsplit(",") %>%
     unlist() %>%
     as.numeric()
+
   if (!parsed_crs$IsGeographic) {
     data <- ctransform(data, parsed_crs, 4326)
   }
+
   x_ok <- sapply(data[, 1], dplyr::between, crs_bbox[2], crs_bbox[4])
   y_ok <- sapply(data[, 2], dplyr::between, crs_bbox[1], crs_bbox[3])
   crs_ok <- all(c(x_ok, y_ok))
+
   if (!silent && !crs_ok) {
-    cli::cli_alert_warning(
-      paste(
-        "Coordinates either fall outside of the EPSG {.val {crs$epsg}}",
-        "boundaries or don't match its coordinate notation."
-      )
-    )
+    cli::cli_alert_warning(paste("Coordinates either fall outside of the EPSG",
+                                 "{.val {crs$epsg}} boundaries or don't match",
+                                 "its coordinate notation."))
   }
   return(crs_ok)
 }

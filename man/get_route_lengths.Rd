@@ -9,9 +9,8 @@ get_route_lengths(
   destination,
   profile,
   units = "m",
-  how = "directions",
   geometry = FALSE,
-  options = list()
+  ...
 )
 }
 \arguments{
@@ -31,48 +30,73 @@ OpenRouteService. For a list of active profiles, call
 
 \item{units}{Distance unit for distance calculations ('m', 'km' or 'mi')}
 
-\item{geometry}{Specifies whether to return distance measures or geometry
-features.}
+\item{geometry}{If \code{TRUE}, returns a \code{sf} object containing route
+geometries. If \code{FALSE}, returns route distance measures.}
 
-\item{options}{Ignored. Could be added in the future to add ORS query
-options, e.g. avoid_polygons or maximum_speed.}
+\item{...}{Additional arguments passed to the ORS API. This includes all
+options that modify the routing results. For details on each argument,
+refer to the
+\href{https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post}{API playground}
+and
+\href{https://github.com/GIScience/openrouteservice-docs#routing-options}{documentation}
+\itemize{
+\item{geometry_simplify}{Logical length-1 vector specifying whether
+geometry should be simplified.}
+\item{continue_straight}{Logical length-1 vector. If \code{FALSE}, avoids
+u-turns and forces the route to keep going
+straight}
+\item{avoid_borders}{Length-1 character vector specifying whether to avoid
+all borders, only controlled ones or none.}
+\item{avoid_countries}{Numeric vector listing countries to avoid. Each
+country is assigned a numeric value. Refer to the
+ORS documentation.}
+\item{avoid_features}{Traffic features to avoid (e.g. highways or tunnels)}
+\item{avoid_polygons}{\code{sf} or \code{sfc} object describing areas to
+avoid.}
+\item{preference}{Length-1 character value describing the routing
+preference. Either "recommended", "fastest" or
+"shortest"}
+\item{radiuses}{Maximum distance (in m) that road segments can be snapped
+to. \code{-1} represents an unlimited radius. This option
+can also be adjusted in the ORS service configurations.}
+\item,{maximum_speed}{Numeric length-1 vector specifying the maximum speed.}
+}}
 }
 \value{
 Dataframe with distances and travel durations between source and
-destination
+destination. If \code{geometry = TRUE}, returns an \code{sf} object
+containing the route geometries.
 }
 \description{
 Calculates the routing distance between two datasets.
 }
-\details{
-If \code{method = "directions"}, both datasets must have the same shape,
-i.e. the same number of rows. If \code{method = "matrix"}, both datasets are
-allowed to contain only one row. If one of both datasets contains only one
-row, one-to-many or many-to-one matrices are generated. In general, only
-one-to-many, many-to-one, one-to-one, or many-to-many combinations are
-allowed. If you pass a source dataset with 3 rows and a destination dataset
-with 5 rows, the function cannot know how to match the datasets.
-}
 \examples{
-source <- ors_sample(5)
-dest <- ors_sample(5)
+set.seed(111)
+source <- ors_sample(10)
+source_sf <- ors_sample[1:5, ]
+source_df <- as.data.frame(sf::st_coordinates(ors_sample[6:10, ]))
 
-rowwise <- get_route_lengths(source, dest, "driving-car")
-rowwise
-  distance duration
-1  30190.7   1872.4 -> A1 to B1
-2  32061.1   2898.6 -> A2 to B2
-3  28219.9   1901.5 -> A3 to B3
-4 126467.0   5763.3 -> A4 to B4
-5 131494.0   5634.1 -> A5 to B5
+set.seed(222)
+dest <- ors_sample(10)
+dest_sf <- ors_sample[1:5, ]
+dest_df <- as.data.frame(sf::st_coordinates(ors_sample[6:10, ]))
 
-one_to_many <- get_route_lengths(source[1], dest, "driving-car", how = "matrix")
-one_to_many
-  distance duration
-1 30190.73  1872.42 -> A1 to B1
-2 99046.71  4158.36 -> A1 to B2
-3 47517.33  2975.49 -> A1 to B3
-4 17426.51  1402.07 -> A1 to B4
-5  9695.32   822.68 -> A1 to B5
+profile <- get_profiles()[1]
 
+# Running with sf objects
+route_lengths_sf <- get_route_lengths(source_sf, dest_sf, profile)
+route_lengths_sf
+
+# Running with coordinate pairs
+route_lengths_df <- get_route_lengths(source_df, dest_df, profile)
+route_lengths_df
+
+# Returns route geometries
+route_lengths_geom <- get_route_lengths(source_df, dest_df, profile, geometry = TRUE)
+
+# Returns routes in kilometers
+route_lengths_km <- get_route_lengths(source_df, dest_df, profile, units = "km")
+
+# Running with additional arguments
+route_lengths_opts <- get_route_lengths(source_dd, dest_df, profile, continue_straight = TRUE, preference = "fastest")
 }

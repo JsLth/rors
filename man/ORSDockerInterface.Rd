@@ -35,10 +35,11 @@ occurred.}
 \itemize{
 \item \href{#method-new}{\code{ORSDockerInterface$new()}}
 \item \href{#method-image_up}{\code{ORSDockerInterface$image_up()}}
-\item \href{#method-image_down}{\code{ORSDockerInterface$image_down()}}
-\item \href{#method-remove_container}{\code{ORSDockerInterface$remove_container()}}
+\item \href{#method-rm_image}{\code{ORSDockerInterface$rm_image()}}
+\item \href{#method-container_down}{\code{ORSDockerInterface$container_down()}}
 \item \href{#method-start_container}{\code{ORSDockerInterface$start_container()}}
 \item \href{#method-stop_container}{\code{ORSDockerInterface$stop_container()}}
+\item \href{#method-cleanup}{\code{ORSDockerInterface$cleanup()}}
 }
 }
 \if{html}{
@@ -92,23 +93,31 @@ setup.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-image_down"></a>}}
-\if{latex}{\out{\hypertarget{method-image_down}{}}}
-\subsection{Method \code{image_down()}}{
-Deletes the image. Should only be used when the container
-does not exist.
+\if{html}{\out{<a id="method-rm_image"></a>}}
+\if{latex}{\out{\hypertarget{method-rm_image}{}}}
+\subsection{Method \code{rm_image()}}{
+Deletes the image.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$image_down(force = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$rm_image(force = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{force}}{Specifies if the image should be forcibly removed, even
+if the container is still running or the source directory cannot be
+found. Use with caution.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-remove_container"></a>}}
-\if{latex}{\out{\hypertarget{method-remove_container}{}}}
-\subsection{Method \code{remove_container()}}{
+\if{html}{\out{<a id="method-container_down"></a>}}
+\if{latex}{\out{\hypertarget{method-container_down}{}}}
+\subsection{Method \code{container_down()}}{
 Removes the container after stopping it if necessary.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$remove_container()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$container_down()}\if{html}{\out{</div>}}
 }
 
 }
@@ -118,7 +127,7 @@ Removes the container after stopping it if necessary.
 \subsection{Method \code{start_container()}}{
 Starts the container.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$start_container(wait = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$start_container(wait = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -140,6 +149,17 @@ then call \code{$service_ready} or \code{\link{ors_ready}}.}
 Stops the container.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$stop_container()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-cleanup"></a>}}
+\if{latex}{\out{\hypertarget{method-cleanup}{}}}
+\subsection{Method \code{cleanup()}}{
+Takes down the container, removes the image and deletes all
+docker directories except /data
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$cleanup()}\if{html}{\out{</div>}}
 }
 
 }

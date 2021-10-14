@@ -242,7 +242,7 @@ ORSDockerInterface$funs$image_up <- function(self, private, wait, verbose) {
     private$.notify_when_ready(interval = 10, silently = FALSE)
   }
 
-  if (is.null(getOption("ors_url"))) {
+  if (is.null(getOption("ors_url"))) { # TODO: Properly implement url customization
     options("ors_url" = sprintf("http://localhost:%s/"), pkg_cache$port)
   }
 

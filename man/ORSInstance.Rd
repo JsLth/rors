@@ -109,7 +109,8 @@ after that should preferably be made manually.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$initial_setup(
   profiles = "car",
-  extract_path = self$extract$path,
+  extract = self$extract$path,
+  provider = NULL,
   init_memory = NULL,
   max_memory = NULL,
   wait = TRUE,
@@ -123,11 +124,16 @@ after that should preferably be made manually.
 \item{\code{profiles}}{Character vector. Modes of transport for which graphs
 should be build. Passed to \code{\link{ORSConfig}}.}
 
-\item{\code{extract_path}}{Path to an OSM extract that is then passed to
-\code{\link{ORSSetupSettings}}. Defaults to \verb{$extract$path}. This means
-that if you already set an extract using \code{\link{ORSExtract}}, you
-do not need to specify this argument. If you did not set an extract
-using ORSExtract, you can pass a path to a local extract here.}
+\item{\code{extract}}{Path to an OSM extract that is then passed to
+\code{\link{ORSSetupSettings}}. Can also be any value that can be
+passed to \code{$extract$get_extract}. Defaults to \verb{$extract$path}.
+This means that if you already set an extract using
+\code{\link{ORSExtract}}, you do not need to specify this argument. If
+you did not set an extract using \code{ORSExtract}, you can pass a path
+to a local extract here.}
+
+\item{\code{provider}}{Character vector of OSM extract provider(s) that should
+be searched for extracts.}
 
 \item{\code{init_memory}}{Initial memory to be allocated to the docker
 container. Passed to \code{\link{ORSSetupSettings}}.}

@@ -9,6 +9,7 @@ query_ors_directions <- function(source,
                                  profile,
                                  units,
                                  geometry,
+                                 options,
                                  url) {
   # Get coordinates in shape
   locations <- list(
@@ -17,13 +18,20 @@ query_ors_directions <- function(source,
   )
 
   # Create http body of the request
-  body <- jsonlite::toJSON(
-    list(coordinates = locations,
-         units = units,
-         geometry = geometry),
-    auto_unbox = TRUE,
-    digits = NA
-  )
+  body_list <- list(coordinates       = locations,
+                    attributes        = options$attributes,
+                    continue_straight = options$continue_straight,
+                    elevation         = options$elevation,
+                    extra_info        = options$extra_info,
+                    geometry_simplify = options$geometry_simplify,
+                    options           = options$options,
+                    preference        = options$preference,
+                    radiuses          = options$radiuses,
+                    units             = units,
+                    geometry          = geometry,
+                    maximum_speed     = options$maximum_speed)
+  body_list <- body_list[lengths(body_list) > 0]
+  body <- jsonlite::toJSON(body_list, auto_unbox = TRUE, digits = NA)
 
   # Create request headers
   header <- httr::add_headers(
@@ -62,7 +70,8 @@ query_ors_directions <- function(source,
                                   ": ",
                                   parsed_response$error$message),
                      "i" = get_error_tip(parsed_response$error$code)))
-  }
+  } # TODO: Warning instead of error
+  # TODO: Function to show last ORS errors
 
   if (!geometry) {
     return(parsed_response)

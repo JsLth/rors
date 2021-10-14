@@ -16,15 +16,14 @@ clear_cache <- function() {
 
 get_container_info <- function() {
   if (is.null(pkg_cache$container_info)) {
-    container_info <- auth_system(
-      "docker container inspect ors-app",
-      stdout = TRUE
-    ) %>%
+    container_info <- system2("docker",
+                              "container inspect ors-app",
+                              stdout = TRUE) %>%
       paste0(collapse = "\n") %>%
       jsonlite::fromJSON()
 
     if (length(container_info) == 0) {
-      cli::cli_abort("No such container: ors-app")
+      cli::cli_abort("Cannot access container: ors-app")
     }
 
     assign("container_info", container_info, envir = pkg_cache)
