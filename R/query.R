@@ -56,14 +56,12 @@ query_ors_directions <- function(source,
         error$
         message <- fill_empty_error_message(parsed_response$error$code)
 
-    cli::cli_abort(
-      c("ORS returned the following error:",
-        "!" = paste0("Code ",
-                     parsed_response$error$code,
-                     ": ",
-                     parsed_response$error$message),
-        "i" = get_error_tip(parsed_response$error$code))
-    )
+    cli::cli_abort(c("ORS returned the following error:",
+                     "!" = paste0("Code ",
+                                  parsed_response$error$code,
+                                  ": ",
+                                  parsed_response$error$message),
+                     "i" = get_error_tip(parsed_response$error$code)))
   }
 
   if (!geometry) {
@@ -150,15 +148,17 @@ query_ors_matrix <- function(source,
 
   if (!is.null(parsed_response$error)) {
 
-    cli::cli_abort(
-      c("ORS returned the following error:",
-        "!" = paste0("Code ",
-                     parsed_response$error$code,
-                     ": ",
-                     parsed_response$error$message),
-        "i" = get_error_tip(parsed_response$error$code))
-    )
+    if (is.null(parsed_response$error$message))
+      parsed_response$
+        error$
+        message <- fill_empty_error_message(parsed_response$error$code)
 
+    cli::cli_abort(c("ORS returned the following error:",
+                     "!" = paste0("Code ",
+                                  parsed_response$error$code,
+                                  ": ",
+                                  parsed_response$error$message),
+                     "i" = get_error_tip(parsed_response$error$code)))
   }
   return(parsed_response)
 }
