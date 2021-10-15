@@ -30,34 +30,42 @@
 #' and
 #' \href{https://github.com/GIScience/openrouteservice-docs#routing-options}{documentation}
 #' \itemize{
-#'  \item{geometry_simplify}{Logical length-1 vector specifying whether
+#'  \item{\strong{geometry_simplify}}: {Logical length-1 vector specifying whether
 #'                           geometry should be simplified.}
-#'  \item{continue_straight}{Logical length-1 vector. If \code{FALSE}, avoids
+#'  \item{\strong{continue_straight}}: {Logical length-1 vector. If \code{FALSE}, avoids
 #'                           u-turns and forces the route to keep going
 #'                           straight}
-#'  \item{avoid_borders}{Length-1 character vector specifying whether to avoid
+#'  \item{\strong{avoid_borders}}: {Length-1 character vector specifying whether to avoid
 #'                       all borders, only controlled ones or none.}
-#'  \item{avoid_countries}{Numeric vector listing countries to avoid. Each
+#'  \item{\strong{avoid_countries}}: {Numeric vector listing countries to avoid. Each
 #'                         country is assigned a numeric value. Refer to the
 #'                         ORS documentation.}
-#'  \item{avoid_features}{Traffic features to avoid (e.g. highways or tunnels)}
-#'  \item{avoid_polygons}{\code{sf} or \code{sfc} object describing areas to
+#'  \item{\strong{avoid_features}}: {Traffic features to avoid (e.g. highways or tunnels)}
+#'  \item{\strong{avoid_polygons}}: {\code{sf} or \code{sfc} object describing areas to
 #'                        avoid.}
-#'  \item{preference}{Length-1 character value describing the routing
+#'  \item{\strong{preference}}: {Length-1 character value describing the routing
 #'                    preference. Either "recommended", "fastest" or
 #'                    "shortest"}
-#'  \item{radiuses}{Maximum distance (in m) that road segments can be snapped
+#'  \item{\strong{radiuses}}: {Maximum distance (in m) that road segments can be snapped
 #'                  to. \code{-1} represents an unlimited radius. This option
 #'                  can also be adjusted in the ORS service configurations.}
-#'  \item,{maximum_speed}{Numeric length-1 vector specifying the maximum speed.}
+#'  \item{\strong{maximum_speed}}: {Numeric length-1 vector specifying the maximum speed.}
 #' }
 #' @returns Dataframe with distances and travel durations between source and
 #' destination. If \code{geometry = TRUE}, returns an \code{sf} object
 #' containing the route geometries.
 #'
-#' @export
+#' @section Error handling:
+#' Since \code{get_route_lengths} is supposed to conduct a lot of calculations
+#' in one go, errors might occur even in well-conceived service setups. In
+#' order to make debugging less painful, errors do not tear down the whole
+#' process. They are saved to an environment and issue a warning containing the
+#' indices of the routes in question. After the process has finished, they can
+#' be accessed by calling \code{\link{last_ors_errors}}. Note, that only the
+#' last function call can be accessed as the error cache is cleared with each
+#' function call.
 #'
-#' @importFrom magrittr %>%
+#' @export
 #'
 #' @examples
 #' set.seed(111)
@@ -146,6 +154,8 @@ get_route_lengths <- function(source,
 
   if (!is.null(c(...))) {
     options <- format_ors_options(list(...), profile)
+  } else {
+    options <- NULL
   }
 
   extract_lengths <- function(source, dest) {
@@ -156,6 +166,19 @@ get_route_lengths <- function(source,
                                   geometry = geometry,
                                   options = options,
                                   url = url)
+    i <- get("i", envir = parent.frame())
+
+    if (is.character(route)) {
+      pkg_cache$routing_error[[attr(route, "time")]][i] <- route
+      if (!geometry) {
+        return(data.frame(distance = NA,
+                          duration = NA))
+      } else {
+        return(data.frame(distance = NA,
+                          duration = NA,
+                          geometry = NA))
+      }
+    }
 
     if (!geometry) {
 
@@ -174,7 +197,17 @@ get_route_lengths <- function(source,
   # Apply a directions query to each row
   route_list <- zipped_locations %>%
     purrr::pmap(extract_lengths) %>%
-    dplyr::bind_rows()
+    do.call(rbind, .)
+
+  if (all(sapply(unlist(route_list), is.na))) {
+    cli::cli_warn("No routes could be calculated. Check your service config.")
+  } else if (any(sapply(unlist(route_list), is.na))) {
+    error_indices <- cli::cli_vec(which(!is.na(pkg_cache$routing_error)),
+                                  style = list(vec_sep = ", ", vec_last = ", "))
+    cli::cli_warn(c(paste("Some routes could not be calculated and were",
+                          "skipped: {error_indices}"),
+                    "For a list of error messages, call {.fn last_ors_errors}"))
+  }
 
   if (is.null(route_list$geometry)) {
     return(route_list)
@@ -263,12 +296,16 @@ get_shortest_routes <- function(source,
     )
 
     if (identical(tolower(proximity_type), "distance")) {
-      best_index <- match(min(routes[["distance"]]),
-                          routes[["distance"]])
+      best_index <- suppressWarnings(
+        match(min(routes[["distance"]], na.rm = TRUE),
+              routes[["distance"]])
+      )
 
     } else if (identical(tolower(proximity_type), 'duration')) {
-      best_index <- match(min(routes[["duration"]]),
-                          routes[["duration"]])
+      best_index <- suppressWarnings(
+        match(min(routes[["duration"]], na.rm = TRUE),
+              routes[["duration"]])
+      )
 
     } else {
       cli::cli_abort(paste("Expected a proximity type",
@@ -358,5 +395,6 @@ create_dist_matrix <- function(source,
     matrix <- list(distances = route$distances,
                    durations = route$durations)
   }
+
   return(matrix)
 }

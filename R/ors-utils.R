@@ -16,8 +16,8 @@ clear_cache <- function() {
 
 get_container_info <- function() {
   if (is.null(pkg_cache$container_info)) {
-    container_info <- system2("docker",
-                              "container inspect ors-app",
+    container_info <- system2(command = "docker",
+                              args = "container inspect ors-app",
                               stdout = TRUE) %>%
       paste0(collapse = "\n") %>%
       jsonlite::fromJSON()
@@ -168,6 +168,39 @@ get_ors_port <- function() {
 }
 
 
+#' Print ORS errors
+#' @description Print the errors and warnings that ORS returned in the last
+#' \code{\link{get_route_lengths}} function calls.
+#' @param last Number of error lists that should be returned. \code{last = 2}
+#' returns errors from the last two function calls. To catch all errors from
+#' \code{\link{get_shortest_routes}}, pass the number of rows multiplied by
+#' the number of profiles (\code{last = nrow(source) * length(profiles)}).
+#'
+#' @export
+
+last_ors_errors <- function(last = 1L) {
+  errors <- pkg_cache$routing_error
+
+  cli_abortifnot(is.numeric(last))
+  cli_abortifnot(last <= length(errors))
+
+  time <- names(errors) %>%
+    as.numeric() %>%
+    as.POSIXct(origin = "1970-01-01") %>%
+    format(format = "%H:%M:%S")
+
+  error_df <- lapply(errors, function(x) na.omit(data.frame(errors = x)))
+  names(error_df) <- time
+
+  cols <- names(error_df)
+  end <- length(cols)
+  start <- length(cols) + 1 - last
+  selected_errors <- error_df[seq(start, end)]
+
+  invisible(selected_errors)
+}
+
+
 fill_empty_error_message <- function(code) {
   switch(
     as.character(code),
@@ -190,17 +223,5 @@ fill_empty_error_message <- function(code) {
     `6007` = "Unsupported export format.",
     `6008` = "Empty Element.",
     `6099` = "Unknown internal error."
-  )
-}
-
-
-get_error_tip <- function(code) {
-  switch(
-    as.character(code),
-    `2099` = paste("This error code might indicate that some or all input",
-                  "coordinates fall outside of the extract coverage."),
-    `6099` = paste("This error code typically occurs with with walking or",
-                  "cycling profiles and matrix queries. Try increasing",
-                  "{.val maximum_visited_nodes} in the ORS configuration file.")
   )
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{grant_docker_privileges}
 \alias{grant_docker_privileges}
-\title{Grant a non-root user permission to access docker on Linux}
+\title{Enable non-root docker access on Linux}
 \usage{
 grant_docker_privileges(run = TRUE)
 }

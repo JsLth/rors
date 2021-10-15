@@ -91,7 +91,7 @@ is.macos <- function() {
 }
 
 
-#' Grant a non-root user permission to access docker on Linux
+#' Enable non-root docker access on Linux
 #' @description Creates a docker group and adds the current user to it in order
 #' to enable docker commands from within R. Doing this, either manually or by
 #' using this function, is a requirement for using \code{\link{ORSInstance}}.
@@ -100,6 +100,8 @@ is.macos <- function() {
 #' @details For details on what this function does and what security
 #' implications it might have, refer to Docker's
 #' \href{https://docs.docker.com/engine/install/linux-postinstall/}{post-installation guide}
+#'
+#' @export
 
 grant_docker_privileges <- function(run = TRUE) {
   if (is.linux()) {

@@ -40,26 +40,26 @@ refer to the
 and
 \href{https://github.com/GIScience/openrouteservice-docs#routing-options}{documentation}
 \itemize{
-\item{geometry_simplify}{Logical length-1 vector specifying whether
+\item{\strong{geometry_simplify}}: {Logical length-1 vector specifying whether
 geometry should be simplified.}
-\item{continue_straight}{Logical length-1 vector. If \code{FALSE}, avoids
+\item{\strong{continue_straight}}: {Logical length-1 vector. If \code{FALSE}, avoids
 u-turns and forces the route to keep going
 straight}
-\item{avoid_borders}{Length-1 character vector specifying whether to avoid
+\item{\strong{avoid_borders}}: {Length-1 character vector specifying whether to avoid
 all borders, only controlled ones or none.}
-\item{avoid_countries}{Numeric vector listing countries to avoid. Each
+\item{\strong{avoid_countries}}: {Numeric vector listing countries to avoid. Each
 country is assigned a numeric value. Refer to the
 ORS documentation.}
-\item{avoid_features}{Traffic features to avoid (e.g. highways or tunnels)}
-\item{avoid_polygons}{\code{sf} or \code{sfc} object describing areas to
+\item{\strong{avoid_features}}: {Traffic features to avoid (e.g. highways or tunnels)}
+\item{\strong{avoid_polygons}}: {\code{sf} or \code{sfc} object describing areas to
 avoid.}
-\item{preference}{Length-1 character value describing the routing
+\item{\strong{preference}}: {Length-1 character value describing the routing
 preference. Either "recommended", "fastest" or
 "shortest"}
-\item{radiuses}{Maximum distance (in m) that road segments can be snapped
+\item{\strong{radiuses}}: {Maximum distance (in m) that road segments can be snapped
 to. \code{-1} represents an unlimited radius. This option
 can also be adjusted in the ORS service configurations.}
-\item,{maximum_speed}{Numeric length-1 vector specifying the maximum speed.}
+\item{\strong{maximum_speed}}: {Numeric length-1 vector specifying the maximum speed.}
 }}
 }
 \value{
@@ -70,6 +70,18 @@ containing the route geometries.
 \description{
 Calculates the routing distance between two datasets.
 }
+\section{Error handling}{
+
+Since \code{get_route_lengths} is supposed to conduct a lot of calculations
+in one go, errors might occur even in well-conceived service setups. In
+order to make debugging less painful, errors do not tear down the whole
+process. They are saved to an environment and issue a warning containing the
+indices of the routes in question. After the process has finished, they can
+be accessed by calling \code{\link{last_ors_errors}}. Note, that only the
+last function call can be accessed as the error cache is cleared with each
+function call.
+}
+
 \examples{
 set.seed(111)
 source <- ors_sample(10)

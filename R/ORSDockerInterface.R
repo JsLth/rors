@@ -428,7 +428,6 @@ ORSDockerInterface$funs$notify_when_ready <- function(self, private, interval, s
   if (!silently) {
     notify("ORS Service is ready.")
   }
-  # TODO: Implement a function that cleans up if an error occurred
   invisible()
 }
 
@@ -465,7 +464,7 @@ ORSDockerInterface$funs$watch_for_error <- function(self) {
         error = function(e) "Log not available"
       ),
       # Output from Dockers logs command (this never stops logging)
-      system2("docker",
+      system2(command = "docker",
               args = "logs ors-app",
               stdout = FALSE,
               stderr = TRUE)
