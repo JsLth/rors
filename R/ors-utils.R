@@ -135,11 +135,8 @@ identify_extract <- function(force = FALSE) {
         if (sum(osm_file_occurences) == 1) {
           extract_path <- dir(data_dir)[osm_file_occurences]
         } else {
-          cli::cli_abort(
-            paste(
-              "Cannot identify current extract file. Pass it explicitly."
-            )
-          )
+          cli::cli_abort(paste("Cannot identify current extract file.",
+                               "Pass it explicitly."))
         }
       }
     }
@@ -169,35 +166,28 @@ get_ors_port <- function() {
 
 
 #' Print ORS errors
-#' @description Print the errors and warnings that ORS returned in the last
-#' \code{\link{get_route_lengths}} function calls.
-#' @param last Number of error lists that should be returned. \code{last = 2}
-#' returns errors from the last two function calls. To catch all errors from
-#' \code{\link{get_shortest_routes}}, pass the number of rows multiplied by
-#' the number of profiles (\code{last = nrow(source) * length(profiles)}).
+#' @description Return the error and warning messages that ORS returned in the
+#' last \code{\link{get_route_lengths}} or \code{get_route_attributes} function calls.
+#' @param last Number of error lists that should be returned. \code{last = 2L},
+#' for example, returns errors from the last two function calls.
 #'
 #' @export
 
-last_ors_errors <- function(last = 1L) {
-  errors <- pkg_cache$routing_error
+last_ors_conditions <- function(last = 1L) {
+  conditions <- pkg_cache$routing_conditions
 
   cli_abortifnot(is.numeric(last))
-  cli_abortifnot(last <= length(errors))
+  cli_abortifnot(last <= length(conditions))
 
-  time <- names(errors) %>%
-    as.numeric() %>%
-    as.POSIXct(origin = "1970-01-01") %>%
-    format(format = "%H:%M:%S")
+  time <- names(conditions)
 
-  error_df <- lapply(errors, function(x) na.omit(data.frame(errors = x)))
-  names(error_df) <- time
+  cond_df <- lapply(conditions, function(x) na.omit(data.frame(errors = x)))
+  names(cond_df) <- time
 
-  cols <- names(error_df)
-  end <- length(cols)
-  start <- length(cols) + 1 - last
-  selected_errors <- error_df[seq(start, end)]
-
-  invisible(selected_errors)
+  end <- length(names(cond_df))
+  start <- length(names(cond_df)) + 1 - last
+  selected_errors <- cond_df[seq(start, end)]
+  selected_errors
 }
 
 

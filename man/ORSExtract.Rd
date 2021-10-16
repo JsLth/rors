@@ -63,12 +63,12 @@ Downloads an OSM extract.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{place}}{Character scalar, sf or sfc object or length-2 numeric
-vector to be passed to \code{\link[osmextract]{oe_match}}. Represents
-a place that falls inside the coverage of defined extract regions of
-the providers listed in \code{\link[osmextract]{oe_providers}}. The
-geographic scale can be adjusted by changing the parameter \code{level}. For
-details, refer to \code{\link[osmextract]{oe_match}}.}
+\item{\code{place}}{Character scalar, \code{sf} or \code{sfc} object or length-2
+numeric vector to be passed to \code{\link[osmextract]{oe_match}}.
+Represents a place that falls inside the coverage of defined extract
+regions of the providers listed in \code{\link[osmextract]{oe_providers}}.
+The geographic scale can be adjusted by changing the parameter \code{level}.
+For details, refer to \code{\link[osmextract]{oe_match}}.}
 
 \item{\code{provider}}{Character vector of OSM extract provider(s) that should
 be searched for extracts.}
@@ -79,8 +79,8 @@ include anything except \code{quiet}.}
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-The extract is downloaded directly to docker/data. This will
-also be the directory that is passed to the
+The extract is downloaded directly to \code{docker/data}. This
+will also be the directory that is passed to the
 \code{\link{ORSSetupSettings}} to process the extract. This directory is
 not mutable because Docker expects a relative path to its main directory.
 }

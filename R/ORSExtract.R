@@ -35,18 +35,18 @@ ORSExtract <- R6::R6Class(
     },
 
     #' @description Downloads an OSM extract.
-    #' @param place Character scalar, sf or sfc object or length-2 numeric
-    #' vector to be passed to \code{\link[osmextract]{oe_match}}. Represents
-    #' a place that falls inside the coverage of defined extract regions of
-    #' the providers listed in \code{\link[osmextract]{oe_providers}}. The
-    #' geographic scale can be adjusted by changing the parameter `level`. For
-    #' details, refer to \code{\link[osmextract]{oe_match}}.
+    #' @param place Character scalar, \code{sf} or \code{sfc} object or length-2
+    #' numeric vector to be passed to \code{\link[osmextract]{oe_match}}.
+    #' Represents a place that falls inside the coverage of defined extract
+    #' regions of the providers listed in \code{\link[osmextract]{oe_providers}}.
+    #' The geographic scale can be adjusted by changing the parameter `level`.
+    #' For details, refer to \code{\link[osmextract]{oe_match}}.
     #' @param provider Character vector of OSM extract provider(s) that should
     #' be searched for extracts.
     #' @param ... Passed to \code{\link[osmextract]{oe_match}}. This can
     #' include anything except \code{quiet}.
-    #' @details The extract is downloaded directly to docker/data. This will
-    #' also be the directory that is passed to the
+    #' @details The extract is downloaded directly to \code{docker/data}. This 
+    #' will also be the directory that is passed to the
     #' \code{\link{ORSSetupSettings}} to process the extract. This directory is
     #' not mutable because Docker expects a relative path to its main directory.
 

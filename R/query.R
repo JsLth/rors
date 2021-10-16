@@ -57,43 +57,43 @@ query_ors_directions <- function(source,
 
   parsed_response <- jsonlite::fromJSON(response)
 
-  timestamp <- parsed_response$metadata$timestamp
-
   if (!is.null(parsed_response$error)) {
-    timestamp <- parsed_response$info$timestamp
-
     if (is.null(parsed_response$error$message)) {
       parsed_response$
         error$
         message <- fill_empty_error_message(parsed_response$error$code)
     }
 
-    parsed_response <- paste0("Error code ",
-                              parsed_response$error$code,
-                              ": ",
-                              parsed_response$error$message)
+    parsed_response$error <- paste0(
+      "Error code ",
+      parsed_response$error$code,
+      ": ",
+      parsed_response$error$message
+    )
 
   } else if (!geometry) {
     if (!is.null(parsed_response$routes$warnings)) {
 
-      parsed_response <- paste0("Warning code ",
-                                parsed_response$routes$warnings[[1]]$code,
-                                ": ",
-                                parsed_response$routes$warnings[[1]]$message)
+      parsed_response$routes$warnings <- paste0(
+        "Warning code ",
+        parsed_response$routes$warnings[[1]]$code,
+        ": ",
+        parsed_response$routes$warnings[[1]]$message
+      )
+
     }
   } else if (geometry) {
     if (!is.null(parsed_response$features$warnings)) {
 
-      parsed_response <- paste0("Warning code ",
-                                parsed_response$features$warnings[[1]]$code,
-                                ": ",
-                                parsed_response$features$warnings[[1]]$message)
+      parsed_response$features$warnings <- paste0(
+        "Warning code ",
+        parsed_response$features$warnings[[1]]$code,
+        ": ",
+        parsed_response$features$warnings[[1]]$message
+      )
+
     }
   }
-
-  timestamp <- format(timestamp / 1000, scientific = FALSE)
-  attrib <- append(attributes(parsed_response), list(time = timestamp), after = 0)
-  attributes(parsed_response) <- attrib
 
   if (!geometry) {
     return(parsed_response)

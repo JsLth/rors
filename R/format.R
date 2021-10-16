@@ -6,9 +6,14 @@
 
 format_input_data <- function(data) {
   if (is.sf(data)) {
-    data <- reformat_vectordata(data)[, c("X", "Y")]
+    if (sf::st_is(data, c("POINT", "MULTIPOINT"))) {
+      data <- reformat_vectordata(data)[, c("X", "Y")]
+    } else {
+      geom_type <- sf::st_geometry_type(data)
+      cli::cli_abort("Input data must contain points, not {.val geom_type}.")
+    }
   } else {
-    if (is.matrix(data) || is.list(data)) {
+    if (is.matrix(data) || is.list(data) || is.array(data)) {
       data <- as.data.frame(data)
     }
     if (ncol(data) > 2) {
@@ -16,7 +21,7 @@ format_input_data <- function(data) {
         data <- data[, c("X", "Y")]
       } else if (all(is.element(c("Lon", "Lat"), colnames(data)))) {
         data <- data[, c("Lon", "Lat")]
-      } else if (is.numeric(unlist(data[, c(1, 2)]))) {
+      } else if (is.double(unlist(data[, c(1, 2)]))) {
         data <- data[, c(1, 2)]
       } else {
         cli::cli_abort(paste("Cannot determine coordinate columns of",

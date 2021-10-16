@@ -7,12 +7,16 @@
 
 
 #' Routing between two dataframes
-#' @description Calculates the routing distance between two datasets.
+#' @description Calculates the routing distance between two datasets using the
+#' ORS service "Directions".
 #'
-#' @param source Source dataset that represents point coordinates that are to
-#' be routed from. The source dataset should be passed as a double nested
-#' dataframe with each row representing a x/y or lon/lat coordinate
-#' pair or as an \code{sf} or \code{sfc} object containing point geometries.
+#' @param source Source dataset that represents points that should be routed
+#' from. It can be passed as any two-dimensional base data structure, as a list
+#' or as an \code{sf}/\code{sfc} object containing point geometries. Each row
+#' or element represents a \code{lon/lat} coordinate pair. The coordinate
+#' reference system for the source data is expected to be \code{EPSG:4326}. If
+#' an object with \code{length > 2} is passed (not \code{sf}/\code{sfc}), it
+#' will be tried to heuristically determine the columns containing coordinates.
 #' @param destination Destination dataset that represents point coordinates
 #' that are to be routed to. The destination dataset follows the same format
 #' requirements as the source dataset.
@@ -20,7 +24,8 @@
 #' OpenRouteService. For a list of active profiles, call
 #' \code{\link{get_profiles}}. For details on all profiles, refer to the
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
-#' @param units Distance unit for distance calculations ('m', 'km' or 'mi')
+#' @param units Distance unit for distance calculations (\code{"m"},
+#' \code{"km"} or \code{"mi"})
 #' @param geometry If \code{TRUE}, returns a \code{sf} object containing route
 #' geometries. If \code{FALSE}, returns route distance measures.
 #' @param ... Additional arguments passed to the ORS API. This includes all
@@ -29,27 +34,39 @@
 #' \href{https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post}{API playground}
 #' and
 #' \href{https://github.com/GIScience/openrouteservice-docs#routing-options}{documentation}
-#' \itemize{
-#'  \item{\strong{geometry_simplify}}: {Logical length-1 vector specifying whether
-#'                           geometry should be simplified.}
-#'  \item{\strong{continue_straight}}: {Logical length-1 vector. If \code{FALSE}, avoids
-#'                           u-turns and forces the route to keep going
-#'                           straight}
-#'  \item{\strong{avoid_borders}}: {Length-1 character vector specifying whether to avoid
-#'                       all borders, only controlled ones or none.}
-#'  \item{\strong{avoid_countries}}: {Numeric vector listing countries to avoid. Each
-#'                         country is assigned a numeric value. Refer to the
-#'                         ORS documentation.}
-#'  \item{\strong{avoid_features}}: {Traffic features to avoid (e.g. highways or tunnels)}
-#'  \item{\strong{avoid_polygons}}: {\code{sf} or \code{sfc} object describing areas to
-#'                        avoid.}
-#'  \item{\strong{preference}}: {Length-1 character value describing the routing
-#'                    preference. Either "recommended", "fastest" or
-#'                    "shortest"}
-#'  \item{\strong{radiuses}}: {Maximum distance (in m) that road segments can be snapped
-#'                  to. \code{-1} represents an unlimited radius. This option
-#'                  can also be adjusted in the ORS service configurations.}
-#'  \item{\strong{maximum_speed}}: {Numeric length-1 vector specifying the maximum speed.}
+#' \describe{
+#'  \item{\strong{geometry_simplify}}{Logical length-1 vector specifying
+#'                                    whether geometry should be simplified.}
+#'  \item{\strong{continue_straight}}{Logical length-1 vector. If \code{FALSE},
+#'                                    avoids u-turns and forces the route to
+#'                                    keep going straight.}
+#'  \item{\strong{avoid_borders}}{Length-1 character vector specifying whether
+#'                                to avoid, all borders, only controlled ones
+#'                                or none. Only available for \code{driving-*}.}
+#'  \item{\strong{avoid_countries}}{Numeric vector listing countries to avoid.
+#'                                  Each country is assigned a numeric value.
+#'                                  Refer to the ORS documentation. Only
+#'                                  available for \code{driving-*}.}
+#'  \item{\strong{avoid_features}}{Character vector containing traffic features
+#'                                 to avoid (e.g. highways or tunnels).}
+#'  \item{\strong{avoid_polygons}}{\code{sf} or \code{sfc} object describing
+#'                                 areas to avoid.}
+#'  \item{\strong{profile_params}}{Nested list containing restrictions and
+#'                                 weightings for \code{driving-hgv},
+#'                                 \code{cycling-*}, \code{walking},
+#'                                 \code{hiking} and \code{wheelchair}.}
+#'  \item{\strong{vehicle_type}}{Length-1 character vector specifying the type
+#'                               of heavy goods vehicle. Needed to set
+#'                               restrictions for \code{driving-hgv}.}
+#'  \item{\strong{preference}}{Length-1 character vector describing the routing
+#'                             preference. Either "recommended", "fastest" or
+#'                             "shortest".}
+#'  \item{\strong{radiuses}}{Maximum distance (in m) that road segments can be
+#'                           snapped to. \code{radiuses = -1} represents an
+#'                           unlimited radius. This option can also be adjusted
+#'                           in the ORS service configurations.}
+#'  \item{\strong{maximum_speed}}{Numeric length-1 vector specifying the
+#'                                maximum speed.}
 #' }
 #' @returns Dataframe with distances and travel durations between source and
 #' destination. If \code{geometry = TRUE}, returns an \code{sf} object
@@ -61,9 +78,9 @@
 #' order to make debugging less painful, errors do not tear down the whole
 #' process. They are saved to an environment and issue a warning containing the
 #' indices of the routes in question. After the process has finished, they can
-#' be accessed by calling \code{\link{last_ors_errors}}. Note, that only the
-#' last function call can be accessed as the error cache is cleared with each
-#' function call.
+#' be accessed by calling \code{\link{last_ors_conditions}}. Specific routes
+#' can be examined by inspecting its route attributes using
+#' \code{\link{get_route_attributes}}.
 #'
 #' @export
 #'
@@ -158,6 +175,8 @@ get_route_lengths <- function(source,
     options <- NULL
   }
 
+  call_index <- format(Sys.time(), format = "%H:%M:%S")
+
   extract_lengths <- function(source, dest) {
     route <- query_ors_directions(source = source,
                                   destination = dest,
@@ -168,8 +187,9 @@ get_route_lengths <- function(source,
                                   url = url)
     i <- get("i", envir = parent.frame())
 
-    if (is.character(route)) {
-      pkg_cache$routing_error[[attr(route, "time")]][i] <- route
+    if (!is.null(route$error)) {
+      pkg_cache$routing_conditions[[call_index]][i] <- route$error
+
       if (!geometry) {
         return(data.frame(distance = NA,
                           duration = NA))
@@ -178,6 +198,14 @@ get_route_lengths <- function(source,
                           duration = NA,
                           geometry = NA))
       }
+    }
+
+    if (!is.null(route$routes$warnings)) {
+      pkg_cache$routing_conditions[[call_index]][i] <- route$routes$warnings
+    }
+
+    if (!is.null(route$features$warnings)) {
+      pkg_cache$routing_conditions[[call_index]][i] <- route$features$warnings
     }
 
     if (!geometry) {
@@ -199,14 +227,16 @@ get_route_lengths <- function(source,
     purrr::pmap(extract_lengths) %>%
     do.call(rbind, .)
 
-  if (all(sapply(unlist(route_list), is.na))) {
+  route_missing <- sapply(unlist(route_list), is.na)
+  if (all(route_missing)) {
     cli::cli_warn("No routes could be calculated. Check your service config.")
-  } else if (any(sapply(unlist(route_list), is.na))) {
-    error_indices <- cli::cli_vec(which(!is.na(pkg_cache$routing_error)),
-                                  style = list(vec_sep = ", ", vec_last = ", "))
-    cli::cli_warn(c(paste("Some routes could not be calculated and were",
-                          "skipped: {error_indices}"),
-                    "For a list of error messages, call {.fn last_ors_errors}"))
+  } else if (any(route_missing)) {
+    conds <- pkg_cache$routing_conditions[[length(pkg_cache$routing_conditions)]]
+    cond_indices <- cli::cli_vec(which(!is.na(conds)),
+                                 style = list(vec_sep = ", ", vec_last = ", "))
+    cli::cli_warn(c(paste("{length(cond_indices)} route{?s} could not be",
+                          "calculated and {?was/were} skipped: {cond_indices}"),
+                    "For a list of error messages, call {.fn last_ors_conditions}"))
   }
 
   if (is.null(route_list$geometry)) {
@@ -215,7 +245,6 @@ get_route_lengths <- function(source,
     return(sf::st_as_sf(route_list))
   }
 }
-
 
 
 #' Calculate shortest routes to nearby points of interest
@@ -397,4 +426,26 @@ create_dist_matrix <- function(source,
   }
 
   return(matrix)
+}
+
+
+#' Route attributes
+#' @description Get further attributes and properties of routes
+#' @param source
+#' @param destination
+#' @param profile
+#' @param units
+#' @param attributes
+#' @param ...
+#' @returns
+#'
+#' @export
+
+get_route_attributes <- function(source,
+                                 destination,
+                                 profile,
+                                 units = "m",
+                                 attributes = list(),
+                                 ...) {
+
 }
