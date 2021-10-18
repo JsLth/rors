@@ -19,6 +19,7 @@ Depends:
 Imports:
     httr,
     jsonlite,
+    yaml,
     magrittr,
     purrr,
     R6,

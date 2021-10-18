@@ -2,13 +2,24 @@
 % Please edit documentation in R/routing.R
 \name{get_route_lengths}
 \alias{get_route_lengths}
+\alias{get_shortest_routes}
 \title{Routing between two dataframes}
 \usage{
 get_route_lengths(
   source,
   destination,
-  profile,
-  units = "m",
+  profile = get_profiles(),
+  units = c("m", "km", "mi"),
+  geometry = FALSE,
+  ...
+)
+
+get_shortest_routes(
+  source,
+  destination,
+  profile = get_profiles(),
+  proximity_type = "duration",
+  units = c("m", "km", "mi"),
   geometry = FALSE,
   ...
 )
@@ -24,11 +35,19 @@ will be tried to heuristically determine the columns containing coordinates.}
 
 \item{destination}{Destination dataset that represents point coordinates
 that are to be routed to. The destination dataset follows the same format
-requirements as the source dataset.}
+requirements as the source dataset.
 
-\item{profile}{Character scalar. Means of transport as supported by
-OpenRouteService. For a list of active profiles, call
-\code{\link{get_profiles}}. For details on all profiles, refer to the
+For \code{get_shortest_routes}, this can argument can also be a list of
+accordingly formatted datasets (as returned by \code{get_nearest_pois}).
+If a list is passed, each list element corresponds to one row in the source
+dataset. If a two-dimensional data structure is passed, each row in the
+source dataset feeds from the entire dataframe.}
+
+\item{profile}{Character vector. Means of transport as supported by
+OpenRouteService. For \code{get_route_lengths}, only length-1 vectors are
+allowed, \code{get_shortest_routes} supports multiple profiles. For a list
+of active profiles, call \code{\link{get_profiles}}. For details on all
+profiles, refer to the
 \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
 \item{units}{Distance unit for distance calculations (\code{"m"},
@@ -77,16 +96,34 @@ in the ORS service configurations.}
 \item{\strong{maximum_speed}}{Numeric length-1 vector specifying the
 maximum speed.}
 }}
+
+\item{proximity_type}{Type of proximity that the calculations should be
+based on. If \code{distance}, the shortest physical distance will be calculated
+and if \code{duration}, the shortest temporal distance will be calculated.}
 }
 \value{
 Dataframe with distances and travel durations between source and
 destination. If \code{geometry = TRUE}, returns an \code{sf} object
 containing the route geometries.
+
+Dataframe with distances, travel durations and the index number of
+the point of interest with the shortest distance to the respective place of
+the source dataset.
 }
 \description{
-Calculates the routing distance between two datasets using the
-ORS service "Directions".
+\code{get_route_lengths} calculates the routing distance between two
+datasets using the Directions service from ORS.
+
+\code{get_shortest_routes} is a wrapper around \code{get_route_lengths} that
+matches each point of the source dataset to a list of points of interest
+from the destination dataset and then extracts the route with the shortest
+distance.
 }
+\section{Functions}{
+\itemize{
+\item \code{get_shortest_routes}: 
+}}
+
 \section{Error handling}{
 
 Since \code{get_route_lengths} is supposed to conduct a lot of calculations
@@ -128,4 +165,20 @@ route_lengths_km <- get_route_lengths(source_df, dest_df, profile, units = "km")
 
 # Running with additional arguments
 route_lengths_opts <- get_route_lengths(source_dd, dest_df, profile, continue_straight = TRUE, preference = "fastest")
+source <- ors_sample(5)
+pois <- get_osm_pois(sf::st_bbox(source), amenity = "hospital")
+
+shortest_routes <- get_shortest_routes(source, pois, profiles = c("driving-car", "foot-walking"))
+shortest_routes
+   point_number   route_type poi_number distance duration
+1             1  driving-car          4  23479.2   1394.6
+2             1 foot-walking         53  13806.2   9940.4
+3             2  driving-car         59   6783.0    649.9
+4             2 foot-walking         60   6047.9   4354.4
+5             3  driving-car         34   8751.6    788.4
+6             3 foot-walking         35   9093.1   6547.0
+7             4  driving-car         19   3009.7    405.3
+8             4 foot-walking         20   2320.2   1670.5
+9             5  driving-car         13  16882.8   1294.3
+10            5 foot-walking         53  13636.7   9818.3
 }

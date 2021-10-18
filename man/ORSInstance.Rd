@@ -45,6 +45,7 @@ stop. For details refer to the
 \code{\link{ORSDockerInterface}},
 \code{\link{ORSSetupSettings}}
 }
+\concept{ORS control panel}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{

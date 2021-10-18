@@ -7,8 +7,9 @@
 
 
 #' Routing between two dataframes
-#' @description Calculates the routing distance between two datasets using the
-#' ORS service "Directions".
+#' @description
+#' \code{get_route_lengths} calculates the routing distance between two
+#' datasets using the Directions service from ORS.
 #'
 #' @param source Source dataset that represents points that should be routed
 #' from. It can be passed as any two-dimensional base data structure, as a list
@@ -20,9 +21,17 @@
 #' @param destination Destination dataset that represents point coordinates
 #' that are to be routed to. The destination dataset follows the same format
 #' requirements as the source dataset.
-#' @param profile Character scalar. Means of transport as supported by
-#' OpenRouteService. For a list of active profiles, call
-#' \code{\link{get_profiles}}. For details on all profiles, refer to the
+#'
+#' For \code{get_shortest_routes}, this can argument can also be a list of
+#' accordingly formatted datasets (as returned by \code{get_nearest_pois}).
+#' If a list is passed, each list element corresponds to one row in the source
+#' dataset. If a two-dimensional data structure is passed, each row in the
+#' source dataset feeds from the entire dataframe.
+#' @param profile Character vector. Means of transport as supported by
+#' OpenRouteService. For \code{get_route_lengths}, only length-1 vectors are
+#' allowed, \code{get_shortest_routes} supports multiple profiles. For a list
+#' of active profiles, call \code{\link{get_profiles}}. For details on all
+#' profiles, refer to the
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
 #' @param units Distance unit for distance calculations (\code{"m"},
 #' \code{"km"} or \code{"mi"})
@@ -251,35 +260,22 @@ get_route_lengths <- function(source,
 
 
 #' Calculate shortest routes to nearby points of interest
-#' @description Calculates the shortest routes from a source dataset to the
-#' points of interest of each coordinate pair. This function is a wrapper
-#' around `get_route_lengths` that matches each coordinate pair to a list of
-#' points of interest and returns the route with the shortest distance.
+#' @description
+#' \code{get_shortest_routes} is a wrapper around \code{get_route_lengths} that
+#' matches each point of the source dataset to a list of points of interest
+#' from the destination dataset and then extracts the route with the shortest
+#' distance.
 #'
-#' @param source Source dataset that represents point coordinates that are to
-#' be routed from. The source dataset should be passed as a double nested
-#' dataframe or list with each row representing a x/y or lon/lat coordinate
-#' pair.
-#' @param pois Dataset containing points of interest that should be
-#' routed to. The POI dataset can either be passed as a single dataframe or as
-#' a list of dataframes. If a list is passed, each list element corresponds to
-#' one row in the source dataset. If a dataframe, an \code{sf} object or an
-#' \code{sfc} object is passed, each row in the source dataset feeds from the
-#' entire dataframe.
-#' @param profiles Character vector or list. Means of transport as supported by
-#' OpenRouteService. For details, see \code{\link{get_route_lengths}}. This
-#' function supports
 #' @param proximity_type Type of proximity that the calculations should be
 #' based on. If `distance`, the shortest physical distance will be calculated
 #' and if `duration`, the shortest temporal distance will be calculated.
-#' @param ... Passed to \code{\link{get_route_lengths}}
 #' @returns Dataframe with distances, travel durations and the index number of
 #' the point of interest with the shortest distance to the respective place of
 #' the source dataset.
 #'
 #' @export
 #'
-#' @importFrom magrittr %>%
+#' @describeIn get_route_lengths
 #'
 #' @examples
 #' source <- ors_sample(5)
@@ -300,30 +296,34 @@ get_route_lengths <- function(source,
 #' 10            5 foot-walking         53  13636.7   9818.3
 
 get_shortest_routes <- function(source,
-                                pois,
-                                profiles = get_profiles(),
+                                destination,
+                                profile = get_profiles(),
                                 proximity_type = 'duration',
+                                units = c("m", "km", "mi"),
+                                geometry = FALSE,
                                 ...) {
-  cli_abortifnot(is.character(profiles))
+  cli_abortifnot(is.character(profile))
   cli_abortifnot(is.character(proximity_type))
 
   source <- format_input_data(source)
 
-  if (inherits(pois, "list")) {
-    pois <- lapply(pois, format_input_data)
+  if (inherits(destination, "list")) {
+    destination <- lapply(destination, format_input_data)
   } else {
-    pois <- format_input_data(pois)
+    destination <- format_input_data(destination)
   }
 
   calculate.shortest.routes <- function (profile, point_number) {
     routes <- get_route_lengths(
       source = source[point_number, ],
-      destination = if (is.data.frame(pois)) {
-        pois
-      } else if (is.list(pois)) {
-        pois[[point_number]]
+      destination = if (is.data.frame(destination)) {
+        destination
+      } else if (is.list(destination)) {
+        destination[[point_number]]
       },
       profile = profile,
+      units = units,
+      geometry = geometry,
       ...
     )
 
@@ -353,13 +353,13 @@ get_shortest_routes <- function(source,
   # Create a nested iterator that iterates through every point number for each
   # profile
   nested_iterator <- list(
-    profiles = profiles,
+    profile = profile,
     point_number = seq_len(nrow(source))
   ) %>%
     expand.grid()
 
   cli::cli_progress_bar(name = "Calculating shortest routes...",
-                        total = nrow(source) * length(profiles),
+                        total = nrow(source) * length(profile),
                         type = "iterator")
 
   # Find shortest route for each coordinate pair
@@ -367,11 +367,9 @@ get_shortest_routes <- function(source,
                              ~calculate.shortest.routes(.x, .y)) %>%
     do.call(rbind, .) %>%
     as.data.frame() %>%
-    cbind(nested_iterator[["point_number"]], nested_iterator[["profiles"]], .)
+    cbind(nested_iterator[["point_number"]], nested_iterator[["profile"]], .)
 
   cli::cli_progress_done()
-
-  geometry <- isTRUE(list(...)$geometry)
 
   output_cols <- c("point_number",
                    "route_type",
@@ -432,8 +430,9 @@ create_dist_matrix <- function(source,
 }
 
 
-#' Route attributes
-#' @description Get further attributes and properties of routes
+#' Get route attributes
+#' @description Calls the directions service of ORS and returns route segments
+#' along with a set of additional attributes
 #' @param source
 #' @param destination
 #' @param profile
@@ -444,7 +443,7 @@ create_dist_matrix <- function(source,
 #'
 #' @export
 
-get_route_attributes <- function(source,
+inspect_route <- function(source,
                                  destination,
                                  profile,
                                  units = "m",

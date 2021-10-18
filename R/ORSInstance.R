@@ -49,6 +49,8 @@ options(
 #' stop. For details refer to the
 #' \href{https://giscience.github.io/openrouteservice/installation/System-Requirements.html}{system requirements of OpenRouteService}
 #'
+#' @family ORS control panel
+#'
 #' @seealso
 #' \code{\link{ORSExtract}},
 #' \code{\link{ORSConfig}},
