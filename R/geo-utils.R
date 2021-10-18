@@ -4,7 +4,6 @@
 # Created on: 14.10.2021
 
 
-
 centroids_from_polygons <- function(polygons, as_sf = FALSE) {
   crs <- sf::st_crs(polygons)
   # Polygone zu projiziertem CRS transformieren
@@ -17,43 +16,38 @@ centroids_from_polygons <- function(polygons, as_sf = FALSE) {
     lonlat_to_utm(crs, reverse = TRUE)
   if (as_sf) {
     st_geometry(polygons) <- centroids
-    return(polygons)
+    polygons
   } else {
     centroid_coords <- as.data.frame(sf::st_coordinates(centroids))
     st_geometry(polygons) <- NULL
-    return(cbind(centroid_coords, polygons))
+    cbind(centroid_coords, polygons)
   }
 
 }
 
 
-
-buffers_from_points <- function(
-  points,
-  radius,
-  cap_style = "ROUND",
-  join_style = "ROUND") {
+buffers_from_points <- function(points,
+                                radius,
+                                cap_style = "ROUND",
+                                join_style = "ROUND") {
   crs <- sf::st_crs(points)
-  points %>%
-    lonlat_to_utm() %>%
+  lonlat_to_utm(points) %>%
     sf::st_buffer(radius, endCapStyle = cap_style, joinStyle = join_style) %>%
     lonlat_to_utm(crs = crs, reverse = TRUE)
 }
 
 
-
 buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326) {
   # Convert coordinates to metric points
-  points <- coordinates %>%
-    sf::st_as_sf(coords = c(1, 2), crs = crs) %>%
+  points <- sf::st_as_sf(coordinates, coords = c(1, 2), crs = crs) %>%
     lonlat_to_utm()
+
   # Generate buffers
-  buffers <- points %>%
-    sf::st_buffer(dist = radius) %>%
+  buffers <- sf::st_buffer(points, dist = radius) %>%
     lonlat_to_utm(crs = crs, reverse = TRUE)
+
   # Extract bboxes
-  buffer_bbox <- buffers %>%
-    sf::st_geometry() %>%
+  buffer_bbox <- sf::st_geometry(buffers) %>%
     purrr::map(st_bbox) %>%
     do.call(rbind, .) %>%
     as.data.frame()
@@ -61,22 +55,14 @@ buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326) {
 }
 
 
-
 reformat_vectordata <- function(data) {
-  # Extract coordinates from geometries
-  data %>%
-    sf::st_coordinates() %>%
-    as.data.frame() %>%
-    return()
+  as.data.frame(sf::st_coordinates(data))
 }
-
 
 
 swap_xy <- function(data) {
-  data <- data[, c(2, 1)]
-  return(data)
+  data[, c(2, 1)]
 }
-
 
 
 ctransform <- function(coordinates, from_crs, to_crs) {
@@ -90,7 +76,6 @@ ctransform <- function(coordinates, from_crs, to_crs) {
 }
 
 
-
 parse_proj4string <- function(proj4_string) {
   crs_props <- proj4_string %>%
     strsplit(" ") %>%
@@ -100,9 +85,8 @@ parse_proj4string <- function(proj4_string) {
   names(crs_props) <- as.character(unlist(crs_props[1, ]))
   crs_props <- crs_props[-1, ]
   rownames(crs_props) <- NULL
-  return(crs_props)
+  crs_props
 }
-
 
 
 lonlat_to_utm <- function(
@@ -164,7 +148,6 @@ lonlat_to_utm <- function(
 }
 
 
-
 verify_crs <- function(data, crs, silent = FALSE) {
   parsed_crs <- sf::st_crs(crs)
 
@@ -191,15 +174,14 @@ verify_crs <- function(data, crs, silent = FALSE) {
   crs_ok <- all(c(x_ok, y_ok))
 
   if (!silent && !crs_ok) {
-    cli::cli_alert_warning(paste("Coordinates either fall outside of the EPSG",
-                                 "{.val {crs$epsg}} boundaries or don't match",
-                                 "its coordinate notation."))
+    cli::cli_alert_warning(paste0("Coordinates either fall outside of the EPSG:",
+                                  "{.val {crs$epsg}} boundaries or don't match ",
+                                  "its coordinate notation."))
   }
-  return(crs_ok)
+  crs_ok
 }
 
 
-
 is.sf <- function(x) {
-  return(inherits(x, c("sf", "sfc")))
+  inherits(x, c("sf", "sfc"))
 }

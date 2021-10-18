@@ -165,32 +165,6 @@ get_ors_port <- function() {
 }
 
 
-#' Print ORS errors
-#' @description Return the error and warning messages that ORS returned in the
-#' last \code{\link{get_route_lengths}} or \code{get_route_attributes} function calls.
-#' @param last Number of error lists that should be returned. \code{last = 2L},
-#' for example, returns errors from the last two function calls.
-#'
-#' @export
-
-last_ors_conditions <- function(last = 1L) {
-  conditions <- pkg_cache$routing_conditions
-
-  cli_abortifnot(is.numeric(last))
-  cli_abortifnot(last <= length(conditions))
-
-  time <- names(conditions)
-
-  cond_df <- lapply(conditions, function(x) na.omit(data.frame(errors = x)))
-  names(cond_df) <- time
-
-  end <- length(names(cond_df))
-  start <- length(names(cond_df)) + 1 - last
-  selected_errors <- cond_df[seq(start, end)]
-  selected_errors
-}
-
-
 fill_empty_error_message <- function(code) {
   switch(
     as.character(code),
@@ -214,4 +188,59 @@ fill_empty_error_message <- function(code) {
     `6008` = "Empty Element.",
     `6099` = "Unknown internal error."
   )
+}
+
+
+#' Print ORS errors
+#' @description Return the error and warning messages that ORS returned in the
+#' last \code{\link{get_route_lengths}} or \code{get_route_attributes} function calls.
+#' @param last Number of error lists that should be returned. \code{last = 2L},
+#' for example, returns errors from the last two function calls.
+#'
+#' @export
+
+last_ors_conditions <- function(last = 1L) {
+  conditions <- pkg_cache$routing_conditions
+
+  cli_abortifnot(is.numeric(last))
+  cli_abortifnot(last <= length(conditions))
+
+  time <- names(conditions)
+
+  cond_df <- lapply(conditions, function(x) {
+    na.omit(data.frame(conditions = x))
+  })
+  names(cond_df) <- time
+
+  end <- length(names(cond_df))
+  start <- length(names(cond_df)) + 1 - last
+  selected_conditions <- cond_df[seq(start, end)]
+
+  class(selected_conditions) <- "ors_condition"
+  selected_conditions
+}
+
+
+#' Print ORS conditions
+#' @description Print the output of \code{last_ors_conditions}.
+#' @param x Object of type \code{ors_condition}
+#' @param ... Ignored.
+#'
+#' @export
+
+print.ors_condition <- function(x, ...) {
+  timestamps <- names(x)
+  calls <- sapply(timestamps, function(time) {
+    indices <- attr(x[[time]], "row.names")
+    messages <- sapply(x[[time]]$conditions, function(row) {
+      if (nchar(row) > 100) {
+        paste0(strtrim(row, width = 100), "...")
+      } else row
+    })
+    messages <- lapply(seq(1, length(messages)),
+                       function(mi) paste0(indices[mi], " - ", messages[[mi]]))
+    printed_time <- paste0("Function call from ", time, ":")
+    paste(printed_time, paste0(messages, collapse = "\n"), sep = "\n")
+  })
+  cat(paste0(paste0(calls, collapse = "\n\n"), "\n"))
 }

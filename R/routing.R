@@ -116,8 +116,8 @@
 
 get_route_lengths <- function(source,
                               destination,
-                              profile,
-                              units = "m",
+                              profile = get_profiles(),
+                              units = c("m", "km", "mi"),
                               geometry = FALSE,
                               ...) {
   # Check if ORS is ready to use
@@ -163,6 +163,9 @@ get_route_lengths <- function(source,
                      "Source dataset rows: {source_shape}",
                      "Destination dataset rows: {dest_shape}"))
   }
+  
+  match.arg(profiles)
+  match.arg(units)
 
   options_url <- getOption("ors_url")
   url <- ifelse(is.null(options_url),
@@ -232,7 +235,7 @@ get_route_lengths <- function(source,
     cli::cli_warn("No routes could be calculated. Check your service config.")
   } else if (any(route_missing)) {
     conds <- pkg_cache$routing_conditions[[length(pkg_cache$routing_conditions)]]
-    cond_indices <- cli::cli_vec(which(!is.na(conds)),
+    cond_indices <- cli::cli_vec(which(grepl("Error", conds)),
                                  style = list(vec_sep = ", ", vec_last = ", "))
     cli::cli_warn(c(paste("{length(cond_indices)} route{?s} could not be",
                           "calculated and {?was/were} skipped: {cond_indices}"),

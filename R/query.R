@@ -98,7 +98,7 @@ query_ors_directions <- function(source,
   if (!geometry) {
     return(parsed_response)
   } else {
-    if (!is.character(parsed_response)) {
+    if (is.null(parsed_response$error)) {
       parsed_response$
         features$
         geometry <- sf::st_multilinestring(parsed_response$
