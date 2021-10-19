@@ -15,6 +15,8 @@ format_input_data <- function(data) {
   } else {
     if (is.matrix(data) || is.list(data) || is.array(data)) {
       data <- as.data.frame(data)
+    } else if (is.double(data) && length(data) == 2) {
+      data <- as.data.frame(t(data))
     }
     if (ncol(data) > 2) {
       if (all(is.element(c("X", "Y"), colnames(data)))) {
@@ -35,7 +37,64 @@ format_input_data <- function(data) {
 
 
 format_ors_options <- function(options, profile) {
+  if (is.null(options)) {
+    return(NULL)
+  }
+
   options_check <- NULL
+
+  if (!is.null(options$attributes) && length(options$attributes)) {
+    attributes <- c("avgspeed", "detourfactor")
+
+    if (isTRUE(options$attributes)) {
+      options$attributes <- c(attributes, "elevation", extra_info)
+    }
+
+    attributes_i <- match(options$attributes, attributes)
+    attributes_i <- attributes_i[!is.na(attributes_i)]
+
+    if (length(attributes_i)) {
+      options$attributes <- attributes[attributes_i]
+      options_check["attributes"] <- TRUE
+    }
+  }
+
+  if (!is.null(options$elevation)) {
+    if (isTRUEorFALSE(options$elevation)) {
+      options$elevation <- TRUE
+      options_check["elevation"] <- TRUE
+    }
+  }
+
+  if (!is.null(options$extra_info)) {
+    extra_info <- c("steepness", "suitability", "surface", "waycategory",
+                    "waytype", "tollways", "traildifficulty", "osmid",
+                    "roadaccessrestrictions", "countryinfo", "green", "noise")
+
+    if (isTRUE(options$extra_info)) {
+      options$extra_info <- extra_info
+    }
+
+    extra_info_i <- match(options$attributes, extra_info)
+    extra_info_i <- extra_info_i[!is.na(extra_info_i)]
+
+    if (length(extra_info_i)) {
+      options$extra_info <- extra_info[extra_info_i]
+      options_check["extra_info"] <- TRUE
+    } else {
+      options_check["extra_info"] <- FALSE
+      options$extra_info <- NULL
+    }
+  }
+
+  if (!is.null(options$continue_straight)) {
+    if (isTRUEorFALSE(options$continue_straight)) {
+      options_check["continue_straight"] <- TRUE
+    } else {
+      options_check["continue_straight"] <- FALSE
+      options$continue_straight <- NULL
+    }
+  }
 
   if (!is.null(options$geometry_simplify)) {
     if (isTRUE(options$geometry_simplify) ||
@@ -44,16 +103,6 @@ format_ors_options <- function(options, profile) {
     } else {
       options_check["geometry_simplify"] <- FALSE
       options$geometry_simplify <- NULL
-    }
-  }
-
-  if (!is.null(options$continue_straight)) {
-    if (isTRUE(options$continue_straight) ||
-        isFALSE(options$continue_straight)) {
-      options_check["continue_straight"] <- TRUE
-    } else {
-      options_check["continue_straight"] <- FALSE
-      options$continue_straight <- NULL
     }
   }
 
@@ -197,8 +246,11 @@ format_ors_options <- function(options, profile) {
   adv_options_list <- adv_options_list[lengths(adv_options_list) > 0]
 
   options_list <- list(
-    geometry_simplify = options$geometry_simplify,
+    attributes        = options$attributes,
     continue_straight = options$continue_straight,
+    elevation         = options$elevation,
+    extra_info        = options$extra_info,
+    geometry_simplify = options$geometry_simplify,
     options           = adv_options_list,
     preference        = options$preference,
     radiuses          = options$radiuses,
@@ -214,4 +266,81 @@ format_ors_options <- function(options, profile) {
   }
 
   options_list
+}
+
+
+calculate_avgspeed <- function(res, units) {
+  dist_divisor <- switch(units, m = 1000, km = 1, mi = 1.609)
+  distance <- res$features$properties$segments[[1]]$steps[[1]]$distance
+  duration <- res$features$properties$segments[[1]]$steps[[1]]$duration
+  speeds <- (distance / dist_divisor) / (duration / 3600)
+  print(speeds)
+  data.frame(avgspeed = speeds)
+}
+
+
+calculate_percentage <- function(res) {
+  total_distance <- res$features$properties$segments[[1]]$distance
+  total_duration <- res$features$properties$segments[[1]]$distance
+  distance <- res$features$properties$segments[[1]]$steps[[1]]$distance
+  duration <- res$features$properties$segments[[1]]$steps[[1]]$duration
+  perc_dist <- round(distance / total_distance, digits = 3)
+  perc_dura <- round(duration / total_duration, digits = 3)
+  data.frame(perc_distance = perc_dist, perc_duration = perc_dura)
+}
+
+
+get_waypoint_index <- function(from, to, waypoints, by_waypoint) {
+  if (isFALSE(by_waypoint)) {
+    from_index <- match(from + 1, waypoints[[1]])
+    to_index <- match(to + 1, waypoints[[2]])
+    seq(from_index, to_index)
+  }
+}
+
+
+format_extra_info <- function(res, extra_info, by_waypoint) {
+  if (identical(extra_info, "waytype")) extra_info <- "waytypes"
+  waypoints <- res$features$properties$segments[[1]]$steps[[1]]$way_points
+  last_waypoint <- res$features$properties$way_points[[1]][2]
+  matrix <- res$features$properties$extras[[extra_info]]$values[[1]]
+
+  if (length(matrix)) {
+    start <- matrix[, 1]
+    end <- matrix[, 2]
+
+    if (isTRUE(by_waypoint)) {
+      waypoints_df <- as.data.frame(do.call(rbind, waypoints))
+    } else {
+      waypoints_df <- data.frame(V1 = seq(1, last_waypoint),
+                                 V2 = seq(1, last_waypoint) + 1)
+    }
+
+    indices <- purrr::map2(start,
+                           end,
+                           get_waypoint_index,
+                           waypoints = waypoints_df,
+                           by_waypoint = FALSE)
+
+    values <- sapply(seq(1, length(indices)),
+                     function(seg) rep(matrix[seg, 3], length(indices[[seg]])))
+    values <- unlist(values)
+
+    fill_fun_name <- paste("fill", extra_info, sep = "_")
+    if (exists(fill_fun_name)) {
+      profile <- res$metadata$query$profile
+      fill_fun <- match.fun(fill_fun_name)
+      if (identical(fill_fun_name, "fill_traildifficulty")) {
+        values <- sapply(values, fill_fun, profile)
+      } else {
+        values <- sapply(values, fill_fun)
+      }
+    }
+
+    values_df <- data.frame(values)
+  } else {
+    values_df <- data.frame(rep(NA, last_waypoint))
+  }
+  colnames(values_df) <- substitute(extra_info)
+  values_df
 }

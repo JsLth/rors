@@ -55,6 +55,44 @@ buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326) {
 }
 
 
+ors_multiple_linestrings <- function(res, by_waypoints) {
+  coordinates <- res$features$geometry$coordinates[[1]]
+  waypoints <- res$features$properties$segments[[1]]$steps[[1]]$way_points
+
+  split_ls <- function(wp) {
+    indices <- seq(wp, wp + 1)
+    segment <- coordinates[indices, ]
+    if (is.matrix(segment)) {
+      sf::st_linestring(segment)
+    } else {
+      sf::st_point(segment)
+    }
+  }
+
+  if (isTRUE(by_waypoints)) {
+    iterator <- waypoints
+  } else {
+    iterator <- seq_len(nrow(coordinates) - 1)
+  }
+
+  linestrings <- lapply(iterator, split_ls)
+  sf::st_sfc(linestrings, crs = 4326)
+}
+
+
+ors_single_linestring <- function(res) {
+  coordinates <- res$features$geometry$coordinates
+  linestring <- sf::st_multilinestring(coordinates)
+  sf::st_sfc(linestring, crs = 4326)
+}
+
+
+extract_z <- function(geometry) {
+  coordinates <- sf::st_coordinates(geometry)
+  mean(coordinates$Z)
+}
+
+
 reformat_vectordata <- function(data) {
   as.data.frame(sf::st_coordinates(data))
 }
@@ -175,8 +213,8 @@ verify_crs <- function(data, crs, silent = FALSE) {
 
   if (!silent && !crs_ok) {
     cli::cli_alert_warning(paste0("Coordinates either fall outside of the EPSG:",
-                                  "{.val {crs$epsg}} boundaries or don't match ",
-                                  "its coordinate notation."))
+                                  "{.val {parsed_crs$epsg}} boundaries or ",
+                                  "don't match its coordinate notation."))
   }
   crs_ok
 }

@@ -71,42 +71,25 @@ query_ors_directions <- function(source,
       parsed_response$error$message
     )
 
-  } else if (!geometry) {
-    if (!is.null(parsed_response$routes$warnings)) {
+  } else {
+    properties_branch <- ifelse(geometry,
+                          yes = parsed_response$features$properties,
+                          no = parsed_response$routes)
+    if (!is.null(properties_branch$warnings)) {
 
       parsed_response$routes$warnings <- paste0(
         "Warning code ",
-        parsed_response$routes$warnings[[1]]$code,
+        properties_branch$warnings[[1]]$code,
         ": ",
-        parsed_response$routes$warnings[[1]]$message
+        properties_branch$warnings[[1]]$message
       )
-
-    }
-  } else if (geometry) {
-    if (!is.null(parsed_response$features$warnings)) {
-
-      parsed_response$features$warnings <- paste0(
-        "Warning code ",
-        parsed_response$features$warnings[[1]]$code,
-        ": ",
-        parsed_response$features$warnings[[1]]$message
-      )
-
     }
   }
 
   if (!geometry) {
     return(parsed_response)
   } else {
-    if (is.null(parsed_response$error)) {
-      parsed_response$
-        features$
-        geometry <- sf::st_multilinestring(parsed_response$
-                                                   features$
-                                                   geometry$
-                                                   coordinates) %>%
-        sf::st_sfc()
-    }
+
     return(parsed_response)
   }
 }

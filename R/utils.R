@@ -91,6 +91,11 @@ is.macos <- function() {
 }
 
 
+isTRUEorFALSE <- function(x) {
+  is.logical(x) && length(x) == 1L && !is.na(x)
+}
+
+
 #' Enable non-root docker access on Linux
 #' @description Creates a docker group and adds the current user to it in order
 #' to enable docker commands from within R. Doing this, either manually or by

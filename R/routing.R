@@ -130,9 +130,7 @@ get_route_lengths <- function(source,
                               geometry = FALSE,
                               ...) {
   # Check if ORS is ready to use
-  if (!ors_ready(force = FALSE)) {
-    cli::cli_abort("ORS service is not reachable.")
-  }
+  ors_ready(force = FALSE, error = TRUE)
 
   # Bring input data into shape
   source <- format_input_data(source)
@@ -173,19 +171,12 @@ get_route_lengths <- function(source,
                      "Destination dataset rows: {dest_shape}"))
   }
   
-  match.arg(profiles)
-  match.arg(units)
+  profile <- match.arg(profile)
+  units <- match.arg(units)
 
-  options_url <- getOption("ors_url")
-  url <- ifelse(is.null(options_url),
-                sprintf("http://localhost:%s/", get_ors_port()),
-                options_url)
+  url <- get_ors_url()
 
-  if (!is.null(c(...))) {
-    options <- format_ors_options(list(...), profile)
-  } else {
-    options <- NULL
-  }
+  options <- format_ors_options(list(...), profile)
 
   call_index <- format(Sys.time(), format = "%H:%M:%S")
 
@@ -433,21 +424,113 @@ create_dist_matrix <- function(source,
 #' Get route attributes
 #' @description Calls the directions service of ORS and returns route segments
 #' along with a set of additional attributes
-#' @param source
-#' @param destination
-#' @param profile
-#' @param units
-#' @param attributes
-#' @param ...
-#' @returns
+#' @param source Any kind of numeric vector containing \code{x/y} values of a
+#' route segment that should be routed from. Refer to
+#' \code{\link{get_route_lengths}}.
+#' @param destination Any kind of numeric vector containing \code{x/y} values
+#' of a route segment that should be routed to.
+#' @param profile Character vector. Means of transport as supported by
+#' OpenRouteService.
+#' @param features List of additional information to be included in the
+#' output. A feature is included for each route segment, i.e. for each
+#' linestring in the output. Possible values include "avgspeed", "detourfactor",
+#' "percentage", "elevation", "steepness", "suitability", "surface",
+#' "waycategory", "waytype", "tollways", "traildifficulty", "osmid",
+#' "roadaccessrestrictions", "countryinfo", "green" and "noise". If
+#' \code{TRUE}, all features are taken into account. Refer to the
+#' \href{https://github.com/GIScience/openrouteservice-docs#routing-response}{routing response documentation}
+#' @inheritParams get_route_lengths
+#' @returns A dataframe containing linestrings and attributes for each route
+#' segment
+#' @seealso get_route_lengths
 #'
 #' @export
 
 inspect_route <- function(source,
-                                 destination,
-                                 profile,
-                                 units = "m",
-                                 attributes = list(),
-                                 ...) {
+                          destination,
+                          profile = get_profiles(),
+                          units = c("m", "km", "mi"),
+                          attributes = list(),
+                          elevation = TRUE,
+                          extra_info = list(),
+                          by_waypoint = FALSE, # TODO: Implement
+                          elev_as_z = TRUE, # TODO: Implement
+                          ...) {
+  # Check if ORS is ready to use
+  ors_ready(force = FALSE, error = TRUE)
 
+  # Bring input data into shape
+  source <- format_input_data(source)
+  destination <- format_input_data(destination)
+
+  verify_crs(source, crs = 4326)
+  verify_crs(destination, crs = 4326)
+
+  profile <- match.arg(profile)
+  units <- match.arg(units)
+
+  url <- get_ors_url()
+
+  features <- list(attributes = attributes,
+                   elevation = elevation,
+                   extra_info = extra_info)
+  options <- format_ors_options(append(features, list(...)), profile)
+
+  res <- query_ors_directions(source = source,
+                              destination = destination,
+                              profile = profile,
+                              units = units,
+                              geometry = TRUE,
+                              options = options,
+                              url = url)
+  return(res)
+  last_waypoint <- res$features$properties$way_points[[1]][2]
+  if (is.element("avgspeed", features) || isTRUE(unlist(features))) { # TODO: Make shorter
+    if (isTRUE(by_waypoint)) {
+      speeds <- calculate_avgspeed(res, units = units)
+    } else {
+      speeds <- data.frame(avgspeed = rep(NA, last_waypoint))
+    }
+    avgspeed <- res$features$properties$segments[[1]]$avgspeed
+  }
+
+  if (is.element("percentage", features) || isTRUE(unlist(features))) {
+    if (isTRUE(by_waypoint)) {
+      percentages <- calculate_percentage(res)
+    } else {
+      percentages <- data.frame(percentage = rep(NA, last_waypoint))
+    }
+  }
+
+  if (is.element("detourfactor", features) || isTRUE(unlist(features))) {
+    detourfactor <- res$features$properties$segments[[1]]$detourfactor
+  }
+
+  ascent <- res$features$properties$segments[[1]]$ascent
+  descent <- res$features$properties$segments[[1]]$descent
+
+  extra_info <- vapply(options$extra_info,
+                       function(x) format_extra_info(res, x, by_waypoint),
+                       data.frame(1))
+
+  geometry <- ors_multiple_linestrings(res, by_waypoints = FALSE)
+
+  elements <- list(
+    if (exists("speeds")) speeds,
+    if (exists("percentages")) percentages,
+    if (exists("extra_info")) extra_info,
+    if (exists("geometry")) geometry
+  )
+
+  elements <- elements[lengths(elements) != 0]
+  route <- do.call(data.frame, elements)
+
+  route_sf <- structure(
+    sf::st_as_sf(route),
+    avgspeed = if (exists("avgspeed")) avgspeed,
+    detourfactor = if (exists("detourfactor")) detourfactor,
+    ascent = ascent,
+    descent = descent
+  )
+  route_sf
 }

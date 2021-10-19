@@ -69,17 +69,22 @@ get_profiles <- function(force = FALSE) {
 #'
 #' @export
 
-ors_ready <- function(force = TRUE) {
+ors_ready <- function(force = TRUE, error = FALSE) {
   if (is.null(pkg_cache$ors_ready) || force) {
+    port <- get_ors_port()
     ready <- tryCatch(
       httr::GET(
-        sprintf("http://localhost:%s/ors/health", get_ors_port())
+        sprintf("http://localhost:%s/ors/health", port)
       ) %>%
         httr::content(as = "text", type = "application/json", encoding = "UTF-8") %>%
         jsonlite::fromJSON() %>%
         .$status %>%
         identical("ready"),
-      error = function(e) FALSE
+      error = function(e) {
+        ifelse(error,
+               cli::cli_abort("ORS service is not reachable."),
+               FALSE)
+      }
     )
     assign("ors_ready", ready, envir = pkg_cache)
     return(ready)
@@ -165,6 +170,16 @@ get_ors_port <- function() {
 }
 
 
+get_ors_url <- function() {
+  options_url <- getOption("ors_url")
+  if (is.null(options_url)) {
+    sprintf("http://localhost:%s/", get_ors_port())
+  } else {
+    options_url
+  }
+}
+
+
 fill_empty_error_message <- function(code) {
   switch(
     as.character(code),
@@ -187,6 +202,123 @@ fill_empty_error_message <- function(code) {
     `6007` = "Unsupported export format.",
     `6008` = "Empty Element.",
     `6099` = "Unknown internal error."
+  )
+}
+
+
+fill_steepness <- function(code) {
+  switch(
+    as.character(code),
+    `-5` = ">16%",
+    `-4` = "12-15%",
+    `-3` = "7-11%",
+    `-2` = "4-6%",
+    `-1` = "1-3%",
+    `0`  = "0%",
+    `1`  = "1-3%",
+    `2`  = "4-6%",
+    `3`  = "7-11%",
+    `4`  = "12-15%",
+    `5`  = ">16%"
+  )
+}
+
+
+fill_surface <- function(code) {
+  switch(
+    as.character(code),
+    `0`  = "Unknown",
+    `1`  = "Paved",
+    `2`  = "Unpaved",
+    `3`  = "Asphalt",
+    `4`  = "Concrete",
+    `5`  = "Cobblestone",
+    `6`  = "Metal",
+    `7`  = "Wood",
+    `8`  = "Compacted Gravel",
+    `9`  = "Fine Gravel",
+    `10` = "Gravel",
+    `11` = "Dirt",
+    `12` = "Ground",
+    `13` = "Ice",
+    `14` = "Paving Stones",
+    `15` = "Sand",
+    `16` = "Woodchips",
+    `17` = "Grass",
+    `18` = "Grass Paver"
+  )
+}
+
+
+fill_waycategory <- function(code) {
+  switch(
+    as.character(code),
+    `0`   = "No category",
+    `1`   = "Highway",
+    `2`   = "Steps",
+    `4`   = "Unpaved Road",
+    `8`   = "Ferry",
+    `16`  = "Track",
+    `32`  = "Tunnel",
+    `64`  = "Paved road",
+    `128` = "Ford"
+  )
+}
+
+
+fill_waytypes <- function(code) {
+  switch(
+    as.character(code),
+    `0`  = "Unknown",
+    `1`  = "State Road",
+    `2`  = "Road",
+    `3`  = "Street",
+    `4`  = "Path",
+    `5`  = "Track",
+    `6`  = "Cycleway",
+    `7`  = "Footway",
+    `8`  = "Steps",
+    `9`  = "Ferry",
+    `10` = "Construction"
+  )
+}
+
+
+fill_traildifficulty <- function(code, profile) {
+  if (identical(base_profile(profile), "cycling")) {
+    code <- code * -1
+  }
+
+  switch(
+    as.character(code),
+    `-7` = "mtb:scale=6",
+    `-6` = "mtb:scale=5",
+    `-5` = "mtb:scale=4",
+    `-4` = "mtb:scale=3",
+    `-3` = "mtb:scale=2",
+    `-2` = "mtb:scale=1",
+    `-1` = "mtb:scale=0",
+    `0`  = "No Tag",
+    `1`  = "sac_scale=hiking",
+    `2`  = "sac_scale=mountain_hiking",
+    `3`  = "sac_scale=demanding_mountain_hiking",
+    `4`  = "sac_scale=alpine_hiking",
+    `5`  = "sac_scale=demanding_alpine_hiking",
+    `6`  = "sac_scale=difficult_alpine_hiking"
+  )
+}
+
+
+fill_roadaccessrestrictions <- function(code) {
+  switch(
+    as.character(code),
+    `0`  = "None",
+    `1`  = "No",
+    `2`  = "Customers",
+    `4`  = "Destination",
+    `8`  = "Delivery",
+    `16` = "Private",
+    `32` = "Permissive"
   )
 }
 
