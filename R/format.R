@@ -269,24 +269,39 @@ format_ors_options <- function(options, profile) {
 }
 
 
-calculate_avgspeed <- function(res, units) {
-  dist_divisor <- switch(units, m = 1000, km = 1, mi = 1.609)
-  distance <- res$features$properties$segments[[1]]$steps[[1]]$distance
-  duration <- res$features$properties$segments[[1]]$steps[[1]]$duration
-  speeds <- (distance / dist_divisor) / (duration / 3600)
-  print(speeds)
+calculate_distances <- function(geometry) {
+  distances <- sf::st_length(sf::st_zm(geometry))
+  data.frame(distance = distances)
+}
+
+
+calculate_avgspeed <- function(distance, duration) {
+  speeds <- distance / duration
+  speeds <- units::set_units(speeds, km/h)
   data.frame(avgspeed = speeds)
 }
 
 
-calculate_percentage <- function(res) {
-  total_distance <- res$features$properties$segments[[1]]$distance
-  total_duration <- res$features$properties$segments[[1]]$distance
-  distance <- res$features$properties$segments[[1]]$steps[[1]]$distance
-  duration <- res$features$properties$segments[[1]]$steps[[1]]$duration
-  perc_dist <- round(distance / total_distance, digits = 3)
-  perc_dura <- round(duration / total_duration, digits = 3)
-  data.frame(perc_distance = perc_dist, perc_duration = perc_dura)
+calculate_durations <- function(res, distances) {
+  waypoints <- res$features$properties$segments[[1]]$steps[[1]]$way_points
+  wp_distances <- res$features$properties$segments[[1]]$steps[[1]]$distance
+  expanded_wp_distances <- expand_by_waypoint(wp_distances, waypoints)
+  percentages <- units::drop_units(distances / expanded_wp_distances)
+  wp_durations <- res$features$properties$segments[[1]]$steps[[1]]$duration
+  durations <- expand_by_waypoint(wp_durations, waypoints) * percentages
+  durations <- units::set_units(durations, s)
+  data.frame(duration = durations)
+}
+
+
+expand_by_waypoint <- function(vector, waypoints) {
+  expand_vctr <- function(i) {
+    multiplier <- waypoints[[i]][2] - waypoints[[i]][1]
+    rep(vector[i], multiplier)
+  }
+  expanded_data <- unlist(sapply(seq_len(length(vector)), expand_vctr))
+  expanded_data[length(expanded_data) + 1] <- vector[length(vector)]
+  expanded_data
 }
 
 
@@ -311,6 +326,7 @@ format_extra_info <- function(res, extra_info, by_waypoint) {
 
     if (isTRUE(by_waypoint)) {
       waypoints_df <- as.data.frame(do.call(rbind, waypoints))
+      waypoints_df <- waypoints_df + 1
     } else {
       waypoints_df <- data.frame(V1 = seq(1, last_waypoint),
                                  V2 = seq(1, last_waypoint) + 1)

@@ -76,7 +76,9 @@ ors_multiple_linestrings <- function(res, by_waypoints) {
   }
 
   linestrings <- lapply(iterator, split_ls)
-  sf::st_sfc(linestrings, crs = 4326)
+  last_point <- sf::st_point(coordinates[nrow(coordinates),])
+  geometry <- append(linestrings, list(last_point))
+  sf::st_sfc(geometry, crs = 4326)
 }
 
 

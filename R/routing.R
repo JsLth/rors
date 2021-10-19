@@ -483,28 +483,20 @@ inspect_route <- function(source,
                               geometry = TRUE,
                               options = options,
                               url = url)
-  return(res)
-  last_waypoint <- res$features$properties$way_points[[1]][2]
-  if (is.element("avgspeed", features) || isTRUE(unlist(features))) { # TODO: Make shorter
-    if (isTRUE(by_waypoint)) {
-      speeds <- calculate_avgspeed(res, units = units)
-    } else {
-      speeds <- data.frame(avgspeed = rep(NA, last_waypoint))
-    }
+
+  geometry <- ors_multiple_linestrings(res, by_waypoints = FALSE)
+
+  distances <- calculate_distances(geometry)
+  durations <- calculate_durations(res, distances$distance)
+  speeds <- calculate_avgspeed(distances$distance, durations$duration)
+
+  if (is.element("avgspeed", options$attributes)) {
     avgspeed <- res$features$properties$segments[[1]]$avgspeed
-  }
+  } else avgspeed <- NULL
 
-  if (is.element("percentage", features) || isTRUE(unlist(features))) {
-    if (isTRUE(by_waypoint)) {
-      percentages <- calculate_percentage(res)
-    } else {
-      percentages <- data.frame(percentage = rep(NA, last_waypoint))
-    }
-  }
-
-  if (is.element("detourfactor", features) || isTRUE(unlist(features))) {
+  if (is.element("detourfactor", options$attributes)) {
     detourfactor <- res$features$properties$segments[[1]]$detourfactor
-  }
+  } else avgspeed <- NULL
 
   ascent <- res$features$properties$segments[[1]]$ascent
   descent <- res$features$properties$segments[[1]]$descent
@@ -513,13 +505,13 @@ inspect_route <- function(source,
                        function(x) format_extra_info(res, x, by_waypoint),
                        data.frame(1))
 
-  geometry <- ors_multiple_linestrings(res, by_waypoints = FALSE)
-
   elements <- list(
-    if (exists("speeds")) speeds,
-    if (exists("percentages")) percentages,
-    if (exists("extra_info")) extra_info,
-    if (exists("geometry")) geometry
+    distances,
+    durations,
+    speeds,
+    percentages,
+    extra_info,
+    geometry
   )
 
   elements <- elements[lengths(elements) != 0]
