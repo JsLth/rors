@@ -289,7 +289,7 @@ get_route_lengths <- function(source,
 get_shortest_routes <- function(source,
                                 destination,
                                 profile = get_profiles(),
-                                proximity_type = 'duration',
+                                proximity_type = "duration",
                                 units = c("m", "km", "mi"),
                                 geometry = FALSE,
                                 ...) {
@@ -304,7 +304,7 @@ get_shortest_routes <- function(source,
     destination <- format_input_data(destination)
   }
 
-  calculate.shortest.routes <- function (profile, point_number) {
+  calculate_shortest_routes <- function(profile, point_number) {
     routes <- get_route_lengths(
       source = source[point_number, ],
       destination = if (is.data.frame(destination)) {
@@ -324,7 +324,7 @@ get_shortest_routes <- function(source,
               routes[["distance"]])
       )
 
-    } else if (identical(tolower(proximity_type), 'duration')) {
+    } else if (identical(tolower(proximity_type), "duration")) {
       best_index <- suppressWarnings(
         match(min(routes[["duration"]], na.rm = TRUE),
               routes[["duration"]])
@@ -335,7 +335,7 @@ get_shortest_routes <- function(source,
                            "({.val duration} or {.val distance})"))
     }
 
-    best_route <- cbind(best_index, routes[best_index,])
+    best_route <- cbind(best_index, routes[best_index, ])
 
     cli::cli_progress_update(.envir = parent.frame(3))
     return(best_route)
@@ -355,7 +355,7 @@ get_shortest_routes <- function(source,
 
   # Find shortest route for each coordinate pair
   route_list <- purrr::pmap(nested_iterator,
-                             ~calculate.shortest.routes(.x, .y)) %>%
+                             ~calculate_shortest_routes(.x, .y)) %>%
     do.call(rbind, .) %>%
     as.data.frame() %>%
     cbind(nested_iterator[["point_number"]], nested_iterator[["profile"]], .)
@@ -484,7 +484,9 @@ inspect_route <- function(source,
                               options = options,
                               url = url)
 
-  geometry <- ors_multiple_linestrings(res, by_waypoints = FALSE)
+  geometry <- ors_multiple_linestrings(res)
+
+  waypoints <- res$features$properties$segments[[1]]$steps[[1]]$way_points
 
   distances <- calculate_distances(geometry)
   durations <- calculate_durations(res, distances$distance)
@@ -498,18 +500,21 @@ inspect_route <- function(source,
     detourfactor <- res$features$properties$segments[[1]]$detourfactor
   } else avgspeed <- NULL
 
+  names_wp <- res$features$properties$segments[[1]]$steps[[1]]$name
+  names <- data.frame(names = expand_by_waypoint(names_wp, waypoints))
+
   ascent <- res$features$properties$segments[[1]]$ascent
   descent <- res$features$properties$segments[[1]]$descent
 
   extra_info <- vapply(options$extra_info,
-                       function(x) format_extra_info(res, x, by_waypoint),
+                       function(x) format_extra_info(res, x),
                        data.frame(1))
 
   elements <- list(
+    names,
     distances,
     durations,
     speeds,
-    percentages,
     extra_info,
     geometry
   )

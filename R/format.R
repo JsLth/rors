@@ -47,7 +47,7 @@ format_ors_options <- function(options, profile) {
     attributes <- c("avgspeed", "detourfactor")
 
     if (isTRUE(options$attributes)) {
-      options$attributes <- c(attributes, "elevation", extra_info)
+      options$attributes <- attributes
     }
 
     attributes_i <- match(options$attributes, attributes)
@@ -75,7 +75,7 @@ format_ors_options <- function(options, profile) {
       options$extra_info <- extra_info
     }
 
-    extra_info_i <- match(options$attributes, extra_info)
+    extra_info_i <- match(options$extra_info, extra_info)
     extra_info_i <- extra_info_i[!is.na(extra_info_i)]
 
     if (length(extra_info_i)) {
@@ -260,9 +260,11 @@ format_ors_options <- function(options, profile) {
   options_list <- options_list[lengths(options_list) > 0]
 
   if (!all(options_check)) {
-    cli::cli_warn(paste("The following options are formatted incorrectly and",
-                          "will be skipped:"))
-    cli::cli_ul(items = names(options_check)[!options_check])
+    option_names <- names(options_check)[!options_check]
+    cli::cli_warn(paste("The following {length(option_names)} option{?s} ",
+                        "{?is/are} formatted incorrectly and will be",
+                        "skipped:"))
+    cli::cli_ul(items = option_names)
   }
 
   options_list
@@ -314,35 +316,30 @@ get_waypoint_index <- function(from, to, waypoints, by_waypoint) {
 }
 
 
-format_extra_info <- function(res, extra_info, by_waypoint) {
-  if (identical(extra_info, "waytype")) extra_info <- "waytypes"
+format_extra_info <- function(res, info_type) {
+  if (identical(info_type, "waytype")) info_type <- "waytypes"
   waypoints <- res$features$properties$segments[[1]]$steps[[1]]$way_points
   last_waypoint <- res$features$properties$way_points[[1]][2]
-  matrix <- res$features$properties$extras[[extra_info]]$values[[1]]
+  matrix <- res$features$properties$extras[[info_type]]$values[[1]]
 
   if (length(matrix)) {
     start <- matrix[, 1]
     end <- matrix[, 2]
 
-    if (isTRUE(by_waypoint)) {
-      waypoints_df <- as.data.frame(do.call(rbind, waypoints))
-      waypoints_df <- waypoints_df + 1
-    } else {
-      waypoints_df <- data.frame(V1 = seq(1, last_waypoint),
-                                 V2 = seq(1, last_waypoint) + 1)
-    }
+    iterator <- data.frame(V1 = seq(1, last_waypoint),
+                           V2 = seq(1, last_waypoint) + 1)
 
     indices <- purrr::map2(start,
                            end,
                            get_waypoint_index,
-                           waypoints = waypoints_df,
+                           waypoints = iterator,
                            by_waypoint = FALSE)
 
     values <- sapply(seq(1, length(indices)),
                      function(seg) rep(matrix[seg, 3], length(indices[[seg]])))
     values <- unlist(values)
 
-    fill_fun_name <- paste("fill", extra_info, sep = "_")
+    fill_fun_name <- paste("fill", info_type, sep = "_")
     if (exists(fill_fun_name)) {
       profile <- res$metadata$query$profile
       fill_fun <- match.fun(fill_fun_name)
@@ -352,11 +349,11 @@ format_extra_info <- function(res, extra_info, by_waypoint) {
         values <- sapply(values, fill_fun)
       }
     }
-
+    values[length(values) + 1] <- NA
     values_df <- data.frame(values)
   } else {
-    values_df <- data.frame(rep(NA, last_waypoint))
+    values_df <- data.frame(rep(NA, last_waypoint + 1))
   }
-  colnames(values_df) <- substitute(extra_info)
+  colnames(values_df) <- substitute(info_type)
   values_df
 }

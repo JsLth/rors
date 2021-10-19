@@ -55,9 +55,8 @@ buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326) {
 }
 
 
-ors_multiple_linestrings <- function(res, by_waypoints) {
+ors_multiple_linestrings <- function(res) {
   coordinates <- res$features$geometry$coordinates[[1]]
-  waypoints <- res$features$properties$segments[[1]]$steps[[1]]$way_points
 
   split_ls <- function(wp) {
     indices <- seq(wp, wp + 1)
@@ -69,12 +68,7 @@ ors_multiple_linestrings <- function(res, by_waypoints) {
     }
   }
 
-  if (isTRUE(by_waypoints)) {
-    iterator <- waypoints
-  } else {
-    iterator <- seq_len(nrow(coordinates) - 1)
-  }
-
+  iterator <- seq_len(nrow(coordinates) - 1)
   linestrings <- lapply(iterator, split_ls)
   last_point <- sf::st_point(coordinates[nrow(coordinates),])
   geometry <- append(linestrings, list(last_point))
