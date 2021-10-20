@@ -190,25 +190,18 @@ get_route_lengths <- function(source,
                                   url = url)
     i <- get("i", envir = parent.frame())
 
-    if (!is.null(route$error)) {
-      pkg_cache$routing_conditions[[call_index]][i] <- route$error
+    cond <- handle_ors_conditions(res)
+
+    if (isTRUE(attr(cond, "error"))) {
+      pkg_cache$routing_conditions[[call_index]][i] <- cond
 
       if (!geometry) {
-        return(data.frame(distance = NA,
-                          duration = NA))
+        return(data.frame(distance = NA, duration = NA))
       } else {
-        return(data.frame(distance = NA,
-                          duration = NA,
-                          geometry = NA))
+        return(data.frame(distance = NA, duration = NA, geometry = NA))
       }
-    }
-
-    if (!is.null(route$routes$warnings)) {
-      pkg_cache$routing_conditions[[call_index]][i] <- route$routes$warnings
-    }
-
-    if (!is.null(route$features$warnings)) {
-      pkg_cache$routing_conditions[[call_index]][i] <- route$features$warnings
+    } else if (isFALSE(attr(cond, "error"))) {
+      pkg_cache$routing_conditions[[call_index]][i] <- cond
     }
 
     if (!geometry) {
@@ -231,15 +224,22 @@ get_route_lengths <- function(source,
     do.call(rbind, .)
 
   route_missing <- sapply(unlist(route_list), is.na)
+  conds <- pkg_cache$routing_conditions[[call_index]]
+  warn_indices <- which(grepl("Warning", conds))
   if (all(route_missing)) {
     cli::cli_warn("No routes could be calculated. Check your service config.")
   } else if (any(route_missing)) {
-    conds <- pkg_cache$routing_conditions[[length(pkg_cache$routing_conditions)]]
     cond_indices <- cli::cli_vec(which(grepl("Error", conds)),
                                  style = list(vec_sep = ", ", vec_last = ", "))
     cli::cli_warn(c(paste("{length(cond_indices)} route{?s} could not be",
                           "calculated and {?was/were} skipped: {cond_indices}"),
-                    "For a list of error messages, call {.fn last_ors_conditions}"))
+                    "For a list of conditions, call {.fn last_ors_conditions}."))
+  } else if (length(warn_indices)) {
+    warn_indices <- cli::cli_vec(warn_indices,
+                                 style = list(vec_sep = ", ", vec_last = ", "))
+    cli::cli_warn(c(paste("ORS returned a warning for {length(warn_indices)}",
+                          "route{?s}: {warn_indices}"),
+                    "For a list of conditions, call {.fn last_ors_conditions}."))
   }
 
   if (is.null(route_list$geometry)) {
@@ -380,19 +380,14 @@ get_shortest_routes <- function(source,
 }
 
 
-
 create_dist_matrix <- function(source,
                                destination,
-                               profile,
-                               proximity_type = "distance",
-                               units = "m") {
-  cli_abortifnot(is.character(proximity_type))
-  cli_abortifnot(is.character(units))
-
-  if (all(!is.element(proximity_type, c("distance", "duration")))) {
-    cli::cli_abort(paste("Expected a proximity type",
-                         "({.val {\"duration\"}} or {.val {\"distance\"}})"))
-  }
+                               profile = get_profiles(),
+                               proximity_type = c("distance", "duration"),
+                               units = c("m", "km", "mi")) {
+  profile <- match.arg(profiles)
+  proximity_type <- match.arg(proximity_type)
+  units <- match.arg(units)
 
   source <- format_input_data(source)
   destination <- format_input_data(destination)
@@ -403,21 +398,23 @@ create_dist_matrix <- function(source,
                 sprintf("http://localhost:%s/", port),
                 options_url)
 
-  route <- query_ors_matrix(source = source,
-                            destination = destination,
-                            profile = profile,
-                            metrics = proximity_type,
-                            units = units,
-                            url = url)
+  res <- query_ors_matrix(source = source,
+                          destination = destination,
+                          profile = profile,
+                          metrics = proximity_type,
+                          units = units,
+                          url = url)
+
+  handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
 
   if (length(proximity_type) == 1) {
-    matrix <- route[[paste0(proximity_type, "s")]]
+    matrix <- res[[paste0(proximity_type, "s")]]
   } else {
-    matrix <- list(distances = route$distances,
-                   durations = route$durations)
+    matrix <- list(distances = res$distances,
+                   durations = res$durations)
   }
 
-  return(matrix)
+  matrix
 }
 
 
@@ -431,17 +428,40 @@ create_dist_matrix <- function(source,
 #' of a route segment that should be routed to.
 #' @param profile Character vector. Means of transport as supported by
 #' OpenRouteService.
-#' @param features List of additional information to be included in the
-#' output. A feature is included for each route segment, i.e. for each
-#' linestring in the output. Possible values include "avgspeed", "detourfactor",
-#' "percentage", "elevation", "steepness", "suitability", "surface",
-#' "waycategory", "waytype", "tollways", "traildifficulty", "osmid",
-#' "roadaccessrestrictions", "countryinfo", "green" and "noise". If
-#' \code{TRUE}, all features are taken into account. Refer to the
-#' \href{https://github.com/GIScience/openrouteservice-docs#routing-response}{routing response documentation}
+#' @param attributes List of attributes that summarize route characteristics.
+#' This includes two values: \code{avgspeed} states the average vehicle speed
+#' along the route, \code{detourfactor} indicates how much the route deviates
+#' from a straight line. If \code{TRUE}, both values are included.
+#' @param elevation If \code{TRUE}, elevation data is included in the output.
+#' @param extra_info List of keywords that add extra information regarding each
+#' linestring segment of the output. Possible values include:
+#' \itemize{
+#'  \item steepness
+#'  \item suitability
+#'  \item surface
+#'  \item waycategory
+#'  \item waytype
+#'  \item tollways
+#'  \item traildifficulty
+#'  \item osmid
+#'  \item roadaccessrestrictions
+#'  \item countryinfo
+#'  \item green
+#'  \item noise
+#' }
+#' If \code{TRUE}, all values are included.
+#' @param elev_as_z If \code{TRUE}, elevation data is stored as z-values in the
+#' geometry of the output \code{sf} dataframe. If \code{FALSE}, elevation is
+#' stored as a distinct dataframe column. Ignored if \code{elevation = FALSE}.
 #' @inheritParams get_route_lengths
-#' @returns A dataframe containing linestrings and attributes for each route
-#' segment
+#' @returns A dataframe containing linestrings and additional information for each
+#' route segment
+#' @details Refer to the
+#' \href{https://github.com/GIScience/openrouteservice-docs#routing-response}{routing response documentation}
+#' and the
+#' \href{https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post}{API playground}
+#' for more information on the route inspection arguments and their response
+#' behavior.
 #' @seealso get_route_lengths
 #'
 #' @export
@@ -453,8 +473,7 @@ inspect_route <- function(source,
                           attributes = list(),
                           elevation = TRUE,
                           extra_info = list(),
-                          by_waypoint = FALSE, # TODO: Implement
-                          elev_as_z = TRUE, # TODO: Implement
+                          elev_as_z = FALSE, # TODO: Implement
                           ...) {
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE)
@@ -483,6 +502,8 @@ inspect_route <- function(source,
                               geometry = TRUE,
                               options = options,
                               url = url)
+  # TODO: Implement units package
+  handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
 
   geometry <- ors_multiple_linestrings(res)
 
@@ -530,4 +551,9 @@ inspect_route <- function(source,
     descent = descent
   )
   route_sf
+}
+
+
+summarize_route <- function() {
+
 }

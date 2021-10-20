@@ -4,7 +4,7 @@
 \alias{ors_ready}
 \title{Is ORS usable?}
 \usage{
-ors_ready(force = TRUE)
+ors_ready(force = TRUE, error = FALSE)
 }
 \arguments{
 \item{force}{If \code{TRUE}, function must query local host. If

@@ -323,6 +323,50 @@ fill_roadaccessrestrictions <- function(code) {
 }
 
 
+handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning = FALSE) {
+  if (!is.null(res$error)) {
+    message <- res$error$message
+    code <- res$error$code
+    if (is.null(res$error$message)) {
+      message <- fill_empty_error_message(res$error$code)
+    }
+    error <- paste0("Error code ", code, ": ", message)
+    if (abort_on_error) {
+      cli::cli_abort(c("ORS encountered the following exception:", error))
+    } else {
+      attributes(error) <- list(error = TRUE)
+      return(error)
+    }
+  } else {
+    format <- res$metadata$query$format
+    if (identical(format, "geojson")) {
+      warnings_geojson <- res$features$properties$warnings[[1]]
+      warnings_json <- res$routes$warnings[[1]]
+      message <- NULL
+      code <- NULL
+      if (!is.null(warnings_geojson)) {
+        message <- res$features$properties$warnings[[1]]$message
+        code <- res$features$properties$warnings[[1]]$code
+      } else if (!is.null(warnings_json)) {
+        message <- res$routes$warnings[[1]]$message
+        code <- res$routes$warnings[[1]]$code
+      }
+
+      if (!is.null(message) && !is.null(code)) {
+        warning <- paste0("Warning code ", code, ": ", message)
+
+        if (warn_on_warning) {
+          cli::cli_warn(c("ORS returned a warning:", warning))
+        } else {
+          attributes(warning) <- list(error = FALSE)
+          return(warning)
+        }
+      }
+    }
+  }
+}
+
+
 #' Print ORS errors
 #' @description Return the error and warning messages that ORS returned in the
 #' last \code{\link{get_route_lengths}} or \code{get_route_attributes} function calls.

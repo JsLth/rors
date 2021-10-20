@@ -35,63 +35,27 @@ query_ors_directions <- function(source,
 
   # Create request headers
   header <- httr::add_headers(
-    Accept = "application/%s; charset=utf-8" %>%
-      sprintf(ifelse(geometry, "geo+json", "json")),
+    Accept = sprintf("application/%s; charset=utf-8",
+                     ifelse(geometry, yes = "geo+json", no = "json")),
     `Content-Type` = "application/json; charset=utf-8"
   )
 
   # Prepare the url
-  url <- httr::modify_url(url = url,
-                          path = paste0("ors/v2/directions/",
-                                        profile,
-                                        if (geometry) "/geojson"))
+  path <- paste0("ors/v2/directions/", profile, if (geometry) "/geojson")
+  url <- httr::modify_url(url = url, path = path)
 
   # Calculate routes for every profile
-  response <- url %>%
-    httr::POST(body = body,
-               encode = "json",
-               header) %>%
-    httr::content(as = "text",
-                  type = "application/json",
-                  encoding = "UTF-8")
+  res_object <- httr::POST(url,
+                           body = body,
+                           encode = "json",
+                           header)
+  res_text <- httr::content(x = res_object,
+                            as = "text",
+                            type = "application/json",
+                            encoding = "UTF-8")
 
-  parsed_response <- jsonlite::fromJSON(response)
-
-  if (!is.null(parsed_response$error)) {
-    if (is.null(parsed_response$error$message)) {
-      parsed_response$
-        error$
-        message <- fill_empty_error_message(parsed_response$error$code)
-    }
-
-    parsed_response$error <- paste0(
-      "Error code ",
-      parsed_response$error$code,
-      ": ",
-      parsed_response$error$message
-    )
-
-  } else {
-    properties_branch <- ifelse(geometry,
-                          yes = parsed_response$features$properties,
-                          no = parsed_response$routes)
-    if (!is.null(properties_branch$warnings)) {
-
-      parsed_response$routes$warnings <- paste0(
-        "Warning code ",
-        properties_branch$warnings[[1]]$code,
-        ": ",
-        properties_branch$warnings[[1]]$message
-      )
-    }
-  }
-
-  if (!geometry) {
-    return(parsed_response)
-  } else {
-
-    return(parsed_response)
-  }
+  res <- jsonlite::fromJSON(res_text)
+  res
 }
 
 
@@ -130,15 +94,12 @@ query_ors_matrix <- function(source,
   if (length(metrics) == 1) metrics <- list(metrics)
 
   # Create http body of the request
-  body <- jsonlite::toJSON(
-    list(locations = locations,
-         destinations = dest_index,
-         sources = source_index,
-         metrics = metrics,
-         units = units),
-    auto_unbox = TRUE,
-    digits = NA
-  )
+  body_list <- list(locations = locations,
+                    destinations = dest_index,
+                    sources = source_index,
+                    metrics = metrics,
+                    units = units)
+  body <- jsonlite::toJSON(body_list, auto_unbox = TRUE, digits = NA)
 
   # Create request headers
   header <- httr::add_headers(
@@ -151,29 +112,15 @@ query_ors_matrix <- function(source,
                           path = paste0("ors/v2/matrix/",
                                         profile))
 
-  response <- url %>%
-    httr::POST(body = body,
-               encode = 'json',
-               header) %>%
-    httr::content(as = "text",
-                  type = "application/json",
-                  encoding = "UTF-8")
+  res_object <- httr::POST(url = url,
+                           body = body,
+                           encode = 'json',
+                           header)
+  res_text <- httr::content(x = res_object,
+                            as = "text",
+                            type = "application/json",
+                            encoding = "UTF-8")
 
-  parsed_response <- jsonlite::fromJSON(response)
-
-  if (!is.null(parsed_response$error)) {
-
-    if (is.null(parsed_response$error$message))
-      parsed_response$
-        error$
-        message <- fill_empty_error_message(parsed_response$error$code)
-
-    cli::cli_abort(c("ORS returned the following error:",
-                     "!" = paste0("Code ",
-                                  parsed_response$error$code,
-                                  ": ",
-                                  parsed_response$error$message),
-                     "i" = get_error_tip(parsed_response$error$code)))
-  }
-  return(parsed_response)
+  res <- jsonlite::fromJSON(res_text)
+  res
 }
