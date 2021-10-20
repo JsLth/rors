@@ -340,26 +340,30 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
   } else {
     format <- res$metadata$query$format
     if (identical(format, "geojson")) {
-      warnings_geojson <- res$features$properties$warnings[[1]]
-      warnings_json <- res$routes$warnings[[1]]
+      warnings_geojson <- res$features$properties$warnings
+      warnings_json <- res$routes$warnings
       message <- NULL
       code <- NULL
       if (!is.null(warnings_geojson)) {
-        message <- res$features$properties$warnings[[1]]$message
-        code <- res$features$properties$warnings[[1]]$code
+        message <- purrr::map(warnings_geojson, ~.$message)
+        code <- purrr::map(warnings_geojson, ~.$code)
       } else if (!is.null(warnings_json)) {
-        message <- res$routes$warnings[[1]]$message
-        code <- res$routes$warnings[[1]]$code
+        message <- purrr::map(warnings_json, ~.$message)
+        code <- purrr::map(warnings_json, ~.$code)
       }
 
-      if (!is.null(message) && !is.null(code)) {
-        warning <- paste0("Warning code ", code, ": ", message)
+      if (length(code) && length(message)) {
+        warnings <- purrr::map(seq(1, length(code)), function(w) {
+          paste0("Warning code ", code[w], ": ", message[w])
+        })
 
         if (warn_on_warning) {
-          cli::cli_warn(c("ORS returned a warning:", warning))
+          w_vec <- cli::cli_vec(warnings,
+                                style = list(vec_sep = "\n", vec_last = "\n"))
+          cli::cli_warn(c("ORS returned {length(w_vec)} warning{?s}:", "{w_vec}"))
         } else {
           attributes(warning) <- list(error = FALSE)
-          return(warning)
+          return(warnings)
         }
       }
     }

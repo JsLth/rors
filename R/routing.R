@@ -170,7 +170,7 @@ get_route_lengths <- function(source,
                      "Source dataset rows: {source_shape}",
                      "Destination dataset rows: {dest_shape}"))
   }
-  
+
   profile <- match.arg(profile)
   units <- match.arg(units)
 
@@ -181,13 +181,13 @@ get_route_lengths <- function(source,
   call_index <- format(Sys.time(), format = "%H:%M:%S")
 
   extract_lengths <- function(source, dest) {
-    route <- query_ors_directions(source = source,
-                                  destination = dest,
-                                  profile = profile,
-                                  units = units,
-                                  geometry = geometry,
-                                  options = options,
-                                  url = url)
+    res <- query_ors_directions(source = source,
+                                destination = dest,
+                                profile = profile,
+                                units = units,
+                                geometry = geometry,
+                                options = options,
+                                url = url)
     i <- get("i", envir = parent.frame())
 
     cond <- handle_ors_conditions(res)
@@ -206,14 +206,14 @@ get_route_lengths <- function(source,
 
     if (!geometry) {
 
-      return(data.frame(distance = route$routes$summary$distance,
-                        duration = route$routes$summary$duration))
+      return(data.frame(distance = res$routes$summary$distance,
+                        duration = res$routes$summary$duration))
 
     } else {
-
-      return(data.frame(distance = route$features$properties$summary$distance,
-                        duration = route$features$properties$summary$duration,
-                        geometry = route$features$geometry))
+      linestring <- sf::st_linestring(res$features$geometry$coordinates[[1]])
+      return(data.frame(distance = res$features$properties$summary$distance,
+                        duration = res$features$properties$summary$duration,
+                        geometry = sf::st_sfc(linestring)))
 
     }
   }
@@ -241,6 +241,9 @@ get_route_lengths <- function(source,
                           "route{?s}: {warn_indices}"),
                     "For a list of conditions, call {.fn last_ors_conditions}."))
   }
+
+  units(route_list[, "distance"]) <- units
+  units(route_list[, "duration"]) <- "s"
 
   if (is.null(route_list$geometry)) {
     return(route_list)
@@ -289,12 +292,11 @@ get_route_lengths <- function(source,
 get_shortest_routes <- function(source,
                                 destination,
                                 profile = get_profiles(),
-                                proximity_type = "duration",
+                                proximity_type = c("duration", "distance"),
                                 units = c("m", "km", "mi"),
                                 geometry = FALSE,
                                 ...) {
-  cli_abortifnot(is.character(profile))
-  cli_abortifnot(is.character(proximity_type))
+  proximity_type <- match.arg(proximity_type)
 
   source <- format_input_data(source)
 
@@ -304,7 +306,7 @@ get_shortest_routes <- function(source,
     destination <- format_input_data(destination)
   }
 
-  calculate_shortest_routes <- function(profile, point_number) {
+  calculate_shortest_routes <- function(prfl, point_number) {
     routes <- get_route_lengths(
       source = source[point_number, ],
       destination = if (is.data.frame(destination)) {
@@ -312,7 +314,7 @@ get_shortest_routes <- function(source,
       } else if (is.list(destination)) {
         destination[[point_number]]
       },
-      profile = profile,
+      profile = prfl,
       units = units,
       geometry = geometry,
       ...
@@ -343,11 +345,9 @@ get_shortest_routes <- function(source,
 
   # Create a nested iterator that iterates through every point number for each
   # profile
-  nested_iterator <- list(
-    profile = profile,
-    point_number = seq_len(nrow(source))
-  ) %>%
-    expand.grid()
+  nested_iterator <- expand.grid(list(profile = profile,
+                                      point_number = seq_len(nrow(source))),
+                                 stringsAsFactors = FALSE)
 
   cli::cli_progress_bar(name = "Calculating shortest routes...",
                         total = nrow(source) * length(profile),
@@ -355,7 +355,7 @@ get_shortest_routes <- function(source,
 
   # Find shortest route for each coordinate pair
   route_list <- purrr::pmap(nested_iterator,
-                             ~calculate_shortest_routes(.x, .y)) %>%
+                            ~calculate_shortest_routes(.x, .y)) %>%
     do.call(rbind, .) %>%
     as.data.frame() %>%
     cbind(nested_iterator[["point_number"]], nested_iterator[["profile"]], .)
@@ -469,11 +469,10 @@ create_dist_matrix <- function(source,
 inspect_route <- function(source,
                           destination,
                           profile = get_profiles(),
-                          units = c("m", "km", "mi"),
                           attributes = list(),
                           elevation = TRUE,
                           extra_info = list(),
-                          elev_as_z = FALSE, # TODO: Implement
+                          elev_as_z = FALSE,
                           ...) {
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE)
@@ -486,7 +485,6 @@ inspect_route <- function(source,
   verify_crs(destination, crs = 4326)
 
   profile <- match.arg(profile)
-  units <- match.arg(units)
 
   url <- get_ors_url()
 
@@ -505,7 +503,8 @@ inspect_route <- function(source,
   # TODO: Implement units package
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
 
-  geometry <- ors_multiple_linestrings(res)
+  geometry <- ors_multiple_linestrings(res, elev_as_z)
+  elevation <- data.frame(elevation = attr(geometry, "elevation"))
 
   waypoints <- res$features$properties$segments[[1]]$steps[[1]]$way_points
 
@@ -522,7 +521,9 @@ inspect_route <- function(source,
   } else avgspeed <- NULL
 
   names_wp <- res$features$properties$segments[[1]]$steps[[1]]$name
-  names <- data.frame(names = expand_by_waypoint(names_wp, waypoints))
+  expanded_names <- expand_by_waypoint(names_wp, waypoints)
+  names <- gsub(pattern = "-", replacement = NA, expanded_names)
+  names <- data.frame(names = names)
 
   ascent <- res$features$properties$segments[[1]]$ascent
   descent <- res$features$properties$segments[[1]]$descent
@@ -536,8 +537,10 @@ inspect_route <- function(source,
     distances,
     durations,
     speeds,
+    elevation,
     extra_info,
-    geometry
+    geometry,
+    stringsAsFactors = TRUE
   )
 
   elements <- elements[lengths(elements) != 0]

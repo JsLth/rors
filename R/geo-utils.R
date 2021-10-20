@@ -55,24 +55,25 @@ buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326) {
 }
 
 
-ors_multiple_linestrings <- function(res) {
+ors_multiple_linestrings <- function(res, elev_as_z) {
   coordinates <- res$features$geometry$coordinates[[1]]
+  cols <- seq(1, 2 + isTRUE(elev_as_z))
 
   split_ls <- function(wp) {
-    indices <- seq(wp, wp + 1)
-    segment <- coordinates[indices, ]
-    if (is.matrix(segment)) {
-      sf::st_linestring(segment)
-    } else {
-      sf::st_point(segment)
-    }
+    rows <- seq(wp, wp + 1)
+    segment <- coordinates[rows, cols]
+    sf::st_linestring(segment)
   }
+
+  if (ncol(coordinates) == 3 && isFALSE(elev_as_z)) {
+    elevation <- coordinates[, 3]
+  } else elevation <- NULL
 
   iterator <- seq_len(nrow(coordinates) - 1)
   linestrings <- lapply(iterator, split_ls)
-  last_point <- sf::st_point(coordinates[nrow(coordinates),])
+  last_point <- sf::st_point(coordinates[nrow(coordinates), cols])
   geometry <- append(linestrings, list(last_point))
-  sf::st_sfc(geometry, crs = 4326)
+  structure(sf::st_sfc(geometry, crs = 4326), elevation = elevation)
 }
 
 
@@ -80,12 +81,6 @@ ors_single_linestring <- function(res) {
   coordinates <- res$features$geometry$coordinates
   linestring <- sf::st_multilinestring(coordinates)
   sf::st_sfc(linestring, crs = 4326)
-}
-
-
-extract_z <- function(geometry) {
-  coordinates <- sf::st_coordinates(geometry)
-  mean(coordinates$Z)
 }
 
 

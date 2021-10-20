@@ -279,7 +279,7 @@ calculate_distances <- function(geometry) {
 
 calculate_avgspeed <- function(distance, duration) {
   speeds <- distance / duration
-  speeds <- units::set_units(speeds, km/h)
+  units(speed) <- "km/h"
   data.frame(avgspeed = speeds)
 }
 
@@ -291,7 +291,7 @@ calculate_durations <- function(res, distances) {
   percentages <- units::drop_units(distances / expanded_wp_distances)
   wp_durations <- res$features$properties$segments[[1]]$steps[[1]]$duration
   durations <- expand_by_waypoint(wp_durations, waypoints) * percentages
-  durations <- units::set_units(durations, s)
+  units(durations) <- "s"
   data.frame(duration = durations)
 }
 
