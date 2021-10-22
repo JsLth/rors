@@ -50,6 +50,13 @@ base_profile <- function(profile) {
 }
 
 
+box <- function(x) {
+  if (length(x) == 1) {
+    list(x)
+  } else x
+}
+
+
 notify <- function(msg) {
   if (is.windows()) {
     system("rundll32 user32.dll, MessageBeep -1")

@@ -19,10 +19,10 @@ query_ors_directions <- function(source,
 
   # Create http body of the request
   body_list <- list(coordinates       = locations,
-                    attributes        = options$attributes,
+                    attributes        = box(options$attributes),
                     continue_straight = options$continue_straight,
                     elevation         = options$elevation,
-                    extra_info        = options$extra_info,
+                    extra_info        = box(options$extra_info),
                     geometry_simplify = options$geometry_simplify,
                     options           = options$options,
                     preference        = options$preference,

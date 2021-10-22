@@ -273,14 +273,14 @@ format_ors_options <- function(options, profile) {
 
 calculate_distances <- function(geometry) {
   distances <- sf::st_length(sf::st_zm(geometry))
-  data.frame(distance = distances)
+  data.frame(distance = round(distances, 2))
 }
 
 
 calculate_avgspeed <- function(distance, duration) {
   speeds <- distance / duration
-  units(speed) <- "km/h"
-  data.frame(avgspeed = speeds)
+  units(speeds) <- "km/h"
+  data.frame(avgspeed = round(speeds, 2))
 }
 
 
@@ -292,7 +292,7 @@ calculate_durations <- function(res, distances) {
   wp_durations <- res$features$properties$segments[[1]]$steps[[1]]$duration
   durations <- expand_by_waypoint(wp_durations, waypoints) * percentages
   units(durations) <- "s"
-  data.frame(duration = durations)
+  data.frame(duration = round(durations, 2))
 }
 
 
@@ -339,16 +339,9 @@ format_extra_info <- function(res, info_type) {
                      function(seg) rep(matrix[seg, 3], length(indices[[seg]])))
     values <- unlist(values)
 
-    fill_fun_name <- paste("fill", info_type, sep = "_")
-    if (exists(fill_fun_name)) {
-      profile <- res$metadata$query$profile
-      fill_fun <- match.fun(fill_fun_name)
-      if (identical(fill_fun_name, "fill_traildifficulty")) {
-        values <- sapply(values, fill_fun, profile)
-      } else {
-        values <- sapply(values, fill_fun)
-      }
-    }
+    profile <- res$metadata$query$profile
+    values <- fill_extra_info(values, info_type, profile)
+
     values[length(values) + 1] <- NA
     values_df <- data.frame(values)
   } else {
@@ -356,4 +349,35 @@ format_extra_info <- function(res, info_type) {
   }
   colnames(values_df) <- substitute(info_type)
   values_df
+}
+
+
+extract_ors_attribute <- function(res, attribute) {
+  attrib <- res$features$properties$segments[[1]][[attribute]]
+  if (!is.null(attrib)) {
+    attrib
+  }
+}
+
+
+make_summary_table <- function(vector, distances) {
+  vector_length <- length(vector)
+  total_distance <- sum(distances)
+  vector <- as.vector(vector)
+
+  # Determine factor levels
+  break_points <- pretty(vector, n = 5, min.n = 1)
+  cats <- cut(vector, break_points, include.lowest = TRUE)
+
+  amount_summary <- aggregate(vector, by = list(cats), function(x) {
+    length(x) / vector_length * 100
+  })
+
+  distance_summary <- lapply(amount_summary$x, function(x) {
+    x * total_distance / 100
+  })
+
+  data.frame(distance = round(unlist(distance_summary), 1),
+             amount = round(amount_summary$x, 1),
+             row.names = amount_summary[, 1])
 }

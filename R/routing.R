@@ -6,7 +6,7 @@
 # Created on: 17.04.2021
 
 
-#' Routing between two dataframes
+#' Routing distance computations
 #' @description
 #' \code{get_route_lengths} calculates the routing distance between two
 #' datasets using the Directions service from ORS.
@@ -21,17 +21,9 @@
 #' @param destination Destination dataset that represents point coordinates
 #' that are to be routed to. The destination dataset follows the same format
 #' requirements as the source dataset.
-#'
-#' For \code{get_shortest_routes}, this can argument can also be a list of
-#' accordingly formatted datasets (as returned by \code{get_nearest_pois}).
-#' If a list is passed, each list element corresponds to one row in the source
-#' dataset. If a two-dimensional data structure is passed, each row in the
-#' source dataset feeds from the entire dataframe.
 #' @param profile Character vector. Means of transport as supported by
-#' OpenRouteService. For \code{get_route_lengths}, only length-1 vectors are
-#' allowed, \code{get_shortest_routes} supports multiple profiles. For a list
-#' of active profiles, call \code{\link{get_profiles}}. For details on all
-#' profiles, refer to the
+#' OpenRouteService. For a list of active profiles, call
+#' \code{\link{get_profiles}}. For details on all profiles, refer to the
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
 #' @param units Distance unit for distance calculations (\code{"m"},
 #' \code{"km"} or \code{"mi"})
@@ -77,9 +69,14 @@
 #'  \item{\strong{maximum_speed}}{Numeric length-1 vector specifying the
 #'                                maximum speed.}
 #' }
-#' @returns Dataframe with distances and travel durations between source and
-#' destination. If \code{geometry = TRUE}, returns an \code{sf} object
-#' containing the route geometries.
+#' @returns \code{get_route_lengths} returns a dataframe with distances and
+#' travel durations between source and destination.
+#'
+#' @details
+#' For \code{get_route_lengths}, the profile argument supports only length-1
+#' vectors while \code{get_shortest_routes} supports multiple profiles.
+#' \code{get_shortest_routes} finds the shortest route for each source
+#' point and each profile, respectively.
 #'
 #' @section Error handling:
 #' Since \code{get_route_lengths} is supposed to conduct a lot of calculations
@@ -263,39 +260,41 @@ get_route_lengths <- function(source,
 #' @param proximity_type Type of proximity that the calculations should be
 #' based on. If `distance`, the shortest physical distance will be calculated
 #' and if `duration`, the shortest temporal distance will be calculated.
-#' @returns Dataframe with distances, travel durations and the index number of
-#' the point of interest with the shortest distance to the respective place of
-#' the source dataset.
+#' @returns \code{get_shortest_routes} returns a dataframe containing
+#' distances, travel durations and the index number of the point of interest
+#' with the shortest routing distance to the respective place of the source
+#' dataset.
+#'
+#' Depending on the \code{geometry} argument, these outputs can either be
+#' simple dataframes or objects of class \code{sf} containing the linestring
+#' geometries of the respective routes.
+#'
+#' @details
+#' For \code{get_shortest_routes}, the destination argument can argument can
+#' also be a list of accordingly formatted datasets (as returned by
+#' \code{get_nearest_pois}). If a list is passed, each list element corresponds
+#' to one row in the source dataset. If a two-dimensional data structure is
+#' passed, each row in the source dataset feeds from the entire dataframe.
 #'
 #' @export
 #'
-#' @describeIn get_route_lengths
+#' @rdname get_route_lengths
 #'
 #' @examples
-#' source <- ors_sample(5)
+#'
+#' # Finding the shortest routes to the nearest hospitals
 #' pois <- get_osm_pois(sf::st_bbox(source), amenity = "hospital")
 #'
 #' shortest_routes <- get_shortest_routes(source, pois, profiles = c("driving-car", "foot-walking"))
 #' shortest_routes
-#'    point_number   route_type poi_number distance duration
-#' 1             1  driving-car          4  23479.2   1394.6
-#' 2             1 foot-walking         53  13806.2   9940.4
-#' 3             2  driving-car         59   6783.0    649.9
-#' 4             2 foot-walking         60   6047.9   4354.4
-#' 5             3  driving-car         34   8751.6    788.4
-#' 6             3 foot-walking         35   9093.1   6547.0
-#' 7             4  driving-car         19   3009.7    405.3
-#' 8             4 foot-walking         20   2320.2   1670.5
-#' 9             5  driving-car         13  16882.8   1294.3
-#' 10            5 foot-walking         53  13636.7   9818.3
 
 get_shortest_routes <- function(source,
                                 destination,
                                 profile = get_profiles(),
-                                proximity_type = c("duration", "distance"),
                                 units = c("m", "km", "mi"),
                                 geometry = FALSE,
-                                ...) {
+                                ...,
+                                proximity_type = c("duration", "distance")) {
   proximity_type <- match.arg(proximity_type)
 
   source <- format_input_data(source)
@@ -380,11 +379,18 @@ get_shortest_routes <- function(source,
 }
 
 
+#' Routing distance matrix
+#' @description Calls the matrix service and returns a routing distance matrix.
+#' @inheritParams get_route_lengths
+#' @returns If \code{length(proximity_type) == 1}, returns a
+#' \code{nrow(source) * nrow(destination)} routing distance matrix. Otherwise,
+#' returns a list containing two matrices accordingly.
+
 create_dist_matrix <- function(source,
                                destination,
                                profile = get_profiles(),
-                               proximity_type = c("distance", "duration"),
-                               units = c("m", "km", "mi")) {
+                               units = c("m", "km", "mi"),
+                               proximity_type = c("distance", "duration")) {
   profile <- match.arg(profiles)
   proximity_type <- match.arg(proximity_type)
   units <- match.arg(units)
@@ -418,16 +424,17 @@ create_dist_matrix <- function(source,
 }
 
 
-#' Get route attributes
-#' @description Calls the directions service of ORS and returns route segments
-#' along with a set of additional attributes
+#' Route inspection
+#' @description Calls the directions service once to get a closer look at route
+#' characteristics and attributes.
+#'
+#' \code{inspect_route} returns all line segments of a route along with a set
+#' of additional attributes
 #' @param source Any kind of numeric vector containing \code{x/y} values of a
 #' route segment that should be routed from. Refer to
 #' \code{\link{get_route_lengths}}.
 #' @param destination Any kind of numeric vector containing \code{x/y} values
 #' of a route segment that should be routed to.
-#' @param profile Character vector. Means of transport as supported by
-#' OpenRouteService.
 #' @param attributes List of attributes that summarize route characteristics.
 #' This includes two values: \code{avgspeed} states the average vehicle speed
 #' along the route, \code{detourfactor} indicates how much the route deviates
@@ -472,8 +479,8 @@ inspect_route <- function(source,
                           attributes = list(),
                           elevation = TRUE,
                           extra_info = list(),
-                          elev_as_z = FALSE,
-                          ...) {
+                          ...,
+                          elev_as_z = FALSE) {
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE)
 
@@ -496,11 +503,11 @@ inspect_route <- function(source,
   res <- query_ors_directions(source = source,
                               destination = destination,
                               profile = profile,
-                              units = units,
+                              units = "m",
                               geometry = TRUE,
                               options = options,
                               url = url)
-  # TODO: Implement units package
+
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
 
   geometry <- ors_multiple_linestrings(res, elev_as_z)
@@ -557,6 +564,202 @@ inspect_route <- function(source,
 }
 
 
-summarize_route <- function() {
+#' Route inspection
+#' @description \code{summarize_route} generates a range of summary tables and
+#' values that provide an overview of a route.
+#' @inheritParams inspect_route
+#' @returns Object of type \code{route_summary} that contains information on
+#' distances, durations, speed, elevation, detour factors as well as all
+#' available extra information for the requested route.
+#' @describeIn inspect_route
+#'
+#' @export
 
+summarize_route <- function(source,
+                            destination,
+                            profile = get_profiles(),
+                            ...) {
+  # Check if ORS is ready to use
+  ors_ready(force = FALSE, error = TRUE)
+
+  # Bring input data into shape
+  source <- format_input_data(source)
+  destination <- format_input_data(destination)
+
+  verify_crs(source, crs = 4326)
+  verify_crs(destination, crs = 4326)
+
+  profile <- match.arg(profile)
+
+  url <- get_ors_url()
+
+  features <- list(attributes = TRUE, elevation = TRUE, extra_info = TRUE)
+  options <- format_ors_options(append(features, list(...)), profile)
+
+  res <- query_ors_directions(source = source,
+                              destination = destination,
+                              profile = profile,
+                              units = "m",
+                              geometry = TRUE,
+                              options = options,
+                              url = url)
+
+  handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = FALSE)
+
+  # Custom summary tables
+  geometry <- ors_multiple_linestrings(res, elev_as_z = FALSE)
+  elevation <- attr(geometry, "elevation")
+
+  distances <- calculate_distances(geometry)
+  durations <- calculate_durations(res, distances$distance)
+  speeds <- calculate_avgspeed(distances$distance, durations$duration)$avgspeed
+
+  speeds_summary <- make_summary_table(unlist(speeds), distances)
+  elevation_summary <- make_summary_table(elevation, distances)
+
+  # ORS summary tables
+  get_ors_summaries <- function(info_type) {
+    summary <- extras[[info_type]]$summary[[1]]
+    summary$value <- fill_extra_info(summary$value, info_type, profile)
+    summary
+  }
+
+  extras <- res$features$properties$extras
+  summaries <- sapply(names(extras), get_ors_summaries, simplify = FALSE)
+
+  summaries <- sapply(summaries, function(summary) {
+    summary <- aggregate(summary[, 2:3],
+                         by = summary["value"],
+                         sum)
+    row.names(summary) <- summary$value
+    summary$value <- NULL
+    summary
+  }, simplify = FALSE)
+
+  # Append summary tables and set units
+  elev_speeds <- list(elevation = elevation_summary, avgspeed = speeds_summary)
+  summaries <- append(summaries,
+                      elev_speeds,
+                      after = 0)
+
+  summaries <- lapply(summaries, function(s) {
+    s["distance"] <- units::as_units(s$distance, "m")
+    s
+  })
+
+  output <- list(
+    distance = extract_ors_attribute(res, "distance"),
+    duration = extract_ors_attribute(res, "duration"),
+    detourfactor = extract_ors_attribute(res, "detourfactor"),
+    ascent = extract_ors_attribute(res, "ascent"),
+    descent = extract_ors_attribute(res, "descent"),
+    speed = summary(speeds),
+    elevation = summary(elevation),
+    tables = summaries
+  )
+
+  units(output$distance) <- "m"
+  units(output$duration) <- "s"
+
+  class(output) <- "route_summary"
+  output
+}
+
+
+#' Print route summaries
+#' @description Print the output of \code{\link{summarize_route}}.
+#' @param x Object of type \code{route_summary}
+#' @param ncols Number of tables to be printed in one row to the console
+#' @param ... Ignored.
+#'
+#' @export
+
+print.route_summary <- function(x, ncols = 3, ...) {
+  cli::cli_text("{.strong Attributes}")
+  for (n in names(x[1:5])) {
+    name <- capitalizeChar(n)
+    if (identical(n, "Detourfactor")) name <- "Detour factor"
+    attribute_row <- paste(name, ": ", round(x[[n]], 2), "\n")
+    cat(attribute_row)
+  }
+
+  cat("\n")
+
+  for (n in names(x[6:7])) {
+    name <- capitalizeChar(n)
+    cli::cli_text("{.strong {name}}")
+    print(x[[n]])
+    cat("\n")
+  }
+
+  cli::cli_text("{.strong Additional infos}")
+
+  tables <- x$tables
+
+  # Get the maximum row length of the input tables
+  row_lengths <- sapply(tables, function(tb) sapply(capture.output(tb), nchar))
+  max_row_length <- max(unlist(row_lengths))
+
+  # Get an iterator that splits up the tables at the indices defined by ncols
+  table_iterator <- split(tables, ceiling(seq_along(tables) / ncols))
+
+  # Iterate through each table row (as defined by ncols)
+  for (t in table_iterator) {
+    # Number of rows of each table
+    rows <- sapply(t, nrow)
+
+    # Cumulated number of rows + table name + column names + empty line
+    border_indices <- cumsum(rows + 3)
+
+    # Catch the output of print.data.frame and split it by table
+    output <- capture.output(t)
+    output_split <- split(output,
+                          cumsum(is.element(seq_along(output),
+                                            border_indices + 1)))
+
+    # Get the maximum number of rows of one table row
+    max_length <- max(sapply(output_split, length))
+
+    # Iterate through each table of one table row
+    op_vec <- lapply(output_split, function(op_vec) {
+      # Remove empty character string
+      op_vec <- op_vec[nchar(op_vec) != 0]
+
+      # If the table name is shorter than the row length, fill with white space
+      add_ws <- function(char, row_length, max_length) {
+        if (row_length < max_length) {
+          paste0(char, strrep(" ", max_length - row_length))
+        } else char
+      }
+
+      name <- op_vec[1]
+      name <- add_ws(name, nchar(name), max_row_length)
+
+      columns <- op_vec[2]
+      row_length <- nchar(columns)
+      columns <- add_ws(columns, row_length, max_row_length)
+
+      rows <- op_vec[seq(3, length(op_vec))]
+      rows <- unlist(lapply(rows, add_ws, row_length, max_row_length))
+
+      # Get the number of rows. If the table has less rows than the table
+      # with the most rows, add rows and fill them with white space
+      len <- length(rows)
+      if (len < max_length) {
+        rows[seq(len + 1, max_length - 2)] <- strrep(" ", max_row_length)
+      }
+      c(name, columns, rows)
+    })
+
+    # Transpose list to align corresponding rows from each table
+    to_vector <- lapply(purrr::transpose(op_vec), unlist)
+    # Piece together character strings
+    to_string <- purrr::map(to_vector,
+                            ~trimws(paste(., collapse = strrep(" ", 8)),
+                                    which = "right"))
+    to_string <- lapply(to_string, trimws, which = "right")
+    row_string <- paste(to_string, collapse = "\n")
+    cat(row_string)
+    cat("\n")
+  }
 }

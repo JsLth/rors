@@ -96,7 +96,7 @@ ORSInstance <- R6::R6Class(
     #' Docker container is set up and the source directory is removed, a number
     #' of problems can emerge ranging from broken ORSRouting functions to the
     #' necessity to force-delete the container.
-    initialize = function(dir = NULL) {
+    initialize = function(dir = "~") {
       if (is.linux() && !grant_docker_privileges(run = FALSE)) {
         cli::cli_abort(paste("To use {.cls ORSInstance}, Docker needs to be",
                              "accessible as a non-root user. Refer to the",
@@ -285,24 +285,21 @@ ORSInstance$funs$get_subclass <- function(private, env) {
 
 
 ORSInstance$funs$clone_ors_repo <- function(self, dir) {
-  basedir <- "openrouteservice-master"
   download_url <- paste0("https://github.com/",
                          "GIScience/openrouteservice/archive/",
                          "refs/heads/master.zip")
 
-  if (is.null(dir)) {
-    dir <- path.expand("~")
-  }
   cli_abortifnot(dir.exists(dir))
 
-  basedir <- file.path(normalizePath(dir, winslash = "/"), basedir)
+  dir <- normalizePath(dir, winslash = "/")
+  basedir <- file.path(dir, "openrouteservice-master")
 
   if (!dir.exists(basedir)) {
     zip_file <- file.path(self$dir, "openrouteservice.zip")
     cli::cli_progress_step("Downloading service backend from GitHub repository...",
                            msg_done = "Successfully downloaded the service backend.",
                            msg_failed = "Failed to download the service backend.")
-    httr::GET(download_url, write_disk(zip_file))
+    httr::GET(download_url, write_disk(zip_file), progress())
     unzip(zip_file, exdir = dir)
     file.remove(zip_file)
     cli::cli_progress_done()

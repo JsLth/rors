@@ -323,6 +323,20 @@ fill_roadaccessrestrictions <- function(code) {
 }
 
 
+fill_extra_info <- function(values, info_type, profile) {
+  fill_fun_name <- paste("fill", info_type, sep = "_")
+  if (exists(fill_fun_name)) {
+    fill_fun <- match.fun(fill_fun_name)
+    if (identical(fill_fun_name, "fill_traildifficulty")) {
+      values <- sapply(values, fill_fun, profile)
+    } else {
+      values <- sapply(values, fill_fun)
+    }
+  }
+  values
+}
+
+
 handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning = FALSE) {
   if (!is.null(res$error)) {
     message <- res$error$message

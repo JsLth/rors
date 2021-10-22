@@ -80,7 +80,7 @@ Initialize \code{\link{ORSInstance}} as well as \code{\link{ORSExtract}},
 \code{\link{ORSConfig}}, \code{\link{ORSSetupSettings}} and
 \code{\link{ORSDockerInterface}}.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$new(dir = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$new(dir = "~")}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
