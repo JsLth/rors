@@ -9,16 +9,12 @@ read_extract_boundaries <- function(force_new_extract = FALSE) {
   if (is.null(pkg_cache$extract_boundaries) || force_new_extract) {
     extract_path <- identify_extract(force = force_new_extract)
     extract_data <- suppressWarnings(
-      osmextract::oe_read(
-        extract_path,
-        layer = "multipolygons",
-        query = paste(
-         "SELECT geometry FROM \"multipolygons\"",
-         "WHERE boundary = \"administrative\"",
-         "AND admin_level IS NOT NULL"
-        ),
-        quiet = TRUE
-      )
+      osmextract::oe_read(extract_path,
+                          layer = "multipolygons",
+                          query = paste("SELECT geometry FROM \"multipolygons\"",
+                                        "WHERE boundary = \"administrative\"",
+                                        "AND admin_level IS NOT NULL"),
+                          quiet = TRUE)
     ) %>%
       sf::st_geometry() %>%
       sf::st_union()

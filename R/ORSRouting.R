@@ -24,11 +24,16 @@
 #'  \item \code{\link{get_nearest_pois}}
 #' }
 #'
-#' Route computation and inspection:
+#' Route distance computation:
 #' \itemize{
 #'  \item \code{\link{get_route_lengths}}
 #'  \item \code{\link{get_shortest_routes}}
+#' }
+#'
+#' Route inspection and summary:
+#' \itemize{
 #'  \item \code{\link{inspect_route}}
+#'  \item \code{\link{summarize_route}}
 #' }
 #'
 #' Utility functions:
@@ -37,23 +42,6 @@
 #'  \item \code{\link{ors_ready}}
 #'  \item \code{\link{last_ors_conditions}}
 #'  \item \code{\link{grant_docker_privileges}}
-#' }
-#'
-#' @section Imports:
-#' \describe{
-#'  \item{httr}{Necessary to query the ORS API on Docker}
-#'  \item{jsonlite}{Necessary to parse ORS responses}
-#'  \item{yaml}{Necessary to parse Docker compose files}
-#'  \item{magrittr}{Necessary for pretty code to work}
-#'  \item{purrr}{Necessary for pretty and efficient code to work}
-#'  \item{R6}{Necessary to use ORSInstance and its children}
-#'  \item{sf}{Necessary for all kinds of geometry computations}
-#'  \item{memuse}{Necessary to aid Docker memory allocation}
-#'  \item{dplyr}{Necessary for certain data wrangling operations}
-#'  \item{osmdata}{Necessary for \code{get_osm_data}}
-#'  \item{fields}{Necessary for \code{get_nearest_pois}}
-#'  \item{tidyr}{Necessary for certain data wrangling operations}
-#'  \item{osmextract}{Necessary for \code{$get_extract} and \code{ors_sample}}
 #' }
 #'
 #' @references
