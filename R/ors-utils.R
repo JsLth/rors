@@ -71,10 +71,9 @@ get_profiles <- function(force = FALSE) {
 
 ors_ready <- function(force = TRUE, error = FALSE) {
   if (is.null(pkg_cache$ors_ready) || force) {
-    port <- get_ors_port()
     ready <- tryCatch(
       httr::GET(
-        sprintf("http://localhost:%s/ors/health", port)
+        sprintf("http://localhost:%s/ors/health", get_ors_port())
       ) %>%
         httr::content(as = "text", type = "application/json", encoding = "UTF-8") %>%
         jsonlite::fromJSON() %>%
