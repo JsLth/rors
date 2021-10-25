@@ -8,9 +8,16 @@
 #' OpenRouteService Docker interface
 #' @description R6 class that interacts with the Docker daemon and is able to
 #' run basic commands on the openrouteservice:latest image and the ors-app
-#' container
+#' container. \strong{This class is initialized from within
+#' \code{\link{ORSInstance}}}.
+#' @details If the setup fails, first clean up Docker and the docker directory
+#' using \code{$cleanup}.
 #'
-#' @importFrom magrittr %>%
+#' If the setup fails due to an OutOfMemoryError, first check if you allocated
+#' enough memory. If it keeps failing, clear the available memory or restart
+#' the system.
+#'
+#' @family ORSSetup
 
 ORSDockerInterface <- R6::R6Class(
   classname = "ORSDockerInterface",

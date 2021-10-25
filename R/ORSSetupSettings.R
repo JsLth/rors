@@ -8,9 +8,10 @@
 #' @description R6 class that controls `docker-compose.yml` and `Dockerfile`.
 #' Provides an interface to easily allocate memory, switch graph building on or
 #' off and assign data. It is recommended to initialize this class after
-#' setting an extract and configuring ORS.
+#' setting an extract and configuring ORS. \strong{This class is initialized
+#' from within \code{\link{ORSInstance}}}.
 #'
-#' @importFrom magrittr %>%
+#' @family ORSSetup
 
 ORSSetupSettings <- R6::R6Class(
   classname = "ORSSetupSettings",
@@ -52,15 +53,24 @@ ORSSetupSettings <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Specifies the amount of memory to be allocated. If only the
-    #' memory limit is given, the initial memory will be set to half that
-    #' amount. If no memory is given, the method will estimate the optimal
-    #' amount of memory to be allocated. The memory is written to the compose
-    #' file.
+    #' @description Specifies the amount of memory to be allocated.
     #' @param init Initial memory (GB) to be allocated to the docker container.
     #' @param max Maximum memory (GB) to be allocated to the docker container.
     #' The' container will start with the initial memory and increases the
     #' memory usage up to the maximum memory if necessary.
+    #' @details
+    #' If only the memory limit is given, the initial memory will be set to
+    #' half that amount. If no memory is given, the method will estimate the
+    #' optimal amount of memory to be allocated. The memory is written to the
+    #' compose file.
+    #'
+    #' OpenRouteService recommends allocating a little more than twice
+    #' the extract size. Make sure to not allocate more than your available memory.
+    #' If you allocate more than 80% of your free working memory, the function will
+    #' stop. For details refer to the
+    #' \href{https://giscience.github.io/openrouteservice/installation/System-Requirements.html}{system requirements of OpenRouteService}.
+    #' Not allocating enough memory results in an OutOfMemory error during the
+    #' container startup.
     allocate_memory = function(init = NULL, max = NULL) ORSSetupSettings$funs$allocate_memory(self, private, init, max),
 
     #' @description Saves the setup changes by overwriting `docker-compose.yml`

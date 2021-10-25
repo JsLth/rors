@@ -7,8 +7,17 @@
 R6 class that controls \code{docker-compose.yml} and \code{Dockerfile}.
 Provides an interface to easily allocate memory, switch graph building on or
 off and assign data. It is recommended to initialize this class after
-setting an extract and configuring ORS.
+setting an extract and configuring ORS. \strong{This class is initialized
+from within \code{\link{ORSInstance}}}.
 }
+\seealso{
+Other ORSSetup: 
+\code{\link{ORSConfig}},
+\code{\link{ORSDockerInterface}},
+\code{\link{ORSExtract}},
+\code{\link{ORSInstance}}
+}
+\concept{ORSSetup}
 \section{Super class}{
 \code{\link[ORSRouting:ORSInstance]{ORSRouting::ORSInstance}} -> \code{ORSSetupSettings}
 }
@@ -68,11 +77,7 @@ Initializes the \code{ORSSetupSettings} class. Reads the
 \if{html}{\out{<a id="method-allocate_memory"></a>}}
 \if{latex}{\out{\hypertarget{method-allocate_memory}{}}}
 \subsection{Method \code{allocate_memory()}}{
-Specifies the amount of memory to be allocated. If only the
-memory limit is given, the initial memory will be set to half that
-amount. If no memory is given, the method will estimate the optimal
-amount of memory to be allocated. The memory is written to the compose
-file.
+Specifies the amount of memory to be allocated.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSSetupSettings$allocate_memory(init = NULL, max = NULL)}\if{html}{\out{</div>}}
 }
@@ -88,6 +93,21 @@ memory usage up to the maximum memory if necessary.}
 }
 \if{html}{\out{</div>}}
 }
+\subsection{Details}{
+If only the memory limit is given, the initial memory will be set to
+half that amount. If no memory is given, the method will estimate the
+optimal amount of memory to be allocated. The memory is written to the
+compose file.
+
+OpenRouteService recommends allocating a little more than twice
+the extract size. Make sure to not allocate more than your available memory.
+If you allocate more than 80\% of your free working memory, the function will
+stop. For details refer to the
+\href{https://giscience.github.io/openrouteservice/installation/System-Requirements.html}{system requirements of OpenRouteService}.
+Not allocating enough memory results in an OutOfMemory error during the
+container startup.
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-save_compose"></a>}}

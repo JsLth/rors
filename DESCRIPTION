@@ -27,7 +27,8 @@ Imports:
     memuse,
     dplyr,
     tidyr,
-    osmextract
+    osmextract (>= 0.2.0),
+    cli (>= 3.0.0)
 Suggests:
     rmarkdown (>= 2.7),
     knitr (>= 1.31),

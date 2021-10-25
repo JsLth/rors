@@ -4,7 +4,8 @@
 \alias{ORSExtract}
 \title{OpenRouteService OSM extract control panel}
 \description{
-R6 class to download, set or manage an OpenStreetMap extract
+R6 class to download, set or manage an OpenStreetMap extract.
+\strong{This class is initialized from within \code{\link{ORSInstance}}}.
 }
 \details{
 Note that the coverage of the OSM extract should include all
@@ -13,6 +14,14 @@ by the extract, the service will respond with an error. If necessary, the
 OSM extract can be changed later by running \verb{$assign_data(build = change)}
 in \code{\link{ORSSetupSettings}}.
 }
+\seealso{
+Other ORSSetup: 
+\code{\link{ORSConfig}},
+\code{\link{ORSDockerInterface}},
+\code{\link{ORSInstance}},
+\code{\link{ORSSetupSettings}}
+}
+\concept{ORSSetup}
 \section{Super class}{
 \code{\link[ORSRouting:ORSInstance]{ORSRouting::ORSInstance}} -> \code{ORSExtract}
 }
@@ -74,7 +83,7 @@ For details, refer to \code{\link[osmextract]{oe_match}}.}
 be searched for extracts.}
 
 \item{\code{...}}{Passed to \code{\link[osmextract]{oe_match}}. This can
-include anything except \code{quiet}.}
+include anything except \code{provider} and \code{quiet}.}
 }
 \if{html}{\out{</div>}}
 }

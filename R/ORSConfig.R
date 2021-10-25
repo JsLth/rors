@@ -7,19 +7,23 @@
 
 #' OpenRouteService configuration control panel
 #' @description R6 class that loads the ORS config file and can be used to
-#' change the ORS configurations
+#' change the ORS configurations. \strong{This class is initialized from within
+#' \code{\link{ORSInstance}}}.
 #'
-#' @details The argument `profiles` refers to the supported modes of transport.
+#' @details The term `profiles` refers to the supported modes of transport.
 #' Avoid passing all profiles as each profile has to be built seperately, which
-#' can strain memory extremely quickly. For a list of and details on the
-#' supported profiles, refer to the
+#' can strain memory extremely quickly. For a list of supported profiles, refer
+#' to the path parameters tab in the
+#' \href{https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post}{API playground}.
+#' For technical details on each profile, refer to the
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{OpenRouteService documentation}.
-#' For a details on each configuration in the config file, refer to the
-#' \href{https://giscience.github.io/openrouteservice/installation/Configuration.html}{config documentation}.
+#' Each profile also has a dedicated section inside the configuration file.
+#' Should you intend on changing the active profiles after the first setup, you
+#' need to rebuild the entire container since graphs need to be built for each
+#' active profile. Graph building is controlled using the active binding
+#' $graph_building inside the \code{\link{ORSSetupSettings}} subclass.
 #'
-#' @seealso \code{\link{ORSInstance}}
-#'
-#' @importFrom magrittr %>%
+#' @family ORSSetup
 
 ORSConfig <- R6::R6Class(
   classname = "ORSConfig",

@@ -1,8 +1,11 @@
-# Title     : General auxiliary functions
+# Title     : General utility functions
 # Objective : Manipulate character strings and execute system commands
 # Created by: Jonas Lieth
 # Created on: 11.06.2021
 
+
+#' @importFrom magrittr %>%
+NULL
 
 
 file.open <- function(file) {
@@ -103,6 +106,15 @@ isTRUEorFALSE <- function(x) {
 }
 
 
+docker_installed <- function() {
+  inst <- system2(command = "which",
+                  args = "docker",
+                  stdout = FALSE,
+                  stderr = FALSE)
+  identical(inst, 0L)
+}
+
+
 #' Enable non-root docker access on Linux
 #' @description Creates a docker group and adds the current user to it in order
 #' to enable docker commands from within R. Doing this, either manually or by
@@ -135,14 +147,14 @@ grant_docker_privileges <- function(run = TRUE) {
       return(FALSE)
     }
 
-    works <- identical(system2("docker", "ps"), 0)
+    works <- identical(system2("docker", "ps"), 0L)
     if (!works) {
       cli::cli_alert_warning(paste("You might have to restart your system to",
                                    "re-evaluate group membership"))
     }
 
     return(TRUE)
-  }
+  } else TRUE
 }
 
 

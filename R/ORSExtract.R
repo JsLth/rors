@@ -6,7 +6,8 @@
 
 
 #' OpenRouteService OSM extract control panel
-#' @description R6 class to download, set or manage an OpenStreetMap extract
+#' @description R6 class to download, set or manage an OpenStreetMap extract.
+#' \strong{This class is initialized from within \code{\link{ORSInstance}}}.
 #'
 #' @details Note that the coverage of the OSM extract should include all
 #' necessary places that need to be processed. If a location is not covered
@@ -14,7 +15,7 @@
 #' OSM extract can be changed later by running `$assign_data(build = change)`
 #' in \code{\link{ORSSetupSettings}}.
 #'
-#' @importFrom magrittr %>%
+#' @family ORSSetup
 
 ORSExtract <- R6::R6Class(
   classname = "ORSExtract",
@@ -44,7 +45,7 @@ ORSExtract <- R6::R6Class(
     #' @param provider Character vector of OSM extract provider(s) that should
     #' be searched for extracts.
     #' @param ... Passed to \code{\link[osmextract]{oe_match}}. This can
-    #' include anything except \code{quiet}.
+    #' include anything except \code{provider} and \code{quiet}.
     #' @details The extract is downloaded directly to \code{docker/data}. This 
     #' will also be the directory that is passed to the
     #' \code{\link{ORSSetupSettings}} to process the extract. This directory is

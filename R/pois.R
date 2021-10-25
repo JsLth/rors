@@ -44,8 +44,6 @@
 #'
 #' @export
 #'
-#' @importFrom magrittr %>%
-#'
 #' @examples
 #' pois_source <- get_osm_pois(datensatz.a, amenity = "hospital", radius = 5000, crs = 4326)
 #'

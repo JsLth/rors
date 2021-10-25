@@ -37,27 +37,11 @@ options(
 #' profiles to assign the extract and estimate the required RAM to be
 #' allocated.
 #'
-#' If the setup keeps failing due to whatever reason, try resetting the docker
-#' path of the main directory (as specified in `$dir`), or just delete the
-#' directory and download it again to be safe.
+#' An initial default can be set up using \code{$init_setup}. This method
+#' should only be used for the initial container startup. Subsequent changes
+#' to the setup need to be done using the subclasses.
 #'
-#' If the setup fails due to an OutOfMemoryError, first check if you allocated
-#' enough memory. If it keeps failing, clear the available memory or restart
-#' the system. OpenRouteService recommends allocating a little more than twice
-#' the extract size. Make sure not to allocate more than your available memory.
-#' If you allocate more than 80% of your free working memory, the function will
-#' stop. For details refer to the
-#' \href{https://giscience.github.io/openrouteservice/installation/System-Requirements.html}{system requirements of OpenRouteService}
-#'
-#' @family ORS control panel
-#'
-#' @seealso
-#' \code{\link{ORSExtract}},
-#' \code{\link{ORSConfig}},
-#' \code{\link{ORSDockerInterface}},
-#' \code{\link{ORSSetupSettings}}
-#'
-#' @importFrom magrittr %>%
+#' @family ORSSetup
 #'
 #' @export
 
@@ -97,6 +81,10 @@ ORSInstance <- R6::R6Class(
     #' of problems can emerge ranging from broken ORSRouting functions to the
     #' necessity to force-delete the container.
     initialize = function(dir = "~") {
+      if (!docker_installed()) {
+        cli::cli_abort("Docker does not seem to be installed.")
+      }
+
       if (is.linux() && !grant_docker_privileges(run = FALSE)) {
         cli::cli_abort(paste("To use {.cls ORSInstance}, Docker needs to be",
                              "accessible as a non-root user. Refer to the",

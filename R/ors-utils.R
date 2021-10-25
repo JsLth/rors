@@ -81,9 +81,9 @@ ors_ready <- function(force = TRUE, error = FALSE) {
         .$status %>%
         identical("ready"),
       error = function(e) {
-        ifelse(error,
-               cli::cli_abort("ORS service is not reachable."),
-               FALSE)
+        if (isTRUE(error)) {
+          cli::cli_abort("ORS service is not reachable.")
+        } else FALSE
       }
     )
     assign("ors_ready", ready, envir = pkg_cache)
@@ -191,22 +191,24 @@ get_ors_url <- function() {
 last_ors_conditions <- function(last = 1L) {
   conditions <- pkg_cache$routing_conditions
 
-  cli_abortifnot(is.numeric(last))
-  cli_abortifnot(last <= length(conditions))
+  if (length(conditions)) {
+    cli_abortifnot(is.numeric(last))
+    cli_abortifnot(last <= length(conditions))
 
-  time <- names(conditions)
+    time <- names(conditions)
 
-  cond_df <- lapply(conditions, function(x) {
-    na.omit(data.frame(conditions = x))
-  })
-  names(cond_df) <- time
+    cond_df <- lapply(conditions, function(x) {
+      na.omit(data.frame(conditions = x))
+    })
+    names(cond_df) <- time
 
-  end <- length(names(cond_df))
-  start <- length(names(cond_df)) + 1 - last
-  selected_conditions <- cond_df[seq(start, end)]
+    end <- length(names(cond_df))
+    start <- length(names(cond_df)) + 1 - last
+    selected_conditions <- cond_df[seq(start, end)]
 
-  class(selected_conditions) <- "ors_condition"
-  selected_conditions
+    class(selected_conditions) <- "ors_condition"
+    selected_conditions
+  }
 }
 
 
