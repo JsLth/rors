@@ -105,7 +105,7 @@ inspect_route <- function(source,
 
   if (is.element("detourfactor", options$attributes)) {
     detourfactor <- res$features$properties$segments[[1]]$detourfactor
-  } else avgspeed <- NULL
+  } else detourfactor <- NULL
 
   names_wp <- res$features$properties$segments[[1]]$steps[[1]]$name
   expanded_names <- expand_by_waypoint(names_wp, waypoints)
@@ -135,8 +135,8 @@ inspect_route <- function(source,
 
   route_sf <- structure(
     sf::st_as_sf(route),
-    avgspeed = if (exists("avgspeed")) avgspeed,
-    detourfactor = if (exists("detourfactor")) detourfactor,
+    avgspeed = avgspeed,
+    detourfactor = detourfactor,
     ascent = ascent,
     descent = descent
   )
