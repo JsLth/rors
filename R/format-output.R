@@ -21,17 +21,17 @@ fill_extra_info <- function(values, info_type, profile) {
 fill_steepness <- function(code) {
   switch(
     as.character(code),
-    `-5` = ">16%",
-    `-4` = "12-15%",
-    `-3` = "7-11%",
-    `-2` = "4-6%",
-    `-1` = "1-3%",
-    `0`  = "0%",
-    `1`  = "1-3%",
-    `2`  = "4-6%",
-    `3`  = "7-11%",
-    `4`  = "12-15%",
-    `5`  = ">16%"
+    `-5` = "<16% d",
+    `-4` = "12-15% d",
+    `-3` = "7-11% d",
+    `-2` = "4-6% d",
+    `-1` = "1-3% d",
+    `0`  = "0% i",
+    `1`  = "1-3% i",
+    `2`  = "4-6% i",
+    `3`  = "7-11% i",
+    `4`  = "12-15% i",
+    `5`  = ">16% i"
   )
 }
 
@@ -63,18 +63,25 @@ fill_surface <- function(code) {
 
 
 fill_waycategory <- function(code) {
-  switch(
-    as.character(code),
-    `0`   = "No category",
-    `1`   = "Highway",
-    `2`   = "Steps",
-    `4`   = "Unpaved Road",
-    `8`   = "Ferry",
-    `16`  = "Track",
-    `32`  = "Tunnel",
-    `64`  = "Paved road",
-    `128` = "Ford"
-  )
+  is.base2 <- log2(code) %% 1 == 0
+  if (!is.base2) {
+    code <- decode_non_base2(code)
+  }
+  cats <- sapply(code, function(c) {
+    switch(
+      as.character(c),
+      `0`   = "No category",
+      `1`   = "Highway",
+      `2`   = "Steps",
+      `4`   = "Unpaved Road",
+      `8`   = "Ferry",
+      `16`  = "Track",
+      `32`  = "Tunnel",
+      `64`  = "Paved road",
+      `128` = "Ford"
+    )
+  })
+  paste(sort(cats, decreasing = TRUE), collapse = "/")
 }
 
 

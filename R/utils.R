@@ -53,6 +53,34 @@ base_profile <- function(profile) {
 }
 
 
+decode_non_base2 <- function(code) {
+  base2_vector <- 0
+  i <- 0
+  while (tail(base2_vector, 1) < code) {
+    base2_vector[i + 1] <- 2 ^ i
+    i <- i + 1
+  }
+  base2_vector <- head(base2_vector, -1)
+  base2_vector <- sort(base2_vector, decreasing = TRUE)
+  for (b in seq(1, length(base2_vector))) {
+    if (b > 1) {
+      rbase2 <- tail(base2_vector, -(b - 1))
+    } else rbase2 <- base2_vector
+    res <- NULL
+    for (ni in seq(1, length(rbase2))) {
+      num <- rbase2[ni]
+      code_sum <- num + sum(res[!is.na(res)])
+      if (code_sum <= code) {
+        res[ni] <- num
+      }
+      if (code_sum == code) {
+        return(res[!is.na(res)])
+      }
+    }
+  }
+}
+
+
 box <- function(x) {
   if (length(x) == 1) {
     list(x)

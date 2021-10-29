@@ -136,7 +136,7 @@ process. They are saved to an environment and issue a warning containing the
 indices of the routes in question. After the process has finished, they can
 be accessed by calling \code{\link{last_ors_conditions}}. Specific routes
 can be examined by inspecting its route attributes using
-\code{\link{get_route_attributes}}.
+\code{\link{inspect_route}}.
 }
 
 \examples{

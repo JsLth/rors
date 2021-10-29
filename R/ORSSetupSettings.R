@@ -233,7 +233,7 @@ ORSSetupSettings$funs$save_compose <- function(private) {
 
 
 ORSSetupSettings$funs$open_compose <- function(self) {
-  file.open(file.path(self$dir, "docker/data/docker-compose.yml"))
+  file.open(file.path(self$dir, "docker/docker-compose.yml"))
 }
 
 
