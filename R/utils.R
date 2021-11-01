@@ -175,7 +175,7 @@ grant_docker_privileges <- function(run = TRUE) {
       return(FALSE)
     }
 
-    works <- identical(system2("docker", "ps"), 0L)
+    works <- system2("docker", "ps", stdout = FALSE, stderr = FALSE) == 0L
     if (!works) {
       cli::cli_alert_warning(paste("You might have to restart your system to",
                                    "re-evaluate group membership"))

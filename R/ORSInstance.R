@@ -283,12 +283,21 @@ ORSInstance$funs$clone_ors_repo <- function(self, dir) {
   basedir <- file.path(dir, "openrouteservice-master")
 
   if (!dir.exists(basedir)) {
-    zip_file <- file.path(self$dir, "openrouteservice.zip")
-    cli::cli_progress_step("Downloading service backend from GitHub repository...",
+    zip_file <- file.path(dir, "openrouteservice.zip")
+    
+    cli::cli_progress_step(msg = "Downloading service backend from GitHub repository...",
                            msg_done = "Successfully downloaded the service backend.",
                            msg_failed = "Failed to download the service backend.")
-    httr::GET(download_url, write_disk(zip_file), progress())
+    download.file(download_url, destfile = zip_file, quiet = TRUE)
+    
+    cli::cli_progress_step(msg = "Extracting files...",
+                           msg_done = "Extracted files.",
+                           msg_failed = "Could not extract files.")
     unzip(zip_file, exdir = dir)
+    
+    cli::cli_progress_step(msg = "Removing zip file...",
+                           msg_done = "Removed zip file.",
+                           msg_failed = "Could not remove zip file.")
     file.remove(zip_file)
     cli::cli_progress_done()
   }
