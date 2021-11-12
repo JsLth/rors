@@ -9,9 +9,9 @@ fill_extra_info <- function(values, info_type, profile) {
   if (exists(fill_fun_name)) {
     fill_fun <- match.fun(fill_fun_name)
     if (identical(fill_fun_name, "fill_traildifficulty")) {
-      values <- sapply(values, fill_fun, profile)
+      values <- vapply(values, fill_fun, profile, character(1))
     } else {
-      values <- sapply(values, fill_fun)
+      values <- vapply(values, fill_fun, character(1))
     }
   }
   values
@@ -21,17 +21,17 @@ fill_extra_info <- function(values, info_type, profile) {
 fill_steepness <- function(code) {
   switch(
     as.character(code),
-    `-5` = "<16% d",
-    `-4` = "12-15% d",
-    `-3` = "7-11% d",
-    `-2` = "4-6% d",
-    `-1` = "1-3% d",
-    `0`  = "0% i",
-    `1`  = "1-3% i",
-    `2`  = "4-6% i",
-    `3`  = "7-11% i",
-    `4`  = "12-15% i",
-    `5`  = ">16% i"
+    `-5` = ">16% decline",
+    `-4` = "12-15% decline",
+    `-3` = "7-11% decline",
+    `-2` = "4-6% decline",
+    `-1` = "1-3% decline",
+    `0`  = "0% incline",
+    `1`  = "1-3% incline",
+    `2`  = "4-6% incline",
+    `3`  = "7-11% incline",
+    `4`  = "12-15% incline",
+    `5`  = ">16% incline"
   )
 }
 
@@ -63,11 +63,8 @@ fill_surface <- function(code) {
 
 
 fill_waycategory <- function(code) {
-  is.base2 <- log2(code) %% 1 == 0
-  if (!is.base2) {
-    code <- decode_non_base2(code)
-  }
-  cats <- sapply(code, function(c) {
+  code <- decode_base2(code)
+  cats <- lapply(code, function(c) {
     switch(
       as.character(c),
       `0`   = "No category",
@@ -81,7 +78,7 @@ fill_waycategory <- function(code) {
       `128` = "Ford"
     )
   })
-  paste(sort(cats, decreasing = TRUE), collapse = "/")
+  paste(rev(cats), collapse = "/")
 }
 
 
@@ -129,16 +126,20 @@ fill_traildifficulty <- function(code, profile) {
 
 
 fill_roadaccessrestrictions <- function(code) {
-  switch(
-    as.character(code),
-    `0`  = "None",
-    `1`  = "No",
-    `2`  = "Customers",
-    `4`  = "Destination",
-    `8`  = "Delivery",
-    `16` = "Private",
-    `32` = "Permissive"
-  )
+  code <- decode_base2(code)
+  cats <- lapply(code, function(c) {
+    switch(
+      as.character(code),
+      `0`  = "None",
+      `1`  = "No",
+      `2`  = "Customers",
+      `4`  = "Destination",
+      `8`  = "Delivery",
+      `16` = "Private",
+      `32` = "Permissive"
+    )
+  })
+  paste(rev(cats), collapse = "/")
 }
 
 
@@ -208,7 +209,7 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
           cli::cli_warn(c("ORS returned {length(w_vec)} warning{?s}:", "{w_vec}"))
         } else {
           attributes(warning) <- list(error = FALSE)
-          return(warnings)
+          warnings
         }
       }
     }
@@ -245,7 +246,7 @@ expand_by_waypoint <- function(vector, waypoints) {
     multiplier <- waypoints[[i]][2] - waypoints[[i]][1]
     rep(vector[i], multiplier)
   }
-  expanded_data <- unlist(sapply(seq_len(length(vector)), expand_vctr))
+  expanded_data <- unlist(lapply(seq_len(length(vector)), expand_vctr))
   expanded_data[length(expanded_data) + 1] <- vector[length(vector)]
   expanded_data
 }
@@ -279,7 +280,7 @@ format_extra_info <- function(res, info_type) {
                            waypoints = iterator,
                            by_waypoint = FALSE)
 
-    values <- sapply(seq(1, length(indices)),
+    values <- lapply(seq(1, length(indices)),
                      function(seg) rep(matrix[seg, 3], length(indices[[seg]])))
     values <- unlist(values)
 

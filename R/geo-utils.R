@@ -77,13 +77,6 @@ ors_multiple_linestrings <- function(res, elev_as_z) {
 }
 
 
-ors_single_linestring <- function(res) {
-  coordinates <- res$features$geometry$coordinates
-  linestring <- sf::st_multilinestring(coordinates)
-  sf::st_sfc(linestring, crs = 4326)
-}
-
-
 reformat_vectordata <- function(data) {
   as.data.frame(sf::st_coordinates(data))
 }

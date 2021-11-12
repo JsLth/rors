@@ -53,15 +53,18 @@ base_profile <- function(profile) {
 }
 
 
-decode_non_base2 <- function(code) {
+decode_base2 <- function(code) {
+  is.base2 <- log2(code) %% 1 == 0
+  if (isTRUE(is.base2)) {
+    return(code)
+  }
   base2_vector <- 0
   i <- 0
   while (tail(base2_vector, 1) < code) {
     base2_vector[i + 1] <- 2 ^ i
     i <- i + 1
   }
-  base2_vector <- head(base2_vector, -1)
-  base2_vector <- sort(base2_vector, decreasing = TRUE)
+  base2_vector <- rev(head(base2_vector, -1))
   for (b in seq(1, length(base2_vector))) {
     if (b > 1) {
       rbase2 <- tail(base2_vector, -(b - 1))
@@ -110,7 +113,7 @@ notify <- function(msg) {
 
 
 is.rstudio <- function() {
-  Sys.getenv("RSTUDIO") == 1
+  .Platform$GUI == "RStudio"
 }
 
 

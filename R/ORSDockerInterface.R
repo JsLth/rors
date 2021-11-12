@@ -414,7 +414,7 @@ ORSDockerInterface$funs$notify_when_ready <- function(self, private, interval, s
   }
 
   cli::cli_progress_step("Starting service",
-                         spinner = TRUE,
+                         spinner = interactive(),
                          msg_done = "Service setup done. ORS should now be ready to use.",
                          msg_failed = "Service setup failed.")
 

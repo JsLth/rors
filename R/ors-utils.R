@@ -72,13 +72,16 @@ get_profiles <- function(force = FALSE) {
 ors_ready <- function(force = TRUE, error = FALSE) {
   if (is.null(pkg_cache$ors_ready) || force) {
     ready <- tryCatch(
-      httr::GET(
-        sprintf("http://localhost:%s/ors/health", get_ors_port())
-      ) %>%
-        httr::content(as = "text", type = "application/json", encoding = "UTF-8") %>%
-        jsonlite::fromJSON() %>%
-        .$status %>%
-        identical("ready"),
+      {
+        res <- httr::GET(sprintf("http://localhost:%s/ors/health",
+                               get_ors_port())) %>%
+          httr::content(as = "text",
+                        type = "application/json",
+                        encoding = "UTF-8") %>%
+          jsonlite::fromJSON()
+        stopifnot(r <- identical(res$status, "ready"))
+        r
+      },
       error = function(e) {
         if (isTRUE(error)) {
           cli::cli_abort("ORS service is not reachable.")

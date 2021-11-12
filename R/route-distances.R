@@ -9,9 +9,13 @@
 #' \code{get_route_lengths} calculates the routing distance between two
 #' datasets using the Directions service from ORS.
 #' @param source Source dataset that represents points that should be routed
-#' from. It can be passed as any two-dimensional base data structure, as a list
-#' or as an \code{sf}/\code{sfc} object containing point geometries. Each row
-#' or element represents a \code{lon/lat} coordinate pair. The coordinate
+#' from. It can be passed as:
+#' \itemize{
+#'  \item Any two-dimensional base data structure, e.g. dataframes
+#'  \item A nested list
+#'  \item An \code{sf}/\code{sfc} object containing point geometries.
+#' }
+#' Each row represents a \code{lon/lat} coordinate pair. The coordinate
 #' reference system for the source data is expected to be \code{EPSG:4326}. If
 #' an object with \code{length > 2} is passed (not \code{sf}/\code{sfc}), it
 #' will be tried to heuristically determine the columns containing coordinates.
@@ -139,7 +143,6 @@ get_route_lengths <- function(source,
     source <- dplyr::bind_rows(replicate(nrow(destination),
                                          source,
                                          simplify = FALSE))
-
   } else if (nrow(destination) == 1) {
     destination <- dplyr::bind_rows(replicate(nrow(destination),
                                               source,
@@ -175,6 +178,7 @@ get_route_lengths <- function(source,
   call_index <- format(Sys.time(), format = "%H:%M:%S")
 
   extract_lengths <- function(source, dest) {
+
     res <- query_ors_directions(source = source,
                                 destination = dest,
                                 profile = profile,
@@ -182,6 +186,7 @@ get_route_lengths <- function(source,
                                 geometry = geometry,
                                 options = options,
                                 url = url)
+
     i <- get("i", envir = parent.frame())
 
     cond <- handle_ors_conditions(res)
@@ -207,7 +212,7 @@ get_route_lengths <- function(source,
       linestring <- sf::st_linestring(res$features$geometry$coordinates[[1]])
       return(data.frame(distance = res$features$properties$summary$distance,
                         duration = res$features$properties$summary$duration,
-                        geometry = sf::st_sfc(linestring)))
+                        geometry = sf::st_sfc(linestring, crs = 4326)))
 
     }
   }
@@ -220,20 +225,22 @@ get_route_lengths <- function(source,
   route_missing <- sapply(unlist(route_list), is.na)
   conds <- pkg_cache$routing_conditions[[call_index]]
   warn_indices <- which(grepl("Warning", conds))
+  tip <- cli::col_grey("For a list of conditions, call {.fn last_ors_conditions}.")
   if (all(route_missing)) {
-    cli::cli_warn("No routes could be calculated. Check your service config.")
+    cli::cli_warn(c("No routes could be calculated. Check your service config.",
+                    tip))
   } else if (any(route_missing)) {
     cond_indices <- cli::cli_vec(which(grepl("Error", conds)),
                                  style = list(vec_sep = ", ", vec_last = ", "))
     cli::cli_warn(c(paste("{length(cond_indices)} route{?s} could not be",
                           "calculated and {?was/were} skipped: {cond_indices}"),
-                    "For a list of conditions, call {.fn last_ors_conditions}."))
+                    tip))
   } else if (length(warn_indices)) {
     warn_indices <- cli::cli_vec(warn_indices,
                                  style = list(vec_sep = ", ", vec_last = ", "))
     cli::cli_warn(c(paste("ORS returned a warning for {length(warn_indices)}",
                           "route{?s}: {warn_indices}"),
-                    "For a list of conditions, call {.fn last_ors_conditions}."))
+                    tip))
   }
 
   units(route_list[, "distance"]) <- units

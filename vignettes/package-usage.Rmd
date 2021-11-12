@@ -16,15 +16,11 @@ knitr::opts_chunk$set(
 )
 ```
 
+The `ORSRouting` package allows you to easily utilize the
+
 First, we will need sample data:
 ```{r}
-wfs <- ows4R::WFSClient$new("https://www.wfs.nrw.de/geobasis/wfs_nw_dvg", serviceVersion = "2.0.0")
-border_data <- wfs$capabilities$findFeatureTypeByName("dvg:nw_dvg2_rbz")$getFeatures()
-cgn <- border_data[border_data$GN == "Köln", ]
-sample_data <- sf::st_sample(cgn, 100) %>%
-        sf::st_transform(4326) %>%
-        sf::st_coordinates() %>%
-        as.data.frame()
+
 ```
 
 ```{r setup}
