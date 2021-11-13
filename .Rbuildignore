@@ -6,3 +6,4 @@
 .vscode
 README.md
 openrouteservice-master
+^\.github$

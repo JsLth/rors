@@ -249,6 +249,7 @@ get_route_lengths <- function(source,
   if (is.null(route_list$geometry)) {
     return(route_list)
   } else {
+    sf::st_bbox(route_list) <- sf::st_bbox(pkg_cache$extract_boundaries)
     return(sf::st_as_sf(route_list))
   }
 }

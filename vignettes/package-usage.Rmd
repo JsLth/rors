@@ -16,11 +16,37 @@ knitr::opts_chunk$set(
 )
 ```
 
-The `ORSRouting` package allows you to easily utilize the
+The `ORSRouting` package allows you to easily utilize the power and performance of OpenRouteService to generate routing data. This vignette will cover the four main functions on route distance and route inspection as well as ways to generate sample data and augment real-life data. It is expected that you already set up a local ORS instance as described in `vignette("ors-installation")`.
 
-First, we will need sample data:
+First of all, we will need sample data:
 ```{r}
+set.seed(111)
+sample_a <- ors_sample(20)
 
+set.seed(222)
+sample_b <- ors_sample(20)
+```
+
+What happens here is that the OSM file that was mounted to the Docker container is identified and read in. This can take some time since the file has to be vectortranslated by GDAL first. Using `sf::st_sample`, we can then find a geographic sample inside the boundaries of the mounted OSM file. The boundaries are saved to an environment cache and don't need to be loaded again after the first call of `ors_sample`:
+
+```{r}
+plot(ORSRouting:::pkg_cache$extract_boundaries)
+```
+
+Yes, does look like the governmental district of Cologne! If you need to load new boundaries - for example after changing the OSM file - you can do so by setting the argument `force_new_extract` to `TRUE`.
+
+With that out of the way, let us inspect the sample data:
+
+```{r}
+head(sample_a)
+```
+
+Coordinates are stored in long format with the first column being X or longitude and the second column being Y or latitude. Each row represents one point. The coordinate reference system is geographic and therefore the coordinates are notated in angular units. This is the default format for all routing functions.
+
+When we pass the sample data to `get_route_lengths`, the function computes route distances row-wise, i.e. from `sample_a[i, ]` to `sample_b[i, ]` with `i = 1:20`. The route calculations are considerably influenced by the profile choice. Since cars a lot faster than bicycles, but cannot use smaller tracks, the routes will be significantly different. The result is a dataframe containing distances and durations of the computed routes:
+
+```{r}
+get_route_lengths(sample_a, sample_b, profile = "driving-car")
 ```
 
 ```{r setup}
