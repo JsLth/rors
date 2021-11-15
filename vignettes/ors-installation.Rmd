@@ -272,11 +272,11 @@ Great. To make sure I don't mess up the coordinates again, I'll use the ORS depe
 ```{r wrong-config, error = TRUE, purl = FALSE}
 # This may take a while
 set.seed(111)
-sample_a <- ors_sample(size = 100)
+sample_a <- ors_sample(size = 20)
 
 # This'll be a lot faster
 set.seed(222)
-sample_b <- ors_sample(size = 100)
+sample_b <- ors_sample(size = 20)
 
 get_route_lengths(sample_a, sample_b, profile = "driving-car")
 ```
@@ -308,10 +308,10 @@ Third time's the charm, let's try again:
 
 ```{r all-fine}
 set.seed(111)
-sample_a <- ors_sample(size = 100)
+sample_a <- ors_sample(size = 20)
 
 set.seed(222)
-sample_b <- ors_sample(size = 100)
+sample_b <- ors_sample(size = 20)
 
 get_route_lengths(sample_a, sample_b, profile = "driving-car")
 ```
