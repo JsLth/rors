@@ -1,0 +1,6 @@
+- Establish tests
+- Try out pkgdown
+- Try out GitLab CI/CD
+- Implement ORS host customization
+- Root out previous mistakes like use of return()
+- Find ways to increase performance of get_route_lengths

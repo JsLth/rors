@@ -5,5 +5,7 @@
 .idea
 .vscode
 README.md
-openrouteservice-master
+^openrouteservice-master$
 ^\.github$
+^ors-installation.Rmd$
+^LICENSE\.md$

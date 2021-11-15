@@ -15,11 +15,11 @@ centroids_from_polygons <- function(polygons, as_sf = FALSE) {
     # Zentroide wieder zu altem CRS transformieren
     lonlat_to_utm(crs, reverse = TRUE)
   if (as_sf) {
-    st_geometry(polygons) <- centroids
+    sf::st_geometry(polygons) <- centroids
     polygons
   } else {
     centroid_coords <- as.data.frame(sf::st_coordinates(centroids))
-    st_geometry(polygons) <- NULL
+    sf::st_geometry(polygons) <- NULL
     cbind(centroid_coords, polygons)
   }
 
@@ -48,7 +48,7 @@ buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326) {
 
   # Extract bboxes
   buffer_bbox <- sf::st_geometry(buffers) %>%
-    purrr::map(st_bbox) %>%
+    purrr::map(sf::st_bbox) %>%
     do.call(rbind, .) %>%
     as.data.frame()
   return(buffer_bbox)
@@ -134,7 +134,7 @@ lonlat_to_utm <- function(
       parse_proj4string()
     if (is.null(zone)) {
       get_zone <- function(longitudes) {
-        longitude_median <- median(longitudes)
+        longitude_median <- stats::median(longitudes)
         floor((longitude_median + 180) / 6) + 1
       }
       zone <- coordinates %>%
@@ -174,7 +174,7 @@ verify_crs <- function(data, crs, silent = FALSE) {
   parsed_crs <- sf::st_crs(crs)
 
   if (is.na(parsed_crs$wkt)) {
-    cli::cli_abort("CRS of type {.cls {class(crs)}} is invalid.")
+    cli::cli_abort("CRS {.val {crs}} is invalid.")
   }
 
   wkt <- parsed_crs$wkt %>%

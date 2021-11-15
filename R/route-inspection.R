@@ -208,7 +208,7 @@ summarize_route <- function(source,
   summaries <- sapply(names(extras), get_ors_summaries, simplify = FALSE)
 
   summaries <- sapply(summaries, function(summary) {
-    summary <- aggregate(summary[, 2:3],
+    summary <- stats::aggregate(summary[, 2:3],
                          by = summary["value"],
                          sum)
     row.names(summary) <- summary$value
@@ -222,10 +222,12 @@ summarize_route <- function(source,
                       elev_speeds,
                       after = 0)
 
-  summaries <- lapply(summaries, function(s) {
-    s["distance"] <- units::as_units(s$distance, "m")
-    s
-  })
+  if (requireNamespace("units")) {
+    summaries <- lapply(summaries, function(s) {
+      s["distance"] <- units::as_units(s$distance, "m")
+      s
+    })
+  }
 
   output <- list(
     distance = extract_ors_attribute(res, "distance"),
@@ -238,8 +240,10 @@ summarize_route <- function(source,
     tables = summaries
   )
 
-  units(output$distance) <- "m"
-  units(output$duration) <- "s"
+  if (requireNamespace("units")) {
+    units(output$distance) <- "m"
+    units(output$duration) <- "s"
+  }
 
   class(output) <- "route_summary"
   output
@@ -271,7 +275,7 @@ print.route_summary <- function(x, ncols = 3, ...) {
   tables <- x$tables
 
   # Get the maximum row length of the input tables
-  row_lengths <- sapply(tables, function(tb) sapply(capture.output(tb), nchar))
+  row_lengths <- sapply(tables, function(tb) sapply(utils::capture.output(tb), nchar))
   max_row_length <- max(unlist(row_lengths))
 
   # Get an iterator that splits up the tables at the indices defined by ncols
@@ -286,7 +290,7 @@ print.route_summary <- function(x, ncols = 3, ...) {
     border_indices <- cumsum(rows + 3)
 
     # Catch the output of print.data.frame and split it by table
-    output <- capture.output(t)
+    output <- utils::capture.output(t)
     output_split <- split(output,
                           cumsum(is.element(seq_along(output),
                                             border_indices + 1)))

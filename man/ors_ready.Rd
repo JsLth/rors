@@ -9,6 +9,8 @@ ors_ready(force = TRUE, error = FALSE)
 \arguments{
 \item{force}{If \code{TRUE}, function must query local host. If
 \code{FALSE}, the status will be read from the cache if possible.}
+
+\item{error}{If \code{TRUE}, gives out an error if the service is not ready.}
 }
 \description{
 States whether the ORS service is set up and ready to use.

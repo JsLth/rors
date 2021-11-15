@@ -41,7 +41,7 @@ get_container_info <- function() {
 #'
 #' @export
 
-get_profiles <- function(force = FALSE) {
+get_profiles <- function(force = TRUE) {
   if (is.null(pkg_cache$profiles) || isTRUE(force)) {
     if (ors_ready()) {
       url <- sprintf("http://localhost:%s/ors/v2/status", get_ors_port())
@@ -66,6 +66,7 @@ get_profiles <- function(force = FALSE) {
 #' @description States whether the ORS service is set up and ready to use.
 #' @param force If \code{TRUE}, function must query local host. If
 #' \code{FALSE}, the status will be read from the cache if possible.
+#' @param error If \code{TRUE}, gives out an error if the service is not ready.
 #'
 #' @export
 
@@ -103,7 +104,7 @@ get_ors_dir <- function(force = TRUE) {
     mdir <- normalizePath(mdir, winslash = "/") %>%
       strsplit("/") %>%
       unlist() %>%
-      head(-1) %>%
+      utils::head(-1) %>%
       paste0(collapse = "/")
 
     if (!dir.exists(mdir)) {
@@ -200,7 +201,7 @@ last_ors_conditions <- function(last = 1L) {
     time <- names(conditions)
 
     cond_df <- lapply(conditions, function(x) {
-      na.omit(data.frame(conditions = x))
+      stats::na.omit(data.frame(conditions = x))
     })
     names(cond_df) <- time
 

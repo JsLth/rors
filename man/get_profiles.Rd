@@ -4,7 +4,7 @@
 \alias{get_profiles}
 \title{Get active ORS profiles}
 \usage{
-get_profiles(force = FALSE)
+get_profiles(force = TRUE)
 }
 \arguments{
 \item{force}{If \code{TRUE}, function must query the local host. If

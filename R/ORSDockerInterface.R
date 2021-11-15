@@ -134,7 +134,7 @@ ORSDockerInterface$funs$image_built <- function(self, arg) {
                             stdout = TRUE)
 
       length(image_name) > 0
-    }
+    } else FALSE
   } else {
     cli::cli_abort("{.var $image_built} is read only.")
   }
@@ -153,7 +153,7 @@ ORSDockerInterface$funs$container_exists <- function(self, arg) {
                                   stdout = TRUE)
 
       identical(container_status, "ors-app")
-    }
+    } else FALSE
   } else {
     cli::cli_abort("{.var $container_exists} is read only.")
   }
@@ -173,9 +173,7 @@ ORSDockerInterface$funs$container_running <- function(self, arg) {
                                                    stderr = FALSE))
 
       identical(container_status, "running")
-    } else {
-      FALSE
-    }
+    } else FALSE
   } else {
     cli::cli_abort("{.var $container_running} is read only.")
   }
@@ -189,9 +187,7 @@ ORSDockerInterface$funs$service_ready <- function(self, arg) {
         self$container_exists &&
         self$container_running) {
           ors_ready(force = TRUE)
-    } else {
-      FALSE
-    }
+    } else FALSE
   } else {
     cli::cli_abort("{.var $service_ready} is read only.")
   }
@@ -249,8 +245,8 @@ ORSDockerInterface$funs$image_up <- function(self, private, wait, verbose) {
     private$.notify_when_ready(interval = 10, silently = FALSE)
   }
 
-  if (is.null(getOption("ors_url"))) { # TODO: Properly implement url customization
-    options("ors_url" = sprintf("http://localhost:%s/"), pkg_cache$port)
+  if (is.null(getOption("ors_host"))) { # TODO: Properly implement url customization
+    options(ors_host = sprintf("http://localhost:%s/", pkg_cache$port))
   }
 
   self$setup_settings$graph_building <- NA

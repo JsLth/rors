@@ -314,7 +314,7 @@ make_summary_table <- function(vector, distances) {
   break_points <- pretty(vector, n = 5, min.n = 1)
   cats <- cut(vector, break_points, include.lowest = TRUE)
 
-  amount_summary <- aggregate(vector, by = list(cats), function(x) {
+  amount_summary <- stats::aggregate(vector, by = list(cats), function(x) {
     length(x) / vector_length * 100
   })
 

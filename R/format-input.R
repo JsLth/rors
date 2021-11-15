@@ -6,7 +6,8 @@
 
 format_input_data <- function(data) {
   if (is.sf(data)) {
-    if (sf::st_is(data, c("POINT", "MULTIPOINT"))) {
+    if (all(sf::st_is(data, c("POINT", "MULTIPOINT")))) {
+      data <- sf::st_transform(data, 4326)
       data <- reformat_vectordata(data)[, c("X", "Y")]
     } else {
       geom_type <- sf::st_geometry_type(data)
@@ -226,7 +227,7 @@ format_ors_options <- function(options, profile) {
   }
 
   if (!is.null(options$maximum_speed)) {
-    if (is.numeric(options$maximum_speed) && length(maximum_speed) == 1) {
+    if (is.numeric(options$maximum_speed) && length(options$maximum_speed) == 1) {
       options_check["maximum_speed"] <- TRUE
     } else {
       options_check["maximum_speed"] <- FALSE

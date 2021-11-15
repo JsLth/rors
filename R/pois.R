@@ -45,10 +45,13 @@
 #' @export
 #'
 #' @examples
-#' pois_source <- get_osm_pois(datensatz.a, amenity = "hospital", radius = 5000, crs = 4326)
+#' set.seed(123)
+#' sample_a <- ors_sample(20)
+#' 
+#' pois_source <- get_osm_pois(sample_a, amenity = "hospital", radius = 5000, crs = 4326)
 #'
-#' test_sf <- sf::st_as_sf(datensatz.a, coords = c(1,2), crs = 4326)
-#' test_poly <- sf::st_convex_hull(st_union(test_sf))
+#' test_sf <- sf::st_as_sf(sample_a, coords = c(1,2), crs = 4326)
+#' test_poly <- sf::st_convex_hull(sf::st_union(test_sf))
 #' get_osm_pois(test_poly, amenity = "post_box", building = "residential", trim = FALSE)
 #'
 #' test_bbox <- as.numeric(sf::st_bbox(test_poly))
@@ -79,41 +82,32 @@ get_osm_pois <- function(
 
   # Convert sf object to matrix
   if (is.sf(source)) {
-    if (st_crs(source) != 4326) source <- st_transform(source, 4326)
-    source_coords <- st_geometry(source) %>%
-      st_coordinates() %>%
-      .[, c(1,2)]
-    crs <- st_crs(source)
+    if (sf::st_crs(source) != 4326) source <- sf::st_transform(source, 4326)
+    source_coords <- sf::st_coordinates(sf::st_geometry(source))[, c(1, 2)]
+    crs <- sf::st_crs(source)
   } else {
     source_coords <- source
   }
 
   # If multiple points are passed, generate buffers around them
-  if (
-    (
-      is.data.frame(source) &&
-      !is.sf(source)
-    ) ||
-    (
-      is.sf(source) &&
-      sf::st_is(source, c("POINT", "MULTIPOINT"))
-    )
-  ) {
+  if ((is.data.frame(source) && !is.sf(source)) ||
+      (is.sf(source) && sf::st_is(source, c("POINT", "MULTIPOINT")))) {
     source_coords <- as.data.frame(source_coords)
+    if (missing(crs)) {
+      cli::cli_abort("CRS must be specified for non-sf objects.")
+    }
     verify_crs(source_coords, crs)
 
     # Generate a buffer for each point in the source dataset
     bbox <- buffer_bbox_from_coordinates(source_coords, radius, crs) %>%
-      pmap(c)
+      purrr::pmap(c)
 
     # Estimate the timeout for point data
     timeout <- round(10 + (nrow(source_coords) * radius / 1000))
   } else {
     bbox <- list(source_coords)
-    if(
-      is.sf(source) &&
-      sf::st_is(source, c("POLYGON", "MULTIPOLYGON"))
-    ) {
+    if(is.sf(source) &&
+       sf::st_is(source, c("POLYGON", "MULTIPOLYGON"))) {
       # Estimate the timeout for polygon data
       area <- as.numeric(sf::st_area(source))
       timeout <- round(sqrt(area / 1000000))
@@ -133,38 +127,28 @@ get_osm_pois <- function(
     }
   }
 
-  if (timeout < 25) timeout <- 25
+  timeout <- min(timeout, 25)
 
   # Function that queries points of interest within a bbox
   query.osm <- function(bbox) {
-    osm_data <- osmdata::opq(
-      bbox = bbox,
-      timeout = timeout
-    ) %>%
+    res <- osmdata::opq(bbox = bbox,timeout = timeout) %>%
       osmdata::add_osm_features(features = features) %>%
       osmdata::osmdata_sf()
-
-    if (
-      isTRUE(trim) &&
-      is.sf(source) &&
-      sf::st_is(source, c("POLYGON", "MULTIPOLYGON"))
-    ) {
-      osm_data <- trim_osmdata(osm_data, bbox)
+    
+    if (isTRUE(trim) && is.sf(source) && sf::st_is(source, c("POLYGON", "MULTIPOLYGON"))) {
+      res <- osmdata::trim_osmdata(res, bbox)
     }
-    return(osm_data)
+    
+    if (nrow(res$osm_polygons)) {
+      centroids_from_polygons(res$osm_polygons, as_sf = as_sf)
+    }
   }
   # Apply `query.osm` to each point in the dataset
-  response <- lapply(bbox, query.osm)
-
-  # Calculate the centroids of each output multipolygon
-  pois <- lapply(response, function(r) {
-      centroids_from_polygons(r$osm_polygons, as_sf = as_sf)
-    }
-  )
+  pois <- lapply(bbox, query.osm)
 
   if (length(pois) == 1) pois <- pois[[1]]
 
-  return(pois)
+  pois
 }
 
 
@@ -193,28 +177,13 @@ get_osm_pois <- function(
 #'
 #' @export
 #'
-#' @importFrom magrittr %>%
-#'
 #' @details The proximity can either be defined by the number of points to be selected, by a
 #' distance buffer or by both. If both measures are defined, the function will select points
 #' of interest within a certain radius first and will then select a given number of points
 #' within that radius. The proximity type can be controlled by either passing or not passing
 #' a value to `number_of_points` and `radius`.
 #' @examples
-#' get_nearest_pois(datensatz.a, osm_pois, 3, NULL)
-#' [[1]]
-#'          X        Y
-#' 1 6.924774 50.99160
-#' 2 6.975410 51.03098
-#' 3 6.960451 50.98735
-#'
-#' [[2]]
-#'          X        Y
-#' 1 7.016889 50.91035
-#'  2 7.042753 50.89777
-#' 3 6.966869 50.91035
-#'
-#' ...
+#' #get_nearest_pois(datensatz.a, osm_pois, 3, NULL)
 
 get_nearest_pois <- function(
   source,
@@ -246,7 +215,7 @@ get_nearest_pois <- function(
     }
 
     else {
-      cli::cli_abort('Radius must be either numeric or NULL.')
+      cli::cli_abort("Radius must be either numeric or NULL.")
     }
   }
 
@@ -256,12 +225,13 @@ get_nearest_pois <- function(
   }
 
   else {
-    stop('Either a radius, number of points, or both must be defined.')
+    stop("Either a radius, number of points, or both must be defined.")
   }
 }
 
 
 n.nearest.pois <- function(source, poi_coordinates, n) {
+  Var2 <- NULL
   if(is.sf(poi_coordinates)) {
     poi_coordinates <- reformat_vectordata(poi_coordinates)
   }
@@ -294,7 +264,7 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
       # If `n = 3`, but there's only 1 hospital in the POI dataset, don't stop,
       # just warn.
       cli::cli_alert_warning(
-        sprintf('Point can only be assigned %1.0f POIs.', number_index)
+        sprintf("Point can only be assigned %1.0f POIs.", number_index)
       )
       return()
     }
@@ -324,7 +294,7 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
     # Discard of points where n is larger than the poi dataset
     purrr::discard(sapply(., is.null)) %>%
     dplyr::bind_rows() %>%
-    cbind(Var2 = nested_iterator[seq_len(nrow(.)), 'Var2']) %>%
+    cbind(Var2 = nested_iterator[seq_len(nrow(.)), "Var2"]) %>%
     # Split the output by point number
     dplyr::group_by(Var2) %>%
     dplyr::group_split(.keep = FALSE) %>%
@@ -352,7 +322,7 @@ pois.within.radius <- function(source, pois, radius, crs = NULL) {
   if (!is.sf(source)) {
     if (!is.na(crs)) {
       points <- sf::st_as_sf(source, coords = c(1, 2), crs = crs) %>%
-        sf::st_transform(st_crs(pois))
+        sf::st_transform(sf::st_crs(pois))
     } else {
       cli::cli_abort(
         paste(

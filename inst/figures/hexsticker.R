@@ -7,7 +7,7 @@ p <- ggplot2::ggplot(t) +
   ggplot2::theme_void() +
   hexSticker::theme_transparent()
 
-s <- hexSticker::sticker(
+hexSticker::sticker(
   p,
   package = "ORSRouting",
   p_size = 20,

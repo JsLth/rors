@@ -93,14 +93,12 @@
 #'
 #' @examples
 #' set.seed(111)
-#' source <- ors_sample(10)
-#' source_sf <- ors_sample[1:5, ]
-#' source_df <- as.data.frame(sf::st_coordinates(ors_sample[6:10, ]))
+#' source_sf <- ors_sample(10, as_sf = TRUE)
+#' source_df <- ors_sample(10)
 #'
 #' set.seed(222)
-#' dest <- ors_sample(10)
-#' dest_sf <- ors_sample[1:5, ]
-#' dest_df <- as.data.frame(sf::st_coordinates(ors_sample[6:10, ]))
+#' dest_sf <- ors_sample(10, as_sf = TRUE)
+#' dest_df <- ors_sample(10)
 #'
 #' profile <- get_profiles()[1]
 #'
@@ -119,7 +117,11 @@
 #' route_lengths_km <- get_route_lengths(source_df, dest_df, profile, units = "km")
 #'
 #' # Running with additional arguments
-#' route_lengths_opts <- get_route_lengths(source_dd, dest_df, profile, continue_straight = TRUE, preference = "fastest")
+#' route_lengths_opts <- get_route_lengths(source_df,
+#'                                         dest_df,
+#'                                         profile,
+#'                                         continue_straight = TRUE,
+#'                                         preference = "fastest")
 
 get_route_lengths <- function(source,
                               destination,
@@ -178,7 +180,6 @@ get_route_lengths <- function(source,
   call_index <- format(Sys.time(), format = "%H:%M:%S")
 
   extract_lengths <- function(source, dest) {
-
     res <- query_ors_directions(source = source,
                                 destination = dest,
                                 profile = profile,
@@ -204,15 +205,15 @@ get_route_lengths <- function(source,
     }
 
     if (!geometry) {
-
-      return(data.frame(distance = res$routes$summary$distance,
-                        duration = res$routes$summary$duration))
-
+      data.frame(distance = res$routes$summary$distance,
+                 duration = res$routes$summary$duration)
     } else {
+      distance <- res$features$properties$summary$distance
+      duration <- res$features$properties$summary$duration
       linestring <- sf::st_linestring(res$features$geometry$coordinates[[1]])
-      return(data.frame(distance = res$features$properties$summary$distance,
-                        duration = res$features$properties$summary$duration,
-                        geometry = sf::st_sfc(linestring, crs = 4326)))
+      sf::st_sf(distance = distance,
+                duration = duration,
+                geometry = sf::st_sfc(linestring))
 
     }
   }
@@ -242,16 +243,13 @@ get_route_lengths <- function(source,
                           "route{?s}: {warn_indices}"),
                     tip))
   }
-
-  units(route_list[, "distance"]) <- units
-  units(route_list[, "duration"]) <- "s"
-
-  if (is.null(route_list$geometry)) {
-    return(route_list)
-  } else {
-    sf::st_bbox(route_list) <- sf::st_bbox(pkg_cache$extract_boundaries)
-    return(sf::st_as_sf(route_list))
+  
+  if (requireNamespace("units")) {
+    units(route_list$distance) <- units
+    units(route_list$duration) <- "s"
   }
+
+  route_list
 }
 
 
@@ -288,7 +286,7 @@ get_route_lengths <- function(source,
 #' @examples
 #'
 #' # Finding the shortest routes to the nearest hospitals
-#' pois <- get_osm_pois(sf::st_bbox(source), amenity = "hospital")
+#' pois <- get_osm_pois(sf::st_bbox(source_sf), amenity = "hospital")
 #'
 #' shortest_routes <- get_shortest_routes(source, pois, profiles = c("driving-car", "foot-walking"))
 #' shortest_routes
@@ -338,7 +336,8 @@ get_shortest_routes <- function(source,
 
     } else {
       cli::cli_abort(paste("Expected a proximity type",
-                           "({.val duration} or {.val distance})"))
+                           "({.val duration} or {.val distance}),",
+                           "got {.val {proximity_type}}"))
     }
 
     best_route <- cbind(best_index, routes[best_index, ])
@@ -396,7 +395,7 @@ create_dist_matrix <- function(source,
                                profile = get_profiles(),
                                units = c("m", "km", "mi"),
                                proximity_type = c("distance", "duration")) {
-  profile <- match.arg(profiles)
+  profile <- match.arg(profile)
   proximity_type <- match.arg(proximity_type)
   units <- match.arg(units)
 

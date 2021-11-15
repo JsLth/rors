@@ -15,8 +15,10 @@ Description: The package allows the usage of OpenRouteService to calculate the
 Encoding: UTF-8
 LazyData: true
 Depends:
-    R (>= 4.0.4)
+    R (>= 4.0.0)
 Imports:
+    utils,
+    stats,
     httr,
     jsonlite,
     yaml,
@@ -35,9 +37,11 @@ Suggests:
     sys,
     testthat (>= 3.0.0),
     osmdata,
-    fields
+    fields,
+    units
 SystemRequirements: Docker Engine on Linux systems, Docker Desktop on Windows (>= 20.10.6)
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+License: MIT + file LICENSE

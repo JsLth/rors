@@ -1,7 +1,6 @@
 # <img src="inst/figures/orsr_sticker.png" width = "150" align="right" />
 
 <!-- badges: start -->
-[![R build status](https://github.com/gavinsimpson/gratia/workflows/R-CMD-check/badge.svg)](https://github.com/gavinsimpson/gratia/actions)
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 

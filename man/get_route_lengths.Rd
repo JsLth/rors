@@ -145,14 +145,12 @@ can be examined by inspecting its route attributes using
 
 \examples{
 set.seed(111)
-source <- ors_sample(10)
-source_sf <- ors_sample[1:5, ]
-source_df <- as.data.frame(sf::st_coordinates(ors_sample[6:10, ]))
+source_sf <- ors_sample(10, as_sf = TRUE)
+source_df <- ors_sample(10)
 
 set.seed(222)
-dest <- ors_sample(10)
-dest_sf <- ors_sample[1:5, ]
-dest_df <- as.data.frame(sf::st_coordinates(ors_sample[6:10, ]))
+dest_sf <- ors_sample(10, as_sf = TRUE)
+dest_df <- ors_sample(10)
 
 profile <- get_profiles()[1]
 
@@ -171,10 +169,14 @@ route_lengths_geom <- get_route_lengths(source_df, dest_df, profile, geometry = 
 route_lengths_km <- get_route_lengths(source_df, dest_df, profile, units = "km")
 
 # Running with additional arguments
-route_lengths_opts <- get_route_lengths(source_dd, dest_df, profile, continue_straight = TRUE, preference = "fastest")
+route_lengths_opts <- get_route_lengths(source_df,
+                                        dest_df,
+                                        profile,
+                                        continue_straight = TRUE,
+                                        preference = "fastest")
 
 # Finding the shortest routes to the nearest hospitals
-pois <- get_osm_pois(sf::st_bbox(source), amenity = "hospital")
+pois <- get_osm_pois(sf::st_bbox(source_sf), amenity = "hospital")
 
 shortest_routes <- get_shortest_routes(source, pois, profiles = c("driving-car", "foot-walking"))
 shortest_routes

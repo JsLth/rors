@@ -8,6 +8,9 @@
 NULL
 
 
+utils::globalVariables(".")
+
+
 file.open <- function(file) {
   os <- .Platform$OS.type
   file <- shQuote(file)
@@ -23,7 +26,7 @@ file_path_up <- function(path, times_back = NULL) {
   new_path <- normalizePath(path, winslash = "/") %>%
     strsplit("/") %>%
     unlist() %>%
-    head(-times_back) %>%
+    utils::head(-times_back) %>%
     as.list() %>%
     do.call(file.path, .)
   return(new_path)
@@ -60,14 +63,14 @@ decode_base2 <- function(code) {
   }
   base2_vector <- 0
   i <- 0
-  while (tail(base2_vector, 1) < code) {
+  while (utils::tail(base2_vector, 1) < code) {
     base2_vector[i + 1] <- 2 ^ i
     i <- i + 1
   }
-  base2_vector <- rev(head(base2_vector, -1))
+  base2_vector <- rev(utils::head(base2_vector, -1))
   for (b in seq(1, length(base2_vector))) {
     if (b > 1) {
-      rbase2 <- tail(base2_vector, -(b - 1))
+      rbase2 <- utils::tail(base2_vector, -(b - 1))
     } else rbase2 <- base2_vector
     res <- NULL
     for (ni in seq(1, length(rbase2))) {

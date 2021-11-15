@@ -50,18 +50,5 @@ within that radius. The proximity type can be controlled by either passing or no
 a value to \code{number_of_points} and \code{radius}.
 }
 \examples{
-get_nearest_pois(datensatz.a, osm_pois, 3, NULL)
-[[1]]
-         X        Y
-1 6.924774 50.99160
-2 6.975410 51.03098
-3 6.960451 50.98735
-
-[[2]]
-         X        Y
-1 7.016889 50.91035
- 2 7.042753 50.89777
-3 6.966869 50.91035
-
-...
+#get_nearest_pois(datensatz.a, osm_pois, 3, NULL)
 }
