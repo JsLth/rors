@@ -1,8 +1,4 @@
 <<<<<<< HEAD
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
 =======
 # History files
 .Rhistory
@@ -10,6 +6,7 @@
 
 # Session Data files
 .RData
+.Ruserdata
 
 # User-specific files
 .Ruserdata
