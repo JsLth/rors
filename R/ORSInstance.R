@@ -139,7 +139,13 @@ ORSInstance <- R6::R6Class(
                              wait = TRUE,
                              run = TRUE) {
       ORSInstance$funs$init_setup(self, profiles, extract, provider, init_memory, max_memory, wait, run)
-    }
+    },
+    
+    #' @description Take down all Docker containers and images and wipe the
+    #' OpenRouteService main directory.
+    #' @details This function removes ORS entirely. It should only be used as a
+    #' means to "uninstall" OpenRouteService.
+    remove = function() ORSInstance$funs$remove(self)
 
   ),
   private = list(
@@ -261,6 +267,25 @@ ORSInstance$funs$init_setup <- function(self,
 
   # Upddate ORSConfig
   self$config <- "refresh"
+}
+
+
+ORSInstance$funs$remove <- function(self) {
+  if (self$docker$container_exists) self$docker$container_down()
+  if (self$docker$image_built) self$docker$rm_image()
+  if (dir.exists(self$dir)) {
+    cli::cli_progress_step("Removing main directory...",
+                           msg_done = "Removed main directory.",
+                           msg_failed = "Cannot remove main directory.")
+    unlink(self$dir, recursive = TRUE)
+    cli::cli_progress_done()
+  }
+  
+  cli::cli_progress_step("Terminating R6 class...",
+                         msg_done = "Terminated R6 class.",
+                         msg_failed = "Cannot remove R6 class object.")
+  var_name <- strsplit(deparse(sys.call(which = 1)), "\\$")[[1]][1]
+  rm(list = var_name, envir = parent.frame(n = 2))
 }
 
 

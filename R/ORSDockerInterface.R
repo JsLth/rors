@@ -261,9 +261,15 @@ ORSDockerInterface$funs$rm_image <- function(self, force) {
 
   if (!self$container_exists) {
 
-    cmd <- c("rmi",
-             ifelse(force, "--force", ""),
-             "openrouteservice/openrouteservice:latest")
+    cli::cli_progress_step("Removing image...",
+                           msg_done = "Removed image.",
+                           msg_failed = "Cannot remove image.")
+    
+    cmd <- c(
+      "rmi",
+      ifelse(force, "--force", ""),
+      "openrouteservice/openrouteservice:latest"
+    )
 
     status <- system2(command = "docker", args = cmd)
 
@@ -271,7 +277,8 @@ ORSDockerInterface$funs$rm_image <- function(self, force) {
       cli::cli_abort(c("The docker command encountered an error",
                        paste("Error code", status)))
     }
-
+    
+    cli::cli_progress_done()
   } else {
     cli::cli_abort("Remove the container before removing the image")
   }
@@ -282,10 +289,16 @@ ORSDockerInterface$funs$rm_image <- function(self, force) {
 ORSDockerInterface$funs$container_down <- function(self) {
   if (self$container_exists) {
 
-    cmd <- c("compose",
-             "-f",
-             file.path(self$dir, "docker/docker-compose.yml"),
-             "down")
+    cli::cli_progress_step("Taking down container...",
+                           msg_done = "Took down container.",
+                           msg_failed = "Cannot take down container.")
+    
+    cmd <- c(
+      "compose",
+      "-f",
+      file.path(self$dir, "docker/docker-compose.yml"),
+      "down"
+    )
 
     status <- system2(command = "docker", args = cmd)
 
@@ -293,6 +306,8 @@ ORSDockerInterface$funs$container_down <- function(self) {
       cli::cli_abort(c("The docker command encountered an error",
                        paste("Error code", status)))
     }
+    
+    cli::cli_progress_done()
   }
   invisible()
 }
@@ -300,6 +315,11 @@ ORSDockerInterface$funs$container_down <- function(self) {
 
 ORSDockerInterface$funs$start_container <- function(self, private, wait) {
   if (self$container_exists && !self$container_running) {
+    
+    cli::cli_progress_step("Starting container...",
+                           msg_done = "Container is now running.",
+                           msg_failed = "Cannot start container.")
+    
     self$error_log <- NULL
 
     cmd <- "start ors-app"
@@ -314,6 +334,8 @@ ORSDockerInterface$funs$start_container <- function(self, private, wait) {
     if (wait) {
       private$.notify_when_ready(interval = 2, silently = TRUE)
     }
+    
+    cli::cli_progress_done()
   }
   invisible()
 }
@@ -321,6 +343,10 @@ ORSDockerInterface$funs$start_container <- function(self, private, wait) {
 
 ORSDockerInterface$funs$stop_container <- function(self) {
   if (self$container_running) {
+    cli::cli_progress_step("Stopping container...",
+                           msg_done = "Container stopped.",
+                           msg_failed = "Cannot stop container.")
+    
     cmd <- "stop ors-app"
 
     status <- system2(command = "docker", args = cmd, stdout = FALSE)
@@ -329,6 +355,8 @@ ORSDockerInterface$funs$stop_container <- function(self) {
       cli::cli_abort(c("The docker command encountered an error",
                        paste("Error code", status)))
     }
+    
+    cli::cli_progress_done()
   }
   invisible()
 }
@@ -341,9 +369,22 @@ ORSDockerInterface$funs$cleanup <- function(self) {
     conf_dir <- file.path(self$dir, "docker/conf")
     elev_dir <- file.path(self$dir, "docker/elevation_cache")
     grap_dir <- file.path(self$dir, "docker/graphs")
+    
+    cli::cli_progress_step("Removing config directory...",
+                           msg_done = "Removed config directory.",
+                           msg_failed = "Cannot remove config directory.")
     unlink(conf_dir, recursive = TRUE, force = FALSE)
+    cli::cli_progress_done()
+    cli::cli_progress_step("Removing elevation directory...",
+                           msg_done = "Removed elevation directory.",
+                           msg_failed = "Cannot remove elevation directory.")
     unlink(elev_dir, recursive = TRUE, force = FALSE)
+    cli::cli_progress_done()
+    cli::cli_progress_step("Removing graph directory...",
+                           msg_done = "Removed graph directory.",
+                           msg_failed = "Cannot remove graph directory.")
     unlink(grap_dir, recursive = TRUE, force = FALSE)
+    cli::cli_progress_done()
   }
 }
 
