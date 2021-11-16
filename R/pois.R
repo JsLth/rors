@@ -45,12 +45,14 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(123)
 #' sample_a <- ors_sample(20)
 #' 
 #' pois_source <- get_osm_pois(sample_a, amenity = "hospital", radius = 5000, crs = 4326)
 #'
-#' test_sf <- sf::st_as_sf(sample_a, coords = c(1,2), crs = 4326)
+#' set.seed(123)
+#' test_sf <- ors_sample(20, as_sf = TRUE)
 #' test_poly <- sf::st_convex_hull(sf::st_union(test_sf))
 #' get_osm_pois(test_poly, amenity = "post_box", building = "residential", trim = FALSE)
 #'
@@ -59,6 +61,7 @@
 #'
 #' test_place <- "Cologne"
 #' get_osm_pois(test_place, landuse = "allotments", timeout = 200, as_sf = TRUE)
+#' }
 
 get_osm_pois <- function(source,
                          ...,
@@ -181,7 +184,14 @@ get_osm_pois <- function(source,
 #' within that radius. The proximity type can be controlled by either passing or not passing
 #' a value to `number_of_points` and `radius`.
 #' @examples
+#' \dontrun{
+#' sample <- ors_sample(20)
+#' pois <- get_osm_pois("Cologne", amenity = "hospital")
 #' 
+#' by_points <- get_nearest_pois(sample, pois, number_of_points = 5)
+#' by_buffer <- get_nearest_pois(sample, pois, radius = 5000)
+#' by_both <- get_nearest_pois(sample_pois, number_of_points = 5, radius = 5000)
+#' }
 
 get_nearest_pois <- function(source,
                              pois,

@@ -57,7 +57,7 @@ base_profile <- function(profile) {
 
 
 decode_base2 <- function(code) {
-  is.base2 <- log2(code) %% 1 == 0
+  is.base2 <- log2(code) %% 1 == 0 || code == 0
   if (isTRUE(is.base2)) {
     return(code)
   }

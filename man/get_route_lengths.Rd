@@ -144,6 +144,7 @@ can be examined by inspecting its route attributes using
 }
 
 \examples{
+\dontrun{
 set.seed(111)
 source_sf <- ors_sample(10, as_sf = TRUE)
 source_df <- ors_sample(10)
@@ -152,32 +153,47 @@ set.seed(222)
 dest_sf <- ors_sample(10, as_sf = TRUE)
 dest_df <- ors_sample(10)
 
-profile <- get_profiles()[1]
+car = "driving-car"
+bike = "cycling-regular"
 
 # Running with sf objects
-route_lengths_sf <- get_route_lengths(source_sf, dest_sf, profile)
+route_lengths_sf <- get_route_lengths(source_sf, dest_sf, profile = car)
 route_lengths_sf
 
 # Running with coordinate pairs
-route_lengths_df <- get_route_lengths(source_df, dest_df, profile)
+route_lengths_df <- get_route_lengths(source_df, dest_df, profile = bike)
 route_lengths_df
 
 # Returns route geometries
-route_lengths_geom <- get_route_lengths(source_df, dest_df, profile, geometry = TRUE)
+route_lengths_geom <- get_route_lengths(source_df,
+                                        dest_df,
+                                        profile = car,
+                                        geometry = TRUE)
 
 # Returns routes in kilometers
-route_lengths_km <- get_route_lengths(source_df, dest_df, profile, units = "km")
+route_lengths_km <- get_route_lengths(source_df,
+                                      dest_df,
+                                      profile = bike,
+                                      units = "km")
 
 # Running with additional arguments
 route_lengths_opts <- get_route_lengths(source_df,
                                         dest_df,
-                                        profile,
+                                        profile = car,
                                         continue_straight = TRUE,
                                         preference = "fastest")
+}
+\dontrun{
+# Finding shortest routes from each point in sample_a to sample_b
+shortest_routes <- get_shortest_routes(source_df, dest_df, units = "km")
+shortest_routes
 
 # Finding the shortest routes to the nearest hospitals
 pois <- get_osm_pois(sf::st_bbox(source_sf), amenity = "hospital")
 
-shortest_routes <- get_shortest_routes(source, pois, profiles = c("driving-car", "foot-walking"))
-shortest_routes
+nearest_hospitals <- get_shortest_routes(source,
+                                         pois,
+                                         geometry = TRUE)
+nearest_hospitals
+}
 }

@@ -52,6 +52,44 @@
 #' @seealso get_route_lengths
 #'
 #' @export
+#' 
+#' @examples
+#' \dontrun{
+#' sample_source <- ors_sample(1)
+#' sample_dest <- ors_sample(1)
+#' profile = get_profiles()[1]
+#' 
+#' # Basic inspection without extra information
+#' insp <- inspect_route(sample_source, sample_dest, profile)
+#' 
+#' # Advanced inspection with extra information
+#' insp_adv <- inspect_route(sample_source,
+#'                           sample_dest,
+#'                           profile,
+#'                           extra_info = TRUE)
+#'                           
+#' # Inspection of route elevation data
+#' insp_elev <- inspect_route(sample_source,
+#'                            sample_dest,
+#'                            profile,
+#'                            elevation = TRUE,
+#'                            elev_as_z = FALSE)
+#' 
+#' # Inspection of route summary attributes
+#' insp_attr <- inspect_route(sample_source,
+#'                            sample_ dest,
+#'                            profile,
+#'                            attributes = "detourfactor")
+#' attr(insp_attr, "detourfactor")
+#' 
+#' # Altering the route by passing further arguments
+#' insp_opts <- inspect_route(sample_source,
+#'                            sample_dest,
+#'                            profile,
+#'                            continue_straight = TRUE,
+#'                            preference = "shortest",
+#'                            maximum_speed = 80)
+#' }
 
 inspect_route <- function(source,
                           destination,
@@ -147,13 +185,17 @@ inspect_route <- function(source,
 #' Route inspection
 #' @description \code{summarize_route} generates a range of summary tables and
 #' values that provide an overview of a route.
-#' @inheritParams inspect_route
 #' @returns Object of type \code{route_summary} that contains information on
 #' distances, durations, speed, elevation, detour factors as well as all
 #' available extra information for the requested route.
 #' @rdname inspect_route
 #'
 #' @export
+#' 
+#' @examples
+#' \dontrun{
+#' route_summary <- summarize_route(sample_source, sample_dest, profile)
+#' }
 
 summarize_route <- function(source,
                             destination,

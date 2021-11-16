@@ -50,5 +50,12 @@ within that radius. The proximity type can be controlled by either passing or no
 a value to \code{number_of_points} and \code{radius}.
 }
 \examples{
+\dontrun{
+sample <- ors_sample(20)
+pois <- get_osm_pois("Cologne", amenity = "hospital")
 
+by_points <- get_nearest_pois(sample, pois, number_of_points = 5)
+by_buffer <- get_nearest_pois(sample, pois, radius = 5000)
+by_both <- get_nearest_pois(sample_pois, number_of_points = 5, radius = 5000)
+}
 }

@@ -63,12 +63,14 @@ if you need to pass a vecorized bbox, make sure to pass geographic
 coordinates, preferably EPSG:4326.
 }
 \examples{
+\dontrun{
 set.seed(123)
 sample_a <- ors_sample(20)
 
 pois_source <- get_osm_pois(sample_a, amenity = "hospital", radius = 5000, crs = 4326)
 
-test_sf <- sf::st_as_sf(sample_a, coords = c(1,2), crs = 4326)
+set.seed(123)
+test_sf <- ors_sample(20, as_sf = TRUE)
 test_poly <- sf::st_convex_hull(sf::st_union(test_sf))
 get_osm_pois(test_poly, amenity = "post_box", building = "residential", trim = FALSE)
 
@@ -77,4 +79,5 @@ get_osm_pois(test_bbox, amenity = "marketplace", as_sf = TRUE)
 
 test_place <- "Cologne"
 get_osm_pois(test_place, landuse = "allotments", timeout = 200, as_sf = TRUE)
+}
 }

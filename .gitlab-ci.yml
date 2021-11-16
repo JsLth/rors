@@ -1,0 +1,38 @@
+image: rocker/tidyverse
+
+stages:
+  - build
+  - test
+  - deploy
+
+building:
+  stage: build
+  script:
+    - R -e "remotes::install_deps(dependencies = TRUE)"
+    - R -e 'devtools::check(vignettes = FALSE)'
+
+testing:
+    stage: test
+    allow_failure: true
+    when: on_success
+    only:
+        - master
+    script:
+        - Rscript -e 'install.packages("DT")'
+        - Rscript -e 'covr::gitlab(quiet = FALSE)'
+    artifacts:
+        paths:
+            - public
+
+pages:
+    stage: deploy
+    dependencies:
+        - testing
+    script:
+        - ls
+    artifacts:
+        paths:
+            - public
+        expire_in: 30 days
+    only:
+        - master
