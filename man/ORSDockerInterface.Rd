@@ -16,6 +16,17 @@ using \code{$cleanup}.
 If the setup fails due to an OutOfMemoryError, first check if you allocated
 enough memory. If it keeps failing, clear the available memory or restart
 the system.
+
+Sometimes, the the service just refuses to work. In this case, try to reboot
+your system or wipe the ORS directory using \code{$remove} from
+\code{\link{ORSInstance}}. This includes, but is not limited to the following
+phenomena:
+\itemize{
+\item Cryptic memory errors no matter how much memory you allocate
+\item Illegal state exceptions complaining about location indices being
+opened with incorrect graphs
+}
+If you have a lead on these errors, consider opening an issue. :)
 }
 \seealso{
 Other ORSSetup: 
@@ -63,6 +74,7 @@ occurred.}
 \out{<details open ><summary>Inherited methods</summary>}
 \itemize{
 \item \out{<span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="initial_setup">}\href{../../ORSRouting/html/ORSInstance.html#method-initial_setup}{\code{ORSRouting::ORSInstance$initial_setup()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="remove">}\href{../../ORSRouting/html/ORSInstance.html#method-remove}{\code{ORSRouting::ORSInstance$remove()}}\out{</span>}
 }
 \out{</details>}
 }

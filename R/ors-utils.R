@@ -75,7 +75,7 @@ ors_ready <- function(force = TRUE, error = FALSE) {
     ready <- tryCatch(
       {
         res <- httr::GET(sprintf("http://localhost:%s/ors/health",
-                               get_ors_port())) %>%
+                         get_ors_port())) %>%
           httr::content(as = "text",
                         type = "application/json",
                         encoding = "UTF-8") %>%

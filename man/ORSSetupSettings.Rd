@@ -59,6 +59,7 @@ and that graph building should not be forced.}
 \out{<details open ><summary>Inherited methods</summary>}
 \itemize{
 \item \out{<span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="initial_setup">}\href{../../ORSRouting/html/ORSInstance.html#method-initial_setup}{\code{ORSRouting::ORSInstance$initial_setup()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="remove">}\href{../../ORSRouting/html/ORSInstance.html#method-remove}{\code{ORSRouting::ORSInstance$remove()}}\out{</span>}
 }
 \out{</details>}
 }

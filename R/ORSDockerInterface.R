@@ -16,6 +16,17 @@
 #' If the setup fails due to an OutOfMemoryError, first check if you allocated
 #' enough memory. If it keeps failing, clear the available memory or restart
 #' the system.
+#' 
+#' Sometimes, the the service just refuses to work. In this case, try to reboot
+#' your system or wipe the ORS directory using \code{$remove} from
+#' \code{\link{ORSInstance}}. This includes, but is not limited to the following
+#' phenomena:
+#' \itemize{
+#'   \item Cryptic memory errors no matter how much memory you allocate
+#'   \item Illegal state exceptions complaining about location indices being
+#'         opened with incorrect graphs
+#' }
+#' If you have a lead on these errors, consider opening an issue. :)
 #'
 #' @family ORSSetup
 
@@ -413,7 +424,7 @@ ORSDockerInterface$funs$start_docker <- function(self) {
       # If Docker is installed, it will try to open
       if (status == 0) {
         cli::cli_progress_step("Starting Docker...",
-                                       spinner = TRUE,
+                               spinner = interactive(),
                                msg_done = "Docker Desktop is now running.",
                                msg_failed = "The Docker startup has timed out.")
 

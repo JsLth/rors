@@ -63,6 +63,7 @@ Other ORSSetup:
 \itemize{
 \item \href{#method-new}{\code{ORSInstance$new()}}
 \item \href{#method-initial_setup}{\code{ORSInstance$initial_setup()}}
+\item \href{#method-remove}{\code{ORSInstance$remove()}}
 }
 }
 \if{html}{\out{<hr>}}
@@ -150,5 +151,21 @@ whether the initial setup is done or not.}
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-remove"></a>}}
+\if{latex}{\out{\hypertarget{method-remove}{}}}
+\subsection{Method \code{remove()}}{
+Take down all Docker containers and images and wipe the
+OpenRouteService main directory.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$remove()}\if{html}{\out{</div>}}
+}
+
+\subsection{Details}{
+This function removes ORS entirely. It should only be used as a
+means to "uninstall" OpenRouteService.
+}
+
 }
 }

@@ -17,7 +17,6 @@ knitr::opts_chunk$set(
 ```
 ```{r setup, echo = FALSE}
 library(ORSRouting)
-library(magrittr)
 ```
 
 # Introduction
@@ -267,7 +266,7 @@ ors$docker$image_up(verbose = FALSE)
 
 ## Change ORS configurations
 
-Great. To make sure I don't mess up the coordinates again, I'll use the ORS dependent sampling function `ors_sample`. It's simply a wrapper around `sf::st_sample` that uses the current extract to generate a point sample.
+Great. To make sure I don't mess up the coordinates again, I'll use the ORS dependent sampling function `ors_sample`. More on this can be found in `vignette("ors-routing-usage")`.
 
 ```{r wrong-config, error = TRUE, purl = FALSE}
 # This may take a while
@@ -281,7 +280,13 @@ sample_b <- ors_sample(size = 20)
 get_route_lengths(sample_a, sample_b, profile = "driving-car")
 ```
 
-Dang it! Luckily, changing the service configurations doesn't take very long. Since it's not necessary to alter the compose file in order to change the service configs, we don't need to remove the container entirely, but can just turn it off.
+Dang it! Somehow, two routes could not be calculated. What's this about?
+
+```{r check-errors}
+last_ors_conditions()
+```
+
+Luckily, changing the service configurations doesn't take very long. Since it's not necessary to alter the compose file in order to change the service configs, we don't need to remove the container entirely, but can just turn it off.
 
 ```{r change-config}
 # Stop the container
@@ -301,7 +306,7 @@ ors$config$ors_config$ors$services$routing$profiles$`profile-car`$parameters$max
 ors$config$save_config()
 
 # Re-start the container
-ors$docker$start_container()
+ors$docker$start_container(wait = TRUE)
 ```
 
 Third time's the charm, let's try again:
@@ -316,7 +321,7 @@ sample_b <- ors_sample(size = 20)
 get_route_lengths(sample_a, sample_b, profile = "driving-car")
 ```
 
-Seems to work! However, errors lurk everywhere. If we were to pass a different profile or increase the sample size, we would be faced with new errors. So be sure to take care of your configurations and change them if necessary.
+Seems to work! However, errors lurk everywhere. If we were to pass a different profile or increase the sample size, we could be faced with new errors. So be sure to take care of your configurations and change them if necessary.
 
 Three takeaways can be formulated for this vignette:
 

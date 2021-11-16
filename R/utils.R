@@ -95,23 +95,22 @@ box <- function(x) {
 
 
 notify <- function(msg) {
-  if (is.windows()) {
-    system("rundll32 user32.dll, MessageBeep -1")
-    system(sprintf("msg * \"%s\"", msg))
-
-  } else if (is.linux()) {
-    system("paplay /usr/share/sounds/freedesktop/stereo/complete.oga")
-    system(paste(sprintf("notify-send \"%s\"", msg),
-                 "\"Message from R\""))
-
-  } else if (is.macos()) {
-
-    system(paste("osascript -e 'display notification",
-                 sprintf("\"%s\"", msg),
-                 "with title",
-                 "\"Message from R\""))
+  if (interactive()) {
+    if (is.windows()) {
+      system("rundll32 user32.dll, MessageBeep -1")
+      system(sprintf("msg * \"%s\"", msg))
+    } else if (is.linux()) {
+      system("paplay /usr/share/sounds/freedesktop/stereo/complete.oga")
+      system(paste(sprintf("notify-send \"%s\"", msg),
+                   "\"Message from R\""))
+    } else if (is.macos()) {
+      system(paste("osascript -e 'display notification",
+                   sprintf("\"%s\"", msg),
+                   "with title",
+                   "\"Message from R\""))
+    }
+    invisible()
   }
-  invisible()
 }
 
 
