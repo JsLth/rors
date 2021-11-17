@@ -100,7 +100,7 @@ inspect_route <- function(source,
                           ...,
                           elev_as_z = FALSE) {
   # Check if ORS is ready to use
-  ors_ready(force = FALSE, error = TRUE)
+  ors_ready(force = TRUE, error = TRUE)
 
   # Bring input data into shape
   source <- format_input_data(source)
@@ -202,7 +202,7 @@ summarize_route <- function(source,
                             profile = get_profiles(),
                             ...) {
   # Check if ORS is ready to use
-  ors_ready(force = FALSE, error = TRUE)
+  ors_ready(force = TRUE, error = TRUE)
 
   # Bring input data into shape
   source <- format_input_data(source)

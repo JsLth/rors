@@ -10,7 +10,8 @@ options(
   cli.spinner_ascii = "line",
   cli.progress_bar_style = "fillsquares",
   cli.progress_bar_style_unicode = "fillsquares",
-  cli.progress_bar_style_ascii = "fillsquares"
+  cli.progress_bar_style_ascii = "fillsquares",
+  active_ors = "ors-app"
 )
 
 
