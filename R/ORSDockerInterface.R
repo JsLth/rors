@@ -140,11 +140,11 @@ ORSDockerInterface$funs$image_built <- function(self, arg) {
       cmd <- c("images \"openrouteservice/openrouteservice\"",
                "--format {{.Repository}}")
 
-      image_name <- system2(command = "docker",
+      image_id <- system2(command = "docker",
                             args = cmd,
                             stdout = TRUE)
 
-      length(image_name) > 0
+      length(image_id) > 0
     } else FALSE
   } else {
     cli::cli_abort("{.var $image_built} is read only.")
@@ -271,24 +271,26 @@ ORSDockerInterface$funs$rm_image <- function(self, force) {
   }
 
   if (!self$container_exists) {
-
-    cli::cli_progress_step("Removing image...",
-                           msg_done = "Removed image.",
+    
+    cmd1 <- c("images", "\"openrouteservice/openrouteservice\"", "-q")
+    
+    image_ids <- system2(command = "docker", args = cmd1, stdout = TRUE)
+    
+    cli::cli_progress_step("Removing {length(image_ids)} image{?s}...",
+                           msg_done = "Removed {length(image_ids)} image{?s}.",
                            msg_failed = "Cannot remove image.")
-    
-    cmd <- c(
-      "rmi",
-      ifelse(force, "--force", ""),
-      "openrouteservice/openrouteservice:latest"
-    )
 
-    status <- system2(command = "docker", args = cmd)
-
-    if (!identical(status, 0L)) {
-      cli::cli_abort(c("The docker command encountered an error",
-                       paste("Error code", status)))
+    for (id in image_ids) {
+      cmd2 <- c("rmi", ifelse(force, "--force", ""), id)
+      
+      status <- system2(command = "docker", args = cmd2)
+      
+      if (!identical(status, 0L)) {
+        cli::cli_abort(c("The docker command encountered an error",
+                         paste("Error code", status)))
+      }
     }
-    
+
     cli::cli_progress_done()
   } else {
     cli::cli_abort("Remove the container before removing the image")

@@ -5,3 +5,6 @@
 - Root out previous mistakes like use of return()
 - Find ways to increase performance of get_route_lengths
 - Reduce hard imports (either entirely or make them suggests)
+- Improve conditions printing by implementing console width dependent line breaks
+- Implement a custom print method for ORS R6 classes?
+- Add a way to change the container/image name? (Useful for tests)
