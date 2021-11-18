@@ -1,7 +1,8 @@
 # <img src="inst/figures/orsr_sticker.png" width = "150" align="right" />
 
 <!-- badges: start -->
-[![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+![Coverage](https://img.shields.io/badge/Coverage-7.39%25-red.svg)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 # Overview

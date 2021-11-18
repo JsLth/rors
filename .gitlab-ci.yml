@@ -11,6 +11,12 @@ building:
     - R -e "remotes::install_deps(dependencies = TRUE)"
     - R -e 'devtools::check(vignettes = FALSE)'
 
+# To have the coverage percentage appear as a gitlab badge follow these
+# instructions:
+# https://docs.gitlab.com/ee/user/project/pipelines/settings.html#test-coverage-parsing
+# The coverage parsing string is
+# Coverage: \d+\.\d+
+
 testing:
     stage: test
     allow_failure: true
@@ -23,6 +29,9 @@ testing:
     artifacts:
         paths:
             - public
+
+# To produce a code coverage report as a GitLab page see
+# https://about.gitlab.com/2016/11/03/publish-code-coverage-report-with-gitlab-pages/
 
 pages:
     stage: deploy
