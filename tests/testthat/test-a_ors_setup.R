@@ -10,10 +10,9 @@ test_that("Test Docker availability", {
   skip_on_os(c("windows", "mac", "solaris"))
   skip_if_not_installed("sys")
   privileged <- grant_docker_privileges(run = FALSE)
-  expect_type(privileged, "logical")
+  expect_true(privileged, "logical")
 })
 
-skip_if(Sys.info()["sysname"] == "Linux" && isFALSE(privileged))
 skip_if_offline("github.com")
 
 temp_dir <- dir.create("fixtures", showWarnings = TRUE)
