@@ -1,7 +1,9 @@
 # <img src="inst/figures/orsr_sticker.png" width = "150" align="right" />
 
 <!-- badges: start -->
-![Coverage](https://img.shields.io/badge/Coverage-7.39%25-red.svg)
+
+[![pipeline status](https://git.gesis.org/liethjs/orsrouting/badges/master/pipeline.svg)](https://git.gesis.org/liethjs/orsrouting/-/commits/master) 
+[![coverage report](https://git.gesis.org/liethjs/orsrouting/badges/master/coverage.svg)](https://git.gesis.org/liethjs/orsrouting/-/commits/master)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
