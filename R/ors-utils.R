@@ -16,17 +16,25 @@ clear_cache <- function() {
 
 get_container_info <- function() {
   if (is.null(pkg_cache$container_info)) {
-    container_info <- system2(command = "docker",
-                              args = "container inspect ors-app",
-                              stdout = TRUE) %>%
-      paste0(collapse = "\n") %>%
-      jsonlite::fromJSON()
+    name <- getOption("ors_name")
+    
+    cmd <- c("container", "inspect", name)
+    
+    suppressWarnings({
+      container_info <- system2(command = "docker",
+                                args = cmd,
+                                stdout = TRUE,
+                                stderr = FALSE) %>%
+        paste0(collapse = "\n") %>%
+        jsonlite::fromJSON()
+    })
 
     if (length(container_info) == 0) {
-      cli::cli_abort("Cannot access container: ors-app")
+      cli::cli_abort("Cannot access container: {.val {name}}")
     }
 
     assign("container_info", container_info, envir = pkg_cache)
+    
     invisible(container_info)
   } else {
     invisible(pkg_cache$container_info)
@@ -71,7 +79,7 @@ get_profiles <- function(force = TRUE) {
 #' @export
 
 ors_ready <- function(force = TRUE, error = FALSE) {
-  if (is.null(pkg_cache$ors_ready) || force) {
+  if (is.null(pkg_cache$ors_ready) || isFALSE(pkg_cache$ors_ready) || force) {
     ready <- tryCatch(
       {
         res <- httr::GET(sprintf("http://localhost:%s/ors/health",
@@ -112,9 +120,9 @@ get_ors_dir <- function(force = TRUE) {
     }
 
     assign("mdir", mdir, envir = pkg_cache)
-    return(mdir)
+    mdir
   } else {
-    return(pkg_cache$mdir)
+    pkg_cache$mdir
   }
 }
 
@@ -155,20 +163,21 @@ identify_extract <- function(force = FALSE) {
       normalizePath(winslash = "/")
 
     assign("extract_path", extract_path, envir = pkg_cache)
-    return(extract_path)
+    extract_path
   } else {
-    return(pkg_cache$extract_path)
+    pkg_cache$extract_path
   }
 }
 
 
-get_ors_port <- function() {
-  if (is.null(pkg_cache$port)) {
+get_ors_port <- function(force = TRUE) {
+  if (is.null(pkg_cache$port) || force == TRUE) {
     container_info <- get_container_info()
-    port <- container_info$NetworkSettings$Ports[[1]][[1]]$HostPort[1]
+    port <- container_info$NetworkSettings$Ports[[1]][[1]]$HostPort[1][1]
     assign("port", port, envir = pkg_cache)
+    port
   } else {
-    return(pkg_cache$port)
+    pkg_cache$port
   }
 }
 

@@ -25,7 +25,15 @@ ORSSetupSettings <- R6::R6Class(
     #' was changed and the existing graphs should be overwritten using the new
     #' extract. If `NA` is assigned, indicates that no changes should be made
     #' and that graph building should not be forced.
-    graph_building = function(mode) ORSSetupSettings$funs$graph_building(self, private, mode)
+    graph_building = function(mode) ORSSetupSettings$funs$graph_building(self, private, mode),
+    
+    #' @field ors_name Name of the ORS container. A non-default name can be
+    #' specified by assigning a character string.
+    ors_name = function(name) ORSSetupSettings$funs$ors_name(self, name),
+    
+    #' @field ors_port Port of the ORS container. A non-default port can be
+    #' specified by assigning an integer.
+    ors_port = function(port) ORSSetupSettings$funs$ors_port(self, port)
   ),
 
   public = list(
@@ -50,6 +58,7 @@ ORSSetupSettings <- R6::R6Class(
       self$compose <- private$.read_dockercompose()
       private$.disable_auto_deletion()
       self$graph_building <- NA
+      self$active <- TRUE
       invisible(self)
     },
 
@@ -185,6 +194,30 @@ ORSSetupSettings$funs$graph_building <- function(self, private, mode) {
 }
 
 
+ORSSetupSettings$funs$ors_name <- function(self, name) {
+  if (missing(name)) {
+    self$compose$services$`ors-app`$container_name
+  } else {
+    self$compose$services$`ors-app`$container_name <- name
+    self$save_compose()
+    options(ors_name = name)
+    name
+  }
+}
+
+
+ORSSetupSettings$funs$ors_port <- function(self, port) {
+  cur_port <- strsplit(self$compose$services$`ors-app`$ports[1], ":")[[1]]
+  if (missing(port)) {
+    cur_port[1]
+  } else {
+    self$compose$services$`ors-app`$ports[1] <- sprintf("%s:%s", port, 8080)
+    self$save_compose()
+    port
+  }
+}
+
+
 ORSSetupSettings$funs$allocate_memory <- function(self, private, init = NULL, max = NULL) {
   cli_abortifnot(is.null(init) || is.numeric(init))
   cli_abortifnot(is.null(max) || is.numeric(max))
@@ -198,12 +231,14 @@ ORSSetupSettings$funs$allocate_memory <- function(self, private, init = NULL, ma
     init <- max / 2
     private$.write_memory(init, max)
   } else if (is.null(init) && is.null(max)) {
-    if (!is.null(file.info(pkg_cache$extract_path)$size * 0.000001) &&
+    if (!is.null(pkg_cache$extract_path) &&
         !is.null(self$config$active_profiles)) {
-      max <- round(file.info(pkg_cache$extract_path)$size * 0.000001, -2) *
-        2.5 *
-        length(self$config$active_profiles) / 1000
+      size <- round(file.info(pkg_cache$extract_path)$size * 0.000001, -2)
+      number_of_profiles <- length(self$config$active_profiles) / 1000
+
+      max <- size * 2.5 * number_of_profiles
       init <- max / 2
+
       private$.write_memory(init, max)
     } else {
       cli::cli_abort(c(paste("Set an extract and the active profiles or pass",

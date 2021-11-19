@@ -39,6 +39,15 @@ Other ORSSetup:
 \code{\link{ORSSetupSettings}}
 }
 \concept{ORSSetup}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{active}}{States if the R6 object is active or if it has been
+killed using \code{$remove}. If \code{FALSE}, the fields and methods
+of \code{ORSInstance} lose their functionality.}
+}
+\if{html}{\out{</div>}}
+}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
@@ -159,9 +168,18 @@ whether the initial setup is done or not.}
 Take down all Docker containers and images and wipe the
 OpenRouteService main directory.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$remove()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$remove(ignore_image = TRUE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{ignore_image}}{Specifies if the ORS image should be removed.
+Removing the image may have implications for other ORS instances or
+simply fail if a running container is using the same image.}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Details}{
 This function removes ORS entirely. It should only be used as a
 means to "uninstall" OpenRouteService.

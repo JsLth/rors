@@ -8,7 +8,7 @@ grant_docker_privileges(run = TRUE)
 }
 \arguments{
 \item{run}{If \code{FALSE}, the function will only return a logical vector
-and will not change group memberships.}
+and will not change group membership.}
 }
 \description{
 Creates a docker group and adds the current user to it in order

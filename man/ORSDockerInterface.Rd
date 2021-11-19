@@ -44,11 +44,14 @@ Other ORSSetup:
 \describe{
 \item{\code{docker_running}}{Checks if the Docker daemon is running.}
 
-\item{\code{image_built}}{Checks if the openrouteservice:latest image exists.}
+\item{\code{image_built}}{Checks if the openrouteservice:latest image exists.
+An alternative image name can be provided.}
 
-\item{\code{container_exists}}{Checks if the container ors-app exists.}
+\item{\code{container_exists}}{Checks if the container ors-app exists.
+An alternative container name can be provided.}
 
-\item{\code{container_running}}{Checks if the the container ors-app is running.}
+\item{\code{container_running}}{Checks if the the container ors-app is running.
+An alternative container name can be provided.}
 
 \item{\code{service_ready}}{Checks if the container service is ready to use. If
 this field is \code{TRUE}, the service can be queried and used.}
@@ -136,6 +139,9 @@ Deletes the image.
 \item{\code{force}}{Specifies if the image should be forcibly removed, even
 if the container is still running or the source directory cannot be
 found. Use with caution.}
+
+\item{\code{name}}{Optional name of the container. If not provided, the method
+will use \code{getOption("ors_name")} as a default.}
 }
 \if{html}{\out{</div>}}
 }
@@ -156,12 +162,15 @@ Removes the container after stopping it if necessary.
 \subsection{Method \code{start_container()}}{
 Starts the container.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$start_container(wait = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$start_container(name = NULL, wait = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{name}}{Optional name of the container. If not provided, the method
+will use \code{getOption("ors_name")} as a default.}
+
 \item{\code{wait}}{Logical. If \code{TRUE}, the function will not stop running
 after the container is being started and will give out a notification
 as soon as the service is ready. If \code{FALSE}, the function will
@@ -177,9 +186,17 @@ then call \code{$service_ready} or \code{\link{ors_ready}}.}
 \subsection{Method \code{stop_container()}}{
 Stops the container.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$stop_container()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$stop_container(name = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Optional name of the container. If not provided, the method
+will use \code{getOption("ors_name")} as a default.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-cleanup"></a>}}

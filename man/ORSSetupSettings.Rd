@@ -43,6 +43,12 @@ first time. If \code{change} is assigned, indicates that the extract file
 was changed and the existing graphs should be overwritten using the new
 extract. If \code{NA} is assigned, indicates that no changes should be made
 and that graph building should not be forced.}
+
+\item{\code{ors_name}}{Name of the ORS container. A non-default name can be
+specified by assigning a character string.}
+
+\item{\code{ors_port}}{Port of the ORS container. A non-default port can be
+specified by assigning an integer.}
 }
 \if{html}{\out{</div>}}
 }

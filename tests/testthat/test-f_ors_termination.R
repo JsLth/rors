@@ -1,26 +1,26 @@
-load("fixtures/setupdone")
-unlink("fixtures/setupdone")
-
-test_that("Test docker termination", {
-  skip_if_not(setup_done)
-  expect_container_down(ors$docker)
-  expect_image_removed(ors$docker)
-})
-
-test_that("Test directory wipe", {
-  skip("Skip until ors name customization is implemented.")
+test_that("Test ORS wipe", {
+  dir.create("fixtures")
+  ors <- ORSInstance$new(dir = "fixtures")
   dir <- ors$dir
-  skip_if(!dir.exists(ors$dir))
 
   ors$docker$cleanup()
-  expect_false(dir.exists(file.path(dir, "docker/data")))
+  expect_false(dir.exists(file.path(dir, "docker/conf")))
   expect_false(dir.exists(file.path(dir, "docker/graphs")))
   expect_false(dir.exists(file.path(dir, "docker/elevation_cache")))
 
-  ors$error_log <- NULL
+  ors$docker$error_log <- NULL
   expect_false(dir.exists(file.path(dir, "docker/logs")))
 
-  ors$remove()
+  ors$remove(ignore_image = TRUE)
   expect_false(dir.exists(dir))
-  expect_false(exists(ors))
+  expect_false(ors$active)
+  expect_equal(suppressWarnings(ors$extract), NULL)
+  expect_equal(suppressWarnings(ors$config), NULL)
+  expect_equal(suppressWarnings(ors$setup_settings), NULL)
+  expect_equal(suppressWarnings(ors$docker), NULL)
+  expect_equal(suppressWarnings(ors$initial_setup()))
+  expect_equal(suppressWarnings(ors$remove()))
+  expect_warning(ors$extract, "not active")
+  expect_warning(ors$initial_setup(), "not active")
+  expect_warning(ors$remove(), "not active")
 })

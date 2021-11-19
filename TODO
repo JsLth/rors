@@ -1,3 +1,4 @@
+TO DO:
 - Establish tests
 - Try out pkgdown
 - Try out GitLab CI/CD
@@ -7,4 +8,9 @@
 - Reduce hard imports (either entirely or make them suggests)
 - Improve conditions printing by implementing console width dependent line breaks
 - Implement a custom print method for ORS R6 classes?
+- Try out callr for docker start notify_when_ready?
+- Find ways to properly catch command line progress bars
+- Try out docker pulling ORS instead of git cloning
+
+DONE:
 - Add a way to change the container/image name? (Useful for tests)

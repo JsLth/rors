@@ -7,13 +7,13 @@ skip_if_not_explicit <- function() {
   testthat::skip_on_cran()
   testthat::skip_on_travis()
   testthat::skip_on_ci()
-  testthat::skip_if_not(interactive())
+  testthat::skip_if_not(interactive(), "Test call not explicit")
 }
 
 
 skip_if_ors_not_ready <- function() {
   if (isFALSE(ors_ready(force = TRUE))) {
-    skip("ORS service is not reachable.")
+    testthat::skip("ORS service is not reachable.")
   }
 }
 
@@ -50,6 +50,7 @@ expect_container_start <- function(object) {
 
 expect_container_stop <- function(object) {
   if (!object$container_running) {
+    warning("Container is not running.")
     object$start_container(wait = TRUE)
   }
 
@@ -76,7 +77,7 @@ expect_container_build <- function(object) {
   }
 
   if (object$image_built) {
-    warning("$image_up did not build the image because it was already built")
+    warning("Image already built")
   }
 
   object$image_up(wait = TRUE, verbose = FALSE)
@@ -92,7 +93,7 @@ expect_container_build <- function(object) {
 
 expect_container_down <- function(object) {
   if (!object$container_exists) {
-    warning("Container is already built and running")
+    warning("Container is already down.")
     invisible()
   }
 

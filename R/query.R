@@ -61,7 +61,7 @@ query_ors_directions <- function(source,
 
 
 query_ors_matrix <- function(source,
-                             destinations,
+                             destination,
                              profile,
                              metrics,
                              units,
@@ -70,7 +70,7 @@ query_ors_matrix <- function(source,
   source_list <- dplyr::group_by(source, dplyr::row_number()) %>%
     dplyr::group_split(.keep = FALSE) %>%
     lapply(as.numeric)
-  destinations_list <- dplyr::group_by(destinations, dplyr::row_number()) %>%
+  destinations_list <- dplyr::group_by(destination, dplyr::row_number()) %>%
     dplyr::group_split(.keep = FALSE) %>%
     lapply(as.numeric)
 
@@ -79,7 +79,7 @@ query_ors_matrix <- function(source,
                       source_list,
                       after = 0)
 
-  dest_index <- if (nrow(destinations) > 1) {
+  dest_index <- if (nrow(destination) > 1) {
     seq(nrow(source), length(locations) - 1)
   } else {
     list(nrow(source))

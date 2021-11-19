@@ -10,9 +10,12 @@ options(
   cli.spinner_ascii = "line",
   cli.progress_bar_style = "fillsquares",
   cli.progress_bar_style_unicode = "fillsquares",
-  cli.progress_bar_style_ascii = "fillsquares",
-  active_ors = "ors-app"
+  cli.progress_bar_style_ascii = "fillsquares"
 )
+
+if (is.null(getOption("ors_name"))) {
+  options(ors_name = "ors-app")
+}
 
 
 #' OpenRouteService backend control panel
@@ -71,6 +74,11 @@ ORSInstance <- R6::R6Class(
   ),
   public = list(
 
+    #' @field active States if the R6 object is active or if it has been
+    #' killed using \code{$remove}. If \code{FALSE}, the fields and methods
+    #' of \code{ORSInstance} lose their functionality.
+    active = NULL,
+
     #' @description
     #' Initialize \code{\link{ORSInstance}} as well as \code{\link{ORSExtract}},
     #' \code{\link{ORSConfig}}, \code{\link{ORSSetupSettings}} and
@@ -95,10 +103,13 @@ ORSInstance <- R6::R6Class(
       dir <- private$.clone_ors_repo(dir)
       assign("mdir", dir, envir = pkg_cache)
 
+      self$active <- TRUE
       self$docker
       self$extract
       self$setup_settings
       self$config
+
+      invisible(self)
     },
 
     #' @description Changes the necessary settings and configurations for the
@@ -139,19 +150,22 @@ ORSInstance <- R6::R6Class(
                              max_memory = NULL,
                              wait = TRUE,
                              run = TRUE) {
-      ORSInstance$funs$init_setup(self, profiles, extract, provider, init_memory, max_memory, wait, run)
+      ORSInstance$funs$initial_setup(self, profiles, extract, provider, init_memory, max_memory, wait, run)
     },
     
     #' @description Take down all Docker containers and images and wipe the
     #' OpenRouteService main directory.
+    #' @param ignore_image Specifies if the ORS image should be removed.
+    #' Removing the image may have implications for other ORS instances or
+    #' simply fail if a running container is using the same image.
     #' @details This function removes ORS entirely. It should only be used as a
     #' means to "uninstall" OpenRouteService.
-    remove = function() ORSInstance$funs$remove(self)
+    remove = function(ignore_image = TRUE) ORSInstance$funs$remove(self, ignore_image)
 
   ),
   private = list(
     .subclasses = list(),
-    .get_subclass = function(env) ORSInstance$funs$get_subclass(private, env),
+    .get_subclass = function(env) ORSInstance$funs$get_subclass(self, private, env),
     .clone_ors_repo = function(dir) ORSInstance$funs$clone_ors_repo(self, dir)
   ),
   cloneable = FALSE
@@ -223,7 +237,7 @@ ORSInstance$funs$docker <- function(private, arg) {
 }
 
 
-ORSInstance$funs$init_setup <- function(self,
+ORSInstance$funs$initial_setup <- function(self,
                                         profiles = "car",
                                         extract = self$extract$path,
                                         provider = "geofabrik",
@@ -231,6 +245,11 @@ ORSInstance$funs$init_setup <- function(self,
                                         max_memory = NULL,
                                         wait = TRUE,
                                         run = TRUE) {
+  if (isTRUE(self$active)) {
+    cli::cli_warn("{.cls ORSInstance} is not active.")
+    return()
+  }
+
   if (self$docker$service_ready == "TRUE" ||
       (dir.exists(file.path(self$dir, "docker/graphs")) &&
        is.null(self$docker$error_log))) {
@@ -271,9 +290,17 @@ ORSInstance$funs$init_setup <- function(self,
 }
 
 
-ORSInstance$funs$remove <- function(self) {
+ORSInstance$funs$remove <- function(self, ignore_image) {
+  if (isFALSE(self$active)) {
+    cli::cli_warn("{.cls ORSInstance} is not active.")
+    return()
+  }
+
   if (self$docker$container_exists) self$docker$container_down()
-  if (self$docker$image_built) self$docker$rm_image()
+  if (isFALSE(ignore_image)) {
+    if (self$docker$image_built) self$docker$rm_image()
+  }
+
   if (dir.exists(self$dir)) {
     cli::cli_progress_step("Removing main directory...",
                            msg_done = "Removed main directory.",
@@ -285,16 +312,27 @@ ORSInstance$funs$remove <- function(self) {
   cli::cli_progress_step("Terminating R6 class...",
                          msg_done = "Terminated R6 class.",
                          msg_failed = "Cannot remove R6 class object.")
-  var_name <- strsplit(deparse(sys.call(which = 1)), "\\$")[[1]][1]
-  rm(list = var_name, envir = parent.frame(n = 2))
+
+  self$active <- FALSE
+  suppressWarnings({
+    self$extract <- "refresh"
+    self$config <- "refresh"
+    self$setup_settings <- "refresh"
+    self$docker <- "refresh"
+  })
 }
 
 
 # Private methods -------------------------------------------------------------
 
-ORSInstance$funs$get_subclass <- function(private, env) {
+ORSInstance$funs$get_subclass <- function(self, private, env) {
   env_name <- deparse(substitute(env, env = parent.frame()))
-  private$.subclasses[[env_name]] <- env$new()
+  if (isTRUE(self$active)) {
+    private$.subclasses[[env_name]] <- env$new()
+  } else {
+    cli::cli_warn("{.cls ORSInstance} is not active.")
+    private$.subclasses[[env_name]] <- NULL
+  }
 }
 
 

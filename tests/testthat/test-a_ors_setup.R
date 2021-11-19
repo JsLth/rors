@@ -15,7 +15,9 @@ test_that("Test Docker availability", {
 
 skip_if(Sys.info()["sysname"] == "Linux" && isFALSE(privileged))
 skip_if_offline("github.com")
-ors <- ORSInstance$new()
+
+temp_dir <- dir.create("fixtures", showWarnings = TRUE)
+ors <- ORSInstance$new(dir = "fixtures")
 
 test_that("Test ORS Setup classes", {
   expect_s3_class(ors, "R6")
@@ -23,7 +25,7 @@ test_that("Test ORS Setup classes", {
   expect_s3_class(ors$config, "R6")
   expect_s3_class(ors$setup_settings, "R6")
   expect_s3_class(ors$docker, "R6")
-  expect_equal(ors$dir, normalizePath("~/openrouteservice-master", winslash = "/"))
+  expect_true(dir.exists(ors$dir))
 })
 
 test_that("Test ORSExtract", {
@@ -34,7 +36,6 @@ test_that("Test ORSExtract", {
   expect_true(file.exists(extract$path))
   expect_type(extract$size, "double")
 })
-
 
 test_that("Test ORSConfig", {
   config <- ors$config
@@ -72,6 +73,9 @@ test_that("Test ORSSetupSettings", {
   check_gb()
   setup_settings$graph_building <- NA
   check_gb()
+
+  setup_settings$ors_name <- "test-ors"
+  setup_settings$ors_port <- 80
 })
 
 test_that("Test ORSDockerInterface", {
@@ -84,14 +88,19 @@ test_that("Test ORSDockerInterface", {
   expect_type(docker$error_log, "NULL")
 })
 
-setup_done <- test_that("Test container setup", {
-  skip("Skip until it is sorted out how to properly implement this.")
-  # These functions take long and can change docker setups and thus should not
-  # be run automatically
-  skip_if_not_explicit()
-  expect_container_start(ors$docker)
-  expect_container_stop(ors$docker)
+test_that("Test container setup", {
+  at <- file.info(file.path(logs_dir, "ors/ors.log"))$ctime
+  bt <- format(at, tz = "UTC")
+  ct <- as.Date(bt)
+  warning(at)
+  warning(bt)
+  warning(ct)
+
   expect_container_build(ors$docker)
+  expect_container_stop(ors$docker)
+  expect_container_start(ors$docker)
+
+  expect_equal(getOption("ors_name"), "test-ors")
 })
-print(getwd())
-save(setup_done, file = "fixtures/setupdone")
+
+unlink("fixtures", recursive = TRUE)

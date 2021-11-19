@@ -83,6 +83,7 @@ ORSConfig <- R6::R6Class(
       }
 
       self$ors_config <- config
+      self$active <- TRUE
 
       invisible(self)
     },

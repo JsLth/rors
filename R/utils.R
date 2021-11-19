@@ -12,11 +12,10 @@ utils::globalVariables(".")
 
 
 file.open <- function(file) {
-  os <- .Platform$OS.type
   file <- shQuote(file)
-  if (os == "unix") {
+  if (is.linux()) {
     system2("xdg-open", file, wait = FALSE)
-  } else if (os == "windows") {
+  } else if (is.windows()) {
     system2("open", file, wait = FALSE)
   }
 }
@@ -153,7 +152,7 @@ docker_installed <- function() {
 #' to enable docker commands from within R. Doing this, either manually or by
 #' using this function, is a requirement for using \code{\link{ORSInstance}}.
 #' @param run If \code{FALSE}, the function will only return a logical vector
-#' and will not change group memberships.
+#' and will not change group membership.
 #' @details For details on what this function does and what security
 #' implications it might have, refer to Docker's
 #' \href{https://docs.docker.com/engine/install/linux-postinstall/}{post-installation guide}

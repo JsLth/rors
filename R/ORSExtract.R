@@ -32,6 +32,7 @@ ORSExtract <- R6::R6Class(
     #' existing extract in data path.
     initialize = function() {
       private$.set_current_extract()
+      self$active <- TRUE
       invisible(self)
     },
 
