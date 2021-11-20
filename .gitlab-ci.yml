@@ -26,8 +26,8 @@ building:
   stage: build
   script:
     - mkdir -p $R_LIBS_USER
-    - cmd.exe /C R -e remotes::install_deps(dependencies = TRUE, lib = Sys.getenv('R_LIBS_USER'))
-    - cmd.exe /C R -e devtools::check(vignettes = FALSE, check_dir = Sys.getenv('CHECK_DIR'), args = '--no-tests')
+    - cmd.exe /C R -e "remotes::install_deps(dependencies = TRUE, lib = Sys.getenv('R_LIBS_USER'))"
+    - cmd.exe /C R -e "devtools::check(vignettes = FALSE, check_dir = Sys.getenv('CHECK_DIR'), args = '--no-tests')"
   cache:
     paths:
       - $R_LIBS_USER
@@ -39,8 +39,8 @@ testing:
     only:
         - master
     script:
-        - cmd.exe /C R -e install.packages('DT')
-        - cmd.exe /C R -e covr::gitlab(quiet = FALSE)
+        - cmd.exe /C "R -e install.packages('DT')"
+        - cmd.exe /C "R -e covr::gitlab(quiet = FALSE)"
     artifacts:
         paths:
             - public
