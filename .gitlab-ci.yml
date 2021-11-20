@@ -18,10 +18,14 @@ variables:
   R_LIBS_USER: "$CI_PROJECT_DIR/ci/lib"
   CHECK_DIR: "$CI_PROJECT_DIR/ci/logs"
 
+before_script:
+  - docker info
+  - Get-WmiObject -Class Win32_ComputerSystem
+
 building:
   stage: build
   script:
-    - mkdir -p $R_LIBS_USER $CHECK_DIR
+    - mkdir -p $R_LIBS_USER
     - R -e 'remotes::install_deps(dependencies = TRUE, lib = Sys.getenv("R_LIBS_USER"))'
     - R -e 'devtools::check(vignettes = FALSE, check_dir = Sys.getenv("CHECK_DIR"), args = "--no-tests")'
   cache:

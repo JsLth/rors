@@ -46,8 +46,8 @@ ORSSetupSettings <- R6::R6Class(
     #' to your system, init and max memory refer to the allocated memory of
     #' ORS.
     memory = list(
-      total_memory = memuse::Sys.meminfo()$totalram@size,
-      free_memory = memuse::Sys.meminfo()$freeram@size,
+      total_memory = NULL,
+      free_memory = NULL,
       init_memory = NULL,
       max_memory = NULL
     ),
@@ -58,6 +58,8 @@ ORSSetupSettings <- R6::R6Class(
       self$compose <- private$.read_dockercompose()
       private$.disable_auto_deletion()
       self$graph_building <- NA
+      self$memory$total_memory <- get_memory_info()$total
+      self$memory$free_memory <- get_memory_info()$free
       self$active <- TRUE
       invisible(self)
     },
@@ -249,7 +251,7 @@ ORSSetupSettings$funs$allocate_memory <- function(self, private, init = NULL, ma
   }
 
   gc(verbose = FALSE)
-  free_mem <- memuse::Sys.meminfo()$freeram@size
+  free_mem <- self$memory$free_memory
 
   if (free_mem * 0.8 - max <= 0) {
     cli::cli_warn(paste("You are allocating more than your available memory.",

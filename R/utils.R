@@ -32,6 +32,33 @@ file_path_up <- function(path, times_back = NULL) {
 }
 
 
+get_memory_info <- function() {
+  if (is.windows()) {
+    cmd <- shQuote(
+      paste("(Get-WmiObject Win32_OperatingSystem)",
+            "| %{\"total: {0}`nfree: {1}\"",
+            "-f $_.totalvisiblememorysize, $_.freephysicalmemory}")
+    )
+    mem <- system2("powershell", cmd, stdout = TRUE) %>%
+      gsub(" Physical Memory", "", .) %>%
+      gsub("[a-z]$", "\\L", ., perl = TRUE) %>%
+      strsplit(": ") %>%
+      do.call(cbind, .)
+    colnames(mem) <- mem[1, ]
+    mem <- mem[2, ]
+    lapply(mem, function(x) as.numeric(x) / 1048576)
+  } else if (is.linux()) {
+    mem <- system2("free", "--kibi", stdout = TRUE) %>%
+      gsub("\\s+", ",", .) %>%
+      paste(collapse = "\n") %>%
+      read.csv(text = .) %>%
+      .[1, c("total", "free")] %>%
+      lapply(function(x) x / 1048576)
+    mem
+  }
+}
+
+
 relativePath <- function(targetdir, basedir = getwd()) {
   relative_path <- gsub(pattern = sprintf("%s|%s/", basedir, basedir),
                         replacement = "",

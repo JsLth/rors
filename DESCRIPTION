@@ -26,7 +26,6 @@ Imports:
     purrr,
     R6,
     sf,
-    memuse,
     dplyr,
     tidyr,
     osmextract (>= 0.2.0),
