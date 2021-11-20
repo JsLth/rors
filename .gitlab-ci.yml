@@ -3,6 +3,8 @@ image: rocker/tidyverse
 default:
   tags:
     - docker
+    - shell
+    - specific
 
 stages:
   - build
