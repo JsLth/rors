@@ -1,15 +1,31 @@
 image: rocker/tidyverse
 
+default:
+  tags:
+    - docker
+
 stages:
   - build
   - test
   - deploy
 
+before_script:
+  - docker info
+
+variables:
+  R_LIBS_USER: "$CI_PROJECT_DIR/ci/lib"
+  CHECK_DIR: "$CI_PROJECT_DIR/ci/logs"
+
 building:
   stage: build
   script:
-    - R -e 'remotes::install_deps(dependencies = TRUE)'
-    - R -e 'devtools::check(vignettes = FALSE)'
+    - docker info
+    - mkdir -p $R_LIBS_USER $BUILD_LOGS_DIR
+    - R -e 'remotes::install_deps(dependencies = TRUE, lib = Sys.getenv("R_LIBS_USER"))'
+    - R -e 'devtools::check(vignettes = FALSE, check_dir = Sys.getenv("CHECK_DIR"), args = "--no-tests")'
+  cache:
+    paths:
+      - $R_LIBS_USER
 
 testing:
     stage: test
