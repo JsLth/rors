@@ -15,6 +15,7 @@ stages:
 variables:
   R_LIBS_USER: "$CI_PROJECT_DIR/ci/lib"
   CHECK_DIR: "$CI_PROJECT_DIR/ci/logs"
+  repos: "https://cran.rstudio.com"
 
 before_script:
   - docker info
@@ -24,7 +25,6 @@ building:
   stage: build
   script:
     - mkdir -p $R_LIBS_USER
-    - cmd.exe /C r -e "if (!normalizePath(Sys.getenv('R_LIBS_USER'), winslash = '/') %in% .libPaths()) stop('wrong lib path')"
     - cmd.exe /C R -e "install.packages('devtools', lib = Sys.getenv('R_LIBS_USER'), dependencies = TRUE)"
     - cmd.exe /C R -e "remotes::install_deps(dependencies = TRUE, lib = Sys.getenv('R_LIBS_USER'))"
     - cmd.exe /C R -e "devtools::check(vignettes = FALSE, check_dir = Sys.getenv('CHECK_DIR'), args = '--no-tests')"
