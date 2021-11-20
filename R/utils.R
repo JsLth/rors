@@ -39,22 +39,21 @@ get_memory_info <- function() {
             "| %{\"total: {0}`nfree: {1}\"",
             "-f $_.totalvisiblememorysize, $_.freephysicalmemory}")
     )
-    mem <- system2("powershell", cmd, stdout = TRUE) %>%
+    system2("powershell", cmd, stdout = TRUE) %>%
       gsub(" Physical Memory", "", .) %>%
       gsub("[a-z]$", "\\L", ., perl = TRUE) %>%
       strsplit(": ") %>%
-      do.call(cbind, .)
-    colnames(mem) <- mem[1, ]
-    mem <- mem[2, ]
-    lapply(mem, function(x) as.numeric(x) / 1048576)
+      do.call(cbind, .) %>%
+      magrittr::set_colnames(.[1, ]) %>%
+      magrittr::extract(2, ) %>%
+      lapply(function(x) as.numeric(x) / 1048576)
   } else if (is.linux()) {
-    mem <- system2("free", "--kibi", stdout = TRUE) %>%
+    system2("free", args = "--kibi", stdout = TRUE) %>%
       gsub("\\s+", ",", .) %>%
       paste(collapse = "\n") %>%
-      read.csv(text = .) %>%
-      .[1, c("total", "free")] %>%
+      utils::read.csv(text = .) %>%
+      magrittr::extract(1, c("total", "free")) %>%
       lapply(function(x) x / 1048576)
-    mem
   }
 }
 
