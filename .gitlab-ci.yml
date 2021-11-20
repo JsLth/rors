@@ -1,5 +1,3 @@
-image: rocker/tidyverse
-
 # Pipeline is supposed to only run on project-specific runners using a shell
 # executor and actively running docker. This is a requirement for R CMD check
 # and tests as they require docker to be running.
@@ -21,6 +19,7 @@ variables:
 before_script:
   - docker info
   - Get-WmiObject -Class Win32_ComputerSystem
+  - cmd.exe /C R -e "install.packages('devtools', dependencies = TRUE)"
 
 building:
   stage: build
