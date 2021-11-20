@@ -11,9 +11,6 @@ stages:
   - test
   - deploy
 
-before_script:
-  - docker info
-
 variables:
   R_LIBS_USER: "$CI_PROJECT_DIR/ci/lib"
   CHECK_DIR: "$CI_PROJECT_DIR/ci/logs"
