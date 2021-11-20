@@ -1,5 +1,8 @@
 image: rocker/tidyverse
 
+# Pipeline is supposed to only run on project-specific runners using a shell
+# executor and actively running docker. This is a requirement for R CMD check
+# and tests as they require docker to be running.
 default:
   tags:
     - docker
@@ -11,9 +14,6 @@ stages:
   - test
   - deploy
 
-before_script:
-  - docker info
-
 variables:
   R_LIBS_USER: "$CI_PROJECT_DIR/ci/lib"
   CHECK_DIR: "$CI_PROJECT_DIR/ci/logs"
@@ -21,8 +21,7 @@ variables:
 building:
   stage: build
   script:
-    - docker info
-    - mkdir -p $R_LIBS_USER $BUILD_LOGS_DIR
+    - mkdir -p $R_LIBS_USER $CHECK_DIR
     - R -e 'remotes::install_deps(dependencies = TRUE, lib = Sys.getenv("R_LIBS_USER"))'
     - R -e 'devtools::check(vignettes = FALSE, check_dir = Sys.getenv("CHECK_DIR"), args = "--no-tests")'
   cache:
