@@ -166,7 +166,7 @@ ORSInstance <- R6::R6Class(
   private = list(
     .subclasses = list(),
     .get_subclass = function(env) ORSInstance$funs$get_subclass(self, private, env),
-    .clone_ors_repo = function(dir) ORSInstance$funs$clone_ors_repo(self, dir)
+    .clone_ors_repo = function(dir) ORSInstance$funs$clone_ors_repo(dir)
   ),
   cloneable = FALSE
 )
@@ -247,7 +247,7 @@ ORSInstance$funs$initial_setup <- function(self,
                                         run = TRUE) {
   if (isTRUE(self$active)) {
     cli::cli_warn("{.cls ORSInstance} is not active.")
-    return()
+    invokeRestart("abort")
   }
 
   if (self$docker$service_ready == "TRUE" ||
@@ -293,7 +293,7 @@ ORSInstance$funs$initial_setup <- function(self,
 ORSInstance$funs$remove <- function(self, ignore_image) {
   if (isFALSE(self$active)) {
     cli::cli_warn("{.cls ORSInstance} is not active.")
-    return()
+    invokeRestart("abort")
   }
 
   if (self$docker$container_exists) self$docker$container_down()
@@ -336,7 +336,7 @@ ORSInstance$funs$get_subclass <- function(self, private, env) {
 }
 
 
-ORSInstance$funs$clone_ors_repo <- function(self, dir) {
+ORSInstance$funs$clone_ors_repo <- function(dir) {
   download_url <- paste0("https://github.com/",
                          "GIScience/openrouteservice/archive/",
                          "refs/heads/master.zip")
