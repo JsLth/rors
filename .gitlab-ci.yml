@@ -57,8 +57,8 @@ testing:win:
   stage: test
   rules:
     - if: '$CI_RUNNER_DESCRIPTION == "orsr-win-runner"'
-  allow_failure: true
-  when: on_success
+      when: on_success
+      allow_failure: true
   only:
     - master
   script:
@@ -73,8 +73,8 @@ testing:linux:
   stage: test
   rules:
     - if: '$CI_RUNNER_DESCRIPTION == "orsr-linux-runner"'
-  allow_failure: true
-  when: on_success
+      when: on_success
+      allow_failure: true
   only:
     - master
   script:
