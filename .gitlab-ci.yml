@@ -34,9 +34,6 @@ building:win:
     - cmd.exe /C R -e "install.packages('devtools', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/', dependencies = TRUE)"
     - cmd.exe /C R -e "remotes::install_deps(dependencies = TRUE, lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/')"
     - cmd.exe /C R -e "devtools::check(vignettes = FALSE, check_dir = Sys.getenv('CHECK_DIR'), args = '--no-tests')"
-  cache:
-    paths:
-      - $R_LIBS_USER
 
 #building:linux:
 #  stage: build
