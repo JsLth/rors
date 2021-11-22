@@ -59,6 +59,7 @@ testing:win:
     - if: '$CI_RUNNER_DESCRIPTION == "orsr-win-runner"'
       when: on_success
       allow_failure: true
+    - if: '$CI_COMMIT_REF_NAME == "master"'
   only:
     - master
   script:
@@ -75,6 +76,7 @@ testing:linux:
     - if: '$CI_RUNNER_DESCRIPTION == "orsr-linux-runner"'
       when: on_success
       allow_failure: true
+    - if: '$CI_COMMIT_REF_NAME == "master"'
   only:
     - master
   script:
