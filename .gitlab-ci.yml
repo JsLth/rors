@@ -60,8 +60,6 @@ testing:win:
       when: on_success
       allow_failure: true
     - if: '$CI_COMMIT_REF_NAME == "master"'
-  only:
-    - master
   script:
     - cmd.exe /C R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
     - cmd.exe /C R -e "covr::gitlab(quiet = FALSE)"
@@ -77,8 +75,6 @@ testing:linux:
       when: on_success
       allow_failure: true
     - if: '$CI_COMMIT_REF_NAME == "master"'
-  only:
-    - master
   script:
     - R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
     - R -e "covr::gitlab(quiet = FALSE)"
