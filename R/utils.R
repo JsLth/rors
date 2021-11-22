@@ -36,16 +36,12 @@ get_memory_info <- function() {
   if (is.windows()) {
     cmd <- shQuote(
       paste("(Get-WmiObject Win32_OperatingSystem)",
-            "| %{\"total: {0}`nfree: {1}\"",
+            "| %{{'\"total\": {0},\n\"free\": {1}}'",
             "-f $_.totalvisiblememorysize, $_.freephysicalmemory}")
     )
     system2("powershell", cmd, stdout = TRUE) %>%
-      gsub(" Physical Memory", "", .) %>%
-      gsub("[a-z]$", "\\L", ., perl = TRUE) %>%
-      strsplit(": ") %>%
-      do.call(cbind, .) %>%
-      magrittr::set_colnames(.[1, ]) %>%
-      magrittr::extract(2, ) %>%
+      paste(collapse = "\n") %>%
+      jsonlite::fromJSON() %>%
       lapply(function(x) as.numeric(x) / 1048576)
   } else if (is.linux()) {
     system2("free", args = "--kibi", stdout = TRUE) %>%

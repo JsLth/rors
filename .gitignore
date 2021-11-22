@@ -6,7 +6,6 @@
 
 # Session Data files
 .RData
-.Ruserdata
 
 # User-specific files
 .Ruserdata
@@ -45,6 +44,10 @@ vignettes/*.pdf
 
 # ORS
 openrouteservice-master
+
+# GitLab CI directories
+public
+ci
 
 # R Environment Variables
 .Renviron

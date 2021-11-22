@@ -30,14 +30,18 @@ test_that("Test ORS Setup classes", {
 test_that("Test ORSExtract", {
   extract <- ors$extract
   skip_if_not_installed("osmextract")
+  extract$get_extract("Arnsberg", "bbbike")
   expect_type(extract$get_extract("Cologne", "geofabrik"), "character")
   expect_type(extract$path, "character")
   expect_true(file.exists(extract$path))
   expect_type(extract$size, "double")
+  ors$extract <- "refresh"
 })
 
 test_that("Test ORSConfig", {
+  ors$config <- "refresh"
   config <- ors$config
+  config$open_config()
   expect_type(config$active_profiles, "list")
   expect_type(config$ors_config, "list")
   config$active_profiles <- "car"

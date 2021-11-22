@@ -1,6 +1,6 @@
 # Pipeline is supposed to only run on project-specific runners using a shell
 # executor and actively running docker. This is a requirement for R CMD check
-# and tests as they require docker to be running.
+# and tests as they require docker to be running successfully.
 default:
   tags:
     - docker
@@ -13,15 +13,24 @@ stages:
   - deploy
 
 variables:
-  R_LIBS_USER: "$CI_PROJECT_DIR/ci/lib"
-  CHECK_DIR: "$CI_PROJECT_DIR/ci/logs"
+  R_LIBS_USER:
+    value: "$CI_PROJECT_DIR/ci/lib"
+    description: "Temporary R package library."
+  CHECK_DIR:
+    value: "$CI_PROJECT_DIR/ci/logs"
+    description: "Temporary logs directory for R CMD check."
+  GITLAB_CI:
+    value: "TRUE"
+    description: Specifies that commands are run on GitLab CI.
 
 before_script:
   - docker info
-  - Get-WmiObject -Class Win32_ComputerSystem
+  - docker system info
 
-building:
+building:win:
   stage: build
+  tags:
+    - windows
   script:
     - mkdir -p $R_LIBS_USER
     - cmd.exe /C R -e "install.packages('devtools', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/', dependencies = TRUE)"
@@ -31,31 +40,64 @@ building:
     paths:
       - $R_LIBS_USER
 
-testing:
+building:linux:
+  stage: build
+  tags:
+    - linux
+  script:
+    - mkdir -p $R_LIBS_USER
+    - R -e "install.packages('devtools', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/', dependencies = TRUE)"
+    - R -e "remotes::install_deps(dependencies = TRUE, lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/')"
+    - R -e "devtools::check(vignettes = FALSE, check_dir = Sys.getenv('CHECK_DIR'), args = '--no-tests')"
+  cache:
+    paths:
+      - $R_LIBS_USER
+
+testing:win:
     stage: test
+    tags:
+      - windows
     allow_failure: true
     when: on_success
     only:
-        - master
+      - master
     script:
-        - cmd.exe /C "R -e install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
-        - cmd.exe /C "R -e covr::gitlab(quiet = FALSE)"
+      - cmd.exe /C R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
+      - cmd.exe /C R -e "covr::gitlab(quiet = FALSE)"
     artifacts:
         paths:
-            - public
+          - public
+        when: on_success
+
+testing:linux:
+    stage: test
+    tags:
+      - linux
+    allow_failure: true
+    when: on_success
+    only:
+      - master
+    script:
+      - R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
+      - R -e "covr::gitlab(quiet = FALSE)"
+    artifacts:
+        paths:
+          - public
+        when: on_success
 
 # To produce a code coverage report as a GitLab page see
 # https://about.gitlab.com/2016/11/03/publish-code-coverage-report-with-gitlab-pages/
 
 pages:
     stage: deploy
+    allow_failure: true
     dependencies:
-        - testing
+      - testing
     script:
-        - ls
+      - ls
     artifacts:
         paths:
-            - public
+          - public
         expire_in: 30 days
     only:
-        - master
+      - master

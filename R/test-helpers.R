@@ -1,5 +1,10 @@
 # Skips -----------------------------------------------------------------------
 
+skip_if_on_ci <- function() {
+  on_ci <- as.logical(Sys.getenv("GITLAB_CI"))
+  skip_if(isTRUE(on_ci), message = "On GitLab CI")
+}
+
 skip_if_not_explicit <- function() {
   testthat::skip_on_appveyor()
   testthat::skip_on_bioc()
