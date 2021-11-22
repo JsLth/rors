@@ -240,7 +240,7 @@ ORSConfig$funs$set_current_extract <- function(self, private) {
 
 ORSConfig$funs$rm_old_extracts <- function(self, private) {
   data_dir <- file.path(self$dir, "docker/data")
-  extract_occurences <- private$.identify_extract_files
+  extract_occurences <- private$.identify_extract_files()
 
   if (sum(extract_occurences) > 0) {
     cli::cli_alert_info("Removing old extracts...")

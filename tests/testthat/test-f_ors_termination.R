@@ -1,5 +1,8 @@
 test_that("Test ORS wipe", {
-  dir.create("fixtures")
+  if (!dir.exists(temp_dir <- "fixtures")) {
+    temp_dir <- dir.create("fixtures", showWarnings = TRUE)
+  }
+
   ors <- ORSInstance$new(dir = "fixtures")
   dir <- ors$dir
 
@@ -18,9 +21,8 @@ test_that("Test ORS wipe", {
   expect_equal(suppressWarnings(ors$config), NULL)
   expect_equal(suppressWarnings(ors$setup_settings), NULL)
   expect_equal(suppressWarnings(ors$docker), NULL)
-  expect_equal(suppressWarnings(ors$initial_setup()))
-  expect_equal(suppressWarnings(ors$remove()))
   expect_warning(ors$extract, "not active")
   expect_warning(ors$initial_setup(), "not active")
   expect_warning(ors$remove(), "not active")
+  unlink("fixtures", recursive = TRUE)
 })

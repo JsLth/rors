@@ -143,8 +143,8 @@ ORSInstance <- R6::R6Class(
     #' and runs the setup if not. If `FALSE`, only returns logicals to check
     #' whether the initial setup is done or not.
 
-    initial_setup = function(profiles = "car",
-                             extract = self$extract$path,
+    initial_setup = function(profiles = NULL,
+                             extract = NULL,
                              provider = NULL,
                              init_memory = NULL,
                              max_memory = NULL,
@@ -259,23 +259,21 @@ ORSInstance$funs$initial_setup <- function(self,
   }
 
   # Initialize extract --------------------------------------------------
-  if (!missing(extract)) {
-    if (dir.exists(extract)) {
+  if (!is.null(extract)) {
+    if (file.exists(extract)) {
       self$extract$set_extract(extract)
     } else {
       self$extract$get_extract(extract, provider = provider)
     }
-  } else {
-    if (is.null(extract)) {
-      cli::cli_abort(paste("Either pass an extract path or set",
-                           "an extract using{.cls ORSExtract}"))
-    }
+  } else if (is.null(self$extract$path)) {
+    cli::cli_abort("No extract set. Please pass one or set it using $extract.")
   }
 
   # Set up config ---------------------------------------------------
-  self$config$ors_config$ors$services$routing$profiles$active <- as.list(profiles)
-
-  self$config$save_config()
+  if (!is.null(profiles)) {
+    self$config$ors_config$ors$services$routing$profiles$active <- as.list(profiles)
+    self$config$save_config()
+  }
 
   # Set up Docker -------------------------------------------------------
   self$setup_settings$graph_building <- "build"
@@ -287,6 +285,8 @@ ORSInstance$funs$initial_setup <- function(self,
 
   # Upddate ORSConfig
   self$config <- "refresh"
+
+  invisible(TRUE)
 }
 
 

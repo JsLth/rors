@@ -15,7 +15,10 @@ test_that("Test Docker availability", {
 
 skip_if_offline("github.com")
 
-temp_dir <- dir.create("fixtures", showWarnings = TRUE)
+if (!dir.exists(temp_dir <- "fixtures")) {
+  temp_dir <- dir.create("fixtures", showWarnings = TRUE)
+}
+
 ors <- ORSInstance$new(dir = "fixtures")
 
 test_that("Test ORS Setup classes", {
@@ -30,7 +33,7 @@ test_that("Test ORS Setup classes", {
 test_that("Test ORSExtract", {
   extract <- ors$extract
   skip_if_not_installed("osmextract")
-  extract$get_extract("Arnsberg", "bbbike")
+  extract$get_extract("Arnsberg", "openstreetmap_fr")
   expect_type(extract$get_extract("Cologne", "geofabrik"), "character")
   expect_type(extract$path, "character")
   expect_true(file.exists(extract$path))
@@ -92,14 +95,7 @@ test_that("Test ORSDockerInterface", {
 })
 
 test_that("Test container setup", {
-  at <- file.info(file.path(logs_dir, "ors/ors.log"))$ctime
-  bt <- format(at, tz = "UTC")
-  ct <- as.Date(bt)
-  warning(at)
-  warning(bt)
-  warning(ct)
-
-  expect_container_build(ors$docker)
+  expect_container_build(ors$docker, init_setup = TRUE)
   expect_container_stop(ors$docker)
   expect_container_start(ors$docker)
 

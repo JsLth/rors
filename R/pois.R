@@ -211,12 +211,9 @@ get_nearest_pois <- function(source,
       number_of_points_within_radius <- pois_within_radius %>%
         length() %>%
         seq_len() %>%
-        purrr::map(
-          ~n.nearest.pois(
-            source[..1, ],
-            pois_within_radius[[..1]],
-            number_of_points)
-        ) %>%
+        purrr::map(~n.nearest.pois(source[..1, ],
+                                   pois_within_radius[[..1]],
+                                   number_of_points)) %>%
         purrr::flatten()
       return(number_of_points_within_radius)
     }

@@ -70,7 +70,7 @@ expect_container_stop <- function(object) {
 }
 
 
-expect_container_build <- function(object) {
+expect_container_build <- function(object, init_setup = TRUE) {
   if (object$container_running) {
     warning("Container already running.")
     object$stop_container()
@@ -85,7 +85,11 @@ expect_container_build <- function(object) {
     warning("Image already built")
   }
 
-  object$image_up(wait = TRUE, verbose = FALSE)
+  if (!init_setup) {
+    object$image_up(wait = TRUE, verbose = FALSE)
+  } else {
+    object$initial_setup()
+  }
 
   testthat::expect(
     isTRUE(object$image_built && object$container_exists && object$container_running),

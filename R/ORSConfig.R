@@ -139,7 +139,9 @@ ORSConfig$funs$save_config <- function(self) {
 
 
 ORSConfig$funs$open_config <- function(self) {
-  file.open(normalizePath(self$path, winslash = "/"))
+  if (interactive()) {
+    file.open(normalizePath(self$path, winslash = "/"))
+  }
 }
 
 
