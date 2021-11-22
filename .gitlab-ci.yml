@@ -29,8 +29,8 @@ before_script:
 
 building:win:
   stage: build
-  tags:
-    - windows
+  rules:
+    - if: '$CI_RUNNER_DESCRIPTION == "orsr-win-runner"'
   script:
     - mkdir -p $R_LIBS_USER
     - cmd.exe /C R -e "install.packages('devtools', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/', dependencies = TRUE)"
@@ -42,8 +42,8 @@ building:win:
 
 building:linux:
   stage: build
-  tags:
-    - linux
+  rules:
+    - if: '$CI_RUNNER_DESCRIPTION == "orsr-linux-runner"'
   script:
     - mkdir -p $R_LIBS_USER
     - R -e "install.packages('devtools', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/', dependencies = TRUE)"
@@ -54,64 +54,64 @@ building:linux:
       - $R_LIBS_USER
 
 testing:win:
-    stage: test
-    tags:
-      - windows
-    allow_failure: true
+  stage: test
+  rules:
+    - if: '$CI_RUNNER_DESCRIPTION == "orsr-win-runner"'
+  allow_failure: true
+  when: on_success
+  only:
+    - master
+  script:
+    - cmd.exe /C R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
+    - cmd.exe /C R -e "covr::gitlab(quiet = FALSE)"
+  artifacts:
+    paths:
+      - public
     when: on_success
-    only:
-      - master
-    script:
-      - cmd.exe /C R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
-      - cmd.exe /C R -e "covr::gitlab(quiet = FALSE)"
-    artifacts:
-      paths:
-        - public
-      when: on_success
 
 testing:linux:
-    stage: test
-    tags:
-      - linux
-    allow_failure: true
+  stage: test
+  rules:
+    - if: '$CI_RUNNER_DESCRIPTION == "orsr-linux-runner"'
+  allow_failure: true
+  when: on_success
+  only:
+    - master
+  script:
+    - R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
+    - R -e "covr::gitlab(quiet = FALSE)"
+  artifacts:
+    paths:
+      - public
     when: on_success
-    only:
-      - master
-    script:
-      - R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
-      - R -e "covr::gitlab(quiet = FALSE)"
-    artifacts:
-      paths:
-        - public
-      when: on_success
 
 # To produce a code coverage report as a GitLab page see
 # https://about.gitlab.com/2016/11/03/publish-code-coverage-report-with-gitlab-pages/
 
 pages:win:
-    stage: deploy
-    allow_failure: true
-    dependencies:
-      - testing:win
-    script:
-      - ls
-    artifacts:
-      paths:
-        - public
-      expire_in: 30 days
-    only:
-      - master
+  stage: deploy
+  allow_failure: true
+  dependencies:
+    - testing:win
+  script:
+    - ls
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  only:
+    - master
 
 pages:linux:
-    stage: deploy
-    allow_failure: true
-    dependencies:
-      - testing:linux
-    script:
-      - ls
-    artifacts:
-      paths:
-        - public
-      expire_in: 30 days
-    only:
-      - master
+  stage: deploy
+  allow_failure: true
+  dependencies:
+    - testing:linux
+  script:
+    - ls
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  only:
+    - master
