@@ -25,17 +25,17 @@ variables:
 
 before_script:
   - docker info
-  - docker system info
 
 building:win:
   stage: build
   script:
+    - Get-WmiObject -Class Win32_ComputerSystem
     - mkdir -p $R_LIBS_USER -Force
     - cmd.exe /C R -e "install.packages('devtools', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/', dependencies = TRUE)"
     - cmd.exe /C R -e "remotes::install_deps(dependencies = TRUE, lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/')"
     - cmd.exe /C R -e "devtools::check(vignettes = FALSE, check_dir = Sys.getenv('CHECK_DIR'), args = '--no-tests')"
   cache:
-    key: win-lib-cache-$CI_COMMIT_TAG
+    key: win-lib-cache-$CI_COMMIT_SHORT_SHA
     paths:
       - $R_LIBS_USER
 

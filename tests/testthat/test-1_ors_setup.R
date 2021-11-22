@@ -52,6 +52,7 @@ test_that("Test ORSConfig", {
 
 test_that("Test ORSSetupSettings", {
   setup_settings <- ors$setup_settings
+  setup$open_compose()
   expect_type(setup_settings$compose, "list")
   expect_type(setup_settings$memory$total_memory, "double")
   expect_type(setup_settings$memory$free_memory, "double")
