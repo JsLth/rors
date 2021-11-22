@@ -45,10 +45,6 @@ vignettes/*.pdf
 # ORS
 openrouteservice-master
 
-# GitLab CI directories
-public
-ci
-
 # R Environment Variables
 .Renviron
 >>>>>>> c1342d2880ef52777bc7138cba18cfae3c79d002
