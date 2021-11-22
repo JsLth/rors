@@ -36,7 +36,7 @@ get_memory_info <- function() {
   if (is.windows()) {
     cmd <- shQuote(
       paste("(Get-WmiObject Win32_OperatingSystem)",
-            "| %{{'\"total\": {0},\n\"free\": {1}}'",
+            "| %{'{{\"total\": {0},\n\"free\": {1}}}'",
             "-f $_.totalvisiblememorysize, $_.freephysicalmemory}")
     )
     system2("powershell", cmd, stdout = TRUE) %>%

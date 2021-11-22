@@ -223,7 +223,7 @@ ORSConfig$funs$identify_extract_files <- function(self) {
 
 ORSConfig$funs$set_current_extract <- function(self, private) {
   data_dir <- file.path(self$dir, "docker/data")
-  extract_occurences <- private$.identify_extract_files
+  extract_occurences <- private$.identify_extract_files()
 
   # If exactly one file is an extract, set it
   if (sum(extract_occurences) == 1) {

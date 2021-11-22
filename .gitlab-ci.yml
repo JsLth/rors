@@ -62,7 +62,7 @@ testing:win:
       allow_failure: true
     - if: '$CI_COMMIT_REF_NAME == "master"'
   script:
-    - cmd.exe /C R -e "print(paste(getwd(), Sys.getenv('R_LIBS_USER'))"
+    - cmd.exe /C R -e "print(paste(getwd(), Sys.getenv('R_LIBS_USER')))"
     - cmd.exe /C R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
     - cmd.exe /C R -e "covr::gitlab(quiet = FALSE)"
   cache:
