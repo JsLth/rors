@@ -32,7 +32,7 @@ building:win:
   rules:
     - if: '$CI_RUNNER_DESCRIPTION == "orsr-win-runner"'
   script:
-    - mkdir -p $R_LIBS_USER -Force -Recurse
+    - mkdir -p $R_LIBS_USER
     - cmd.exe /C R -e "install.packages('devtools', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/', dependencies = TRUE)"
     - cmd.exe /C R -e "remotes::install_deps(dependencies = TRUE, lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/')"
     - cmd.exe /C R -e "devtools::check(vignettes = FALSE, check_dir = Sys.getenv('CHECK_DIR'), args = '--no-tests')"
@@ -40,18 +40,18 @@ building:win:
     paths:
       - $R_LIBS_USER
 
-building:linux:
-  stage: build
-  rules:
-    - if: '$CI_RUNNER_DESCRIPTION == "orsr-linux-runner"'
-  script:
-    - mkdir -p $R_LIBS_USER
-    - R -e "install.packages('devtools', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/', dependencies = TRUE)"
-    - R -e "remotes::install_deps(dependencies = TRUE, lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/')"
-    - R -e "devtools::check(vignettes = FALSE, check_dir = Sys.getenv('CHECK_DIR'), args = '--no-tests')"
-  cache:
-    paths:
-      - $R_LIBS_USER
+#building:linux:
+#  stage: build
+#  rules:
+#    - if: '$CI_RUNNER_DESCRIPTION == "orsr-linux-runner"'
+#  script:
+#    - mkdir -p $R_LIBS_USER
+#    - R -e "install.packages('devtools', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/', dependencies = TRUE)"
+#    - R -e "remotes::install_deps(dependencies = TRUE, lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/')"
+#    - R -e "devtools::check(vignettes = FALSE, check_dir = Sys.getenv('CHECK_DIR'), args = '--no-tests')"
+#  cache:
+#    paths:
+#      - $R_LIBS_USER
 
 testing:win:
   stage: test
@@ -68,20 +68,20 @@ testing:win:
       - public
     when: on_success
 
-testing:linux:
-  stage: test
-  rules:
-    - if: '$CI_RUNNER_DESCRIPTION == "orsr-linux-runner"'
-      when: on_success
-      allow_failure: true
-    - if: '$CI_COMMIT_REF_NAME == "master"'
-  script:
-    - R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
-    - R -e "covr::gitlab(quiet = FALSE)"
-  artifacts:
-    paths:
-      - public
-    when: on_success
+#testing:linux:
+#  stage: test
+#  rules:
+#    - if: '$CI_RUNNER_DESCRIPTION == "orsr-linux-runner"'
+#      when: on_success
+#      allow_failure: true
+#    - if: '$CI_COMMIT_REF_NAME == "master"'
+#  script:
+#    - R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
+#    - R -e "covr::gitlab(quiet = FALSE)"
+#  artifacts:
+#    paths:
+#      - public
+#    when: on_success
 
 # To produce a code coverage report as a GitLab page see
 # https://about.gitlab.com/2016/11/03/publish-code-coverage-report-with-gitlab-pages/
@@ -100,16 +100,16 @@ pages:win:
   only:
     - master
 
-pages:linux:
-  stage: deploy
-  allow_failure: true
-  dependencies:
-    - testing:linux
-  script:
-    - ls
-  artifacts:
-    paths:
-      - public
-    expire_in: 30 days
-  only:
-    - master
+#pages:linux:
+#  stage: deploy
+#  allow_failure: true
+#  dependencies:
+#    - testing:linux
+#  script:
+#    - ls
+#  artifacts:
+#    paths:
+#      - public
+#    expire_in: 30 days
+#  only:
+#    - master
