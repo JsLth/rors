@@ -35,6 +35,10 @@ building:win:
     - cmd.exe /C R -e "remotes::install_deps(dependencies = TRUE, lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/')"
     - cmd.exe /C R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
     - cmd.exe /C R -e "devtools::check(vignettes = FALSE, check_dir = Sys.getenv('CHECK_DIR'), args = '--no-tests')"
+  cache:
+    key: lib-cache-$CI_COMMIT_REF_SLUG
+    paths:
+      - $R_LIBS_USER
 
 #building:linux:
 #  stage: build
@@ -60,6 +64,10 @@ testing:win:
     - if: '$CI_COMMIT_REF_NAME == "master"'
   script:
     - cmd.exe /C R -e "covr::gitlab(quiet = FALSE)"
+  cache:
+    key: win-lib-cache-$CI_COMMIT_REF_SLUG
+    paths:
+      - $R_LIBS_USER
   artifacts:
     paths:
       - public
