@@ -74,9 +74,12 @@ ORSConfig <- R6::R6Class(
                                    "resources",
                                    "ors-config-sample.json")
 
-        file.copy(file.path(self$dir, config_sample), data_dir)
-        file.rename(file.path(data_dir, "ors-config-sample.json"),
-                    file.path(data_dir, "ors-config.json"))
+        copied <- file.copy(file.path(self$dir, config_sample), data_dir)
+        renamed <- file.rename(file.path(data_dir, "ors-config-sample.json"),
+                               file.path(data_dir, "ors-config.json"))
+
+        if (!copied) cli::cli_abort("Config sample could not be copied.")
+        if (!renamed) cli::cli_abort("Config sample could not be renamed")
 
         config <- jsonlite::read_json(file.path(data_dir, "ors-config.json"))
         self$path <- file.path(data_dir, "ors-config.json")

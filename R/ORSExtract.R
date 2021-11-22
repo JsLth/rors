@@ -127,7 +127,7 @@ ORSExtract$funs$get_extract <- function(self, private, place, provider = NULL, .
     # If neither yes or no is given as input, cancel the function
     if (!input %in% c("yes", "no")) {
       cli::cli_alert_danger("Function cancelled.")
-      invokeRestart("abort")
+      return(invisible())
     }
     ok <- input == "yes"
   }
@@ -136,7 +136,7 @@ ORSExtract$funs$get_extract <- function(self, private, place, provider = NULL, .
   if (ok) {
     cli::cli_alert_warning(paste("All providers have been searched.",
                                  "Please download the extract manually."))
-    invokeRestart("abort")
+    return(invisible())
   }
 
   # If a file with the same name already exists, skip the download

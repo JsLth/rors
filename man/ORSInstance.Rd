@@ -112,8 +112,8 @@ should only be used when starting the service for the first time. Changes
 after that should preferably be made manually.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$initial_setup(
-  profiles = "car",
-  extract = self$extract$path,
+  profiles = NULL,
+  extract = NULL,
   provider = NULL,
   init_memory = NULL,
   max_memory = NULL,

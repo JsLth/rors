@@ -149,8 +149,9 @@ ORSInstance <- R6::R6Class(
                              init_memory = NULL,
                              max_memory = NULL,
                              wait = TRUE,
+                             verbose = TRUE,
                              run = TRUE) {
-      ORSInstance$funs$initial_setup(self, profiles, extract, provider, init_memory, max_memory, wait, run)
+      ORSInstance$funs$initial_setup(self, profiles, extract, provider, init_memory, max_memory, wait, verbose, run)
     },
     
     #' @description Take down all Docker containers and images and wipe the
@@ -238,16 +239,17 @@ ORSInstance$funs$docker <- function(private, arg) {
 
 
 ORSInstance$funs$initial_setup <- function(self,
-                                        profiles = "car",
-                                        extract = self$extract$path,
-                                        provider = "geofabrik",
-                                        init_memory = NULL,
-                                        max_memory = NULL,
-                                        wait = TRUE,
-                                        run = TRUE) {
-  if (isTRUE(self$active)) {
+                                           profiles,
+                                           extract,
+                                           provider,
+                                           init_memory,
+                                           max_memory,
+                                           wait,
+                                           verbose,
+                                           run) {
+  if (isFALSE(self$active)) {
     cli::cli_warn("{.cls ORSInstance} is not active.")
-    invokeRestart("abort")
+    return(invisible())
   }
 
   if (self$docker$service_ready == "TRUE" ||
@@ -281,7 +283,7 @@ ORSInstance$funs$initial_setup <- function(self,
   self$setup_settings$save_compose()
 
   # Start the service ---------------------------------------------------
-  self$docker$image_up(wait)
+  self$docker$image_up(wait, verbose)
 
   # Upddate ORSConfig
   self$config <- "refresh"
@@ -293,7 +295,7 @@ ORSInstance$funs$initial_setup <- function(self,
 ORSInstance$funs$remove <- function(self, ignore_image) {
   if (isFALSE(self$active)) {
     cli::cli_warn("{.cls ORSInstance} is not active.")
-    invokeRestart("abort")
+    return(invisible())
   }
 
   if (self$docker$container_exists) self$docker$container_down()
@@ -357,7 +359,7 @@ ORSInstance$funs$clone_ors_repo <- function(dir) {
     cli::cli_progress_step(msg = "Extracting files...",
                            msg_done = "Extracted files.",
                            msg_failed = "Could not extract files.")
-    unzip(zip_file, exdir = dir)
+    unzip <- unzip(zip_file, exdir = dir)
     
     cli::cli_progress_step(msg = "Removing zip file...",
                            msg_done = "Removed zip file.",

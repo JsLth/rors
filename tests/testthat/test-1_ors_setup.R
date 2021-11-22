@@ -15,11 +15,9 @@ test_that("Test Docker availability", {
 
 skip_if_offline("github.com")
 
-if (!dir.exists(temp_dir <- "fixtures")) {
-  temp_dir <- dir.create("fixtures", showWarnings = TRUE)
-}
+temp_dir <- tempdir(check = TRUE)
 
-ors <- ORSInstance$new(dir = "fixtures")
+ors <- ORSInstance$new(dir = temp_dir)
 
 test_that("Test ORS Setup classes", {
   expect_s3_class(ors, "R6")
@@ -102,4 +100,4 @@ test_that("Test container setup", {
   expect_equal(getOption("ors_name"), "test-ors")
 })
 
-unlink("fixtures", recursive = TRUE)
+unlink(temp_dir, recursive = TRUE)
