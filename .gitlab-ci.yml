@@ -65,9 +65,9 @@ testing:win:
       - cmd.exe /C R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
       - cmd.exe /C R -e "covr::gitlab(quiet = FALSE)"
     artifacts:
-        paths:
-          - public
-        when: on_success
+      paths:
+        - public
+      when: on_success
 
 testing:linux:
     stage: test
@@ -81,23 +81,37 @@ testing:linux:
       - R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
       - R -e "covr::gitlab(quiet = FALSE)"
     artifacts:
-        paths:
-          - public
-        when: on_success
+      paths:
+        - public
+      when: on_success
 
 # To produce a code coverage report as a GitLab page see
 # https://about.gitlab.com/2016/11/03/publish-code-coverage-report-with-gitlab-pages/
 
-pages:
+pages:win:
     stage: deploy
     allow_failure: true
     dependencies:
-      - testing
+      - testing:win
     script:
       - ls
     artifacts:
-        paths:
-          - public
-        expire_in: 30 days
+      paths:
+        - public
+      expire_in: 30 days
+    only:
+      - master
+
+pages:linux:
+    stage: deploy
+    allow_failure: true
+    dependencies:
+      - testing:linux
+    script:
+      - ls
+    artifacts:
+      paths:
+        - public
+      expire_in: 30 days
     only:
       - master
