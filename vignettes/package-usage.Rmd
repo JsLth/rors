@@ -16,7 +16,18 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r setup}
+library(ORSRouting)
+library(ggmap)
+library(ggplot2)
+library(units)
+```
+
+## Introduction
+
 The `ORSRouting` package allows you to easily utilize the power and performance of OpenRouteService to generate routing data. This vignette will cover the four main functions on route distance and route inspection as well as ways to generate sample data and augment real-life data. It is expected that you already set up a local ORS instance as described in `vignette("ors-installation")`.
+
+## Input data
 
 First of all, we will need sample data:
 ```{r}
@@ -30,7 +41,8 @@ sample_b <- ors_sample(20)
 What happens here is that the OSM file that was mounted to the Docker container is identified and read in. This can take some time since the file has to be vectortranslated by GDAL first. Using `sf::st_sample`, we can then find a geographic sample inside the boundaries of the mounted OSM file. The boundaries are saved to an environment cache and don't need to be loaded again after the first call of `ors_sample`:
 
 ```{r}
-plot(ORSRouting:::pkg_cache$extract_boundaries)
+cgn_boundaries <- get_extract_boundaries()
+plot(cgn_boundaries)
 ```
 
 Yes, does look like the governmental district of Cologne! If you need to load new boundaries - for example after changing the OSM file - you can do so by setting the argument `force_new_extract` to `TRUE`.
@@ -43,12 +55,134 @@ head(sample_a)
 
 Coordinates are stored in long format with the first column being X or longitude and the second column being Y or latitude. Each row represents one point. The coordinate reference system is geographic and therefore the coordinates are notated in angular units. This is the default format for all routing functions.
 
+## Routing distances
+
 When we pass the sample data to `get_route_lengths`, the function computes route distances row-wise, i.e. from `sample_a[i, ]` to `sample_b[i, ]` with `i = 1:20`. The route calculations are considerably influenced by the profile choice. Since cars a lot faster than bicycles, but cannot use smaller tracks, the routes will be significantly different. The result is a dataframe containing distances and durations of the computed routes:
 
 ```{r}
-get_route_lengths(sample_a, sample_b, profile = "driving-car")
+routes <- get_route_lengths(sample_a, sample_b, profile = "driving-car")
+routes
 ```
 
-```{r setup}
-library(ORSRouting)
+```{r}
+mean(routes$duration)
 ```
+
+It is possible to return the route geometries, however, this can take a bit of time and should only be done if necessary. In the following chunk, route geometries are computed and plotted by their duration:
+
+```{r}
+plot_routes_with_basemap <- function(routes) {
+  suppressMessages({
+    route_geom <- routes %>%
+      .["duration"] %>%
+      units::drop_units()
+    m <- ggmap::ggmap(ggmap::get_stamenmap(as.vector(sf::st_bbox(route_geom)), maptype = "toner"), maprange = TRUE)
+    m +
+      ggplot2::geom_sf(data = cgn_boundaries, inherit.aes = FALSE, fill = NA, size = 1, color = "black") +
+      ggplot2::geom_sf(data = route_geom, mapping = aes(color = duration), inherit.aes = FALSE, size = 1.2)
+  })
+}
+
+route_geom <- get_route_lengths(sample_a, sample_b, profile = "driving-car", geometry = TRUE)
+plot_routes_with_basemap(route_geom)
+```
+As you can see, the sample routes cover a large part of the Cologne governmental district. Unfortunately, since late 2019, you can't get around inside the city of Cologne without having a green environment badge. To remove any uncertainties, let's prevent ORS from routing through the city by providing a polygon to avoid:
+
+```{r}
+avoid_poly <- sf::st_as_sfc(sf::st_bbox(c(xmin = 6.9, ymin = 50.9, xmax = 7.05, ymax = 51), crs = 4326))
+
+route_geom <- get_route_lengths(sample_a, sample_b, profile = "driving-car", geometry = TRUE, avoid_polygons = avoid_poly)
+plot_routes_with_basemap(route_geom) + geom_sf(data = avoid_poly, inherit.aes = FALSE, fill = NA, color = "red", size = 1)
+```
+No routes are allowed to lead through (approximately) the urban region of Cologne. Unfortunately, three routes cannot be computed because they either end or start inside the Cologne, but that's life.
+
+If we wanted to enjoy the view of the Rhineland instead of driving on boring highways, we could just avoid those entirely:
+
+```{r}
+route_geom <- get_route_lengths(sample_a, sample_b, profile = "driving-car", geometry = TRUE, avoid_features = "highways")
+print(mean(route_geom$duration, na.rm = TRUE))
+plot_routes_with_basemap(route_geom)
+```
+
+As you can see, all routes now follow ordinary roads at the cost of time (the average duration increased by about 15 minutes compared to the standard scenario).
+
+OpenRouteService supports a whole range of additional options for route processing. You could for example determine the type and specifications of your HGV, the amount of green you want to see on your walking route,  the maximum driving speed, and so on.
+
+A lot of the times, just routing from point A to point B is not enough. Let's say, instead of `sample_b`, you have a list of hospitals and you need to analyze the health care accessibility of a list of vulnerable households. You might want to identify the shortest route from each household to the nearest hospital.
+First, to get a list of all hospitals in the district of Cologne:
+
+```{r}
+hdata <- get_osm_pois(cgn_boundaries, amenity = "hospital", crs = 4326, as_sf = TRUE, timeout = 100)
+```
+
+This function call makes an Overpass query that searches for every hospital inside the boundaries of Cologne. You can pass map features by passing additional arguments where the argument name stands for the feature key and the argument value stands for the feature value.
+
+While we could directly process this dataframe, we would need to route from each point in `sample_a` to each point in `hdata`. In this case, we only have 30 hospitals and the extra charge in processing time is probably endurable, but it's generally a good idea to keep the datasets as small as possible:
+
+```{r}
+nearest_hdata <- get_nearest_pois(sample_a, hdata, number_of_points = 5, crs = 4326)
+```
+
+In this step, we select 5 points for each point that have the lowest linear distance to the respective point. This is not as accurate as actual routing but it helps to minimize the processing load.
+Finally, we can find the nearest hospitals:
+
+```{r}
+nearest_hospitals <- get_shortest_routes(sample_a, nearest_hdata, profile = "driving-car", geometry = TRUE, proximity_type = "duration")
+nearest_hospitals
+```
+```{r}
+plot_routes_with_basemap(nearest_hospitals) +
+  ggplot2::geom_sf(data = hdata, inherit.aes = FALSE, color = "red")
+```
+```{r}
+summary(nearest_hospitals$duration)
+```
+
+Looks like the average household can reach the nearest hospital in around 14 minutes, which is pretty fast. One route strikes the eye though. The most Southern route has the highest distance among all computed routes and might therefore be good example to showcase the route inspection.
+
+## Route inspection
+
+Route inspection explores a singular route much deeper than both route distance functions. You are able to return all line segments of a geometry including additional information like elevation or way type for each segment.
+To demonstrate, we will first select the route with the highest distance:
+
+```{r}
+sorted_routes <- dplyr::arrange(nearest_hospitals, dplyr::desc(duration))
+es_source <- sorted_routes$point_number[1]
+es_dest <- sorted_routes$poi_number[1]
+```
+
+We can then extract a lot of fancy route information and produce a fancy elevation profile
+
+```{r}
+infos <- c("elevation", "steepness", "suitability")
+long_route <- inspect_route(sample_a[es_source, ],
+                                 nearest_hdata[[es_source]][es_dest, ],
+                                 profile = "driving-car",
+                                 attributes = TRUE,
+                                 extra_info = infos)
+long_route
+```
+```{r}
+long_route$aggr_distance <- cumsum(long_route$distance)
+ggplot2::ggplot(data = units::drop_units(long_route), aes(x = aggr_distance, y = elevation)) +
+  geom_line(size = 1) +
+  ggplot2::labs(x = "Distance (in m)", y = "Elevation (in m)")
+```
+
+```{r}
+ggplot2::ggplot(data = units::drop_units(long_route)) +
+  ggplot2::geom_sf(aes(color = elevation), size = 1.5) +
+  scale_color_distiller(palette = "RdYlGn")
+```
+
+## Additional remarks
+
+Aside from the functions mentioned here, the package comes with a few additional functionalities:
+
+- You can generate many-to-many routing matrices using `create_dist_matrix`
+- You can create a summary for a single route using `summarize_route`
+- Aside from `get_extract_boundaries`, you can get ORS instance information using `ors_ready` and `get_profiles`
+
+Additionally, the functions mentioned here only cover the Directions and Matrix service from the OpenRouteService API. Using the local backend, you can just as well query the Isochrones or Elevations service and using the Web API, you can also make use of the Pois, Optimization and Geocoding services.
+
+

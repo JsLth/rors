@@ -108,7 +108,7 @@ ORSInstance <- R6::R6Class(
       self$extract
       self$setup_settings
       self$config
-
+      
       invisible(self)
     },
 

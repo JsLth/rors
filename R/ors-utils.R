@@ -14,7 +14,7 @@ clear_cache <- function() {
 }
 
 
-get_container_info <- function() {
+inspect_container <- function() {
   if (is.null(pkg_cache$container_info)) {
     name <- getOption("ors_name")
     
@@ -107,7 +107,7 @@ ors_ready <- function(force = TRUE, error = FALSE) {
 
 get_ors_dir <- function(force = TRUE) {
   if (is.null(pkg_cache$mdir) || isTRUE(force)) {
-    container_info <- get_container_info()
+    container_info <- inspect_container()
     mdir <- container_info$Config$Labels$com.docker.compose.project.working_dir
     mdir <- normalizePath(mdir, winslash = "/") %>%
       strsplit("/") %>%
@@ -172,7 +172,7 @@ identify_extract <- function(force = FALSE) {
 
 get_ors_port <- function(force = TRUE) {
   if (is.null(pkg_cache$port) || force == TRUE) {
-    container_info <- get_container_info()
+    container_info <- inspect_container()
     port <- container_info$NetworkSettings$Ports[[1]][[1]]$HostPort[1][1]
     assign("port", port, envir = pkg_cache)
     port

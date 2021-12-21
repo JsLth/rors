@@ -5,9 +5,16 @@
 # Created on: 29.09.2021
 
 
-read_extract_boundaries <- function(force_new_extract = FALSE) {
-  if (is.null(pkg_cache$extract_boundaries) || force_new_extract) {
-    extract_path <- identify_extract(force = force_new_extract)
+#' Extract boundaries
+#' @description Returns boundary geometries of the currently mounted extract
+#' either from the local host or from a local cache.
+#' @param force If \code{TRUE}, function must query local host. If
+#' \code{FALSE}, the status will be read from the cache if possible.
+#' 
+#' @export
+get_extract_boundaries <- function(force = FALSE) {
+  if (is.null(pkg_cache$extract_boundaries) || force) {
+    extract_path <- identify_extract(force = force)
     extract_data <- suppressWarnings(
       osmextract::oe_read(extract_path,
                           layer = "multipolygons",
@@ -20,9 +27,9 @@ read_extract_boundaries <- function(force_new_extract = FALSE) {
       sf::st_union()
 
       assign("extract_boundaries", extract_data, envir = pkg_cache)
-      return(extract_data)
+      extract_data
     } else {
-      return(pkg_cache$extract_boundaries)
+      pkg_cache$extract_boundaries
     }
 }
 
@@ -52,11 +59,10 @@ ors_sample <- function(size, ..., as_sf = FALSE, force_new_extract = FALSE) {
     sf::st_transform(4326) %>%
     sf::st_geometry()
   if (isTRUE(as_sf)) {
-    return(sample)
+    sample
   } else {
-    coordinate_sample <- sf::st_coordinates(sample) %>%
+    sf::st_coordinates(sample) %>%
       as.data.frame()
-    return(coordinate_sample)
   }
 
 }

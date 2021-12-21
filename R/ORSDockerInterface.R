@@ -549,18 +549,21 @@ ORSDockerInterface$funs$watch_for_error <- function(self) {
       tryCatch(
         expr = readLines(file.path(logs_dir, "tomcat/catalina.%s.log" %>%
           sprintf(log_date))),
-        error = function(e) "Log not available"
+        error = function(e) "Log not available",
+        warning = function(e) "Log not available"
       ),
       # Logs from Apache Tomcats local host
       tryCatch(
         expr = readLines(file.path(logs_dir, "tomcat/localhost.%s.log" %>%
           sprintf(log_date))),
-        error = function(e) "Log not available"
+        error = function(e) "Log not available",
+        warning = function(e) "Log not available"
       ),
       # Logs from OpenRouteService (this sometimes stops logging)
       tryCatch(
         expr = readLines(file.path(logs_dir, "ors/ors.log")),
-        error = function(e) "Log not available"
+        error = function(e) "Log not available",
+        warning = function(e) "Log not available"
       ),
       # Output from Dockers logs command (this never stops logging)
       system2(command = "docker",
