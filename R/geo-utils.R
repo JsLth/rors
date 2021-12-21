@@ -67,6 +67,7 @@ ors_multiple_linestrings <- function(res, elev_as_z) {
 
   if (ncol(coordinates) == 3 && isFALSE(elev_as_z)) {
     elevation <- coordinates[, 3]
+    units(elevation) <- "m"
   } else elevation <- NULL
 
   iterator <- seq_len(nrow(coordinates) - 1)

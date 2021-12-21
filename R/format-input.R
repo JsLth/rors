@@ -18,8 +18,13 @@ format_input_data <- function(data) {
       data <- as.data.frame(data)
     } else if (is.double(data) && length(data) == 2) {
       data <- as.data.frame(t(data))
+    } else if (is.null(data) || is.na(data)) {
+      data <- NULL
+    } else {
+      cli::cli_abort(paste("Input data of class {.cls class(data)} is not (yet)",
+                           "supported."))
     }
-    if (ncol(data) > 2) {
+    if (ncol(data) > 2 && !is.null(data)) {
       if (all(is.element(c("X", "Y"), colnames(data)))) {
         data <- data[, c("X", "Y")]
       } else if (all(is.element(c("Lon", "Lat"), colnames(data)))) {
