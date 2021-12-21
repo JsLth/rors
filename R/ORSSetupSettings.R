@@ -213,6 +213,13 @@ ORSSetupSettings$funs$ors_port <- function(self, port) {
   if (missing(port)) {
     cur_port[1]
   } else {
+    if (is.na(port)) {
+      if (requireNamespace("httpuv")) {
+        port <- httpuv::randomPort()
+      } else {
+        cli::cli_abort("To assign a random port, install the {.pkg httpuv} package.")
+      }
+    }
     self$compose$services$`ors-app`$ports[1] <- sprintf("%s:%s", port, 8080)
     self$save_compose()
     port

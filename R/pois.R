@@ -243,7 +243,7 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
     source <- reformat_vectordata(source)
   }
   
-  select.lowest.distance <- function(number_index,
+  select_lowest_distance <- function(number_index,
                                      matrix_index,
                                      dist_mat,
                                      sorted_dist_mat
@@ -265,15 +265,17 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
     }
   }
 
+  create_distance_matrix <- function(spi) {
+    fields::rdist(source[spi, ], poi_coordinates)
+  }
+  
   # Creates unsorted distance matrices that keep the index order of the POI dataset so that
   # the shortest distance can easily be matched with their true index
-  distance_matrices <- lapply(seq_len(nrow(source)), function(si) {
-    fields::rdist(source[si, ], poi_coordinates)
-  })
+  distance_matrices <- purrr::map(seq_len(nrow(source)), ~create_distance_matrix(..1))
   
   # Creates sorted distance matrices to easily get the shortest distance by index number
   sorted_distance_matrices <- purrr::map(seq_len(nrow(source)),
-                                         ~create.distance.matrix(..1) %>%
+                                         ~create_distance_matrix(..1) %>%
                                            sort() %>%
                                            as.matrix())
   
@@ -281,7 +283,7 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
   # iteration of the source dataset
   nested_iterator <- expand.grid(seq_len(n), seq_len(nrow(source)))
   output <- purrr::pmap(nested_iterator,
-                        ~select.lowest.distance(..1,
+                        ~select_lowest_distance(..1,
                                                 ..2,
                                                 distance_matrices,
                                                 sorted_distance_matrices))
