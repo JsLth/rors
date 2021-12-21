@@ -10,8 +10,10 @@
 #' either from the local host or from a local cache.
 #' @param force If \code{TRUE}, function must query local host. If
 #' \code{FALSE}, the status will be read from the cache if possible.
+#' @returns An \code{sfc} object of the currently mounted extract boundaries.
 #' 
 #' @export
+
 get_extract_boundaries <- function(force = FALSE) {
   if (is.null(pkg_cache$extract_boundaries) || force) {
     extract_path <- identify_extract(force = force)
