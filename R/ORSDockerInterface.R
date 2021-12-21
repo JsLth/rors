@@ -360,10 +360,12 @@ ORSDockerInterface$funs$start_container <- function(self, private, name, wait) {
   }
 
   if (isFALSE(self$container_running)) {
-    
-    cli::cli_progress_step("Starting container...",
-                           msg_done = "Container is now running.",
-                           msg_failed = "Cannot start container.")
+
+    if (isTRUE(wait)) {
+      cli::cli_progress_step("Starting container...",
+                             msg_done = "Container is now running.",
+                             msg_failed = "Cannot start container.")
+    }
     
     self$error_log <- NULL
     
@@ -376,11 +378,10 @@ ORSDockerInterface$funs$start_container <- function(self, private, name, wait) {
                        "Error code {.val {status}}"))
     }
 
-    if (wait) {
+    if (isTRUE(wait)) {
       private$.notify_when_ready(interval = 2, silently = TRUE)
+      cli::cli_progress_done()
     }
-    
-    cli::cli_progress_done()
   } else {
     cli::cli_inform(c("i" = "Container {.val {name} is already running.}"))
   }

@@ -53,7 +53,7 @@ get_extract_boundaries <- function(force = FALSE) {
 #' @export
 
 ors_sample <- function(size, ..., as_sf = FALSE, force_new_extract = FALSE) {
-  extract <- read_extract_boundaries(force_new_extract) %>%
+  extract <- get_extract_boundaries(force_new_extract) %>%
     lonlat_to_utm()
   sample <- sf::st_sample(extract, size, ...) %>%
     sf::st_transform(4326) %>%
