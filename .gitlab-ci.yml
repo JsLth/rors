@@ -61,10 +61,10 @@ testing:win:
   dependencies:
     - building:win
   rules:
-    - if: '$CI_RUNNER_TAGS =~ windows'
+    - if: $CI_RUNNER_TAGS =~ /^windows/
       when: on_success
       allow_failure: true
-    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - if: $CI_COMMIT_REF_NAME == "master"
   script:
     - cmd.exe /C R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
     - cmd.exe /C R -e "covr::gitlab(quiet = FALSE, line_exclusions = list('R/test-helpers.R'))"
