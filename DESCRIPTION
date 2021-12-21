@@ -38,7 +38,7 @@ Suggests:
     osmdata,
     fields,
     units,
-    spatstat.core
+    spatstat.core,
     httpuv
 SystemRequirements: Docker Engine on Linux systems, Docker Desktop on Windows (>= 20.10.6)
 RoxygenNote: 7.1.1

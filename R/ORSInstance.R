@@ -139,6 +139,8 @@ ORSInstance <- R6::R6Class(
     #' container and then stop. To check the server status, you can then call
     #' `$service_ready` from the class \code{\link{ORSDockerInterface}}. Passed
     #' to \code{\link{ORSDockerInterface}}.
+    #' @param verbose Logical. If \code{TRUE}, prints Docker logs for container
+    #' setup.
     #' @param run Locial. If `TRUE`, returns `TRUE` if the initial setup is done
     #' and runs the setup if not. If `FALSE`, only returns logicals to check
     #' whether the initial setup is done or not.

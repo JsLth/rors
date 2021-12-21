@@ -118,6 +118,7 @@ after that should preferably be made manually.
   init_memory = NULL,
   max_memory = NULL,
   wait = TRUE,
+  verbose = TRUE,
   run = TRUE
 )}\if{html}{\out{</div>}}
 }
@@ -153,6 +154,9 @@ as the service is ready. If \code{FALSE}, the function will start the
 container and then stop. To check the server status, you can then call
 \verb{$service_ready} from the class \code{\link{ORSDockerInterface}}. Passed
 to \code{\link{ORSDockerInterface}}.}
+
+\item{\code{verbose}}{Logical. If \code{TRUE}, prints Docker logs for container
+setup.}
 
 \item{\code{run}}{Locial. If \code{TRUE}, returns \code{TRUE} if the initial setup is done
 and runs the setup if not. If \code{FALSE}, only returns logicals to check
