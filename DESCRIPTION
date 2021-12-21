@@ -39,6 +39,7 @@ Suggests:
     fields,
     units,
     spatstat.core
+    httpuv
 SystemRequirements: Docker Engine on Linux systems, Docker Desktop on Windows (>= 20.10.6)
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)

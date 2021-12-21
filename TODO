@@ -1,16 +1,23 @@
 TO DO:
-- Establish tests
+- Get 80% test coverage
 - Try out pkgdown
-- Try out GitLab CI/CD
 - Implement ORS host customization
 - Root out previous mistakes like use of return()
-- Find ways to increase performance of get_route_lengths
 - Reduce hard imports (either entirely or make them suggests)
 - Improve conditions printing by implementing console width dependent line breaks
 - Implement a custom print method for ORS R6 classes?
 - Try out callr for docker start notify_when_ready?
 - Find ways to properly catch command line progress bars
-- Try out docker pulling ORS instead of git cloning
+- Implement GitLab CI/CD for linux runners
+- Fix summary print method
+- Fix case of multiple ORS warnings in one response json
+- Reconsider `verify_crs`
 
 DONE:
 - Add a way to change the container/image name? (Useful for tests)
+- Try out GitLab CI/CD
+- Write package usage vignette
+
+DROPPED:
+- Try out docker pulling ORS instead of git cloning
+- Find ways to increase performance of get_route_lengths
