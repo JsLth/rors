@@ -207,7 +207,8 @@ get_route_lengths <- function(source,
       if (!geometry) {
         return(data.frame(distance = NA, duration = NA))
       } else {
-        return(data.frame(distance = NA, duration = NA, geometry = NA))
+        empty_line <- sf::st_sfc(sf::st_linestring(), crs = 4326)
+        return(sf::st_sf(distance = NA, duration = NA, geometry = empty_line))
       }
     } else if (isFALSE(attr(cond, "error"))) {
       pkg_cache$routing_conditions[[call_index]][i] <- cond
@@ -222,8 +223,7 @@ get_route_lengths <- function(source,
       linestring <- sf::st_linestring(res$features$geometry$coordinates[[1]])
       sf::st_sf(distance = distance,
                 duration = duration,
-                geometry = sf::st_sfc(linestring))
-
+                geometry = sf::st_sfc(linestring, crs = 4326))
     }
   }
 
@@ -359,7 +359,7 @@ get_shortest_routes <- function(source,
     best_route <- cbind(best_index, routes[best_index, ])
 
     cli::cli_progress_update(.envir = parent.frame(3))
-    return(best_route)
+    best_route
   }
 
   # Create a nested iterator that iterates through every point number for each
@@ -392,9 +392,9 @@ get_shortest_routes <- function(source,
   rownames(route_list) <- NULL
 
   if (!geometry) {
-    return(route_list)
+    route_list
   } else {
-    return(sf::st_as_sf(route_list))
+    sf::st_as_sf(route_list)
   }
 }
 
