@@ -12,7 +12,7 @@
 #' @details Note that the coverage of the OSM extract should include all
 #' necessary places that need to be processed. If a location is not covered
 #' by the extract, the service will respond with an error. If necessary, the
-#' OSM extract can be changed later by running `$assign_data(build = change)`
+#' OSM extract can be changed later by running `$graph_building <- "change"`
 #' in \code{\link{ORSSetupSettings}}.
 #'
 #' @family ORSSetup

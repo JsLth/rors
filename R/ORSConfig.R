@@ -10,19 +10,6 @@
 #' change the ORS configurations. \strong{This class is initialized from within
 #' \code{\link{ORSInstance}}}.
 #'
-#' @details The term `profiles` refers to the supported modes of transport.
-#' Avoid passing all profiles as each profile has to be built seperately, which
-#' can strain memory extremely quickly. For a list of supported profiles, refer
-#' to the path parameters tab in the
-#' \href{https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post}{API playground}.
-#' For technical details on each profile, refer to the
-#' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{OpenRouteService documentation}.
-#' Each profile also has a dedicated section inside the configuration file.
-#' Should you intend on changing the active profiles after the first setup, you
-#' need to rebuild the entire container since graphs need to be built for each
-#' active profile. Graph building is controlled using the active binding
-#' $graph_building inside the \code{\link{ORSSetupSettings}} subclass.
-#'
 #' @family ORSSetup
 
 ORSConfig <- R6::R6Class(
@@ -32,7 +19,18 @@ ORSConfig <- R6::R6Class(
 
     #' @field active_profiles Currently active profiles in the config file.
     #' By assigning a character vector, the field changes the active profiles
-    #' in the config file.
+    #' in the config file. The term `profiles` refers to the supported modes of
+    #' transport. Avoid passing all profiles as each profile has to be built
+    #' seperately, which can strain memory extremely quickly. For a list of
+    #' supported profiles, refer to the path parameters tab in the
+    #' \href{https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post}{API playground}.
+    #' For technical details on each profile, refer to the
+    #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{OpenRouteService documentation}.
+    #' Each profile also has a dedicated section inside the configuration file.
+    #' Should you intend to change the active profiles after the first setup,
+    #' you need to rebuild the entire container since graphs need to be built
+    #' for each active profile. Graph building is controlled using the active
+    #' binding $graph_building inside the \code{\link{ORSSetupSettings}} subclass.
     active_profiles = function(profiles) ORSConfig$funs$active_profiles(self, private, profiles)
   ),
 

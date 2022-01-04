@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
-```{r setup, echo = FALSE}
+```{r setup}
 library(ORSRouting)
 ```
 
@@ -33,7 +33,7 @@ Instead, the ORS backend can be installed locally via Docker. The R6 class `ORSI
 After installing Docker, a new ORS instance can be initialized. If necessary, this will download the ORS GitHub repository and start the Docker daemon. Most importantly though, it allows access to a bunch of new methods.
 
 ```{r init-topclass}
-ors <- ORSInstance$new()
+ors <- ORSInstance$new(dir = tempdir())
 ors
 ```
 
@@ -184,6 +184,17 @@ as.data.frame(ors$setup_settings$memory)
 
 In this case, 0.75 GB of initial memory and 1.5 GB of maximum memory are going to be allocated. Initial memory refers to the memory that is allocated at the beginning of the process. Memory usage is successively increased but cannot exceed the set maximum. If no arguments are passed, the method will estimate the needed memory. If only the maximum memory is passed, the initial memory will be half that value.
 
+Finally, you can change the Docker name and port:
+
+```{r}
+ors$setup_settings$ors_name <- "test_ors"
+ors$setup_settings$ors_name
+```
+
+```{r}
+ors$setup_settings$ors_port
+```
+
 If there are any other things you want to change, you can do so by assigning values to the parsed compose file in `$compose` or by opening the raw file using `$open_settings`.
 
 
@@ -197,7 +208,7 @@ ors$docker
 
 `ORSDockerInterface` is divided into two functionalities: Checking the service status and controlling the image and container.
 
-Checking the service status works using six 'green lights'. `$docker_running` should always be `TRUE` after you initialized `ORSDockerInterface`. `$image_built` checks if the Docker image `openrouteservice:latest` exists. `$container_exists` then verifies the existence of a container named `ors-app`. `$container_running` checks if `ors-app` is running. Finally, `$service_ready` sends a `GET` request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of `ORSDockerInterface`, all lights but the first are probably off.
+Checking the service status works using six 'green lights'. `$docker_running` should always be `TRUE` after you initialized `ORSDockerInterface`. `$image_built` checks if the Docker image `openrouteservice:latest` exists. `$container_exists` then verifies the existence of a container named `test_ors`. `$container_running` checks if `test_ors` is running. Finally, `$service_ready` sends a `GET` request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of `ORSDockerInterface`, all lights but the first are probably off.
 
 ```{r green-lights}
 data.frame(
@@ -225,7 +236,9 @@ Finally, it is time to start an OpenRouteService instance by creating the contai
 ```{r image-up}
 # Verbose is set to FALSE to not litter the output, but it can provide useful
 # information on the process
-ors$docker$image_up(wait = TRUE, verbose = FALSE)
+suppressMessages(
+  ors$docker$image_up(wait = TRUE, verbose = FALSE)
+)
 ```
 
 
@@ -260,7 +273,9 @@ ors$extract$get_extract("Cologne", provider = "geofabrik")
 ors$setup_settings$graph_building <- "change"
 
 # Finally, start the container again.
-ors$docker$image_up(verbose = FALSE)
+suppressMessages(
+  ors$docker$image_up(verbose = FALSE)
+)
 ```
 
 
@@ -306,7 +321,9 @@ ors$config$ors_config$ors$services$routing$profiles$`profile-car`$parameters$max
 ors$config$save_config()
 
 # Re-start the container
-ors$docker$start_container(wait = TRUE)
+suppressMessages(
+  ors$docker$start_container(wait = TRUE)
+)
 ```
 
 Third time's the charm, let's try again:

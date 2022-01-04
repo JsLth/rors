@@ -5,7 +5,7 @@
 \title{OpenRouteService Docker interface}
 \description{
 R6 class that interacts with the Docker daemon and is able to
-run basic commands on the openrouteservice:latest image and the ors-app
+run basic commands on the openrouteservice:latest image and the ORS
 container. \strong{This class is initialized from within
 \code{\link{ORSInstance}}}.
 }
@@ -19,14 +19,14 @@ the system.
 
 Sometimes, the the service just refuses to work. In this case, try to reboot
 your system or wipe the ORS directory using \code{$remove} from
-\code{\link{ORSInstance}}. This includes, but is not limited to the following
+\code{\link{ORSInstance}}. This includes, but is not limited to, the following
 phenomena:
 \itemize{
 \item Cryptic memory errors no matter how much memory you allocate
 \item Illegal state exceptions complaining about location indices being
 opened with incorrect graphs
 }
-If you have a lead on these errors, consider opening an issue. :)
+If you have a lead on these errors, let me know. :)
 }
 \seealso{
 Other ORSSetup: 

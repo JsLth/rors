@@ -22,10 +22,10 @@ profiles. \code{\link{ORSSetupSettings}} can be used to make changes to the
 Docker setup, e.g. to allocate RAM, assign extracts or change the local
 server access. \code{\link{ORSDockerInterface}} provides a basic interface
 to Docker commands and can be used to check the status of the image,
-container and service. \code{\link{ORSSetupSettings}} should be initialized
-last as the Docker setup needs information on the extract and the number of
-profiles to assign the extract and estimate the required RAM to be
-allocated.
+container and service. The \code{\link{ORSSetupSettings}} should be set up
+after \code{\link{ORSExtract}} and \code{\link{ORSConfig}} as the Docker setup
+needs information on the extract and the number of profiles to assign the
+extract and estimate the required RAM to be allocated.
 
 An initial default can be set up using \code{$init_setup}. This method
 should only be used for the initial container startup. Subsequent changes

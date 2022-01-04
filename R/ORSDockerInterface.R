@@ -7,7 +7,7 @@
 
 #' OpenRouteService Docker interface
 #' @description R6 class that interacts with the Docker daemon and is able to
-#' run basic commands on the openrouteservice:latest image and the ors-app
+#' run basic commands on the openrouteservice:latest image and the ORS
 #' container. \strong{This class is initialized from within
 #' \code{\link{ORSInstance}}}.
 #' @details If the setup fails, first clean up Docker and the docker directory
@@ -19,14 +19,13 @@
 #' 
 #' Sometimes, the the service just refuses to work. In this case, try to reboot
 #' your system or wipe the ORS directory using \code{$remove} from
-#' \code{\link{ORSInstance}}. This includes, but is not limited to the following
+#' \code{\link{ORSInstance}}. This includes, but is not limited to, the following
 #' phenomena:
 #' \itemize{
 #'   \item Cryptic memory errors no matter how much memory you allocate
 #'   \item Illegal state exceptions complaining about location indices being
 #'         opened with incorrect graphs
 #' }
-#' If you have a lead on these errors, consider opening an issue. :)
 #'
 #' @family ORSSetup
 
@@ -503,15 +502,23 @@ ORSDockerInterface$funs$notify_when_ready <- function(self, private, interval, s
   # notification when the server is ready. Also watches out for errors
   # in the log files.
   if (!silently) {
-    cli::cli_inform(c("i" = paste("The container is being set up and started now.",
-                                "You can stop the process now or let it run",
-                                "and get notified when the service is ready.")))
+    cli::cli_inform(
+      c("i" = paste(
+        "The container is being set up and started now.",
+        "You can stop the process now or let it run",
+        "and get notified when the service is ready.")
+        )
+      )
   }
 
-  cli::cli_progress_step("Starting service",
-                         spinner = interactive(),
-                         msg_done = "Service setup done. ORS should now be ready to use.",
-                         msg_failed = "Service setup failed.")
+  if (interactive()) {
+    cli::cli_progress_step(
+      "Starting service",
+      spinner = TRUE,
+      msg_done = "Service setup done. ORS should now be ready to use.",
+      msg_failed = "Service setup failed."
+    )
+  }
 
   while (!self$service_ready) {
     for (i in seq_len(interval * 10)) {
@@ -525,7 +532,7 @@ ORSDockerInterface$funs$notify_when_ready <- function(self, private, interval, s
     }
   }
 
-  cli::cli_progress_done()
+  if (interactive()) cli::cli_progress_done()
 
   if (!silently) {
     notify("ORS Service is ready.")
