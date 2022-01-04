@@ -522,7 +522,7 @@ ORSDockerInterface$funs$notify_when_ready <- function(self, private, interval, s
 
   while (!self$service_ready) {
     for (i in seq_len(interval * 10)) {
-      cli::cli_progress_update()
+      if (interactive()) cli::cli_progress_update()
       Sys.sleep(0.1)
     }
     errors <- private$.watch_for_error()
