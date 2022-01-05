@@ -249,7 +249,10 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
   }
 
   create_distance_matrix <- function(spi) {
-    fields::rdist(source[spi, ], poi_coordinates)
+    comb_data <- rbind(source[spi, ], poi_coordinates)
+    dist_matrix <- stats::dist(comb_data, method = "euclidean")
+    cross_dist <- matrix(dist_matrix[seq_len(nrow(poi_coordinates))], nrow = 1)
+    cross_dist
   }
   
   # Creates unsorted distance matrices that keep the index order of the POI dataset so that

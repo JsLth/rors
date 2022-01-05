@@ -551,7 +551,7 @@ ORSDockerInterface$funs$watch_for_error <- function(self) {
 
   if (dir.exists(logs_dir)) {
     log_date <- file.info(file.path(logs_dir, "ors/ors.log"))$ctime
-    log_data <- as.Date(format(log_data, tz = "UTC"))
+    log_date <- as.Date(format(log_date, tz = "UTC"))
     cmd <- c("logs", getOption("ors_name"))
     logs <- c(
       # Logs from Apache Tomcats web container
