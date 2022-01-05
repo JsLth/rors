@@ -117,8 +117,8 @@ ORSConfig$funs$active_profiles <- function(self, private, profiles) {
   } else {
     cli_abortifnot(is.character(profiles))
 
-    profiles <- private$.translate_profiles(profiles) %>%
-      .[!duplicated(.)]
+    profiles <- private$.translate_profiles(profiles)
+    profiles <- profiles[!duplicated(profiles)]
 
     if (length(profiles) > 0) {
       self$ors_config$ors$services$routing$profiles$active <- as.list(profiles)
@@ -172,7 +172,7 @@ ORSConfig$funs$translate_profiles <- function(profiles) {
     }
   }
 
-  translated_profiles <- lapply(profiles, translate) %>%
-    purrr::discard(is.null) %>%
-    unname()
+  translated_profiles <- unname(lapply(profiles, translate))
+  translated_profiles[sapply(translated_profiles, is.null)] <- NULL
+  translated_profiles
 }

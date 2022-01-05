@@ -67,12 +67,10 @@ query_ors_matrix <- function(source,
                              units,
                              url) {
   # Format source and destination
-  source_list <- dplyr::group_by(source, dplyr::row_number()) %>%
-    dplyr::group_split(.keep = FALSE) %>%
-    lapply(as.numeric)
-  destinations_list <- dplyr::group_by(destination, dplyr::row_number()) %>%
-    dplyr::group_split(.keep = FALSE) %>%
-    lapply(as.numeric)
+  source_list <- unname(split(source, seq_len(nrow(source))))
+  source_list <- lapply(source_list, as.numeric)
+  destinations_list <- unname(split(destination, seq_len(nrow(destination))))
+  destinations_list <- lapply(destinations_list, as.numeric)
 
   # Coerce destinations and source
   locations <- append(destinations_list,
@@ -99,6 +97,7 @@ query_ors_matrix <- function(source,
                     sources = source_index,
                     metrics = metrics,
                     units = units)
+  
   body <- jsonlite::toJSON(body_list, auto_unbox = TRUE, digits = NA)
 
   # Create request headers

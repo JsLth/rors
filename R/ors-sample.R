@@ -18,21 +18,22 @@ get_extract_boundaries <- function(force = FALSE) {
   if (is.null(pkg_cache$extract_boundaries) || force) {
     extract_path <- identify_extract(force = force)
     extract_data <- suppressWarnings(
-      osmextract::oe_read(extract_path,
-                          layer = "multipolygons",
-                          query = paste("SELECT geometry FROM \"multipolygons\"",
-                                        "WHERE boundary = \"administrative\"",
-                                        "AND admin_level IS NOT NULL"),
-                          quiet = TRUE)
-    ) %>%
-      sf::st_geometry() %>%
-      sf::st_union()
+      osmextract::oe_read(
+        extract_path,
+        layer = "multipolygons",
+        query = paste("SELECT geometry FROM \"multipolygons\"",
+                      "WHERE boundary = \"administrative\"",
+                      "AND admin_level IS NOT NULL"),
+        quiet = TRUE
+      )
+    )
+    extract_geom <- sf::st_union(sf::st_geometry(extract_data))
 
-      assign("extract_boundaries", extract_data, envir = pkg_cache)
-      extract_data
-    } else {
-      pkg_cache$extract_boundaries
-    }
+    assign("extract_boundaries", extract_geom, envir = pkg_cache)
+    extract_data
+  } else {
+    pkg_cache$extract_boundaries
+  }
 }
 
 
@@ -55,16 +56,12 @@ get_extract_boundaries <- function(force = FALSE) {
 #' @export
 
 ors_sample <- function(size, ..., as_sf = FALSE, force_new_extract = FALSE) {
-  extract <- get_extract_boundaries(force_new_extract) %>%
-    lonlat_to_utm()
-  sample <- sf::st_sample(extract, size, ...) %>%
-    sf::st_transform(4326) %>%
-    sf::st_geometry()
+  extract <- lonlat_to_utm(get_extract_boundaries(force_new_extract))
+  sample <- sf::st_sample(extract, size, ...)
+  sample <- sf::st_geometry(sf::st_transform(sample, 4326))
   if (isTRUE(as_sf)) {
     sample
   } else {
-    sf::st_coordinates(sample) %>%
-      as.data.frame()
+    as.data.frame(sf::st_coordinates(sample))
   }
-
 }

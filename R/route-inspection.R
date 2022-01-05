@@ -372,11 +372,12 @@ print.route_summary <- function(x, ncols = 3, ...) {
     })
 
     # Transpose list to align corresponding rows from each table
-    to_vector <- lapply(purrr::transpose(op_vec), unlist)
+    to_vector <- lapply(do.call(Map, c(f = c, op_vec)), unlist)
     # Piece together character strings
-    to_string <- purrr::map(to_vector,
-                            ~trimws(paste(., collapse = strrep(" ", 8)),
-                                    which = "right"))
+    to_string <- lapply(
+      to_vector,
+      function(v) trimws(paste(v, collapse = strrep(" ", 8)), which = "right")
+    )
     to_string <- lapply(to_string, trimws, which = "right")
     row_string <- paste(to_string, collapse = "\n")
     cat(row_string)

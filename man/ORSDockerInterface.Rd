@@ -26,7 +26,6 @@ phenomena:
 \item Illegal state exceptions complaining about location indices being
 opened with incorrect graphs
 }
-If you have a lead on these errors, let me know. :)
 }
 \seealso{
 Other ORSSetup: 

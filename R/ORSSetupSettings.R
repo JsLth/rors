@@ -112,11 +112,8 @@ ORSSetupSettings$funs <- new.env()
 ORSSetupSettings$funs$graph_building <- function(self, private, mode) {
   build <- is.element("build", names(self$compose$services$`ors-app`))
   change <- !is.na(self$compose$services$`ors-app`$volumes[6])
-  gb <- self$compose$services$`ors-app`$environment[1] %>%
-    strsplit("=") %>%
-    unlist() %>%
-    .[2] %>%
-    as.logical()
+  gb <- self$compose$services$`ors-app`$environment[1]
+  gb <- as.logical(unlist(strsplit(gb, "="))[2])
 
   if(missing(mode)) {
     if(change) {
@@ -287,9 +284,7 @@ ORSSetupSettings$funs$open_compose <- function(self) {
 
 ORSSetupSettings$funs$write_memory <- function(self, init, max) {
   java_options <- self$compose$services$`ors-app`$environment[2]
-  java_mem <- strsplit(java_options, " ") %>%
-    unlist() %>%
-    tail(2)
+  java_mem <- tail(unlist(strsplit(java_options, " ")), 2)
 
   init_mem_allocation <- java_mem[1]
   max_mem_allocation <- java_mem[2]
@@ -308,7 +303,7 @@ ORSSetupSettings$funs$write_memory <- function(self, init, max) {
 
 ORSSetupSettings$funs$force_graphbuilding <- function(self, handle) {
   handle <- capitalizeChar(handle)
-  build_graphs_string <- "BUILD_GRAPHS=%s" %>% sprintf(handle)
+  build_graphs_string <- sprintf("BUILD_GRAPHS=%s", handle)
   self$compose$services$`ors-app`$environment[1] <- build_graphs_string
 }
 

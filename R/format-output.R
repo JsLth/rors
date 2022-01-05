@@ -191,15 +191,15 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
       message <- NULL
       code <- NULL
       if (!is.null(warnings_geojson)) {
-        message <- purrr::map(warnings_geojson, ~.$message)
-        code <- purrr::map(warnings_geojson, ~.$code)
+        message <- lapply(warnings_geojson, function(x) x$message)
+        code <- lapply(warnings_geojson, function(x) x$code)
       } else if (!is.null(warnings_json)) {
-        message <- purrr::map(warnings_json, ~.$message)
-        code <- purrr::map(warnings_json, ~.$code)
+        message <- lapply(warnings_json, function(x) x$message)
+        code <- lapply(warnings_json, function(x) x$code)
       }
 
       if (length(code) && length(message)) {
-        warnings <- purrr::map(seq(1, length(code)), function(w) {
+        warnings <- lapply(seq_along(code), function(w) {
           paste0("Warning code ", code[w], ": ", message[w])
         })
 
@@ -274,11 +274,12 @@ format_extra_info <- function(res, info_type) {
     iterator <- data.frame(V1 = seq(1, last_waypoint),
                            V2 = seq(1, last_waypoint) + 1)
 
-    indices <- purrr::map2(start,
-                           end,
-                           get_waypoint_index,
-                           waypoints = iterator,
-                           by_waypoint = FALSE)
+    indices <- mapply(
+      FUN = get_waypoint_index,
+      start,
+      end,
+      MoreArgs = list(waypoints = iterator, by_waypoint = FALSE)
+    )
 
     values <- lapply(seq(1, length(indices)),
                      function(seg) rep(matrix[seg, 3], length(indices[[seg]])))

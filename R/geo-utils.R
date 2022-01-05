@@ -7,13 +7,11 @@
 centroids_from_polygons <- function(polygons, as_sf = FALSE) {
   crs <- sf::st_crs(polygons)
   # Polygone zu projiziertem CRS transformieren
-  polygons_metric <- polygons %>%
-    sf::st_geometry() %>%
-    lonlat_to_utm()
+  polygons_metric <- lonlat_to_utm(sf::st_geometry(polygons))
+  
   # Zentroide der Polygone berechnen
-  centroids <- sf::st_centroid(polygons_metric) %>%
-    # Zentroide wieder zu altem CRS transformieren
-    lonlat_to_utm(crs, reverse = TRUE)
+  centroids <- lonlat_to_utm(sf::st_centroid(polygons_metric), crs, reverse = TRUE)
+
   if (as_sf) {
     sf::st_geometry(polygons) <- centroids
     polygons
@@ -26,32 +24,32 @@ centroids_from_polygons <- function(polygons, as_sf = FALSE) {
 }
 
 
-buffers_from_points <- function(points,
-                                radius,
-                                cap_style = "ROUND",
-                                join_style = "ROUND") {
+buffers_from_points <- function(points, radius, cap_style = "ROUND", join_style = "ROUND") {
   crs <- sf::st_crs(points)
-  lonlat_to_utm(points) %>%
-    sf::st_buffer(radius, endCapStyle = cap_style, joinStyle = join_style) %>%
-    lonlat_to_utm(crs = crs, reverse = TRUE)
+  points_metric <- lonlat_to_utm(points)
+  buffers <- sf::st_buffer(points_metric,
+                           radius,
+                           endCapStyle = cap_style,
+                           joinStyle = join_style)
+  lonlat_to_utm(buffers, crs = crs, reverse = TRUE)
 }
 
 
 buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326) {
   # Convert coordinates to metric points
-  points <- sf::st_as_sf(coordinates, coords = c(1, 2), crs = crs) %>%
-    lonlat_to_utm()
+  points <- sf::st_as_sf(coordinates, coords = c(1, 2), crs = crs)
 
   # Generate buffers
-  buffers <- sf::st_buffer(points, dist = radius) %>%
-    lonlat_to_utm(crs = crs, reverse = TRUE)
+  buffers <- lonlat_to_utm(
+    sf::st_buffer(lonlat_to_utm(points), dist = radius),
+    crs = crs,
+    reverse = TRUE
+  )
 
   # Extract bboxes
-  buffer_bbox <- sf::st_geometry(buffers) %>%
-    purrr::map(sf::st_bbox) %>%
-    do.call(rbind, .) %>%
-    as.data.frame()
-  return(buffer_bbox)
+  buffer_bbox <- lapply(sf::st_geometry(buffers), sf::st_bbox)
+  buffer_bbox <- do.call(rbind.data.frame, buffer_bbox)
+  buffer_bbox
 }
 
 
@@ -91,20 +89,18 @@ swap_xy <- function(data) {
 ctransform <- function(coordinates, from_crs, to_crs) {
   # Convert coordinates to sf features
   coordinates_sf <- sf::st_as_sf(coordinates, coords = c(1, 2), crs = from_crs)
+  
   # Transform sf features and extract coordinates
-  transf_coordinates <- sf::st_transform(coordinates_sf, to_crs) %>%
-    sf::st_coordinates() %>%
-    as.data.frame()
-  return(transf_coordinates)
+  transf_coordinates <- sf::st_transform(coordinates_sf, to_crs)
+  transf_coordinates <- as.data.frame(sf::st_coordinates(transf_coordinates))
+  transf_coordinates
 }
 
 
 parse_proj4string <- function(proj4_string) {
-  crs_props <- proj4_string %>%
-    strsplit(" ") %>%
-    lapply(strsplit, split = "=") %>%
-    unlist(recursive = FALSE) %>%
-    do.call(data.frame, .)
+  crs_props <- lapply(strsplit(proj4_string, " "), strsplit, split = "=")
+  crs_props <- do.call(data.frame, unlist(crs_props, recursive = FALSE))
+  
   names(crs_props) <- as.character(unlist(crs_props[1, ]))
   crs_props <- crs_props[-1, ]
   rownames(crs_props) <- NULL
@@ -114,13 +110,16 @@ parse_proj4string <- function(proj4_string) {
 
 lonlat_to_utm <- function(
   coordinates,
-  crs = NULL,
+  crs = NA,
   reverse = FALSE,
   zone = NULL
 ) {
   sf_check <- is.sf(coordinates)
   if (!reverse) {
     if (!sf_check) {
+      if (is.na(crs)) {
+        cli::cli_abort("A valid CRS must be passed.")
+      } 
       coordinates <- sf::st_as_sf(coordinates, coords = c(1, 2), crs = crs)
       crs <- sf::st_crs(crs)
     } else {
@@ -131,42 +130,43 @@ lonlat_to_utm <- function(
       return(coordinates)
     }
 
-    from_crs_props <- crs$proj4string %>%
-      parse_proj4string()
+    from_crs_props <- parse_proj4string(crs$proj4string)
     if (is.null(zone)) {
       get_zone <- function(longitudes) {
         longitude_median <- stats::median(longitudes)
         floor((longitude_median + 180) / 6) + 1
       }
-      zone <- coordinates %>%
-        sf::st_coordinates() %>%
-        .[, 1] %>%
-        as.vector() %>%
-        get_zone()
+      zone <- get_zone(as.vector(sf::st_coordinates(coordinates)[, 1]))
     }
-    to_crs_wkt <- "+proj=utm +zone=%s +datum=%s +units=m" %>%
-      sprintf(zone, from_crs_props$`+datum`) %>%
-      sf::st_crs()
+    to_crs_wkt <- sf::st_crs(
+      sprintf(
+        "+proj=utm +zone=%s +datum=%s +units=m",
+        zone,
+        from_crs_props$`+datum`
+      )
+    )
     if (!sf_check) {
-      transf_coordinates <- sf::st_transform(coordinates, to_crs_wkt) %>%
-        sf::st_coordinates() %>%
-        as.data.frame()
-      return(list(coords = transf_coordinates, zone = zone))
+      transf_coordinates <- sf::st_transform(coordinates, to_crs_wkt)
+      transf_coordinates <- as.data.frame(sf::st_coordinates(transf_coordinates))
+      transf_coordinates <- list(coords = transf_coordinates, zone = zone)
     } else {
       transf_coordinates <- sf::st_transform(coordinates, to_crs_wkt)
-      return(transf_coordinates)
     }
+    transf_coordinates
   } else {
     if (sf_check) {
       transf_coordinates <- sf::st_transform(coordinates, crs)
     } else {
-      to_crs_props <- sf::st_crs(crs)$proj4string %>% parse_proj4string()
-      from_crs_wkt <- "+proj=utm +zone=%s +datum=%s +units=m" %>%
-        sprintf(zone, to_crs_props$`+datum`) %>%
-        sf::st_crs()
+      to_crs_props <- parse_proj4string(sf::st_crs(crs)$proj4string)
+      from_crs_wkt <- sf::st_crs(
+        sprintf(
+          "+proj=utm +zone=%s +datum=%s +units=m",
+          zone, to_crs_props$`+datum`
+        )
+      )
       transf_coordinates <- ctransform(coordinates, from_crs_wkt, crs)
     }
-    return(transf_coordinates)
+    transf_coordinates
   }
 }
 
@@ -178,22 +178,18 @@ verify_crs <- function(data, crs, silent = FALSE) {
     cli::cli_abort("CRS {.val {crs}} is invalid.")
   }
 
-  wkt <- parsed_crs$wkt %>%
-    unlist() %>%
-    strsplit("\n")
+  wkt <- strsplit(unlist(parsed_crs$wkt), "\n")
 
-  crs_bbox <- sapply(wkt, function(x) grep("BBOX", x, value = TRUE)) %>%
-    gsub("\\s+|[A-Z]+|\\[|\\]+,", "", ., perl = TRUE) %>%
-    strsplit(",") %>%
-    unlist() %>%
-    as.numeric()
+  crs_bbox <- sapply(wkt, function(x) grep("BBOX", x, value = TRUE))
+  crs_bbox <- gsub("\\s+|[A-Z]+|\\[|\\]+,", "", crs_bbox, perl = TRUE)
+  crs_bbox <- as.numeric(unlist(strsplit(crs_bbox, ",")))
 
   if (!parsed_crs$IsGeographic) {
     data <- ctransform(data, parsed_crs, 4326)
   }
 
-  x_ok <- sapply(data[, 1], dplyr::between, crs_bbox[2], crs_bbox[4])
-  y_ok <- sapply(data[, 2], dplyr::between, crs_bbox[1], crs_bbox[3])
+  x_ok <- sapply(data[, 1], function(x, left, right) x >= left & x <= right, crs_bbox[2], crs_bbox[4])
+  y_ok <- sapply(data[, 2], function(y, left, right) y >= left & y <= right, crs_bbox[1], crs_bbox[3])
   crs_ok <- all(c(x_ok, y_ok))
 
   if (!silent && !crs_ok) {

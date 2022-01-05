@@ -164,23 +164,26 @@ format_ors_options <- function(options, profile) {
     if (is.list(options$profile_params) &&
         !identical(profile, "driving-car")) {
       base_profile <- base_profile(profile)
-      allowed_opts <- switch(base_profile,
-                             wheelchair = c("maximum_incline",
-                                            "maximum_sloped_kerb",
-                                            "minimum_width",
-                                            "smoothness_type",
-                                            "surface_type",
-                                            "track_type"),
-                             hgv        = c("axleload",
-                                            "hazmat",
-                                            "height",
-                                            "length",
-                                            "weight",
-                                            "width"),
-                             cycling    = "steepness_difficulty",
-                             walking    = c("green", "quiet"))
-      opt_admitted <- purrr::map(options$profile_params,
-                                 ~is.element(names(.), allowed_opts))
+      allowed_opts <- switch(
+        base_profile,
+        wheelchair = c("maximum_incline",
+                       "maximum_sloped_kerb",
+                       "minimum_width",
+                       "smoothness_type",
+                       "surface_type",
+                       "track_type"),
+        hgv        = c("axleload",
+                       "hazmat",
+                       "height",
+                       "length",
+                       "weight",
+                       "width"),
+        cycling    = "steepness_difficulty",
+        walking    = c("green", "quiet"))
+      opt_admitted <- lapply(
+        options$profile_params,
+        function(x) is.element(names(x), allowed_opts)
+      )
       options_check["profile_param"] <- all(unlist(opt_admitted))
 
       if (any(opt_admitted$weightings)) {

@@ -449,11 +449,8 @@ ORSDockerInterface$funs$cleanup <- function(self) {
 # Private methods -------------------------------------------------------------
 
 ORSDockerInterface$funs$set_port <- function(self) {
-  port <- self$setup_settings$compose$services$`ors-app`$ports[1] %>%
-    strsplit(":") %>%
-    unlist() %>%
-    unique() %>%
-    as.numeric()
+  port <- self$setup_settings$compose$services$`ors-app`$ports[1]
+  port <- as.numeric(unique(unlist(strsplit(port, ":"))))
   assign("port", port[1], envir = pkg_cache)
 }
 
@@ -469,10 +466,14 @@ ORSDockerInterface$funs$start_docker <- function(self) {
 
       # If Docker is installed, it will try to open
       if (status == 0) {
-        cli::cli_progress_step("Starting Docker...",
-                               spinner = interactive(),
-                               msg_done = "Docker Desktop is now running.",
-                               msg_failed = "The Docker startup has timed out.")
+        if (interactive()) {
+          cli::cli_progress_step(
+            "Starting Docker...",
+            spinner = TRUE,
+            msg_done = "Docker Desktop is now running.",
+            msg_failed = "The Docker startup has timed out."
+          )
+        }
 
         # Check if Docker is usable by running a Docker command
         while (system2(command = "docker",
@@ -482,13 +483,14 @@ ORSDockerInterface$funs$start_docker <- function(self) {
                        timeout = 180) != 0) {
 
           for (i in 1:100) {
-            cli::cli_progress_update()
+            if (interactive()) cli::cli_progress_update()
             Sys.sleep(0.01)
 
           }
         }
+        if (interactive()) cli::cli_progress_done()
       } else {
-        cli::cli_abort("Something went wrong while starting Docker.")
+        cli::cli_abort("Something went wrong while starting Docker. Is it installed?")
       }
     } else if (is.linux()) {
       system2(command = "systemctl", args = "start docker")
@@ -548,22 +550,19 @@ ORSDockerInterface$funs$watch_for_error <- function(self) {
   logs_dir <- file.path(self$dir, "docker/logs")
 
   if (dir.exists(logs_dir)) {
-    log_date <- file.info(file.path(logs_dir, "ors/ors.log"))$ctime %>%
-      format(tz = "UTC") %>%
-      as.Date()
+    log_date <- file.info(file.path(logs_dir, "ors/ors.log"))$ctime
+    log_data <- as.Date(format(log_data, tz = "UTC"))
     cmd <- c("logs", getOption("ors_name"))
     logs <- c(
       # Logs from Apache Tomcats web container
       tryCatch(
-        expr = readLines(file.path(logs_dir, "tomcat/catalina.%s.log" %>%
-          sprintf(log_date))),
+        expr = sprintf(readLines(file.path(logs_dir, "tomcat/catalina.%s.log", log_date))),
         error = function(e) "Log not available",
         warning = function(e) "Log not available"
       ),
       # Logs from Apache Tomcats local host
       tryCatch(
-        expr = readLines(file.path(logs_dir, "tomcat/localhost.%s.log" %>%
-          sprintf(log_date))),
+        expr = sprintf(readLines(file.path(logs_dir, "tomcat/localhost.%s.log", log_date))),
         error = function(e) "Log not available",
         warning = function(e) "Log not available"
       ),
@@ -597,9 +596,8 @@ ORSDockerInterface$funs$watch_for_error <- function(self) {
       }
     }
 
-    sapply(logs, error_catcher) %>%
-      purrr::discard(sapply(., is.null)) %>%
-      unlist(use.names = FALSE) %>%
-      unique() # Don't return the same errors multiple times
+    logs <- sapply(logs, error_catcher)
+    logs[sapply(logs, is.null)] <- NULL
+    unique(unlist(logs, use.names = FALSE))
   }
 }

@@ -2,7 +2,6 @@
 
 S3method(print,ors_condition)
 S3method(print,route_summary)
-export("%>%")
 export(ORSInstance)
 export(get_extract_boundaries)
 export(get_nearest_pois)
@@ -16,4 +15,3 @@ export(last_ors_conditions)
 export(ors_ready)
 export(ors_sample)
 export(summarize_route)
-importFrom(magrittr,"%>%")

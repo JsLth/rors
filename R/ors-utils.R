@@ -24,10 +24,9 @@ inspect_container <- function() {
       container_info <- system2(command = "docker",
                                 args = cmd,
                                 stdout = TRUE,
-                                stderr = FALSE) %>%
-        paste0(collapse = "\n") %>%
-        jsonlite::fromJSON()
+                                stderr = FALSE)
     })
+    container_info <- jsonlite::fromJSON(paste0(container_info, collapse = "\n"))
 
     if (length(container_info) == 0) {
       cli::cli_abort("Cannot access container: {.val {name}}")
@@ -57,9 +56,13 @@ get_profiles <- function(force = TRUE) {
       cli::cli_abort("ORS service is not reachable.")
     }
 
-    status_response <- httr::GET(url) %>%
-      httr::content(as = "text", type = "application/json", encoding = "UTF-8")
-    ors_info <- jsonlite::fromJSON(status_response)
+    status_res <- httr::content(
+      httr::GET(url),
+      as = "text",
+      type = "application/json",
+      encoding = "UTF-8"
+    )
+    ors_info <- jsonlite::fromJSON(status_res)
 
     profiles <- unname(sapply(ors_info$profiles, function(x) x$profiles))
     assign("profiles", profiles, envir = pkg_cache)
@@ -80,14 +83,19 @@ get_profiles <- function(force = TRUE) {
 
 ors_ready <- function(force = TRUE, error = FALSE) {
   if (is.null(pkg_cache$ors_ready) || isFALSE(pkg_cache$ors_ready) || force) {
+    port <- get_ors_port()
     ready <- tryCatch(
       {
         res <- httr::GET(sprintf("http://localhost:%s/ors/health",
-                         get_ors_port())) %>%
-          httr::content(as = "text",
-                        type = "application/json",
-                        encoding = "UTF-8") %>%
-          jsonlite::fromJSON()
+                         port))
+        res <- jsonlite::fromJSON(
+          httr::content(
+            res,
+            as = "text",
+            type = "application/json",
+            encoding = "UTF-8"
+          )
+        )
         stopifnot(r <- identical(res$status, "ready"))
         r
       },
@@ -109,11 +117,8 @@ get_ors_dir <- function(force = TRUE) {
   if (is.null(pkg_cache$mdir) || isTRUE(force)) {
     container_info <- inspect_container()
     mdir <- container_info$Config$Labels$com.docker.compose.project.working_dir
-    mdir <- normalizePath(mdir, winslash = "/") %>%
-      strsplit("/") %>%
-      unlist() %>%
-      utils::head(-1) %>%
-      paste0(collapse = "/")
+    mdir <- unlist(strsplit(normalizePath(mdir, winslash = "/"), "/"))
+    mdir <- paste0(utils::head(mdir, -1), collapse = "/")
 
     if (!dir.exists(mdir)) {
       cli::cli_abort("The current ORS container directory does not exist")
@@ -144,8 +149,7 @@ identify_extract <- function(force = FALSE) {
       # If not, check if change volume is set
       if (is.null(extract_path) || is.na(extract_path)) {
         data_dir <- file.path(mdir, "docker/data")
-        osm_file_occurences <- dir(data_dir) %>%
-          grepl(".pbf|.osm.gz|.osm.zip|.osm", .)
+        osm_file_occurences <- grepl(".pbf|.osm.gz|.osm.zip|.osm", dir(data_dir))
 
         # As a last resort, check if we can just pick it up from the data folder
         if (sum(osm_file_occurences) == 1) {
@@ -158,9 +162,13 @@ identify_extract <- function(force = FALSE) {
     }
 
     # Convert relative to absolute path
-    extract_path <- basename(extract_path) %>%
-      file.path(mdir, "docker/data", .) %>%
-      normalizePath(winslash = "/")
+    extract_path <- normalizePath(
+      file.path(
+        mdir,
+        "docker/data",
+        basename(extract_path)
+      ), winslash = "/"
+    )
 
     assign("extract_path", extract_path, envir = pkg_cache)
     extract_path
