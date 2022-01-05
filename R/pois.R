@@ -100,8 +100,7 @@ get_osm_pois <- function(source,
     verify_crs(source_coords, crs)
 
     # Generate a buffer for each point in the source dataset
-    bbox <- buffer_bbox_from_coordinates(source_coords, radius, crs) %>%
-      purrr::pmap(c)
+    bbox <- t(buffer_bbox_from_coordinates(source_coords, radius, crs))
 
     # Estimate the timeout for point data
     timeout <- round(10 + (nrow(source_coords) * radius / 1000))
@@ -114,11 +113,8 @@ get_osm_pois <- function(source,
       timeout <- round(sqrt(area / 1000000))
     } else if (!is.null(names(source))) {
       # Estimate the timeout for named vector bboxes
-      area <- sf::st_bbox(source) %>%
-        sf::st_as_sfc() %>%
-        sf::st_sf(crs = crs) %>%
-        sf::st_area() %>%
-        as.numeric()
+      area_pol <- sf::st_sf(sf::st_as_sfc(sf::st_bbox(source)), crs = crs)
+      area <- as.numeric(sf::st_area(area_pol))
       timeout <- round(sqrt(area / 1000000))
     } else {
       # Fix the timeout for strings, matrices or unnamed vectors
@@ -132,9 +128,9 @@ get_osm_pois <- function(source,
 
   # Function that queries points of interest within a bbox
   query.osm <- function(bbox) {
-    res <- osmdata::opq(bbox = bbox,timeout = timeout) %>%
-      osmdata::add_osm_features(features = features) %>%
-      osmdata::osmdata_sf()
+    q <- osmdata::opq(bbox = bbox,timeout = timeout)
+    q <- osmdata::add_osm_features(q, features = features)
+    res <- osmdata::osmdata_sf(q)
     
     if (isTRUE(trim) && is.sf(source) && sf::st_is(source, c("POLYGON", "MULTIPOLYGON"))) {
       res <- osmdata::trim_osmdata(res, bbox)
@@ -145,7 +141,7 @@ get_osm_pois <- function(source,
     }
   }
   # Apply `query.osm` to each point in the dataset
-  pois <- lapply(bbox, query.osm)
+  pois <- apply(bbox, 2, query.osm)
 
   if (length(pois) == 1) pois <- pois[[1]]
 
@@ -201,35 +197,32 @@ get_nearest_pois <- function(source,
   if (is.numeric(number_of_points)) {
     if (is.null(radius)) {
       # A number of points, but no radius is given -> n.nearest.pois
-      return(n.nearest.pois(source, pois, number_of_points))
+      n.nearest.pois(source, pois, number_of_points)
     }
 
     else if (is.numeric(radius)) {
       # A number of points and a radius is given -> pois.within.radius and then
       # n.nearest.pois
-      pois_within_radius <- pois.within.radius(source, pois, radius)
-      number_of_points_within_radius <- pois_within_radius %>%
-        length() %>%
-        seq_len() %>%
-        purrr::map(~n.nearest.pois(source[..1, ],
-                                   pois_within_radius[[..1]],
-                                   number_of_points)) %>%
-        purrr::flatten()
-      return(number_of_points_within_radius)
+      pois_within_radius <- pois.within.radius(source, pois, radius, crs)
+      n_pois_within_radius <- lapply(seq_along(pois_within_radius), function(x) {
+        p <- n.nearest.pois(source[x, ], pois_within_radius[[x]], number_of_points)
+      })
+      n_pois_within_radius
     }
 
     else {
-      cli::cli_abort("Radius must be either numeric or NULL.")
+      cli::cli_abort(c("Radius must be either numeric or {.var NULL}.",
+                       "Got {.cls {class(radius)}} instead."))
     }
   }
 
   else if (is.null(number_of_points) && is.numeric(radius)) {
     # No number of points, but a radius is given -> pois.within.radius
-    return(pois.within.radius(source, pois, radius, crs))
+    pois.within.radius(source, pois, radius, crs)
   }
 
   else {
-    stop("Either a radius, number of points, or both must be defined.")
+    cli::cli_abort("Either a radius, number of points, or both must be defined.")
   }
 }
 
@@ -243,11 +236,7 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
     source <- reformat_vectordata(source)
   }
   
-  select_lowest_distance <- function(number_index,
-                                     matrix_index,
-                                     dist_mat,
-                                     sorted_dist_mat
-  ) {
+  select_lowest_distance <- function(number_index, matrix_index, dist_mat, sorted_dist_mat) {
     if (number_index <= nrow(poi_coordinates)) {
       # Selects the POI dataset index with the lowest distance to the
       # respective source coordinate
@@ -256,12 +245,6 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
       )
       # ... and returns the POIs with the selected index
       poi_coordinates[index, ]
-    } else {
-      # If `n = 3`, but there's only 1 hospital in the POI dataset, don't stop,
-      # just warn.
-      cli::cli_alert_warning(sprintf("Point can only be assigned %1.0f POIs.",
-                                     number_index))
-      NULL
     }
   }
 
@@ -271,32 +254,47 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
   
   # Creates unsorted distance matrices that keep the index order of the POI dataset so that
   # the shortest distance can easily be matched with their true index
-  distance_matrices <- purrr::map(seq_len(nrow(source)), ~create_distance_matrix(..1))
+  distance_matrices <- lapply(seq_len(nrow(source)), create_distance_matrix)
   
   # Creates sorted distance matrices to easily get the shortest distance by index number
-  sorted_distance_matrices <- purrr::map(seq_len(nrow(source)),
-                                         ~create_distance_matrix(..1) %>%
-                                           sort() %>%
-                                           as.matrix())
+  sorted_distance_matrices <- lapply(seq_len(nrow(source)), function(x) {
+    as.matrix(sort(create_distance_matrix(x)))
+  })
   
   # Creates a dataframe to nest the pmap loop so that it loops over n with each
   # iteration of the source dataset
   nested_iterator <- expand.grid(seq_len(n), seq_len(nrow(source)))
-  output <- purrr::pmap(nested_iterator,
-                        ~select_lowest_distance(..1,
-                                                ..2,
-                                                distance_matrices,
-                                                sorted_distance_matrices))
-    # Discard of points where n is larger than the poi dataset
-  output <- purrr::discard(output, sapply(output, is.null)) %>%
-    dplyr::bind_rows() %>%
-    cbind(nested_iterator[seq_len(nrow(.)), "Var2"]) %>%
-    # Split the output by point number
-    dplyr::group_by(dplyr::across(3)) %>%
-    dplyr::group_split(.keep = FALSE) %>%
-    purrr::map(as.data.frame)
+  output <- lapply(seq_len(nrow(nested_iterator)), function(i) {
+    select_lowest_distance(
+      nested_iterator[i, 1],
+      nested_iterator[i, 2],
+      distance_matrices,
+      sorted_distance_matrices
+    )
+  })
   
-  if (length(output) == 1) output <- output[[1]]
+  not_assigned <- sapply(output, is.null)
+  nal <- length(output[not_assigned])
+  if (nal) {
+    i <- get("i", envir = parent.frame(2))
+    if (!n - nal) {
+      cli::cli_warn("Point {.val {i}} could not be assigned any point{?s} of interest.")
+    } else {
+      cli::cli_warn("Point {.val {i}} could only be assigned {.val {n - nal}} point{?s} of interest.")
+    }
+
+  }
+  output[not_assigned] <- NULL
+  if (length(output)) {
+    output <- as.data.frame(do.call(rbind, output), row.names = seq_along(output))
+    output <- split(output, nested_iterator[seq_len(nrow(output)), 2])
+    output <- unname(output)
+    output <- lapply(output, function(r) { row.names(r) <- NULL; r })
+    
+    if (length(output) == 1) output <- output[[1]]
+  } else {
+    output <- data.frame()
+  }
   
   output
 }
@@ -307,8 +305,7 @@ pois.within.radius <- function(source, pois, radius, crs = NULL) {
     if (!is.na(crs)) {
       # If the POIs are passed as coordinates and the coordinate notation is
       # known, convert coordinates to features.
-      pois <- as.data.frame(pois) %>%
-        sf::st_as_sf(coords = c(1,2), crs = crs)
+      pois <-  sf::st_as_sf(as.data.frame(pois), coords = c(1,2), crs = crs)
     } else {
       cli::cli_abort("CRS must be specified for non-sf objects.")
     }
@@ -316,8 +313,10 @@ pois.within.radius <- function(source, pois, radius, crs = NULL) {
 
   if (!is.sf(source)) {
     if (!is.na(crs)) {
-      points <- sf::st_as_sf(source, coords = c(1, 2), crs = crs) %>%
-        sf::st_transform(sf::st_crs(pois))
+      points <- sf::st_transform(
+        sf::st_as_sf(source, coords = c(1, 2), crs = crs),
+        sf::st_crs(pois)
+      )
     } else {
       cli::cli_abort("CRS must be specified for non-sf objects.")
     }
@@ -328,17 +327,15 @@ pois.within.radius <- function(source, pois, radius, crs = NULL) {
 
   # Create distance radius as buffer polygon
   buffers <- buffers_from_points(points, radius)
+  buffers <- sf::st_transform(buffers, sf::st_crs(pois))
   
   select.pois.within <- function (source_index) {
     # Selects all POIs within the respective distance buffer
-    buffers[source_index, ] %>%
-      sf::st_within(pois, ., sparse = FALSE) %>%
-      sf::st_geometry(pois)[.] %>%
-      sf::st_transform(crs) %>%
-      sf::st_coordinates()
+    pois_within <- sf::st_within(pois, buffers[source_index, ], sparse = FALSE)
+    sf::st_coordinates(sf::st_transform(sf::st_geometry(pois)[pois_within], crs))
   }
   
-  selected_pois <- purrr::map(seq_len(nrow(source)), select.pois.within)
+  selected_pois <- lapply(seq_len(nrow(source)), select.pois.within)
   
   selected_pois
 }

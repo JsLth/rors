@@ -30,7 +30,7 @@ By default, ORS is queryable over the [official webserver](https://api.openroute
 
 Instead, the ORS backend can be installed locally via Docker. The R6 class `ORSInstance` controls both the installation and customization of the backend. The installation requires Docker, a raw OpenStreetMap extract (i.e., `.pbf` or `.osm`) of the required region, and the source code of OpenStreetMap. Of these, only [Docker needs to be installed beforehand](https://www.docker.com/products/docker-desktop).
 
-After installing Docker, a new ORS instance can be initialized. If necessary, this will download the ORS GitHub repository and start the Docker daemon. Most importantly though, it allows access to a bunch of new methods.
+After installing Docker, a new ORS instance can be initialized. If necessary, this will download the ORS GitHub repository and start the Docker daemon. Most importantly though, it allows access to a bunch of new methods. In the following example, we will download the repository to a temporary directory. In practice, you should probably be choosing a more permanent directory.
 
 ```{r init-topclass}
 ors <- ORSInstance$new(dir = tempdir())

@@ -4,13 +4,6 @@
 # Created on: 11.06.2021
 
 
-#' @importFrom magrittr %>%
-NULL
-
-
-utils::globalVariables(".")
-
-
 file.open <- function(file) {
   file <- shQuote(file)
   if (is.linux()) {
@@ -22,13 +15,9 @@ file.open <- function(file) {
 
 
 file_path_up <- function(path, times_back = NULL) {
-  new_path <- normalizePath(path, winslash = "/") %>%
-    strsplit("/") %>%
-    unlist() %>%
-    utils::head(-times_back) %>%
-    as.list() %>%
-    do.call(file.path, .)
-  return(new_path)
+  path <- normalizePath(path, winslash = "/")
+  new_path <- utils::head(unlist(strsplit(path, "/")), -times_back)
+  do.call(file.path, as.list(new_path))
 }
 
 
@@ -39,17 +28,14 @@ get_memory_info <- function() {
             "| %{'{{\"total\": {0},\n\"free\": {1}}}'",
             "-f $_.totalvisiblememorysize, $_.freephysicalmemory}")
     )
-    system2("powershell", cmd, stdout = TRUE) %>%
-      paste(collapse = "\n") %>%
-      jsonlite::fromJSON() %>%
-      lapply(function(x) as.numeric(x) / 1048576)
+    
+    mem_json <- paste(system2("powershell", cmd, stdout = TRUE), collapse = "\n")
+    parsed_json <- jsonlite::fromJSON(mem_json)
+    lapply(parsed_json, function(x) as.numeric(x) / 1048576)
   } else if (is.linux()) {
-    system2("free", args = "--kibi", stdout = TRUE) %>%
-      gsub("\\s+", ",", .) %>%
-      paste(collapse = "\n") %>%
-      utils::read.csv(text = .) %>%
-      magrittr::extract(1, c("total", "free")) %>%
-      lapply(function(x) x / 1048576)
+    mem_csv <- paste(gsub("\\s+", ",", system2("free", args = "--kibi", stdout = TRUE)), collapse = "\n")
+    mem_df <- utils::read.csv(text = mem_csv)[1, c("total", "free")]
+    lapply(mem_df, function(x) x / 1048576)
   }
 }
 
@@ -112,6 +98,19 @@ box <- function(x) {
   if (length(x) == 1) {
     list(x)
   } else x
+}
+
+
+df_nest <- function(data, names = NULL) {
+  rows <- unique(sapply(data, nrow))
+  if (length(rows) > 1) {
+    cli::cli_abort("Data have different number of rows.")
+  }
+
+  if (!is.null(names)) {
+    names(data) <- names
+  }
+  data
 }
 
 

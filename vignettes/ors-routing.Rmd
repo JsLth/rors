@@ -1,10 +1,10 @@
 ---
-title: "How to use the package functions"
+title: "How to use routing functions"
 author: Jonas Lieth
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{How to use the package functions}
+  %\VignetteIndexEntry{How to use routing functions}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -30,6 +30,7 @@ The `ORSRouting` package allows you to easily utilize the power and performance 
 ## Input data
 
 First of all, we will need sample data:
+
 ```{r}
 set.seed(111)
 sample_a <- ors_sample(20)
@@ -73,10 +74,8 @@ It is possible to return the route geometries, however, this can take a bit of t
 ```{r}
 plot_routes_with_basemap <- function(routes) {
   suppressMessages({
-    route_geom <- routes %>%
-      .["duration"] %>%
-      units::drop_units()
-    m <- ggmap::ggmap(ggmap::get_stamenmap(as.vector(sf::st_bbox(route_geom)), maptype = "toner"), maprange = TRUE)
+    route_geom <- units::drop_units(routes["duration"])
+    m <- ggmap::ggmap(ggmap::get_stamenmap(as.vector(sf::st_bbox(route_geom)), maptype = "toner-labels"), maprange = TRUE)
     m +
       ggplot2::geom_sf(data = cgn_boundaries, inherit.aes = FALSE, fill = NA, size = 1, color = "black") +
       ggplot2::geom_sf(data = route_geom, mapping = aes(color = duration), inherit.aes = FALSE, size = 1.2)
@@ -184,5 +183,11 @@ Aside from the functions mentioned here, the package comes with a few additional
 - Aside from `get_extract_boundaries`, you can get ORS instance information using `ors_ready` and `get_profiles`
 
 Additionally, the functions mentioned here only cover the Directions and Matrix service from the OpenRouteService API. Using the local backend, you can just as well query the Isochrones or Elevations service and using the Web API, you can also make use of the Pois, Optimization and Geocoding services.
+
+
+```{r cleanup, include = FALSE}
+ors$remove(ignore_image = FALSE)
+```
+
 
 

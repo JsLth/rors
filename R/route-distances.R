@@ -151,22 +151,22 @@ get_route_lengths <- function(source,
   # If directions is the method of choice but the input suggests one-to-many,
   # replicate the one-element dataframe `nrow` times
   if (nrow(source) == 1) {
-    source <- dplyr::bind_rows(replicate(nrow(destination),
-                                         source,
-                                         simplify = FALSE))
+    source <- do.call(
+      rbind,
+      replicate(nrow(destination), source, simplify = FALSE)
+    )
   } else if (nrow(destination) == 1) {
-    destination <- dplyr::bind_rows(replicate(nrow(destination),
-                                              source,
-                                              simplify = FALSE))
+    destination <- do.call(
+      rbind,
+      replicate(nrow(source), destination, simplify = FALSE)
+    )
   }
 
   if (identical(row(source), row(destination))) {
     # If both datasets have the same shape, prepare a rowwise iterator for pmap.
-    zipped_locations <- data.frame(source = source, dest = destination) %>%
-      dplyr::group_split(dplyr::row_number(), .keep = FALSE) %>%
-      purrr::map_df(tidyr::nest,
-                    source = dplyr::starts_with("source"),
-                    dest = dplyr::starts_with("dest"))
+    zipped_locations <- list(source = source, dest = destination)
+    attr(zipped_locations, "row.names") <- seq_len(nrow(source))
+    class(zipped_locations) <- "data.frame"
 
   } else {
     source_shape <- cli::cli_vec(nrow(source), style = list(vec_last = ":"))
@@ -188,17 +188,15 @@ get_route_lengths <- function(source,
 
   call_index <- format(Sys.time(), format = "%H:%M:%S")
 
-  extract_lengths <- function(source, dest) {
-    res <- query_ors_directions(source = source,
-                                destination = dest,
+  extract_lengths <- function(i) {
+    res <- query_ors_directions(source = zipped_locations[i, "source"],
+                                destination = zipped_locations[i, "dest"],
                                 profile = profile,
                                 units = units,
                                 geometry = geometry,
                                 options = options,
                                 url = url)
-
-    i <- get("i", envir = parent.frame())
-
+    
     cond <- handle_ors_conditions(res)
 
     if (isTRUE(attr(cond, "error"))) {
@@ -228,9 +226,7 @@ get_route_lengths <- function(source,
   }
 
   # Apply a directions query to each row
-  route_list <- zipped_locations %>%
-    purrr::pmap(extract_lengths) %>%
-    do.call(rbind, .)
+  route_list <- do.call(rbind, lapply(seq_len(nrow(zipped_locations)), extract_lengths))
 
   route_missing <- sapply(unlist(route_list), is.na)
   conds <- pkg_cache$routing_conditions[[call_index]]
@@ -324,15 +320,15 @@ get_shortest_routes <- function(source,
     destination <- format_input_data(destination)
   }
 
-  calculate_shortest_routes <- function(prfl, point_number) {
+  calculate_shortest_routes <- function(i) {
     routes <- get_route_lengths(
-      source = source[point_number, ],
+      source = source[nested_iterator[i, "point_number"], ],
       destination = if (is.data.frame(destination)) {
         destination
       } else if (is.list(destination)) {
-        destination[[point_number]]
+        destination[[nested_iterator[i, "point_number"]]]
       },
-      profile = prfl,
+      profile = nested_iterator[i, "profile"],
       units = units,
       geometry = geometry,
       ...
@@ -357,8 +353,8 @@ get_shortest_routes <- function(source,
     }
 
     best_route <- cbind(best_index, routes[best_index, ])
-
-    cli::cli_progress_update(.envir = parent.frame(3))
+    
+    cli::cli_progress_update(.envir = parent.frame(2))
     best_route
   }
 
@@ -373,11 +369,12 @@ get_shortest_routes <- function(source,
                         type = "iterator")
 
   # Find shortest route for each coordinate pair
-  route_list <- purrr::pmap(nested_iterator,
-                            ~calculate_shortest_routes(.x, .y)) %>%
-    do.call(rbind, .) %>%
-    as.data.frame() %>%
-    cbind(nested_iterator[["point_number"]], nested_iterator[["profile"]], .)
+  route_list <- lapply(seq_len(nrow(nested_iterator)), calculate_shortest_routes)
+  route_list <- cbind(
+    nested_iterator[["point_number"]],
+    nested_iterator[["profile"]],
+    do.call(rbind, route_list)
+  )
 
   cli::cli_progress_done()
 
