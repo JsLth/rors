@@ -9,9 +9,9 @@ fill_extra_info <- function(values, info_type, profile) {
   if (exists(fill_fun_name)) {
     fill_fun <- match.fun(fill_fun_name)
     if (identical(fill_fun_name, "fill_traildifficulty")) {
-      values <- vapply(values, fill_fun, profile, character(1))
+      values <- vapply(values, fill_fun, profile, character(1L))
     } else {
-      values <- vapply(values, fill_fun, character(1))
+      values <- vapply(values, fill_fun, character(1L))
     }
   }
   values
@@ -102,7 +102,7 @@ fill_waytypes <- function(code) {
 
 fill_traildifficulty <- function(code, profile) {
   if (identical(base_profile(profile), "cycling")) {
-    code <- code * -1
+    code <- code * -1L
   }
 
   switch(
@@ -180,37 +180,33 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
     if (abort_on_error) {
       cli::cli_abort(c("ORS encountered the following exception:", error))
     } else {
-      attributes(error) <- list(error = TRUE)
-      return(error)
+      structure(error, error = TRUE)
     }
   } else {
     format <- res$metadata$query$format
-    if (identical(format, "geojson")) {
-      warnings_geojson <- res$features$properties$warnings
-      warnings_json <- res$routes$warnings
-      message <- NULL
-      code <- NULL
-      if (!is.null(warnings_geojson)) {
-        message <- lapply(warnings_geojson, function(x) x$message)
-        code <- lapply(warnings_geojson, function(x) x$code)
-      } else if (!is.null(warnings_json)) {
-        message <- lapply(warnings_json, function(x) x$message)
-        code <- lapply(warnings_json, function(x) x$code)
-      }
+    warnings_geojson <- res$features$properties$warnings[[1L]]
+    warnings_json <- res$routes$warnings[[1L]]
+    message <- NULL
+    code <- NULL
+    if (!is.null(warnings_geojson)) {
+      message <- warnings_geojson$message
+      code <- warnings_geojson$code
+    } else if (!is.null(warnings_json)) {
+      message <- warnings_json$message
+      code <- warnings_json$code
+    }
 
-      if (length(code) && length(message)) {
-        warnings <- lapply(seq_along(code), function(w) {
-          paste0("Warning code ", code[w], ": ", message[w])
-        })
-
-        if (warn_on_warning) {
-          w_vec <- cli::cli_vec(warnings,
-                                style = list(vec_sep = "\n", vec_last = "\n"))
-          cli::cli_warn(c("ORS returned {length(w_vec)} warning{?s}:", "{w_vec}"))
-        } else {
-          attributes(warning) <- list(error = FALSE)
-          warnings
-        }
+    if (length(code) && length(message)) {
+      warnings <- lapply(seq_along(code), function(w) {
+        paste0("Warning code ", code[w], ": ", message[w])
+      })
+      
+      if (warn_on_warning) {
+        w_vec <- cli::cli_vec(warnings,
+                              style = list(vec_sep = "\f", vec_last = "\f"))
+        cli::cli_warn(c("ORS returned {length(w_vec)} warning{?s}:", "{w_vec}"))
+      } else {
+        structure(warnings, error = FALSE)
       }
     }
   }
@@ -218,44 +214,44 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
 
 calculate_distances <- function(geometry) {
   distances <- sf::st_length(sf::st_zm(geometry))
-  data.frame(distance = round(distances, 2))
+  data.frame(distance = round(distances, 2L))
 }
 
 
 calculate_avgspeed <- function(distance, duration) {
   speeds <- distance / duration
   units(speeds) <- "km/h"
-  data.frame(avgspeed = round(speeds, 2))
+  data.frame(avgspeed = round(speeds, 2L))
 }
 
 
 calculate_durations <- function(res, distances) {
-  waypoints <- res$features$properties$segments[[1]]$steps[[1]]$way_points
-  wp_distances <- res$features$properties$segments[[1]]$steps[[1]]$distance
+  waypoints <- res$features$properties$segments[[1L]]$steps[[1L]]$way_points
+  wp_distances <- res$features$properties$segments[[1L]]$steps[[1L]]$distance
   expanded_wp_distances <- expand_by_waypoint(wp_distances, waypoints)
   percentages <- units::drop_units(distances / expanded_wp_distances)
-  wp_durations <- res$features$properties$segments[[1]]$steps[[1]]$duration
+  wp_durations <- res$features$properties$segments[[1L]]$steps[[1L]]$duration
   durations <- expand_by_waypoint(wp_durations, waypoints) * percentages
   units(durations) <- "s"
-  data.frame(duration = round(durations, 2))
+  data.frame(duration = round(durations, 2L))
 }
 
 
 expand_by_waypoint <- function(vector, waypoints) {
   expand_vctr <- function(i) {
-    multiplier <- waypoints[[i]][2] - waypoints[[i]][1]
+    multiplier <- waypoints[[i]][2L] - waypoints[[i]][1L]
     rep(vector[i], multiplier)
   }
   expanded_data <- unlist(lapply(seq_len(length(vector)), expand_vctr))
-  expanded_data[length(expanded_data) + 1] <- vector[length(vector)]
+  expanded_data[length(expanded_data) + 1L] <- vector[length(vector)]
   expanded_data
 }
 
 
 get_waypoint_index <- function(from, to, waypoints, by_waypoint) {
   if (isFALSE(by_waypoint)) {
-    from_index <- match(from + 1, waypoints[[1]])
-    to_index <- match(to + 1, waypoints[[2]])
+    from_index <- match(from + 1L, waypoints[[1L]])
+    to_index <- match(to + 1L, waypoints[[2L]])
     seq(from_index, to_index)
   }
 }
@@ -263,16 +259,16 @@ get_waypoint_index <- function(from, to, waypoints, by_waypoint) {
 
 format_extra_info <- function(res, info_type) {
   if (identical(info_type, "waytype")) info_type <- "waytypes"
-  waypoints <- res$features$properties$segments[[1]]$steps[[1]]$way_points
-  last_waypoint <- res$features$properties$way_points[[1]][2]
-  matrix <- res$features$properties$extras[[info_type]]$values[[1]]
+  waypoints <- res$features$properties$segments[[1L]]$steps[[1L]]$way_points
+  last_waypoint <- res$features$properties$way_points[[1L]][2L]
+  matrix <- res$features$properties$extras[[info_type]]$values[[1L]]
 
   if (length(matrix)) {
-    start <- matrix[, 1]
-    end <- matrix[, 2]
+    start <- matrix[, 1L]
+    end <- matrix[, 2L]
 
-    iterator <- data.frame(V1 = seq(1, last_waypoint),
-                           V2 = seq(1, last_waypoint) + 1)
+    iterator <- data.frame(V1 = seq(1L, last_waypoint),
+                           V2 = seq(1L, last_waypoint) + 1L)
 
     indices <- mapply(
       FUN = get_waypoint_index,
@@ -282,16 +278,16 @@ format_extra_info <- function(res, info_type) {
     )
 
     values <- lapply(seq(1, length(indices)),
-                     function(seg) rep(matrix[seg, 3], length(indices[[seg]])))
+                     function(seg) rep(matrix[seg, 3L], length(indices[[seg]])))
     values <- unlist(values)
 
     profile <- res$metadata$query$profile
     values <- fill_extra_info(values, info_type, profile)
 
-    values[length(values) + 1] <- NA
+    values[length(values) + 1L] <- NA
     values_df <- data.frame(values)
   } else {
-    values_df <- data.frame(rep(NA, last_waypoint + 1))
+    values_df <- data.frame(rep(NA, last_waypoint + 1L))
   }
   colnames(values_df) <- substitute(info_type)
   values_df
@@ -299,7 +295,7 @@ format_extra_info <- function(res, info_type) {
 
 
 extract_ors_attribute <- function(res, attribute) {
-  attrib <- res$features$properties$segments[[1]][[attribute]]
+  attrib <- res$features$properties$segments[[1L]][[attribute]]
   if (!is.null(attrib)) {
     attrib
   }
@@ -312,18 +308,18 @@ make_summary_table <- function(vector, distances) {
   vector <- as.vector(vector)
 
   # Determine factor levels
-  break_points <- pretty(vector, n = 5, min.n = 1)
+  break_points <- pretty(vector, n = 5L, min.n = 1L)
   cats <- cut(vector, break_points, include.lowest = TRUE)
 
   amount_summary <- stats::aggregate(vector, by = list(cats), function(x) {
-    length(x) / vector_length * 100
+    length(x) / vector_length * 100L
   })
 
   distance_summary <- lapply(amount_summary$x, function(x) {
-    x * total_distance / 100
+    x * total_distance / 100L
   })
 
-  data.frame(distance = round(unlist(distance_summary), 1),
-             amount = round(amount_summary$x, 1),
-             row.names = amount_summary[, 1])
+  data.frame(distance = round(unlist(distance_summary), 1L),
+             amount = round(amount_summary$x, 1L),
+             row.names = amount_summary[, 1L])
 }

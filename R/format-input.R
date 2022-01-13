@@ -72,7 +72,7 @@ format_ors_options <- function(options, profile) {
     }
   }
 
-  if (!is.null(options$extra_info)) {
+  if (!is.null(options$extra_info) && length(options$extra_info)) {
     extra_info <- c("steepness", "suitability", "surface", "waycategory",
                     "waytype", "tollways", "traildifficulty", "osmid",
                     "roadaccessrestrictions", "countryinfo", "green", "noise")

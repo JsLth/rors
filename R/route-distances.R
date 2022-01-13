@@ -196,7 +196,7 @@ get_route_lengths <- function(source,
                                 geometry = geometry,
                                 options = options,
                                 url = url)
-    
+
     cond <- handle_ors_conditions(res)
 
     if (isTRUE(attr(cond, "error"))) {
@@ -210,6 +210,8 @@ get_route_lengths <- function(source,
       }
     } else if (isFALSE(attr(cond, "error"))) {
       pkg_cache$routing_conditions[[call_index]][i] <- cond
+    } else {
+      pkg_cache$routing_conditions[[call_index]][i] <- NA
     }
 
     if (!geometry) {
@@ -226,9 +228,9 @@ get_route_lengths <- function(source,
   }
 
   # Apply a directions query to each row
-  route_list <- do.call(rbind, lapply(seq_len(nrow(zipped_locations)), extract_lengths))
+  route_df <- do.call(rbind, lapply(seq_len(nrow(zipped_locations)), extract_lengths))
 
-  route_missing <- sapply(unlist(route_list), is.na)
+  route_missing <- sapply(unlist(route_df), is.na)
   conds <- pkg_cache$routing_conditions[[call_index]]
   warn_indices <- which(grepl("Warning", conds))
   tip <- cli::col_grey("For a list of conditions, call {.fn last_ors_conditions}.")
@@ -236,11 +238,15 @@ get_route_lengths <- function(source,
     cli::cli_warn(c("No routes could be calculated. Check your service config.",
                     tip))
   } else if (any(route_missing)) {
-    cond_indices <- cli::cli_vec(which(grepl("Error", conds)),
-                                 style = list(vec_sep = ", ", vec_last = ", "))
-    cli::cli_warn(c(paste("{length(cond_indices)} route{?s} could not be",
-                          "calculated and {?was/were} skipped: {cond_indices}"),
-                    tip))
+    cond_indices <- cli::cli_vec(
+      which(grepl("Error", conds)),
+      style = list(vec_sep = ", ", vec_last = ", ")
+    )
+    cli::cli_warn(c(
+      paste("{length(cond_indices)} route{?s} could not be",
+            "calculated and {?was/were} skipped: {cond_indices}"),
+      tip
+    ))
   } else if (length(warn_indices)) {
     warn_indices <- cli::cli_vec(warn_indices,
                                  style = list(vec_sep = ", ", vec_last = ", "))
@@ -250,11 +256,16 @@ get_route_lengths <- function(source,
   }
   
   if (requireNamespace("units")) {
-    units(route_list$distance) <- units
-    units(route_list$duration) <- "s"
+    units(route_df$distance) <- units
+    units(route_df$duration) <- "s"
   }
 
-  route_list
+  structure(
+    route_df,
+    call = sys.call(),
+    data = zipped_locations,
+    class = c("ors_dist", class(route_df))
+  )
 }
 
 
@@ -369,11 +380,11 @@ get_shortest_routes <- function(source,
                         type = "iterator")
 
   # Find shortest route for each coordinate pair
-  route_list <- lapply(seq_len(nrow(nested_iterator)), calculate_shortest_routes)
-  route_list <- cbind(
+  route_df <- lapply(seq_len(nrow(nested_iterator)), calculate_shortest_routes)
+  route_df <- cbind(
     nested_iterator[["point_number"]],
     nested_iterator[["profile"]],
-    do.call(rbind, route_list)
+    do.call(rbind, route_df)
   )
 
   cli::cli_progress_done()
@@ -385,14 +396,20 @@ get_shortest_routes <- function(source,
                    "duration",
                    if (geometry) "geometry")
 
-  colnames(route_list) <- output_cols
-  rownames(route_list) <- NULL
+  colnames(route_df) <- output_cols
+  rownames(route_df) <- NULL
 
-  if (!geometry) {
-    route_list
-  } else {
-    sf::st_as_sf(route_list)
+  if (geometry) {
+    route_df <- sf::st_as_sf(route_df)
   }
+  
+  structure(
+    route_df,
+    call = sys.call(),
+    source = source,
+    dest = destination,
+    class = c("ors_sdist", class(route_df))
+  )
 }
 
 
@@ -437,5 +454,10 @@ create_dist_matrix <- function(source,
                    durations = res$durations)
   }
 
-  matrix
+  structure(
+    matrix,
+    call = sys.call(),
+    data = cbind(source, destination),
+    class = c("ors_matrix", class(matrix))
+  )
 }

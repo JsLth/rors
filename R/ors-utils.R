@@ -200,7 +200,7 @@ get_ors_url <- function() {
 }
 
 
-#' Print ORS errors
+#' Return ORS conditions
 #' @description Return the error and warning messages that ORS returned in the
 #' last \code{\link{get_route_lengths}} or \code{get_route_attributes} function calls.
 #' @param last Number of error lists that should be returned. \code{last = 2L},
@@ -218,7 +218,7 @@ last_ors_conditions <- function(last = 1L) {
     time <- names(conditions)
 
     cond_df <- lapply(conditions, function(x) {
-      stats::na.omit(data.frame(conditions = x))
+      stats::na.omit(data.frame(conditions = unlist(x)))
     })
     names(cond_df) <- time
 
@@ -238,15 +238,23 @@ print.ors_condition <- function(x, ...) {
   timestamps <- names(x)
   calls <- sapply(timestamps, function(time) {
     indices <- attr(x[[time]], "row.names")
-    messages <- sapply(x[[time]]$conditions, function(row) {
-      if (nchar(row) > 100) {
-        paste0(strtrim(row, width = 100), "...")
-      } else row
+    messages <- x[[time]]$conditions
+    max_nc <- nchar(max(indices))
+    messages <- lapply(seq(1, length(messages)), function(mi) {
+      nc <- nchar(indices[mi])
+      fmsg <- strwrap(
+        messages[[mi]],
+        exdent = nc + 3,
+        initial = paste0(indices[mi], strrep(" ", max_nc - nc), " - "),
+        simplify = TRUE
+      )
+      if (length(fmsg) > 1) {
+        paste(fmsg, collapse = "\n")
+      } else fmsg
     })
-    messages <- lapply(seq(1, length(messages)),
-                       function(mi) paste0(indices[mi], " - ", messages[[mi]]))
+    
     printed_time <- paste0("Function call from ", time, ":")
-    paste(printed_time, paste0(messages, collapse = "\n"), sep = "\n")
+    paste(printed_time, paste(messages, collapse = "\n"), sep = "\n")
   })
-  cat(paste0(paste0(calls, collapse = "\n\n"), "\n"))
+  cat(paste0(paste(calls, collapse = "\n\n"), "\n"))
 }
