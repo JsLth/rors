@@ -21,7 +21,7 @@ summarize_route(source, destination, profile = get_profiles(), ...)
 \arguments{
 \item{source}{Any kind of numeric vector containing \code{x/y} values of a
 route segment that should be routed from. Refer to
-\code{\link{get_route_lengths}}.}
+\code{\link{ors_distances}}.}
 
 \item{destination}{Any kind of numeric vector containing \code{x/y} values
 of a route segment that should be routed to.}
@@ -169,5 +169,5 @@ route_summary <- summarize_route(sample_source, sample_dest, profile)
 }
 }
 \seealso{
-get_route_lengths
+ors_distances
 }

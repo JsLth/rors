@@ -12,7 +12,7 @@
 
 <meta name="author" content="Jonas Lieth" />
 
-<meta name="date" content="2021-10-06" />
+<meta name="date" content="2021-12-21" />
 
 <title>Installing and setting up the service</title>
 
@@ -141,10 +141,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <h1 class="title toc-ignore">Installing and setting up the service</h1>
 <h4 class="author">Jonas Lieth</h4>
-<h4 class="date">2021-10-06</h4>
+<h4 class="date">2021-12-21</h4>
 
 
 
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ORSRouting)</span></code></pre></div>
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>The main purpose of the package is to calculate the routing distances and durations from geo-referenced survey data or other geolocations to nearby points of interest (e.g. hospitals). To achieve this, the package provides two routing functions that are powered by OpenRouteService (ORS), and two functions to either extract OpenStreetMap (OSM) elements or digest local location datasets. To enable the processing of large datasets, the package requires a local installation of the OpenRouteService backend. The setup can be done manually but is time-consuming and not very intuitive. The package provides an R6 class to set up the backend and manage it from within R.</p>
@@ -154,27 +155,32 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>By default, ORS is queryable over the <a href="https://api.openrouteservice.org">official webserver</a> given a valid API key. However, to not overburden the server, the Web API is <a href="https://openrouteservice.org/restrictions/">heavily restricted</a>. For the purpose of this package, these restrictions render the online usage unfeasible.</p>
 <p>Instead, the ORS backend can be installed locally via Docker. The R6 class <code>ORSInstance</code> controls both the installation and customization of the backend. The installation requires Docker, a raw OpenStreetMap extract (i.e., <code>.pbf</code> or <code>.osm</code>) of the required region, and the source code of OpenStreetMap. Of these, only <a href="https://www.docker.com/products/docker-desktop">Docker needs to be installed beforehand</a>.</p>
 <p>After installing Docker, a new ORS instance can be initialized. If necessary, this will download the ORS GitHub repository and start the Docker daemon. Most importantly though, it allows access to a bunch of new methods.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>ors <span class="ot">&lt;-</span> ORSInstance<span class="sc">$</span><span class="fu">new</span>()</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Downloading service backend from GitHub repository...</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Successfully downloaded the service backend. [21.5s]</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Starting Docker...</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Docker Desktop is now running. [23.1s]</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>ors</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSInstance&gt;</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     config: active binding</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     dir: active binding</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker: active binding</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     extract: active binding</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initial_setup: function (profiles = &quot;car&quot;, extract_path = self$extract$path, </span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function (dir = NULL) </span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     setup_settings: active binding</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .clone_ors_repo: function (dir = NA) </span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .get_subclass: function (env) </span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .subclasses: list</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>ors <span class="ot">&lt;-</span> ORSInstance<span class="sc">$</span><span class="fu">new</span>(<span class="at">dir =</span> <span class="fu">tempdir</span>())</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Downloading service backend from GitHub repository...</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Successfully downloaded the service backend. [19.8s]</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Extracting files...</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Extracted files. [4s]</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Removing zip file...</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Removed zip file. [1.1s]</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>ors</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSInstance&gt;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     active: TRUE</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     config: active binding</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     dir: active binding</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker: active binding</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     extract: active binding</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initial_setup: function (profiles = NULL, extract = NULL, provider = NULL, init_memory = NULL, </span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function (dir = &quot;~&quot;) </span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     remove: function (ignore_image = TRUE) </span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     setup_settings: active binding</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .clone_ors_repo: function (dir) </span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .get_subclass: function (env) </span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .subclasses: list</span></span></code></pre></div>
 <p>Generally, the workflow to install the ORS backup consists of four steps:</p>
 <ul>
 <li>Set or get an extract (<code>$extract</code>)</li>
@@ -186,29 +192,29 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div id="the-easy-way" class="section level2">
 <h2>The easy way</h2>
 <p>Let’s assume you already have an extract, a list of profiles, and don’t have any special wishes or needs for ORS. In this case you can just pass the extract path and a character vector containing your profiles to</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span><span class="fu">init_setup</span>(</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">profiles =</span> <span class="fu">c</span>(<span class="st">&quot;car&quot;</span>, <span class="st">&quot;walking&quot;</span>),</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">extract_path =</span> <span class="st">&quot;osm_file.osm.pbf&quot;</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span><span class="fu">init_setup</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">profiles =</span> <span class="fu">c</span>(<span class="st">&quot;car&quot;</span>, <span class="st">&quot;walking&quot;</span>),</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">extract_path =</span> <span class="st">&quot;osm_file.osm.pbf&quot;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
 <p>The rest of the setup should be done automatically. You can also specify the amount of memory to be allocated by passing <code>init_memory</code> and <code>max_memory</code>. If you need to use the R console while the setup is running, set <code>wait = FALSE</code>. Of course you can make changes to this setup, either by hand or by making use of the methods presented below.</p>
 </div>
 <div id="set-or-get-an-extract" class="section level2">
 <h2>Set or get an extract</h2>
 <p>OpenStreetMap extracts contain all elements mapped by OSM contributors within a certain region. OpenRouteService is based on OSM and thus needs OSM data to generate routes. OSM data can be acquired with different tools. An overview of extract providers can be found <a href="https://wiki.openstreetmap.org/wiki/Planet.osm#Country_and_area_extracts">here</a> and <a href="https://wiki.openstreetmap.org/wiki/Downloading_data">here</a>. The <a href="https://www.openstreetmap.org/export">official OSM website</a> also supports extracting data by bounding boxes.</p>
 <p>Extracts are controlled by the class <code>ORSExtract</code> that can be accessed with <code>$extract</code>. If you already have an extract, you can mount it here:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>path_to_extract <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;osm_file.osm.pbf&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;/&quot;</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">download.file</span>(<span class="st">&quot;https://download.geofabrik.de/europe/germany/nordrhein-westfalen/arnsberg-regbez-latest.osm.pbf&quot;</span>,</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">destfile =</span> path_to_extract)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">file.path</span>(<span class="st">&quot;openrouteservice-master/docker/data&quot;</span>, <span class="fu">basename</span>(ors<span class="sc">$</span>extract<span class="sc">$</span><span class="fu">set_extract</span>(path_to_extract)))</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;openrouteservice-master/docker/data/osm_file.osm.pbf&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>path_to_extract <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;osm_file.osm.pbf&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;/&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">download.file</span>(<span class="st">&quot;https://download.geofabrik.de/europe/germany/nordrhein-westfalen/arnsberg-regbez-latest.osm.pbf&quot;</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">destfile =</span> path_to_extract)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">file.path</span>(<span class="st">&quot;openrouteservice-master/docker/data&quot;</span>, <span class="fu">basename</span>(ors<span class="sc">$</span>extract<span class="sc">$</span><span class="fu">set_extract</span>(path_to_extract)))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;openrouteservice-master/docker/data/osm_file.osm.pbf&quot;</span></span></code></pre></div>
 <p>If you don’t have an extract, <code>$get_extract</code> provides a way to download extracts from known providers:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>extract<span class="sc">$</span><span class="fu">get_extract</span>(<span class="st">&quot;Arnsberg&quot;</span>, <span class="at">provider =</span> <span class="st">&quot;geofabrik&quot;</span>)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Trying different extract providers...</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i The extract &#39;arnsberg-latest.osm.pbf&#39; is 180 MB in size and will be downloaded from geofabrik.</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Removing old extracts...</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Downloading the OSM extract...</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v The extract was successfully downloaded to the following path: &#39;C:/Users/No...</span></span>
-</code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>extract<span class="sc">$</span><span class="fu">get_extract</span>(<span class="st">&quot;Arnsberg&quot;</span>, <span class="at">provider =</span> <span class="st">&quot;geofabrik&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Trying different extract providers...</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i The extract &#39;arnsberg-latest.osm.pbf&#39; is 180 MB in size and will be downloaded from geofabrik.</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Removing old extracts...</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Downloading the OSM extract...</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v The extract was successfully downloaded to the following path: &#39;C:/Users/No...</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span></code></pre></div>
 <p>The <code>$get_extract</code> method makes use of <code>osmextract::oe_match</code>. It searches different providers for extracts that match the input. The extract is downloaded to the data path inside the ORS main directory where it waits to be processed by ORS.</p>
 <p>At this point, you can just run <code>$init_setup</code> and let R do the rest. If you need to make specific adjustments, however, you can also…</p>
 </div>
@@ -216,27 +222,29 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2>Adjust the configurations in ors-config.json</h2>
 <p>The ORS configurations are managed inside the file <code>ors-config.json</code>. It is accessible using <code>$config</code>. If you’re not into nested list structures, you can also open the raw file using <code>$open_config</code>.</p>
 <p>Configuring ORS constitutes a way to handle processing and memory load as well as routing capabilities. The config file is documented in the <a href="https://giscience.github.io/openrouteservice/installation/Configuration.html">ORS documentation</a>.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSConfig&gt;</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Inherits from: &lt;ORSInstance&gt;</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     active_profiles: active binding</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     config: active binding</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     dir: active binding</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker: active binding</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     extract: active binding</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initial_setup: function (profiles = &quot;car&quot;, extract_path = self$extract$path, </span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function () </span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     open_config: function () </span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     ors_config: list</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     path: C:/Users/Nonas/Documents/R/win-library/4.0/ORSRouting/op ...</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     save_config: function () </span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     setup_settings: active binding</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .clone_ors_repo: function (dir = NA) </span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .get_subclass: function (env) </span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .subclasses: list</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .translate_profiles: function (profiles)</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSConfig&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Inherits from: &lt;ORSInstance&gt;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     active: TRUE</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     active_profiles: active binding</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     config: active binding</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     dir: active binding</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker: active binding</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     extract: active binding</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initial_setup: function (profiles = NULL, extract = NULL, provider = NULL, init_memory = NULL, </span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function () </span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     open_config: function () </span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     ors_config: list</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     path: C:/Users/Nonas/AppData/Local/Temp/Rtmpi4DQ21/openroutese ...</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     remove: function (ignore_image = TRUE) </span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     save_config: function () </span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     setup_settings: active binding</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .clone_ors_repo: function (dir) </span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .get_subclass: function (env) </span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .subclasses: list</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .translate_profiles: function (profile)</span></span></code></pre></div>
 <p>The most important setting to be changed are the active profiles. Profiles represent the means of transport that are supported by OpenRouteService. Activating a profile means approving it for graph building. Only profiles whose graphs have been built, can be used for routing. A profile can be one of the following:</p>
 <ul>
 <li>driving-car</li>
@@ -251,41 +259,41 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul>
 <p>or their respective synonyms according to the ORS config file.</p>
 <p>Profiles can be changed by assigning character vectors to the active binding <code>$active_profiles</code>:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span>active_profiles <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;car&quot;</span>, <span class="st">&quot;bike-regular&quot;</span>, <span class="st">&quot;walking&quot;</span>)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span>ors_config<span class="sc">$</span>ors<span class="sc">$</span>services<span class="sc">$</span>routing<span class="sc">$</span>profiles<span class="sc">$</span>active</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[1]]</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;car&quot;</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[2]]</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;bike-regular&quot;</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[3]]</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;walking&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span>active_profiles <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;car&quot;</span>, <span class="st">&quot;bike-regular&quot;</span>, <span class="st">&quot;walking&quot;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span>ors_config<span class="sc">$</span>ors<span class="sc">$</span>services<span class="sc">$</span>routing<span class="sc">$</span>profiles<span class="sc">$</span>active</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[1]]</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;car&quot;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[2]]</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;bike-regular&quot;</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[3]]</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;walking&quot;</span></span></code></pre></div>
 <p>In the same way, all configurations can be changed under <code>$ors_config</code>:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Setting the maximum snapping radius to -1 removes the limit for coordinates to be snapped to a</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># nearby geometry edge. For coordinates that are far off from ways or streets, this is especially</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># useful</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>        config<span class="sc">$</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>        ors_config<span class="sc">$</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        ors<span class="sc">$</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        services<span class="sc">$</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>        routing<span class="sc">$</span></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>        profiles<span class="sc">$</span></span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>        default_params<span class="sc">$</span></span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        maximum_snapping_radius <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">1</span></span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>        config<span class="sc">$</span></span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        ors_config<span class="sc">$</span></span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        ors<span class="sc">$</span></span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>        services<span class="sc">$</span></span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>        routing<span class="sc">$</span></span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        profiles<span class="sc">$</span></span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">`</span><span class="at">profile-car</span><span class="st">`</span><span class="sc">$</span></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>        parameters<span class="sc">$</span></span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>        maximum_snapping_radius <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Setting the maximum snapping radius to -1 removes the limit for coordinates to be snapped to a</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># nearby geometry edge. For coordinates that are far off from ways or streets, this is especially</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># useful</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        config<span class="sc">$</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        ors_config<span class="sc">$</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        ors<span class="sc">$</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        services<span class="sc">$</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        routing<span class="sc">$</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        profiles<span class="sc">$</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>        default_params<span class="sc">$</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>        maximum_snapping_radius <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">1</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        config<span class="sc">$</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        ors_config<span class="sc">$</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        ors<span class="sc">$</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        services<span class="sc">$</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        routing<span class="sc">$</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        profiles<span class="sc">$</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">`</span><span class="at">profile-car</span><span class="st">`</span><span class="sc">$</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>        parameters<span class="sc">$</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>        maximum_snapping_radius <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div>
 <p>After making any direct adjustments to the configurations file, the changes have to be saved to the config file using.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span><span class="fu">save_config</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span><span class="fu">save_config</span>()</span></code></pre></div>
 <p>If you make changes through a provided method or by changing the raw file, this step is not necessary. However, if you change the raw file, note, that the R6 class can’t keep track on its own and needs to be refreshed after saving raw changes by calling <code>$config &lt;- &quot;refresh&quot;</code>. Therefore, the solution of minimal effort and error proneness is making use of a built-in R6 method since they save changes on their own.</p>
 </div>
 <div id="change-the-default-setup-settings-in-docker-compose.yml" class="section level2">
@@ -293,299 +301,261 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>Let’s start this section with some basic Docker concepts. Docker is a service that runs software from isolated, standardized and portable instances called containers. Docker uses a compose file called <code>docker-compose.yml</code> to create images. Images are used to build containers. A container is an environment that is capable of running software provided by the image. While the software itself (including the configuration file from above) is set up as soon as the container is running, the compose file is evaluated only when the container is built. The following steps are concerned with adjusting the compose file in order to fine-tune the container.</p>
 <p>The compose file manages ports, the assignment of OSM files and config files as well as volumes and settings for Tomcat and Java. Thus, the most important changes to be made to the Docker Compose file are assigning the extract and the config file, and allocating enough memory for building the profile graphs.</p>
 <p>The Docker Compose file can be read and accessed using <code>$setup_settings</code>.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSSetupSettings&gt;</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Inherits from: &lt;ORSInstance&gt;</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     allocate_memory: function (init = NULL, max = NULL) </span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     compose: list</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     config: active binding</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     dir: active binding</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker: active binding</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     extract: active binding</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     graph_building: active binding</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initial_setup: function (profiles = &quot;car&quot;, extract_path = self$extract$path, </span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function () </span></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     memory: list</span></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     open_compose: function () </span></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     save_compose: function () </span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     setup_settings: active binding</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .clone_ors_repo: function (dir = NA) </span></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .disable_auto_deletion: function () </span></span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .force_graphbuilding: function (handle) </span></span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .get_subclass: function (env) </span></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .read_dockercompose: function () </span></span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .subclasses: list</span></span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .write_dockercompose: function () </span></span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .write_memory: function (init, max)</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSSetupSettings&gt;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Inherits from: &lt;ORSInstance&gt;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     active: TRUE</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     allocate_memory: function (init = NULL, max = NULL) </span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     compose: list</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     config: active binding</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     dir: active binding</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker: active binding</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     extract: active binding</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     graph_building: active binding</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initial_setup: function (profiles = NULL, extract = NULL, provider = NULL, init_memory = NULL, </span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function () </span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     memory: list</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     open_compose: function () </span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     ors_name: active binding</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     ors_port: active binding</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     remove: function (ignore_image = TRUE) </span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     save_compose: function () </span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     setup_settings: active binding</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .clone_ors_repo: function (dir) </span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .disable_auto_deletion: function () </span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .force_graphbuilding: function (handle) </span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .get_subclass: function (env) </span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .read_dockercompose: function () </span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .subclasses: list</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .write_dockercompose: function () </span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .write_memory: function (init, max)</span></span></code></pre></div>
 <p>First, Docker needs to know if it should build the graphs from scratch including a new extract and a new config file, if it should overwrite the existing graphs or if it should leave the graphs be. This can be done by assigning the respective order to the active binding <code>$graph_building</code>. Assigning <code>&quot;build&quot;</code> to the binding creates a <code>build</code> branch in the compose file that orders Docker to build a new graphs directory and apply a non-default config file.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span>graph_building <span class="ot">&lt;-</span> <span class="st">&quot;build&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span>graph_building <span class="ot">&lt;-</span> <span class="st">&quot;build&quot;</span></span></code></pre></div>
 <p>Assign <code>&quot;build&quot;</code> if you’re running the service for the first time. If you intend to change the extract, assign <code>&quot;change&quot;</code>. If you already have graphs and do not want to change the existing graphs, assign NA. This will turn off graph building so that graphs will not be forced to be rebuilt each time you rebuild the ORS image.</p>
 <p>Furthermore, you can specify the working memory to be allocated to Docker. By default, the memory is estimated, however, this estimation might underestimate or overestimate the actually required memory. In such cases, you may specify the memory using <code>$allocate_memory</code>.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span><span class="fu">allocate_memory</span>(<span class="at">init =</span> <span class="cn">NULL</span>, <span class="at">max =</span> <span class="cn">NULL</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as.data.frame</span>(ors<span class="sc">$</span>setup_settings<span class="sc">$</span>memory)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   total_memory free_memory init_memory max_memory</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1     15.95192    7.944843        0.75        1.5</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span><span class="fu">allocate_memory</span>(<span class="at">init =</span> <span class="cn">NULL</span>, <span class="at">max =</span> <span class="cn">NULL</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as.data.frame</span>(ors<span class="sc">$</span>setup_settings<span class="sc">$</span>memory)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   total_memory free_memory init_memory max_memory</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1     15.95192    6.590416        0.75        1.5</span></span></code></pre></div>
 <p>In this case, 0.75 GB of initial memory and 1.5 GB of maximum memory are going to be allocated. Initial memory refers to the memory that is allocated at the beginning of the process. Memory usage is successively increased but cannot exceed the set maximum. If no arguments are passed, the method will estimate the needed memory. If only the maximum memory is passed, the initial memory will be half that value.</p>
+<p>Finally, you can change the Docker name and port:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span>ors_name <span class="ot">&lt;-</span> <span class="st">&quot;test_ors&quot;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span>ors_name</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;test_ors&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span>ors_port</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;8080&quot;</span></span></code></pre></div>
 <p>If there are any other things you want to change, you can do so by assigning values to the parsed compose file in <code>$compose</code> or by opening the raw file using <code>$open_settings</code>.</p>
 </div>
 <div id="build-the-image-and-start-the-container" class="section level2">
 <h2>Build the image and start the container</h2>
 <p>In the final step, Docker builds the image and runs the container. This can be accomplished using an ad-hoc Docker interface, which can be accessed and controlled with <code>$docker</code>.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSDockerInterface&gt;</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Inherits from: &lt;ORSInstance&gt;</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     config: active binding</span></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     container_exists: active binding</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     container_running: active binding</span></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     dir: active binding</span></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker: active binding</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker_running: active binding</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     error_log: active binding</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     extract: active binding</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     image_built: active binding</span></span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     image_down: function () </span></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     image_up: function (wait = TRUE, verbose = TRUE) </span></span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initial_setup: function (profiles = &quot;car&quot;, extract_path = self$extract$path, </span></span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function () </span></span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     remove_container: function () </span></span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     service_ready: active binding</span></span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     setup_settings: active binding</span></span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     start_container: function (wait = TRUE) </span></span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     stop_container: function () </span></span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .clone_ors_repo: function (dir = NA) </span></span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .get_subclass: function (env) </span></span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .notify_when_ready: function (interval = 10, silently = FALSE) </span></span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .set_port: function () </span></span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .start_docker: function () </span></span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .subclasses: list</span></span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .watch_for_error: function ()</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;ORSDockerInterface&gt;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Inherits from: &lt;ORSInstance&gt;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Public:</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     active: TRUE</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     cleanup: function () </span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     config: active binding</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     container_down: function () </span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     container_exists: active binding</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     container_running: active binding</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     dir: active binding</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker: active binding</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     docker_running: active binding</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     error_log: active binding</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     extract: active binding</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     image_built: active binding</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     image_up: function (wait = TRUE, verbose = TRUE) </span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initial_setup: function (profiles = NULL, extract = NULL, provider = NULL, init_memory = NULL, </span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     initialize: function () </span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     remove: function (ignore_image = TRUE) </span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     rm_image: function (force = FALSE) </span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     service_ready: active binding</span></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     setup_settings: active binding</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     start_container: function (name = NULL, wait = FALSE) </span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     stop_container: function (name = NULL) </span></span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Private:</span></span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .clone_ors_repo: function (dir) </span></span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .get_subclass: function (env) </span></span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .notify_when_ready: function (interval, silently) </span></span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .set_port: function () </span></span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .start_docker: function () </span></span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .subclasses: list</span></span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     .watch_for_error: function ()</span></span></code></pre></div>
 <p><code>ORSDockerInterface</code> is divided into two functionalities: Checking the service status and controlling the image and container.</p>
-<p>Checking the service status works using six ‘green lights’. <code>$docker_running</code> should always be <code>TRUE</code> after you initialized <code>ORSDockerInterface</code>. <code>$image_built</code> checks if the Docker image <code>openrouteservice:latest</code> exists. <code>$container_exists</code> then verifies the existence of a container named <code>ors-app</code>. <code>$container_running</code> checks if <code>ors-app</code> is running. Finally, <code>$service_ready</code> sends a <code>GET</code> request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of <code>ORSDockerInterface</code>, all lights but the first are probably off.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">status =</span> <span class="fu">c</span>(</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>docker_running,</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>image_built,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>container_exists,</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>container_running,</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>service_ready</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names =</span> <span class="fu">c</span>(</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is docker running?&#39;</span>,</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Does the image exist?&#39;</span>,</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Does the container exist?&#39;</span>,</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is the container running?&#39;</span>,</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is the service ready to use?&#39;</span></span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                              status</span></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is docker running?             TRUE</span></span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Does the image exist?         FALSE</span></span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Does the container exist?     FALSE</span></span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is the container running?     FALSE</span></span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is the service ready to use?  FALSE</span></span></code></pre></div>
+<p>Checking the service status works using six ‘green lights’. <code>$docker_running</code> should always be <code>TRUE</code> after you initialized <code>ORSDockerInterface</code>. <code>$image_built</code> checks if the Docker image <code>openrouteservice:latest</code> exists. <code>$container_exists</code> then verifies the existence of a container named <code>test_ors</code>. <code>$container_running</code> checks if <code>test_ors</code> is running. Finally, <code>$service_ready</code> sends a <code>GET</code> request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of <code>ORSDockerInterface</code>, all lights but the first are probably off.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">status =</span> <span class="fu">c</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>docker_running,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>image_built,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>container_exists,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>container_running,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    ors<span class="sc">$</span>docker<span class="sc">$</span>service_ready</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names =</span> <span class="fu">c</span>(</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is docker running?&#39;</span>,</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Does the image exist?&#39;</span>,</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Does the container exist?&#39;</span>,</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is the container running?&#39;</span>,</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Is the service ready to use?&#39;</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                              status</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is docker running?             TRUE</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Does the image exist?         FALSE</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Does the container exist?     FALSE</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is the container running?     FALSE</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Is the service ready to use?  FALSE</span></span></code></pre></div>
 <p>If you already built the image and started the container, but encountered an error, you can view the error logs using <code>$error_log</code> and clean up after yourself using <code>$cleanup</code>. Preferably, this should return NULL.</p>
 <p>Finally, it is time to start an OpenRouteService instance by creating the container and setting up the service. While the container creation can be done relatively quickly, depending on the extract size and the number of active profiles, the service setup can take between a few minutes and a few hours. In order to build the image and start the container, simply call <code>$image_up</code>. This will forward the heavy work to docker-compose. If <code>wait</code> is set to <code>TRUE</code>, you will get a notification as soon as the process is done.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">image_up</span>(<span class="at">wait =</span> <span class="cn">TRUE</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; The container is being set up and started now. You can stop the process now or</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; let it run and get notified when the service is ready.</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Starting service</span></span>
-<span id="cb14-166"><a href="#cb14-166" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Service setup done. ORS should now be ready to use. [8m 41s]</span></span>
-</code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Verbose is set to FALSE to not litter the output, but it can provide useful</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># information on the process</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">image_up</span>(<span class="at">wait =</span> <span class="cn">TRUE</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="change-osm-data" class="section level2">
 <h2>Change OSM data</h2>
 <p>Now, that we successfully set up the ORS service, let’s try it out in action:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>test_dataset_a <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">lon =</span> <span class="fu">c</span>(<span class="fl">6.92632</span>,<span class="fl">7.00196</span>,<span class="fl">7.03162</span>,<span class="fl">6.99624</span>,<span class="fl">6.91885</span>),</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">lat =</span> <span class="fu">c</span>(<span class="fl">51.02972</span>,<span class="fl">50.88385</span>,<span class="fl">50.98915</span>,<span class="fl">51.00625</span>,<span class="fl">50.91935</span>)</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>test_dataset_b <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">lon =</span> <span class="fu">c</span>(<span class="fl">7.00524</span>, <span class="fl">6.88638</span>, <span class="fl">6.93490</span>, <span class="fl">6.89956</span>, <span class="fl">6.95876</span>),</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">lat =</span> <span class="fu">c</span>(<span class="fl">50.99847</span>, <span class="fl">50.95235</span>, <span class="fl">51.00619</span>, <span class="fl">51.05668</span>, <span class="fl">50.88194</span>)</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="fu">get_route_lengths</span>(test_dataset_a, test_dataset_b, <span class="at">profile =</span> <span class="st">&quot;driving-car&quot;</span>)</span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: ORS returned the following error:</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ! Code 2099: Unknown internal error.</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i This error code might indicate that some or all input coordinates fall outside</span></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   of the extract coverage.</span></span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>test_dataset_a <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">lon =</span> <span class="fu">c</span>(<span class="fl">6.92632</span>,<span class="fl">7.00196</span>,<span class="fl">7.03162</span>,<span class="fl">6.99624</span>,<span class="fl">6.91885</span>),</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">lat =</span> <span class="fu">c</span>(<span class="fl">51.02972</span>,<span class="fl">50.88385</span>,<span class="fl">50.98915</span>,<span class="fl">51.00625</span>,<span class="fl">50.91935</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>test_dataset_b <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">lon =</span> <span class="fu">c</span>(<span class="fl">7.00524</span>, <span class="fl">6.88638</span>, <span class="fl">6.93490</span>, <span class="fl">6.89956</span>, <span class="fl">6.95876</span>),</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">lat =</span> <span class="fu">c</span>(<span class="fl">50.99847</span>, <span class="fl">50.95235</span>, <span class="fl">51.00619</span>, <span class="fl">51.05668</span>, <span class="fl">50.88194</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ors_distances</span>(test_dataset_a, test_dataset_b, <span class="at">profile =</span> <span class="st">&quot;driving-car&quot;</span>)</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning: No routes could be calculated. Check your service config.</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; For a list of conditions, call `last_ors_conditions()`.</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   distance duration</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1   NA [m]   NA [s]</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2   NA [m]   NA [s]</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3   NA [m]   NA [s]</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4   NA [m]   NA [s]</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5   NA [m]   NA [s]</span></span></code></pre></div>
 <p>That doesn’t seem to work. Looks like I accidentally tried to route between coordinates in Cologne, although I mounted an extract of Arnsberg. This mistake can be fixed by taking down the container:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove container</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">remove_container</span>()</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Get a new extract and set graph building to &quot;change&quot;.</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># This allows Docker to overwrite the graphs directory</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co"># using the new extract.</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>extract<span class="sc">$</span><span class="fu">get_extract</span>(<span class="st">&quot;Cologne&quot;</span>, <span class="at">provider =</span> <span class="st">&quot;geofabrik&quot;</span>)</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Trying different extract providers...</span></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i The extract &#39;koeln-regbez-latest.osm.pbf&#39; is 171 MB in size and will be downloaded from geofabrik.</span></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Removing old extracts...</span></span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Downloading the OSM extract...</span></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v The extract was successfully downloaded to the following path: &#39;C:/Users/No...</span></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span>graph_building <span class="ot">&lt;-</span> <span class="st">&quot;change&quot;</span></span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Finally, start the container again.</span></span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">image_up</span>(<span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; The container is being set up and started now. You can stop the process now or</span></span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; let it run and get notified when the service is ready.</span></span>
-<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Starting service</span></span>
-<span id="cb16-168"><a href="#cb16-168" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Service setup done. ORS should now be ready to use. [7m 54.6s]</span></span>
-</code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove container</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">container_down</span>()</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Taking down container...</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Took down container. [12.4s]</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Get a new extract and set graph building to &quot;change&quot;.</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="co"># This allows Docker to overwrite the graphs directory</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="co"># using the new extract.</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>extract<span class="sc">$</span><span class="fu">get_extract</span>(<span class="st">&quot;Cologne&quot;</span>, <span class="at">provider =</span> <span class="st">&quot;geofabrik&quot;</span>)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Trying different extract providers...</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i The extract &#39;koeln-regbez-latest.osm.pbf&#39; is 171 MB in size and will be downloaded from geofabrik.</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Removing old extracts...</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Downloading the OSM extract...</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v The extract was successfully downloaded to the following path: &#39;C:/Users/No...</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>setup_settings<span class="sc">$</span>graph_building <span class="ot">&lt;-</span> <span class="st">&quot;change&quot;</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Finally, start the container again.</span></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>  ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">image_up</span>(<span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="change-ors-configurations" class="section level2">
 <h2>Change ORS configurations</h2>
-<p>Great. To make sure I don’t mess up the coordinates again, I’ll use the ORS dependent sampling function <code>ors_sample</code>. It’s simply a wrapper around <code>sf::st_sample</code> that uses the current extract to generate a point sample.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This may take a while</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">111</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>sample_a <span class="ot">&lt;-</span> <span class="fu">ors_sample</span>(<span class="at">size =</span> <span class="dv">100</span>)</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="co"># This&#39;ll be a lot faster</span></span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">222</span>)</span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>sample_b <span class="ot">&lt;-</span> <span class="fu">ors_sample</span>(<span class="at">size =</span> <span class="dv">100</span>)</span>
-<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a><span class="fu">get_route_lengths</span>(sample_a, sample_b, <span class="at">profile =</span> <span class="st">&quot;driving-car&quot;</span>)</span>
-<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: ORS returned the following error:</span></span>
-<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ! Code 2004: Request parameters exceed the server configuration limits. The</span></span>
-<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   approximated route distance must not be greater than 100000.0 meters.</span></span></code></pre></div>
-<p>Dang it! Luckily, changing the service configurations doesn’t take very long. Since it’s not necessary to alter the compose file in order to change the service configs, we don’t need to remove the container entirely, but can just turn it off.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop the container</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">stop_container</span>()</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-initialize ORSConfig to get the active config file</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config <span class="ot">&lt;-</span> <span class="st">&quot;refresh&quot;</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Change the default maximum distance. This only changes the maximum distance</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co"># for profiles that don&#39;t have their own distance limit.</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span>ors_config<span class="sc">$</span>ors<span class="sc">$</span>services<span class="sc">$</span>routing<span class="sc">$</span>profiles<span class="sc">$</span>default_params<span class="sc">$</span>maximum_distance <span class="ot">&lt;-</span> <span class="dv">1000000</span></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co"># driving-car has its own distance limit by default, so we&#39;ll eliminate it</span></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span>ors_config<span class="sc">$</span>ors<span class="sc">$</span>services<span class="sc">$</span>routing<span class="sc">$</span>profiles<span class="sc">$</span><span class="st">`</span><span class="at">profile-car</span><span class="st">`</span><span class="sc">$</span>parameters<span class="sc">$</span>maximum_distance <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Don&#39;t forget to save changes to the parsed config file</span></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span><span class="fu">save_config</span>()</span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-start the container</span></span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">start_container</span>()</span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Starting service</span></span>
-<span id="cb18-149"><a href="#cb18-149" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Service setup done. ORS should now be ready to use. [7m 10.8s]</span></span>
-</code></pre></div>
+<p>Great. To make sure I don’t mess up the coordinates again, I’ll use the ORS dependent sampling function <code>ors_sample</code>. More on this can be found in <code>vignette(&quot;ors-routing-usage&quot;)</code>.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This may take a while</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">111</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>sample_a <span class="ot">&lt;-</span> <span class="fu">ors_sample</span>(<span class="at">size =</span> <span class="dv">20</span>)</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="co"># This&#39;ll be a lot faster</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">222</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>sample_b <span class="ot">&lt;-</span> <span class="fu">ors_sample</span>(<span class="at">size =</span> <span class="dv">20</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ors_distances</span>(sample_a, sample_b, <span class="at">profile =</span> <span class="st">&quot;driving-car&quot;</span>)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning: 2 routes could not be calculated and were skipped: 10, 15</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; For a list of conditions, call `last_ors_conditions()`.</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        distance   duration</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1   21136.1 [m] 1639.8 [s]</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2   42905.5 [m] 2343.4 [s]</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3   32226.6 [m] 1377.0 [s]</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4   12018.9 [m] 1412.2 [s]</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5   47660.7 [m] 2344.5 [s]</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6   30252.7 [m] 1616.6 [s]</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7   48614.2 [m] 3986.5 [s]</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8   70604.0 [m] 3697.3 [s]</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9  150549.3 [m] 6472.0 [s]</span></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10       NA [m]     NA [s]</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 11  48571.6 [m] 2115.5 [s]</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 12  26129.6 [m] 1886.3 [s]</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 13  40255.0 [m] 2407.1 [s]</span></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 14  42638.1 [m] 2984.4 [s]</span></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 15       NA [m]     NA [s]</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 16  39907.3 [m] 1855.7 [s]</span></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 17  88816.4 [m] 4556.6 [s]</span></span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 18  81402.9 [m] 4370.4 [s]</span></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 19  89648.9 [m] 4407.4 [s]</span></span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 20  80878.9 [m] 3747.9 [s]</span></span></code></pre></div>
+<p>Dang it! Somehow, two routes could not be calculated. What’s this about?</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">last_ors_conditions</span>()</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Function call from 19:21:37:</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 - Error code 2004: Request parameters exceed the server configuration limits. The approximated route d...</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 15 - Error code 2004: Request parameters exceed the server configuration limits. The approximated route d...</span></span></code></pre></div>
+<p>Luckily, changing the service configurations doesn’t take very long. Since it’s not necessary to alter the compose file in order to change the service configs, we don’t need to remove the container entirely, but can just turn it off.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop the container</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">stop_container</span>()</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; i Stopping container...</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; v Container stopped. [12.1s]</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-initialize ORSConfig to get the active config file</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config <span class="ot">&lt;-</span> <span class="st">&quot;refresh&quot;</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Change the default maximum distance. This only changes the maximum distance</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="co"># for profiles that don&#39;t have their own distance limit.</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span>ors_config<span class="sc">$</span>ors<span class="sc">$</span>services<span class="sc">$</span>routing<span class="sc">$</span>profiles<span class="sc">$</span>default_params<span class="sc">$</span>maximum_distance <span class="ot">&lt;-</span> <span class="dv">1000000</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="co"># driving-car has its own distance limit by default, so we&#39;ll eliminate it</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span>ors_config<span class="sc">$</span>ors<span class="sc">$</span>services<span class="sc">$</span>routing<span class="sc">$</span>profiles<span class="sc">$</span><span class="st">`</span><span class="at">profile-car</span><span class="st">`</span><span class="sc">$</span>parameters<span class="sc">$</span>maximum_distance <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Don&#39;t forget to save changes to the parsed config file</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span>config<span class="sc">$</span><span class="fu">save_config</span>()</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-start the container</span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>  ors<span class="sc">$</span>docker<span class="sc">$</span><span class="fu">start_container</span>(<span class="at">wait =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
 <p>Third time’s the charm, let’s try again:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">111</span>)</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>sample_a <span class="ot">&lt;-</span> <span class="fu">ors_sample</span>(<span class="at">size =</span> <span class="dv">100</span>)</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">222</span>)</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>sample_b <span class="ot">&lt;-</span> <span class="fu">ors_sample</span>(<span class="at">size =</span> <span class="dv">100</span>)</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="fu">get_route_lengths</span>(sample_a, sample_b, <span class="at">profile =</span> <span class="st">&quot;driving-car&quot;</span>)</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    distance duration</span></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1  108611.0   3920.6</span></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2   81341.9   3741.1</span></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3   12579.9   1221.4</span></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4   18866.3   1495.1</span></span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5   59217.0   2895.3</span></span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6   85522.7   4850.2</span></span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7  109393.2   4842.9</span></span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8  144132.8   7098.9</span></span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9   62539.2   3121.3</span></span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10  50547.5   4037.9</span></span>
-<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 11  92403.6   3397.1</span></span>
-<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 12  26250.8   2059.9</span></span>
-<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 13  44710.1   2039.6</span></span>
-<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 14  12566.6    886.6</span></span>
-<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 15  41763.9   1964.1</span></span>
-<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 16  23081.0   2237.5</span></span>
-<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 17 126838.3   5760.6</span></span>
-<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 18  92938.8   4218.9</span></span>
-<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 19  83213.6   3800.8</span></span>
-<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 20  82508.9   3588.3</span></span>
-<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 21  74656.1   3970.8</span></span>
-<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 22  70001.5   3003.4</span></span>
-<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 23  30812.8   2701.4</span></span>
-<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 24  13794.4   1218.9</span></span>
-<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 25  91859.8   3378.4</span></span>
-<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 26  35360.8   3043.0</span></span>
-<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 27  23329.7   1783.1</span></span>
-<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 28  28517.8   2218.3</span></span>
-<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 29 162185.0   6520.6</span></span>
-<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 30  60771.1   2601.7</span></span>
-<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 31  74828.8   3795.2</span></span>
-<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 32  28615.3   2336.9</span></span>
-<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 33 146423.1   5588.9</span></span>
-<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 34  83529.8   5562.1</span></span>
-<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 35  75772.3   4690.4</span></span>
-<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 36 102569.1   4350.1</span></span>
-<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 37 113169.9   4254.0</span></span>
-<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 38 106365.3   3992.0</span></span>
-<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 39  57869.3   4506.8</span></span>
-<span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 40  29709.8   1413.4</span></span>
-<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 41  41590.1   2083.2</span></span>
-<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 42  78446.3   3896.9</span></span>
-<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 43  67989.0   4412.0</span></span>
-<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 44 103085.0   5027.8</span></span>
-<span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 45  80659.5   2306.0</span></span>
-<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 46  73906.2   3714.2</span></span>
-<span id="cb19-55"><a href="#cb19-55" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 47  51334.4   4176.5</span></span>
-<span id="cb19-56"><a href="#cb19-56" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 48  46057.7   2982.5</span></span>
-<span id="cb19-57"><a href="#cb19-57" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 49  64635.2   3687.4</span></span>
-<span id="cb19-58"><a href="#cb19-58" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 50  19509.3   1062.3</span></span>
-<span id="cb19-59"><a href="#cb19-59" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 51  76581.4   3872.9</span></span>
-<span id="cb19-60"><a href="#cb19-60" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 52 103273.7   5014.2</span></span>
-<span id="cb19-61"><a href="#cb19-61" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 53 103098.0   4979.6</span></span>
-<span id="cb19-62"><a href="#cb19-62" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 54  81819.9   4076.6</span></span>
-<span id="cb19-63"><a href="#cb19-63" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 55  78970.6   3647.7</span></span>
-<span id="cb19-64"><a href="#cb19-64" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 56 126587.6   5401.3</span></span>
-<span id="cb19-65"><a href="#cb19-65" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 57 118077.2   4877.7</span></span>
-<span id="cb19-66"><a href="#cb19-66" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 58 129646.3   5829.3</span></span>
-<span id="cb19-67"><a href="#cb19-67" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 59 121873.4   5104.9</span></span>
-<span id="cb19-68"><a href="#cb19-68" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 60  29416.6   2294.3</span></span>
-<span id="cb19-69"><a href="#cb19-69" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 61  65920.9   4260.6</span></span>
-<span id="cb19-70"><a href="#cb19-70" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 62   2874.3    588.1</span></span>
-<span id="cb19-71"><a href="#cb19-71" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 63 123631.0   5592.5</span></span>
-<span id="cb19-72"><a href="#cb19-72" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 64  83291.9   3994.0</span></span>
-<span id="cb19-73"><a href="#cb19-73" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 65  56686.8   3030.4</span></span>
-<span id="cb19-74"><a href="#cb19-74" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 66  50614.1   3497.9</span></span>
-<span id="cb19-75"><a href="#cb19-75" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 67  34640.2   3036.3</span></span>
-<span id="cb19-76"><a href="#cb19-76" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 68 106964.3   4208.5</span></span>
-<span id="cb19-77"><a href="#cb19-77" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 69  92515.7   3956.0</span></span>
-<span id="cb19-78"><a href="#cb19-78" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 70  58042.8   3688.1</span></span>
-<span id="cb19-79"><a href="#cb19-79" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 71  36931.6   2225.1</span></span>
-<span id="cb19-80"><a href="#cb19-80" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 72  30074.2   2557.1</span></span>
-<span id="cb19-81"><a href="#cb19-81" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 73 116935.4   4502.4</span></span>
-<span id="cb19-82"><a href="#cb19-82" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 74 136577.1   6144.1</span></span>
-<span id="cb19-83"><a href="#cb19-83" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 75  56681.1   2915.9</span></span>
-<span id="cb19-84"><a href="#cb19-84" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 76  58732.6   3477.8</span></span>
-<span id="cb19-85"><a href="#cb19-85" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 77 122588.0   5708.5</span></span>
-<span id="cb19-86"><a href="#cb19-86" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 78  15488.2   1177.0</span></span>
-<span id="cb19-87"><a href="#cb19-87" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 79 109077.1   4579.8</span></span>
-<span id="cb19-88"><a href="#cb19-88" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 80  84589.8   4565.5</span></span>
-<span id="cb19-89"><a href="#cb19-89" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 81  33266.5   2470.6</span></span>
-<span id="cb19-90"><a href="#cb19-90" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 82  94367.6   4793.3</span></span>
-<span id="cb19-91"><a href="#cb19-91" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 83  91741.2   3845.1</span></span>
-<span id="cb19-92"><a href="#cb19-92" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 84  65303.6   3602.0</span></span>
-<span id="cb19-93"><a href="#cb19-93" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 85  37206.1   2066.3</span></span>
-<span id="cb19-94"><a href="#cb19-94" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 86  69518.4   3372.4</span></span>
-<span id="cb19-95"><a href="#cb19-95" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 87  36992.3   2369.7</span></span>
-<span id="cb19-96"><a href="#cb19-96" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 88  61125.6   4019.3</span></span>
-<span id="cb19-97"><a href="#cb19-97" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 89 135169.3   7015.7</span></span>
-<span id="cb19-98"><a href="#cb19-98" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 90  99561.0   4587.3</span></span>
-<span id="cb19-99"><a href="#cb19-99" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 91  68465.5   3405.0</span></span>
-<span id="cb19-100"><a href="#cb19-100" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 92  85110.0   3822.1</span></span>
-<span id="cb19-101"><a href="#cb19-101" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 93  57043.4   4437.5</span></span>
-<span id="cb19-102"><a href="#cb19-102" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 94  42949.1   2341.3</span></span>
-<span id="cb19-103"><a href="#cb19-103" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 95  76974.5   3339.0</span></span>
-<span id="cb19-104"><a href="#cb19-104" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 96  86947.4   3472.3</span></span>
-<span id="cb19-105"><a href="#cb19-105" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 97  57618.5   3548.2</span></span>
-<span id="cb19-106"><a href="#cb19-106" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 98  64865.6   2778.1</span></span>
-<span id="cb19-107"><a href="#cb19-107" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 99  57229.3   2787.9</span></span></code></pre></div>
-<p>Seems to work! However, errors lurk everywhere. If we were to pass a different profile or increase the sample size, we would be faced with new errors. So be sure to take care of your configurations and change them if necessary.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">111</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>sample_a <span class="ot">&lt;-</span> <span class="fu">ors_sample</span>(<span class="at">size =</span> <span class="dv">20</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">222</span>)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>sample_b <span class="ot">&lt;-</span> <span class="fu">ors_sample</span>(<span class="at">size =</span> <span class="dv">20</span>)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ors_distances</span>(sample_a, sample_b, <span class="at">profile =</span> <span class="st">&quot;driving-car&quot;</span>)</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        distance   duration</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1   21136.1 [m] 1639.8 [s]</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2   42905.5 [m] 2343.4 [s]</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3   32226.6 [m] 1377.0 [s]</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4   12018.9 [m] 1412.2 [s]</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5   47660.7 [m] 2344.5 [s]</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6   30252.7 [m] 1616.6 [s]</span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7   48614.2 [m] 3986.5 [s]</span></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8   70604.0 [m] 3697.3 [s]</span></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9  150549.3 [m] 6472.0 [s]</span></span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 141842.3 [m] 5058.1 [s]</span></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 11  48571.6 [m] 2115.5 [s]</span></span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 12  26129.6 [m] 1886.3 [s]</span></span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 13  40255.0 [m] 2407.1 [s]</span></span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 14  42638.1 [m] 2984.4 [s]</span></span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 15 136733.5 [m] 5655.2 [s]</span></span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 16  39907.3 [m] 1855.7 [s]</span></span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 17  88816.4 [m] 4556.6 [s]</span></span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 18  81402.9 [m] 4370.4 [s]</span></span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 19  89648.9 [m] 4407.4 [s]</span></span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 20  80878.9 [m] 3747.9 [s]</span></span></code></pre></div>
+<p>Seems to work! However, errors lurk everywhere. If we were to pass a different profile or increase the sample size, we could be faced with new errors. So be sure to take care of your configurations and change them if necessary.</p>
 <p>Three takeaways can be formulated for this vignette:</p>
 <ol style="list-style-type: decimal">
 <li>Run an initial setup by mounting an extract, selecting relevant profiles and building the graphs</li>

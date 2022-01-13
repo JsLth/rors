@@ -18,6 +18,6 @@ DONE:
 
 DROPPED:
 - Try out docker pulling ORS instead of git cloning -> doesn't make any sense
-- Find ways to increase performance of get_route_lengths -> most time and resources are spent by ORS
+- Find ways to increase performance of ors_distances -> most time and resources are spent by ORS
 - Find ways to properly catch command line progress bars -> not possible
 - Implement a custom print method for ORS R6 classes? -> why?

@@ -24,8 +24,8 @@ Points of interest data extraction and formatting:
 
 Route distance computation:
 \itemize{
-\item \code{\link{get_route_lengths}}
-\item \code{\link{get_shortest_routes}}
+\item \code{\link{ors_distances}}
+\item \code{\link{ors_shortest_distances}}
 }
 
 Route inspection and summary:

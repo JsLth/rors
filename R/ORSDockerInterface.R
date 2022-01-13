@@ -78,7 +78,7 @@ ORSDockerInterface <- R6::R6Class(
     #' call \code{$service_ready} or \code{\link{ors_ready}}.
     #' @param verbose Logical. If \code{TRUE}, prints Docker logs for container
     #' setup.
-    container_up = function(wait = TRUE, verbose = TRUE) ORSDockerInterface$funs$image_up(self, private, wait, verbose),
+    container_up = function(wait = TRUE, verbose = TRUE) ORSDockerInterface$funs$container_up(self, private, wait, verbose),
 
     #' @description Deletes the image.
     #' @param name Optional name of the container. If not provided, the method

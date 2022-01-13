@@ -2,7 +2,7 @@
 % Please edit documentation in R/ors-utils.R
 \name{last_ors_conditions}
 \alias{last_ors_conditions}
-\title{Print ORS errors}
+\title{Return ORS conditions}
 \usage{
 last_ors_conditions(last = 1L)
 }
@@ -12,5 +12,5 @@ for example, returns errors from the last two function calls.}
 }
 \description{
 Return the error and warning messages that ORS returned in the
-last \code{\link{get_route_lengths}} or \code{get_route_attributes} function calls.
+last \code{\link{ors_distances}} or \code{get_route_attributes} function calls.
 }

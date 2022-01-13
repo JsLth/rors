@@ -285,7 +285,7 @@ ORSInstance$funs$initial_setup <- function(self,
   self$setup_settings$save_compose()
 
   # Start the service ---------------------------------------------------
-  self$docker$image_up(wait, verbose)
+  self$docker$container_up(wait, verbose)
 
   # Upddate ORSConfig
   self$config <- "refresh"

@@ -58,10 +58,10 @@ Coordinates are stored in long format with the first column being X or longitude
 
 ## Routing distances
 
-When we pass the sample data to `get_route_lengths`, the function computes route distances row-wise, i.e. from `sample_a[i, ]` to `sample_b[i, ]` with `i = 1:20`. The route calculations are considerably influenced by the profile choice. Since cars a lot faster than bicycles, but cannot use smaller tracks, the routes will be significantly different. The result is a dataframe containing distances and durations of the computed routes:
+When we pass the sample data to `ors_distances`, the function computes route distances row-wise, i.e. from `sample_a[i, ]` to `sample_b[i, ]` with `i = 1:20`. The route calculations are considerably influenced by the profile choice. Since cars a lot faster than bicycles, but cannot use smaller tracks, the routes will be significantly different. The result is a dataframe containing distances and durations of the computed routes:
 
 ```{r}
-routes <- get_route_lengths(sample_a, sample_b, profile = "driving-car")
+routes <- ors_distances(sample_a, sample_b, profile = "driving-car")
 routes
 ```
 
@@ -82,7 +82,7 @@ plot_routes_with_basemap <- function(routes) {
   })
 }
 
-route_geom <- get_route_lengths(sample_a, sample_b, profile = "driving-car", geometry = TRUE)
+route_geom <- ors_distances(sample_a, sample_b, profile = "driving-car", geometry = TRUE)
 plot_routes_with_basemap(route_geom)
 ```
 As you can see, the sample routes cover a large part of the Cologne governmental district. Unfortunately, since late 2019, you can't get around inside the city of Cologne without having a green environment badge. To remove any uncertainties, let's prevent ORS from routing through the city by providing a polygon to avoid:
@@ -90,7 +90,7 @@ As you can see, the sample routes cover a large part of the Cologne governmental
 ```{r}
 avoid_poly <- sf::st_as_sfc(sf::st_bbox(c(xmin = 6.9, ymin = 50.9, xmax = 7.05, ymax = 51), crs = 4326))
 
-route_geom <- get_route_lengths(sample_a, sample_b, profile = "driving-car", geometry = TRUE, avoid_polygons = avoid_poly)
+route_geom <- ors_distances(sample_a, sample_b, profile = "driving-car", geometry = TRUE, avoid_polygons = avoid_poly)
 plot_routes_with_basemap(route_geom) + geom_sf(data = avoid_poly, inherit.aes = FALSE, fill = NA, color = "red", size = 1)
 ```
 No routes are allowed to lead through (approximately) the urban region of Cologne. Unfortunately, three routes cannot be computed because they either end or start inside the Cologne, but that's life.
@@ -98,7 +98,7 @@ No routes are allowed to lead through (approximately) the urban region of Cologn
 If we wanted to enjoy the view of the Rhineland instead of driving on boring highways, we could just avoid those entirely:
 
 ```{r}
-route_geom <- get_route_lengths(sample_a, sample_b, profile = "driving-car", geometry = TRUE, avoid_features = "highways")
+route_geom <- ors_distances(sample_a, sample_b, profile = "driving-car", geometry = TRUE, avoid_features = "highways")
 print(mean(route_geom$duration, na.rm = TRUE))
 plot_routes_with_basemap(route_geom)
 ```
@@ -126,7 +126,7 @@ In this step, we select 5 points for each point that have the lowest linear dist
 Finally, we can find the nearest hospitals:
 
 ```{r}
-nearest_hospitals <- get_shortest_routes(sample_a, nearest_hdata, profile = "driving-car", geometry = TRUE, proximity_type = "duration")
+nearest_hospitals <- ors_shortest_distances(sample_a, nearest_hdata, profile = "driving-car", geometry = TRUE, proximity_type = "duration")
 nearest_hospitals
 ```
 ```{r}
@@ -178,7 +178,7 @@ ggplot2::ggplot(data = units::drop_units(long_route)) +
 
 Aside from the functions mentioned here, the package comes with a few additional functionalities:
 
-- You can generate many-to-many routing matrices using `create_dist_matrix`
+- You can generate many-to-many routing matrices using `ors_distances`
 - You can create a summary for a single route using `summarize_route`
 - Aside from `get_extract_boundaries`, you can get ORS instance information using `ors_ready` and `get_profiles`
 

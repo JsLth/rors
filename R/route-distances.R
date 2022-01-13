@@ -6,7 +6,7 @@
 
 #' Routing distance computations
 #' @description
-#' \code{get_route_lengths} calculates the routing distance between two
+#' \code{ors_distances} calculates the routing distance between two
 #' datasets using the Directions service from ORS.
 #' @param source Source dataset that represents points that should be routed
 #' from. It can be passed as:
@@ -70,17 +70,17 @@
 #'  \item{\strong{maximum_speed}}{Numeric length-1 vector specifying the
 #'                                maximum speed.}
 #' }
-#' @returns \code{get_route_lengths} returns a dataframe with distances and
+#' @returns \code{ors_distances} returns a dataframe with distances and
 #' travel durations between source and destination.
 #'
 #' @details
-#' For \code{get_route_lengths}, the profile argument supports only length-1
-#' vectors while \code{get_shortest_routes} supports multiple profiles.
-#' \code{get_shortest_routes} finds the shortest route for each source
+#' For \code{ors_distances}, the profile argument supports only length-1
+#' vectors while \code{ors_shortest_distances} supports multiple profiles.
+#' \code{ors_shortest_distances} finds the shortest route for each source
 #' point and each profile, respectively.
 #'
 #' @section Error handling:
-#' Since \code{get_route_lengths} is supposed to conduct a lot of calculations
+#' Since \code{ors_distances} is supposed to conduct a lot of calculations
 #' in one go, errors might occur even in well-conceived service setups. In
 #' order to make debugging less painful, errors do not tear down the whole
 #' process. They are saved to an environment and issue a warning containing the
@@ -105,39 +105,39 @@
 #' bike = "cycling-regular"
 #'
 #' # Running with sf objects
-#' route_lengths_sf <- get_route_lengths(source_sf, dest_sf, profile = car)
+#' route_lengths_sf <- ors_distances(source_sf, dest_sf, profile = car)
 #' route_lengths_sf
 #'
 #' # Running with coordinate pairs
-#' route_lengths_df <- get_route_lengths(source_df, dest_df, profile = bike)
+#' route_lengths_df <- ors_distances(source_df, dest_df, profile = bike)
 #' route_lengths_df
 #'
 #' # Returns route geometries
-#' route_lengths_geom <- get_route_lengths(source_df,
-#'                                         dest_df,
-#'                                         profile = car,
-#'                                         geometry = TRUE)
+#' route_lengths_geom <- ors_distances(source_df,
+#'                                     dest_df,
+#'                                     profile = car,
+#'                                     geometry = TRUE)
 #'
 #' # Returns routes in kilometers
-#' route_lengths_km <- get_route_lengths(source_df,
-#'                                       dest_df,
-#'                                       profile = bike,
-#'                                       units = "km")
+#' route_lengths_km <- ors_distances(source_df,
+#'                                   dest_df,
+#'                                   profile = bike,
+#'                                   units = "km")
 #'
 #' # Running with additional arguments
-#' route_lengths_opts <- get_route_lengths(source_df,
-#'                                         dest_df,
-#'                                         profile = car,
-#'                                         continue_straight = TRUE,
-#'                                         preference = "fastest")
+#' route_lengths_opts <- ors_distances(source_df,
+#'                                     dest_df,
+#'                                     profile = car,
+#'                                     continue_straight = TRUE,
+#'                                     preference = "fastest")
 #' }
 
-get_route_lengths <- function(source,
-                              destination,
-                              profile = get_profiles(),
-                              units = c("m", "km", "mi"),
-                              geometry = FALSE,
-                              ...) {
+ors_distances <- function(source,
+                          destination,
+                          profile = get_profiles(),
+                          units = c("m", "km", "mi"),
+                          geometry = FALSE,
+                          ...) {
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE)
 
@@ -271,7 +271,7 @@ get_route_lengths <- function(source,
 
 #' Calculate shortest routes to nearby points of interest
 #' @description
-#' \code{get_shortest_routes} is a wrapper around \code{get_route_lengths} that
+#' \code{ors_shortest_distances} is a wrapper around \code{ors_distances} that
 #' matches each point of the source dataset to a list of points of interest
 #' from the destination dataset and then extracts the route with the shortest
 #' distance.
@@ -279,7 +279,7 @@ get_route_lengths <- function(source,
 #' @param proximity_type Type of proximity that the calculations should be
 #' based on. If `distance`, the shortest physical distance will be calculated
 #' and if `duration`, the shortest temporal distance will be calculated.
-#' @returns \code{get_shortest_routes} returns a dataframe containing
+#' @returns \code{ors_shortest_distances} returns a dataframe containing
 #' distances, travel durations and the index number of the point of interest
 #' with the shortest routing distance to the respective place of the source
 #' dataset.
@@ -289,7 +289,7 @@ get_route_lengths <- function(source,
 #' geometries of the respective routes.
 #'
 #' @details
-#' For \code{get_shortest_routes}, the destination argument can argument can
+#' For \code{ors_shortest_distances}, the destination argument can argument can
 #' also be a list of accordingly formatted datasets (as returned by
 #' \code{get_nearest_pois}). If a list is passed, each list element corresponds
 #' to one row in the source dataset. If a two-dimensional data structure is
@@ -297,30 +297,30 @@ get_route_lengths <- function(source,
 #'
 #' @export
 #'
-#' @rdname get_route_lengths
+#' @rdname ors_distances
 #'
 #' @examples
 #' \dontrun{
 #' # Finding shortest routes from each point in sample_a to sample_b
-#' shortest_routes <- get_shortest_routes(source_df, dest_df, units = "km")
+#' shortest_routes <- ors_shortest_distances(source_df, dest_df, units = "km")
 #' shortest_routes
 #'
 #' # Finding the shortest routes to the nearest hospitals
 #' pois <- get_osm_pois(sf::st_bbox(source_sf), amenity = "hospital")
 #'
-#' nearest_hospitals <- get_shortest_routes(source,
+#' nearest_hospitals <- ors_shortest_distances(source,
 #'                                          pois,
 #'                                          geometry = TRUE)
 #' nearest_hospitals
 #' }
 
-get_shortest_routes <- function(source,
-                                destination,
-                                profile = get_profiles(),
-                                units = c("m", "km", "mi"),
-                                geometry = FALSE,
-                                ...,
-                                proximity_type = c("duration", "distance")) {
+ors_shortest_distances <- function(source,
+                                   destination,
+                                   profile = get_profiles(),
+                                   units = c("m", "km", "mi"),
+                                   geometry = FALSE,
+                                   ...,
+                                   proximity_type = c("duration", "distance")) {
   proximity_type <- match.arg(proximity_type)
 
   source <- format_input_data(source)
@@ -332,7 +332,7 @@ get_shortest_routes <- function(source,
   }
 
   calculate_shortest_routes <- function(i) {
-    routes <- get_route_lengths(
+    routes <- ors_distances(
       source = source[nested_iterator[i, "point_number"], ],
       destination = if (is.data.frame(destination)) {
         destination
@@ -415,16 +415,18 @@ get_shortest_routes <- function(source,
 
 #' Routing distance matrix
 #' @description Calls the matrix service and returns a routing distance matrix.
-#' @inheritParams get_route_lengths
+#' @inheritParams ors_distances
 #' @returns If \code{length(proximity_type) == 1}, returns a
 #' \code{nrow(source) * nrow(destination)} routing distance matrix. Otherwise,
 #' returns a list containing two matrices accordingly.
+#' 
+#' @export
 
-create_dist_matrix <- function(source,
-                               destination,
-                               profile = get_profiles(),
-                               units = c("m", "km", "mi"),
-                               proximity_type = c("distance", "duration")) {
+ors_matrix <- function(source,
+                       destination,
+                       profile = get_profiles(),
+                       units = c("m", "km", "mi"),
+                       proximity_type = c("distance", "duration")) {
   profile <- match.arg(profile)
   proximity_type <- match.arg(proximity_type)
   units <- match.arg(units)

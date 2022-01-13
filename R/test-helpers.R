@@ -86,14 +86,14 @@ expect_container_build <- function(object, init_setup = TRUE) {
   }
 
   if (!init_setup) {
-    object$image_up(wait = TRUE, verbose = FALSE)
+    object$container_up(wait = TRUE, verbose = FALSE)
   } else {
     object$initial_setup()
   }
 
   testthat::expect(
     isTRUE(object$image_built && object$container_exists && object$container_running),
-    "$image_up() did not build the image or the container."
+    "$container_up() did not build the image or the container."
   )
 
   invisible(object)

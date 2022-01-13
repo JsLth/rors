@@ -64,7 +64,7 @@ occurred.}
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-new}{\code{ORSDockerInterface$new()}}
-\item \href{#method-image_up}{\code{ORSDockerInterface$image_up()}}
+\item \href{#method-container_up}{\code{ORSDockerInterface$container_up()}}
 \item \href{#method-rm_image}{\code{ORSDockerInterface$rm_image()}}
 \item \href{#method-container_down}{\code{ORSDockerInterface$container_down()}}
 \item \href{#method-start_container}{\code{ORSDockerInterface$start_container()}}
@@ -99,13 +99,13 @@ and specifies the port.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-image_up"></a>}}
-\if{latex}{\out{\hypertarget{method-image_up}{}}}
-\subsection{Method \code{image_up()}}{
-Builds the image, starts the container and issues a system
+\if{html}{\out{<a id="method-container_up"></a>}}
+\if{latex}{\out{\hypertarget{method-container_up}{}}}
+\subsection{Method \code{container_up()}}{
+Builds the container, starts it and issues a system
 notification when the service is ready to be used.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$image_up(wait = TRUE, verbose = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$container_up(wait = TRUE, verbose = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

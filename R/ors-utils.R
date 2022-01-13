@@ -202,7 +202,7 @@ get_ors_url <- function() {
 
 #' Return ORS conditions
 #' @description Return the error and warning messages that ORS returned in the
-#' last \code{\link{get_route_lengths}} or \code{get_route_attributes} function calls.
+#' last \code{\link{ors_distances}} or \code{get_route_attributes} function calls.
 #' @param last Number of error lists that should be returned. \code{last = 2L},
 #' for example, returns errors from the last two function calls.
 #'

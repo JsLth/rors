@@ -12,7 +12,7 @@
 #' of additional attributes
 #' @param source Any kind of numeric vector containing \code{x/y} values of a
 #' route segment that should be routed from. Refer to
-#' \code{\link{get_route_lengths}}.
+#' \code{\link{ors_distances}}.
 #' @param destination Any kind of numeric vector containing \code{x/y} values
 #' of a route segment that should be routed to.
 #' @param attributes List of attributes that summarize route characteristics.
@@ -40,7 +40,7 @@
 #' @param elev_as_z If \code{TRUE}, elevation data is stored as z-values in the
 #' geometry of the output \code{sf} dataframe. If \code{FALSE}, elevation is
 #' stored as a distinct dataframe column. Ignored if \code{elevation = FALSE}.
-#' @inheritParams get_route_lengths
+#' @inheritParams ors_distances
 #' @returns A dataframe containing linestrings and additional information for each
 #' route segment
 #' @details Refer to the
@@ -49,7 +49,7 @@
 #' \href{https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post}{API playground}
 #' for more information on the route inspection arguments and their response
 #' behavior.
-#' @seealso get_route_lengths
+#' @seealso ors_distances
 #'
 #' @export
 #' 

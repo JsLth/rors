@@ -231,13 +231,13 @@ data.frame(
 
 If you already built the image and started the container, but encountered an error, you can view the error logs using `$error_log` and clean up after yourself using `$cleanup`. Preferably, this should return NULL.
 
-Finally, it is time to start an OpenRouteService instance by creating the container and setting up the service. While the container creation can be done relatively quickly, depending on the extract size and the number of active profiles, the service setup can take between a few minutes and a few hours. In order to build the image and start the container, simply call `$image_up`. This will forward the heavy work to docker-compose. If `wait` is set to `TRUE`, you will get a notification as soon as the process is done.
+Finally, it is time to start an OpenRouteService instance by creating the container and setting up the service. While the container creation can be done relatively quickly, depending on the extract size and the number of active profiles, the service setup can take between a few minutes and a few hours. In order to build the image and start the container, simply call `$container_up`. This will forward the heavy work to docker-compose. If `wait` is set to `TRUE`, you will get a notification as soon as the process is done.
 
 ```{r image-up}
 # Verbose is set to FALSE to not litter the output, but it can provide useful
 # information on the process
 suppressMessages(
-  ors$docker$image_up(wait = TRUE, verbose = FALSE)
+  ors$docker$container_up(wait = TRUE, verbose = FALSE)
 )
 ```
 
@@ -257,7 +257,7 @@ test_dataset_b <- data.frame(
   lat = c(50.99847, 50.95235, 51.00619, 51.05668, 50.88194)
 )
 
-get_route_lengths(test_dataset_a, test_dataset_b, profile = "driving-car")
+ors_distances(test_dataset_a, test_dataset_b, profile = "driving-car")
 ```
 
 That doesn't seem to work. Looks like I accidentally tried to route between coordinates in Cologne, although I mounted an extract of Arnsberg. This mistake can be fixed by taking down the container:
@@ -274,7 +274,7 @@ ors$setup_settings$graph_building <- "change"
 
 # Finally, start the container again.
 suppressMessages(
-  ors$docker$image_up(verbose = FALSE)
+  ors$docker$container_up(verbose = FALSE)
 )
 ```
 
@@ -292,7 +292,7 @@ sample_a <- ors_sample(size = 20)
 set.seed(222)
 sample_b <- ors_sample(size = 20)
 
-get_route_lengths(sample_a, sample_b, profile = "driving-car")
+ors_distances(sample_a, sample_b, profile = "driving-car")
 ```
 
 Dang it! Somehow, two routes could not be calculated. What's this about?
@@ -335,7 +335,7 @@ sample_a <- ors_sample(size = 20)
 set.seed(222)
 sample_b <- ors_sample(size = 20)
 
-get_route_lengths(sample_a, sample_b, profile = "driving-car")
+ors_distances(sample_a, sample_b, profile = "driving-car")
 ```
 
 Seems to work! However, errors lurk everywhere. If we were to pass a different profile or increase the sample size, we could be faced with new errors. So be sure to take care of your configurations and change them if necessary.

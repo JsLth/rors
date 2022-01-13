@@ -16,7 +16,7 @@ get_osm_pois(
 }
 \arguments{
 \item{source}{Either (1) a source dataset as used for
-\code{\link{get_route_lengths}}, (2) a character string of a place or
+\code{\link{ors_distances}}, (2) a character string of a place or
 region, (3) a spatial polygon as an sf or sfc object or (4) any bbox format
 supported by \code{\link[osmdata]{opq}}. The source argument is passed to
 osmdata to derive a bounding box for the Overpass query.}
