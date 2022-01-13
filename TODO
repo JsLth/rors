@@ -1,23 +1,23 @@
 TO DO:
-- Get 80% test coverage
+- Get more test coverage
 - Try out pkgdown
 - Implement ORS host customization
-- Root out previous mistakes like use of return()
-- Reduce hard imports (either entirely or make them suggests)
-- Improve conditions printing by implementing console width dependent line breaks
-- Implement a custom print method for ORS R6 classes?
-- Try out callr for docker start notify_when_ready?
-- Find ways to properly catch command line progress bars
+- Root out previous mistakes
+- Try out callr for docker start notify_when_ready? (What are the advantages?)
 - Implement GitLab CI/CD for linux runners
 - Fix summary print method
-- Fix case of multiple ORS warnings in one response json
-- Reconsider `verify_crs`
+- Reconsider `verify_crs` (Is it needed after all?)
 
 DONE:
 - Add a way to change the container/image name? (Useful for tests)
 - Try out GitLab CI/CD
 - Write package usage vignette
+- Reduce hard imports (either entirely or make them suggests) -> removed dplyr, tidyr, purrr, magrittr and fields
+- Fix case of multiple ORS warnings in one response json -> overhauled entire handling system
+- Improve conditions printing by implementing console width dependent line breaks -> added a strwrap call
 
 DROPPED:
-- Try out docker pulling ORS instead of git cloning
-- Find ways to increase performance of get_route_lengths
+- Try out docker pulling ORS instead of git cloning -> doesn't make any sense
+- Find ways to increase performance of get_route_lengths -> most time and resources are spent by ORS
+- Find ways to properly catch command line progress bars -> not possible
+- Implement a custom print method for ORS R6 classes? -> why?
