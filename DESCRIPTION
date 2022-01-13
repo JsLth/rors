@@ -32,7 +32,6 @@ Suggests:
     sys,
     testthat (>= 3.0.0),
     osmdata,
-    fields,
     units,
     spatstat.core,
     httpuv

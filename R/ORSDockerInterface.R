@@ -69,7 +69,7 @@ ORSDockerInterface <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Builds the image, starts the container and issues a system
+    #' @description Builds the container, starts it and issues a system
     #' notification when the service is ready to be used.
     #' @param wait Logical. If \code{TRUE}, the function will not stop running
     #' after the container is being started and will give out a notification as
@@ -78,7 +78,7 @@ ORSDockerInterface <- R6::R6Class(
     #' call \code{$service_ready} or \code{\link{ors_ready}}.
     #' @param verbose Logical. If \code{TRUE}, prints Docker logs for container
     #' setup.
-    image_up = function(wait = TRUE, verbose = TRUE) ORSDockerInterface$funs$image_up(self, private, wait, verbose),
+    container_up = function(wait = TRUE, verbose = TRUE) ORSDockerInterface$funs$image_up(self, private, wait, verbose),
 
     #' @description Deletes the image.
     #' @param name Optional name of the container. If not provided, the method
@@ -236,7 +236,7 @@ ORSDockerInterface$funs$error_log <- function(self, private, arg) {
 }
 
 
-ORSDockerInterface$funs$image_up <- function(self, private, wait, verbose) {
+ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose) {
   if (!self$docker_running) {
     cli::cli_abort("Docker is not running.")
   }
@@ -378,7 +378,7 @@ ORSDockerInterface$funs$start_container <- function(self, private, name, wait) {
     }
 
     if (isTRUE(wait)) {
-      private$.notify_when_ready(interval = 2, silently = TRUE)
+      private$.notify_when_ready(interval = 2L, silently = TRUE)
       cli::cli_progress_done()
     }
   } else {
@@ -449,7 +449,7 @@ ORSDockerInterface$funs$cleanup <- function(self) {
 # Private methods -------------------------------------------------------------
 
 ORSDockerInterface$funs$set_port <- function(self) {
-  port <- self$setup_settings$compose$services$`ors-app`$ports[1]
+  port <- self$setup_settings$compose$services$`ors-app`$ports[1L]
   port <- as.numeric(unique(unlist(strsplit(port, ":"))))
   assign("port", port[1], envir = pkg_cache)
 }
@@ -459,13 +459,13 @@ ORSDockerInterface$funs$start_docker <- function(self) {
   if (!self$docker_running) {
     if (is.windows()) {
       docker_path <- Sys.which("docker")
-      docker_desktop <- file.path(file_path_up(docker_path, 3),
+      docker_desktop <- file.path(file_path_up(docker_path, 3L),
                                   "Docker Desktop.exe")
 
       status <- file.open(docker_desktop)
 
       # If Docker is installed, it will try to open
-      if (status == 0) {
+      if (status == 0L) {
         if (interactive()) {
           cli::cli_progress_step(
             "Starting Docker...",
@@ -480,9 +480,9 @@ ORSDockerInterface$funs$start_docker <- function(self) {
                        args = "ps",
                        stdout = FALSE,
                        stderr = FALSE,
-                       timeout = 180) != 0) {
+                       timeout = 180L) != 0L) {
 
-          for (i in 1:100) {
+          for (i in seq_len(100L)) {
             if (interactive()) cli::cli_progress_update()
             Sys.sleep(0.01)
 
@@ -523,7 +523,7 @@ ORSDockerInterface$funs$notify_when_ready <- function(self, private, interval, s
   }
 
   while (!self$service_ready) {
-    for (i in seq_len(interval * 10)) {
+    for (i in seq_len(interval * 10L)) {
       if (interactive()) cli::cli_progress_update()
       Sys.sleep(0.1)
     }
@@ -589,8 +589,8 @@ ORSDockerInterface$funs$watch_for_error <- function(self) {
       # CLI logs are formatted differently and are therefore not split
       # by strsplit. If this is the case, just return the whole thing,
       # else return only the messages.
-      if (length(error_msgs) > 1) {
-        return(error_msgs[, 2])
+      if (length(error_msgs) > 1L) {
+        return(error_msgs[, 2L])
       } else {
         return(error_msgs)
       }
