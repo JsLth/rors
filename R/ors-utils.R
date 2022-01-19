@@ -20,17 +20,20 @@ inspect_container <- function() {
     
     cmd <- c("container", "inspect", name)
     
-    suppressWarnings({
-      container_info <- system2(command = "docker",
-                                args = cmd,
-                                stdout = TRUE,
-                                stderr = FALSE)
-    })
-    container_info <- jsonlite::fromJSON(paste0(container_info, collapse = "\n"))
-
-    if (length(container_info) == 0) {
-      cli::cli_abort("Cannot access container: {.val {name}}")
+    container_info <- callr::run(
+      command = "docker",
+      args = cmd,
+      stdout = "|",
+      stderr = NULL,
+      error_on_status = FALSE
+    )
+    
+    if (length(container_info$stderr)) {
+      container_info$stderr <- gsub("Error: ", "", container_info$stderr)
+      cli::cli_abort("Cannot access container: {container_info$stderr}")
     }
+    
+    container_info <- jsonlite::fromJSON(container_info$stdout)
 
     assign("container_info", container_info, envir = pkg_cache)
     
@@ -84,9 +87,9 @@ get_profiles <- function(force = TRUE) {
 ors_ready <- function(force = TRUE, error = FALSE) {
   if (is.null(pkg_cache$ors_ready) || isFALSE(pkg_cache$ors_ready) || force) {
     ready <- tryCatch(
-      {
-        res <- httr::GET(sprintf("http://localhost:%s/ors/health",
-                         get_ors_port()))
+      expr = {
+        port <- get_ors_port()
+        res <- httr::GET(sprintf("http://localhost:%s/ors/health", port))
         res <- jsonlite::fromJSON(
           httr::content(
             res,
@@ -106,9 +109,9 @@ ors_ready <- function(force = TRUE, error = FALSE) {
       }
     )
     assign("ors_ready", ready, envir = pkg_cache)
-    return(ready)
+    ready
   } else {
-    return(pkg_cache$ors_ready)
+    pkg_cache$ors_ready
   }
 }
 
@@ -178,7 +181,7 @@ identify_extract <- function(force = FALSE) {
 }
 
 
-get_ors_port <- function(force = TRUE) {
+get_ors_port <- function(force = FALSE) {
   if (is.null(pkg_cache$port) || force == TRUE) {
     container_info <- inspect_container()
     port <- container_info$NetworkSettings$Ports[[1]][[1]]$HostPort[1][1]

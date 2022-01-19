@@ -208,14 +208,14 @@ ors$docker
 
 `ORSDockerInterface` is divided into two functionalities: Checking the service status and controlling the image and container.
 
-Checking the service status works using six 'green lights'. `$docker_running` should always be `TRUE` after you initialized `ORSDockerInterface`. `$image_built` checks if the Docker image `openrouteservice:latest` exists. `$container_exists` then verifies the existence of a container named `test_ors`. `$container_running` checks if `test_ors` is running. Finally, `$service_ready` sends a `GET` request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of `ORSDockerInterface`, all lights but the first are probably off.
+Checking the service status works using six 'green lights'. `$docker_running` should always be `TRUE` after you initialized `ORSDockerInterface`. `$image_exists` checks if the Docker image `openrouteservice:latest` exists. `$container_built` then verifies the existence of a container named `test_ors`. `$container_running` checks if `test_ors` is running. Finally, `$service_ready` sends a `GET` request to the local host to see if the local server exists and if the service is ready to use. Before interacting with the second part of `ORSDockerInterface`, all lights but the first are probably off.
 
 ```{r green-lights}
 data.frame(
   status = c(
     ors$docker$docker_running,
-    ors$docker$image_built,
-    ors$docker$container_exists,
+    ors$docker$image_exists,
+    ors$docker$container_built,
     ors$docker$container_running,
     ors$docker$service_ready
   ),

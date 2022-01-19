@@ -53,7 +53,7 @@ ORSConfig <- R6::R6Class(
 
       # If docker/conf exists, ORS uses it when the docker container
       # is started -> Prefer the conf directory
-      if (dir.exists(conf_dir)) {
+      if (file.exists(file.path(conf_dir, "ors-config.json"))) {
         config <- jsonlite::read_json(file.path(conf_dir,
                                                 "ors-config.json"))
         self$path <- file.path(conf_dir, "ors-config.json")
@@ -66,11 +66,8 @@ ORSConfig <- R6::R6Class(
 
       # If all fails, copy the sample config from the ORS backend
       } else {
-        config_sample <- file.path("openrouteservice",
-                                   "src",
-                                   "main",
-                                   "resources",
-                                   "ors-config-sample.json")
+        config_sample <- file.path("openrouteservice", "src", "main",
+                                   "resources", "ors-config-sample.json")
 
         copied <- file.copy(file.path(self$dir, config_sample), data_dir)
         file.rename(file.path(data_dir, "ors-config-sample.json"),

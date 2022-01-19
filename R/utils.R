@@ -5,12 +5,13 @@
 
 
 file.open <- function(file) {
-  file <- shQuote(file)
+  file <- file
   if (is.linux()) {
-    system2("xdg-open", file, wait = FALSE)
+    proc <- callr::process$new(command = "xdg-open", args = file)
   } else if (is.windows()) {
-    system2("open", file, wait = FALSE)
+    proc <- callr::process$new(command = "open", args = file)
   }
+  proc$get_exit_status()
 }
 
 
@@ -23,17 +24,19 @@ file_path_up <- function(path, times_back = NULL) {
 
 get_memory_info <- function() {
   if (is.windows()) {
-    cmd <- shQuote(
-      paste("(Get-WmiObject Win32_OperatingSystem)",
-            "| %{'{{\"total\": {0},\n\"free\": {1}}}'",
-            "-f $_.totalvisiblememorysize, $_.freephysicalmemory}")
+    cmd <- paste(
+      "(Get-WmiObject Win32_OperatingSystem)",
+      "| %{'{{\"total\": {0},\n\"free\": {1}}}'",
+      "-f $_.totalvisiblememorysize, $_.freephysicalmemory}"
     )
     
-    mem_json <- paste(system2("powershell", cmd, stdout = TRUE), collapse = "\n")
-    parsed_json <- jsonlite::fromJSON(mem_json)
+    mem_json <- callr::run("powershell", cmd, stdout = "|", stderr = NULL)
+    parsed_json <- jsonlite::fromJSON(mem_json$stdout)
     lapply(parsed_json, function(x) as.numeric(x) / 1048576)
   } else if (is.linux()) {
-    mem_csv <- paste(gsub("\\s+", ",", system2("free", args = "--kibi", stdout = TRUE)), collapse = "\n")
+    mem_csv <- callr::run("free", args = "--kibi", stdout = "|", stderr = NULL)
+    mem_csv <- unlist(strsplit(mem_csv$stdout, "\n"))
+    mem_csv <- paste(gsub("\\s+", ",", mem_csv), "\n")
     mem_df <- utils::read.csv(text = mem_csv)[1, c("total", "free")]
     lapply(mem_df, function(x) x / 1048576)
   }
@@ -160,11 +163,13 @@ isTRUEorFALSE <- function(x) {
 
 
 docker_installed <- function() {
-  inst <- system2(command = "which",
-                  args = "docker",
-                  stdout = FALSE,
-                  stderr = FALSE)
-  identical(inst, 0L)
+  inst <- callr::run(
+    command = "which",
+    args = "docker",
+    stdout = NULL,
+    stderr = NULL
+  )
+  identical(inst$status, 0L)
 }
 
 
@@ -183,7 +188,7 @@ docker_installed <- function() {
 grant_docker_privileges <- function(run = TRUE) {
   if (is.linux()) {
     is_granted <- function() {
-      grepl("docker", system2("id", "-nG", stdout = TRUE))
+      grepl("docker", callr::run("id", args = "-nG", stdout = "|")$stdout)
     }
 
     if (!is_granted() && isTRUE(run)) {
@@ -193,14 +198,14 @@ grant_docker_privileges <- function(run = TRUE) {
                            "sudo usermod -aG docker $USER'"),
               stdout = "",
               stderr = "")
-      sys::exec_internal("newgrp", "docker")
+      callr::run("newgrp", args = "docker", stdout = NULL, stderr = NULL)
     }
 
     if (!is_granted()) {
       return(FALSE)
     }
 
-    works <- system2("docker", "ps", stdout = FALSE, stderr = FALSE) == 0L
+    works <- callr::run("docker", "ps", stdout = FALSE, stderr = FALSE) == 0L
     if (!works) {
       cli::cli_alert_warning(paste("You might have to restart your system to",
                                    "re-evaluate group membership"))

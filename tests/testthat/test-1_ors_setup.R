@@ -86,8 +86,8 @@ test_that("Test ORSSetupSettings", {
 test_that("Test ORSDockerInterface", {
   docker <- ors$docker
   expect_true(docker$docker_running)
-  expect_type(docker$image_built, "logical")
-  expect_type(docker$container_exists, "logical")
+  expect_type(docker$image_exists, "logical")
+  expect_type(docker$container_built, "logical")
   expect_type(docker$container_running, "logical")
   expect_type(docker$service_ready, "logical")
   expect_type(docker$error_log, "NULL")

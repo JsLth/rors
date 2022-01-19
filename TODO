@@ -12,7 +12,7 @@ DONE:
 - Add a way to change the container/image name? (Useful for tests)
 - Try out GitLab CI/CD
 - Write package usage vignette
-- Reduce hard imports (either entirely or make them suggests) -> removed dplyr, tidyr, purrr, magrittr and fields
+- Reduce hard imports (either entirely or make them suggests) -> removed dplyr, tidyr, purrr, magrittr, memuse and fields; moved osmdata and units to Suggest
 - Fix case of multiple ORS warnings in one response json -> overhauled entire handling system
 - Improve conditions printing by implementing console width dependent line breaks -> added a strwrap call
 

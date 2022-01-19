@@ -300,9 +300,9 @@ ORSInstance$funs$remove <- function(self, ignore_image) {
     return(invisible())
   }
 
-  if (self$docker$container_exists) self$docker$container_down()
+  if (self$docker$container_built) self$docker$container_down()
   if (isFALSE(ignore_image)) {
-    if (self$docker$image_built) self$docker$rm_image()
+    if (self$docker$image_exists) self$docker$rm_image()
   }
 
   if (dir.exists(self$dir)) {
@@ -355,18 +355,34 @@ ORSInstance$funs$clone_ors_repo <- function(dir) {
     
     cli::cli_progress_step(msg = "Downloading service backend from GitHub repository...",
                            msg_done = "Successfully downloaded the service backend.",
-                           msg_failed = "Failed to download the service backend.")
-    download.file(download_url, destfile = zip_file, quiet = TRUE)
+                           msg_failed = "Failed to download the service backend.",
+                           spinner = interactive())
+    proc <- callr::r_bg(function(url, zip) {
+      download.file(url, destfile = zip, quiet = TRUE)
+    }, args = list(download_url, zip_file))
+    while(proc$is_alive()) cli::cli_progress_update()
+    cli::cli_progress_done()
     
     cli::cli_progress_step(msg = "Extracting files...",
                            msg_done = "Extracted files.",
-                           msg_failed = "Could not extract files.")
-    unzip <- unzip(zip_file, exdir = dir)
+                           msg_failed = "Could not extract files.",
+                           spinner = interactive())
+    
+    proc <- callr::r_bg(function(zip, dir) {
+      unzip(zip, dir)
+    }, args = list(zip_file, dir))
+    while(proc$is_alive()) cli::cli_progress_update()
+    cli::cli_progress_done()
     
     cli::cli_progress_step(msg = "Removing zip file...",
                            msg_done = "Removed zip file.",
-                           msg_failed = "Could not remove zip file.")
-    file.remove(zip_file)
+                           msg_failed = "Could not remove zip file.",
+                           spinner = interactive())
+    
+    proc <- callr::r_bg(function(zip) {
+      file.remove(zip)
+    }, args = list(zip_file))
+    while(proc$is_alive()) cli::cli_progress_update()
     cli::cli_progress_done()
   }
   basedir

@@ -76,12 +76,12 @@ expect_container_build <- function(object, init_setup = TRUE) {
     object$stop_container()
   }
 
-  if (object$container_exists) {
+  if (object$container_built) {
     warning("Container already built.")
     object$container_down()
   }
 
-  if (object$image_built) {
+  if (object$image_exists) {
     warning("Image already built")
   }
 
@@ -92,7 +92,7 @@ expect_container_build <- function(object, init_setup = TRUE) {
   }
 
   testthat::expect(
-    isTRUE(object$image_built && object$container_exists && object$container_running),
+    isTRUE(object$image_exists && object$container_built && object$container_running),
     "$container_up() did not build the image or the container."
   )
 
@@ -101,7 +101,7 @@ expect_container_build <- function(object, init_setup = TRUE) {
 
 
 expect_container_down <- function(object) {
-  if (!object$container_exists) {
+  if (!object$container_built) {
     warning("Container is already down.")
     invisible()
   }
@@ -109,7 +109,7 @@ expect_container_down <- function(object) {
   object$container_down()
 
   testthat::expect(
-    isFALSE(object$image_built && object$container_exists && object$container_running),
+    isFALSE(object$image_exists && object$container_built && object$container_running),
     "$container_down() did not take down the container"
   )
 
@@ -118,7 +118,7 @@ expect_container_down <- function(object) {
 
 
 expect_image_removed <- function(object) {
-  if (!object$image_built) {
+  if (!object$image_exists) {
     warning("Image does not exist.")
     invisible()
   }
@@ -131,7 +131,7 @@ expect_image_removed <- function(object) {
   object$rm_image()
 
   testthat::expect(
-    isFALSE(object$image_built && object$container_exists),
+    isFALSE(object$image_exists && object$container_built),
     "$rm_image() did not remove the image."
   )
 
