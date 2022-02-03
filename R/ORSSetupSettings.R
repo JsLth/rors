@@ -411,7 +411,7 @@ print.ORSSetupSettings <- function(x) {
   cli::cli_text("Name\u00a0\u00a0: {x$ors_name}")
   cli::cli_text("Port\u00a0\u00a0: {x$ors_port}")
   cat("\n")
-  print(as.data.frame(t(ors$setup_settings$memory)), right = FALSE, row.names = FALSE)
+  print(as.data.frame(t(x$memory)), right = FALSE, row.names = FALSE)
   cat("\n")
   cli::cli_text("Public methods:")
   print(names(ORSSetupSettings$public_methods))

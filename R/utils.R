@@ -120,17 +120,30 @@ df_nest <- function(data, names = NULL) {
 notify <- function(msg) {
   if (interactive()) {
     if (is.windows()) {
-      system("rundll32 user32.dll, MessageBeep -1")
-      system(sprintf("msg * \"%s\"", msg))
+      cmd <- paste(
+        "[reflection.assembly]::loadwithpartialname(\"System.Windows.Forms\");",
+        "[reflection.assembly]::loadwithpartialname(\"System.Drawing\");",
+        "$notify = new-object system.windows.forms.notifyicon;",
+        "$notify.icon = [System.Drawing.SystemIcons]::Information;",
+        "$notify.visible = $true;",
+        "$notify.showballoontip(10,",
+        "\"Message from R\",",
+        sprintf("\"%s\",", msg),
+        "[system.windows.forms.tooltipicon]::None)"
+      )
+      callr::run("powershell", cmd, stdout = NULL, error_on_status = FALSE)
     } else if (is.linux()) {
-      system("paplay /usr/share/sounds/freedesktop/stereo/complete.oga")
-      system(paste(sprintf("notify-send \"%s\"", msg),
-                   "\"Message from R\""))
+      cmd1 <- "/usr/share/sounds/freedesktop/stereo/complete.oga"
+      cmd2 <- "%s \"Message from R\""
+      callr::run("paplay", cmd1, stdout = NULL, error_on_status = FALSE)
+      callr::run("notify-send", cmd2, stdout = NULL, error_on_status = FALSE)
     } else if (is.macos()) {
-      system(paste("osascript -e 'display notification",
-                   sprintf("\"%s\"", msg),
-                   "with title",
-                   "\"Message from R\""))
+      cmd <- paste(
+        "-e 'display notification",
+        sprintf("\"%s\"", msg),
+        "with title",
+        "\"Message from R\"")
+      callr::run("osascript", cmd, stdout = NULL, error_on_status = FALSE)
     }
     invisible()
   }

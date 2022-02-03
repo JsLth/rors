@@ -325,6 +325,7 @@ ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose) {
 
   cli::cli_par()
   cli::cli_rule(left = "Building container")
+  cat("\n")
   proc <- callr::run(
     command = "docker",
     args = cmd,
@@ -343,6 +344,7 @@ ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose) {
 
   if (wait) {
     cli::cli_par()
+    cat("\n")
     cli::cli_rule(left = "Setting up service")
     private$.notify_when_ready(interval = 10, silently = FALSE)
   }
@@ -698,7 +700,7 @@ ORSDockerInterface$funs$notify_when_ready <- function(self, private, interval, s
   if (interactive()) cli::cli_progress_done()
 
   if (!silently) {
-    notify("ORS Service is ready.")
+    notify("ORS Service is ready!")
   }
   invisible(TRUE)
 }
