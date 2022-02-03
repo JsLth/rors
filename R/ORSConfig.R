@@ -177,7 +177,7 @@ ORSConfig$funs$translate_profiles <- function(profiles) {
 
 #' @export
 
-print.ORSConfig <- function(x) {
+print.ORSConfig <- function(x, ...) {
   if (grepl("docker/data", x$path, fixed = TRUE)) {
     pd <- "pre-setup"
   } else if (grepl("docker/conf", x$path, fixed = TRUE)) {
@@ -204,5 +204,5 @@ print.ORSConfig <- function(x) {
   cli::cli_dl(do.call(c, allp_in))
   cat("\n")
   cli::cli_text("Public methods:")
-  print(names(ORSConfig$public_methods))
+  print(names(ORSConfig$public_methods), ...)
 }

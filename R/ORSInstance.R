@@ -387,10 +387,10 @@ ORSInstance$funs$clone_ors_repo <- function(dir) {
 
 #' @export
 
-print.ORSInstance <- function(x) {
+print.ORSInstance <- function(x, ...) {
   cli::cli_text("Class\u00a0: {.cls {class(x)}}")
   cli::cli_text("Path\u00a0\u00a0: {x$dir}")
   cat("\n")
   cli::cli_text("Public methods:")
-  print(names(ORSInstance$public_methods))
+  print(names(ORSInstance$public_methods), ...)
 }

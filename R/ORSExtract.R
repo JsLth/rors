@@ -253,12 +253,12 @@ ORSConfig$funs$rm_old_extracts <- function(self, private) {
 
 #' @export
 
-print.ORSExtract <- function(x) {
+print.ORSExtract <- function(x, ...) {
   cli::cli_text("Class\u00a0\u00a0\u00a0: {.cls {class(x)}}")
   cli::cli_text("Path\u00a0\u00a0\u00a0\u00a0: {x$dir}")
   cli::cli_text("Extract\u00a0: {basename(x$path)}")
   cli::cli_text("Size\u00a0\u00a0\u00a0\u00a0: {x$size} MB")
   cat("\n")
   cli::cli_text("Public methods:")
-  print(names(ORSExtract$public_methods))
+  print(names(ORSExtract$public_methods), ...)
 }

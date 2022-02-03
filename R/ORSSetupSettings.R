@@ -403,7 +403,7 @@ ORSSetupSettings$funs$write_dockercompose <- function(self) {
 
 #' @export
 
-print.ORSSetupSettings <- function(x) {
+print.ORSSetupSettings <- function(x, ...) {
   names(x$memory) <- c("Total memory", "Free memory", "Initial memory", "Max memory")
   cli::cli_text("Class\u00a0: {.cls {class(x)}}")
   cli::cli_text("Path\u00a0\u00a0: {x$dir}")
@@ -414,5 +414,5 @@ print.ORSSetupSettings <- function(x) {
   print(as.data.frame(t(x$memory)), right = FALSE, row.names = FALSE)
   cat("\n")
   cli::cli_text("Public methods:")
-  print(names(ORSSetupSettings$public_methods))
+  print(names(ORSSetupSettings$public_methods), ...)
 }

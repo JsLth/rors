@@ -742,7 +742,7 @@ ORSDockerInterface$funs$watch_for_error <- function(self) {
 
 #' @export
 
-print.ORSDockerInterface <- function(x) {
+print.ORSDockerInterface <- function(x, ...) {
   gl <- list(
     x$docker_running,
     x$image_exists,
