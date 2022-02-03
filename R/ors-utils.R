@@ -16,7 +16,7 @@ clear_cache <- function() {
 
 inspect_container <- function() {
   if (is.null(pkg_cache$container_info)) {
-    name <- getOption("ors_name")
+    name <- getOption("ors_name", "ors-app")
     
     cmd <- c("container", "inspect", name)
     
@@ -30,7 +30,7 @@ inspect_container <- function() {
     
     if (length(container_info$stderr)) {
       container_info$stderr <- gsub("Error: ", "", container_info$stderr)
-      cli::cli_abort("Cannot access container: {container_info$stderr}")
+      cli::cli_abort("Cannot access container {.val {name}}: {container_info$stderr}")
     }
     
     container_info <- jsonlite::fromJSON(container_info$stdout)

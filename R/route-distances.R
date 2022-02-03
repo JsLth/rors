@@ -435,10 +435,7 @@ ors_matrix <- function(source,
   destination <- format_input_data(destination)
 
   port <- get_ors_port()
-  options_url <- getOption("ors_url")
-  url <- ifelse(is.null(options_url),
-                sprintf("http://localhost:%s/", port),
-                options_url)
+  url <- get_ors_url()
 
   res <- query_ors_matrix(source = source,
                           destination = destination,

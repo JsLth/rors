@@ -300,6 +300,7 @@ ORSDockerInterface$funs$pull_ors <- function(self, private, all_tags, verbose) {
 
 
 ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose) {
+  browser()
   if (!self$docker_running) {
     cli::cli_abort("Docker is not running.")
   }
@@ -310,7 +311,7 @@ ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose) {
 
   private$.set_port()
   
-  old_name <- getOption("ors_name")
+  old_name <- getOption("ors_name", "ors-app")
   
   ors_name <- self$setup_settings$compose$services$`ors-app`$container_name
   options(ors_name = ors_name)
@@ -344,10 +345,6 @@ ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose) {
     cli::cli_par()
     cli::cli_rule(left = "Setting up service")
     private$.notify_when_ready(interval = 10, silently = FALSE)
-  }
-
-  if (is.null(getOption("ors_host"))) { # TODO: Properly implement url customization
-    options(ors_host = sprintf("http://localhost:%s/", pkg_cache$port))
   }
 
   self$setup_settings$graph_building <- NA
@@ -434,11 +431,11 @@ ORSDockerInterface$funs$container_down <- function(self) {
 
 ORSDockerInterface$funs$start_container <- function(self, private, name, wait) {
   if (!is.null(name)) {
-    old_name <- getOption("ors_name")
+    old_name <- getOption("ors_name", "ors-app")
     options(ors_name = name)
     on.exit(options(ors_name = old_name))
   } else {
-    name <- getOption("ors_name")
+    name <- getOption("ors_name", "ors-app")
   }
 
   if (isFALSE(self$container_built)) {
@@ -487,7 +484,7 @@ ORSDockerInterface$funs$stop_container <- function(self, name) {
     options(ors_name = name)
     on.exit(options(ors_name = old_name))
   } else {
-    name <- getOption("ors_name")
+    name <- getOption("ors_name", "ors-app")
   }
 
   if (isTRUE(self$container_running)) {
@@ -675,10 +672,10 @@ ORSDockerInterface$funs$notify_when_ready <- function(self, private, interval, s
       msg_failed = "Service setup failed."
     )
   }
-
+  
   proc <- callr::r_bg(
     func = function(private) {
-      while(!ors_ready(force = TRUE)) {
+      while(!ORSRouting::ors_ready(force = TRUE)) {
         errors <- private$.watch_for_error()
         if (length(errors)) return(errors)
         Sys.sleep(1L)
@@ -687,7 +684,7 @@ ORSDockerInterface$funs$notify_when_ready <- function(self, private, interval, s
     args = list(private),
     package = TRUE
   )
-  
+
   while (proc$is_alive()) {
     if (interactive()) cli::cli_progress_update()
   }
