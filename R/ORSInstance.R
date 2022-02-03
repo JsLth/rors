@@ -13,10 +13,6 @@ options(
   cli.progress_bar_style_ascii = "fillsquares"
 )
 
-if (is.null(getOption("ors_name"))) {
-  options(ors_name = "ors-app")
-}
-
 
 #' OpenRouteService backend control panel
 #' @description R6 class that acts as a setup wizard and control panel for the
@@ -386,4 +382,15 @@ ORSInstance$funs$clone_ors_repo <- function(dir) {
     cli::cli_progress_done()
   }
   basedir
+}
+
+
+#' @export
+
+print.ORSInstance <- function(x) {
+  cli::cli_text("Class\u00a0: {.cls {class(x)}}")
+  cli::cli_text("Path\u00a0\u00a0: {x$dir}")
+  cat("\n")
+  cli::cli_text("Public methods:")
+  print(names(ORSInstance$public_methods))
 }

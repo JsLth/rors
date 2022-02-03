@@ -43,10 +43,10 @@ Other ORSSetup:
 \describe{
 \item{\code{docker_running}}{Checks if the Docker daemon is running.}
 
-\item{\code{image_built}}{Checks if the openrouteservice:latest image exists.
+\item{\code{image_exists}}{Checks if the openrouteservice:latest image exists.
 An alternative image name can be provided.}
 
-\item{\code{container_exists}}{Checks if the container ors-app exists.
+\item{\code{container_built}}{Checks if the container ors-app exists.
 An alternative container name can be provided.}
 
 \item{\code{container_running}}{Checks if the the container ors-app is running.
@@ -65,6 +65,7 @@ occurred.}
 \itemize{
 \item \href{#method-new}{\code{ORSDockerInterface$new()}}
 \item \href{#method-container_up}{\code{ORSDockerInterface$container_up()}}
+\item \href{#method-pull_ors}{\code{ORSDockerInterface$pull_ors()}}
 \item \href{#method-rm_image}{\code{ORSDockerInterface$rm_image()}}
 \item \href{#method-container_down}{\code{ORSDockerInterface$container_down()}}
 \item \href{#method-start_container}{\code{ORSDockerInterface$start_container()}}
@@ -119,6 +120,26 @@ call \code{$service_ready} or \code{\link{ors_ready}}.}
 
 \item{\code{verbose}}{Logical. If \code{TRUE}, prints Docker logs for container
 setup.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-pull_ors"></a>}}
+\if{latex}{\out{\hypertarget{method-pull_ors}{}}}
+\subsection{Method \code{pull_ors()}}{
+Pulls the openrouteservice/openrouteservice image
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$pull_ors(all_tags = FALSE, verbose = TRUE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{all_tags}}{Whether to download all tagged images in the repository.}
+
+\item{\code{verbose}}{Logical. If \code{TRUE}, prints Docker logs for the pull.
+Equals the -a tag.}
 }
 \if{html}{\out{</div>}}
 }

@@ -60,6 +60,8 @@ ORSSetupSettings <- R6::R6Class(
       self$graph_building <- NA
       self$memory$total_memory <- get_memory_info()$total
       self$memory$free_memory <- get_memory_info()$free
+      self$memory$init_memory <- private$.read_memory(num = TRUE)[1] / 1000
+      self$memory$max_memory <- private$.read_memory(num = TRUE)[2] / 1000
       self$active <- TRUE
       invisible(self)
     },
@@ -95,7 +97,8 @@ ORSSetupSettings <- R6::R6Class(
   ),
 
   private = list(
-    .write_memory = function(init, max) ORSSetupSettings$funs$write_memory(self, init, max),
+    .read_memory = function(num) ORSSetupSettings$funs$read_memory(self, num),
+    .write_memory = function(init, max) ORSSetupSettings$funs$write_memory(self, private, init, max),
     .force_graphbuilding = function(handle) ORSSetupSettings$funs$force_graphbuilding(self, handle),
     .disable_auto_deletion = function() ORSSetupSettings$funs$disable_auto_deletion(self),
     .read_dockercompose = function() ORSSetupSettings$funs$read_dockercompose(self),
@@ -282,9 +285,19 @@ ORSSetupSettings$funs$open_compose <- function(self) {
 
 # Private methods -------------------------------------------------------------
 
-ORSSetupSettings$funs$write_memory <- function(self, init, max) {
+ORSSetupSettings$funs$read_memory <- function(self, num) {
   java_options <- self$compose$services$`ors-app`$environment[2]
   java_mem <- tail(unlist(strsplit(java_options, " ")), 2)
+  
+  if (num) {
+    java_mem <- as.numeric(gsub(".*?([0-9]+).*", "\\1", java_mem))
+  }
+  
+  java_mem
+}
+
+ORSSetupSettings$funs$write_memory <- function(self, private, init, max) {
+  java_mem <- private$.read_memory(num = FALSE)
 
   init_mem_allocation <- java_mem[1]
   max_mem_allocation <- java_mem[2]
@@ -385,4 +398,21 @@ ORSSetupSettings$funs$write_dockercompose <- function(self) {
   self$compose$services$`ors-app`$environment[2] <- java_opts
   self$compose$services$`ors-app`$environment[3] <- catalina_opts
   self$compose$services$`ors-app`$user <- user
+}
+
+
+#' @export
+
+print.ORSSetupSettings <- function(x) {
+  names(x$memory) <- c("Total memory", "Free memory", "Initial memory", "Max memory")
+  cli::cli_text("Class\u00a0: {.cls {class(x)}}")
+  cli::cli_text("Path\u00a0\u00a0: {x$dir}")
+  cli::cli_text("Mode\u00a0\u00a0: {x$graph_building}")
+  cli::cli_text("Name\u00a0\u00a0: {x$ors_name}")
+  cli::cli_text("Port\u00a0\u00a0: {x$ors_port}")
+  cat("\n")
+  print(as.data.frame(t(ors$setup_settings$memory)), right = FALSE, row.names = FALSE)
+  cat("\n")
+  cli::cli_text("Public methods:")
+  print(names(ORSSetupSettings$public_methods))
 }

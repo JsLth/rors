@@ -82,6 +82,7 @@ ORSDockerInterface <- R6::R6Class(
 
     #' @description Pulls the openrouteservice/openrouteservice image
     #' @param all_tags Whether to download all tagged images in the repository.
+    #' @param verbose Logical. If \code{TRUE}, prints Docker logs for the pull.
     #' Equals the -a tag.
     pull_ors = function(all_tags = FALSE, verbose = TRUE) ORSDockerInterface$funs$pull_ors(self, private, all_tags, verbose),
     
@@ -300,7 +301,6 @@ ORSDockerInterface$funs$pull_ors <- function(self, private, all_tags, verbose) {
 
 
 ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose) {
-  browser()
   if (!self$docker_running) {
     cli::cli_abort("Docker is not running.")
   }
@@ -480,7 +480,7 @@ ORSDockerInterface$funs$start_container <- function(self, private, name, wait) {
 
 ORSDockerInterface$funs$stop_container <- function(self, name) {
   if (!is.null(name)) {
-    old_name <- getOption("ors_name")
+    old_name <- getOption("ors_name", "ors-app")
     options(ors_name = name)
     on.exit(options(ors_name = old_name))
   } else {
@@ -736,3 +736,41 @@ ORSDockerInterface$funs$watch_for_error <- function(self) {
   
   error_msgs
 }
+
+
+#' @export
+
+print.ORSDockerInterface <- function(x) {
+  gl <- list(
+    x$docker_running,
+    x$image_exists,
+    x$container_built,
+    x$container_running,
+    x$service_ready
+  )
+  
+  gln <- c(
+    "Docker running",
+    "Image exists",
+    "Container built",
+    "Container running",
+    "Service exist"
+  )
+  
+  gl <- sapply(gl, ifelse, cli::col_green(TRUE), cli::col_red(FALSE))
+
+  gln <- sapply(gln, function(n) {
+    paste0(n, strrep("\u00a0", 18 - nchar(n)))
+  })
+  
+  names(gl) <- gln
+  
+  cli::cli_text("Class\u00a0: {.cls {class(x)}}")
+  cli::cli_text("Path\u00a0\u00a0: {x$dir}")
+  cat("\n")
+  cli::cli_dl(gl)
+  cat("\n")
+  cli::cli_text("Public methods:")
+  print(names(ORSDockerInterface$public_methods))
+}
+

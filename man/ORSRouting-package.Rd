@@ -7,7 +7,7 @@
 \alias{ORSRouting-package}
 \title{ORSRouting: Bulk routing distance calculations using OpenRouteService}
 \description{
-The package allows the usage of OpenRouteService to calculate the (shortest) routing distances of large datasets to certain points of interest. It also provides functions to download or calculate nearby points of interest. To process larger datasets, the package relies on a local Docker setup of the OpenRouteService backend. The package facilitates the setup by including a class that acts as a setup wizard and control panel.
+The package allows the usage of OpenRouteService to calculate the (shortest) routing distances of georeferenced datasets to certain points of interest. It also provides functions to download or calculate nearby points of interest. To process larger datasets, the package relies on a local Docker setup of the OpenRouteService backend. The package facilitates the setup by including a class that acts as a setup wizard and control panel.
 }
 \section{Main exports}{
 
