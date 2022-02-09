@@ -119,7 +119,7 @@ ORSExtract$funs$get_extract <- function(self, private, place, provider = NULL, .
 
     if (length(providers) > 1) {
       input <- tolower(readline(paste("Should a different provider",
-                                      "be tried? (Yes/No/Cancel)")))
+                                      "be tried? (Yes/No/Cancel) ")))
     } else {
       input <- "no"
     }
@@ -158,18 +158,32 @@ ORSExtract$funs$get_extract <- function(self, private, place, provider = NULL, .
     private$.rm_old_extracts()
     path <- file.path(data_dir, paste0(providers[i], "_", file_name))
 
-    cli::cli_progress_step("Downloading the OSM extract...",
-                           msg_done = paste("The extract was successfully",
-                                            "downloaded to the following path:",
-                                             "{.file {path}}"),
-                           msg_failed = "Extract could not be downloaded.")
+    if (interactive()) {
+      rel_path <- file.path(".", relativePath(path, self$dir))
+      cli::cli_progress_step("Downloading OSM extract...",
+                             msg_done = paste("The extract was successfully",
+                                              "downloaded to the following path:",
+                                               "{.file {rel_path}}"),
+                             msg_failed = "Extract could not be downloaded.",
+                             spinner = TRUE)
+    }
 
-    osmextract::oe_download(place_match$url,
-                            provider = providers[i],
-                            download_directory = data_dir,
-                            quiet = TRUE)
+    proc <- callr::r_bg(
+      function(place_match, providers, data_dir) {
+        osmextract::oe_download(place_match$url,
+                                provider = providers[i],
+                                download_directory = data_dir,
+                                quiet = TRUE)
+      },
+      args = list(place_match, providers, data_dir),
+      package = TRUE
+    )
 
-    cli::cli_progress_done()
+    while(proc$is_alive()) {
+      if (interactive()) cli::cli_progress_update()
+    }
+
+    if (interactive()) cli::cli_progress_done()
   }
 
   # If the size is over 6 GB in size, give out a warning
@@ -248,17 +262,4 @@ ORSConfig$funs$rm_old_extracts <- function(self, private) {
       file.remove(file.path(data_dir, extract))
     }
   }
-}
-
-
-#' @export
-
-print.ORSExtract <- function(x, ...) {
-  cli::cli_text("Class\u00a0\u00a0\u00a0: {.cls {class(x)}}")
-  cli::cli_text("Path\u00a0\u00a0\u00a0\u00a0: {x$dir}")
-  cli::cli_text("Extract\u00a0: {basename(x$path)}")
-  cli::cli_text("Size\u00a0\u00a0\u00a0\u00a0: {x$size} MB")
-  cat("\n")
-  cli::cli_text("Public methods:")
-  print(names(ORSExtract$public_methods), ...)
 }

@@ -17,20 +17,43 @@
 get_extract_boundaries <- function(force = FALSE) {
   if (is.null(pkg_cache$extract_boundaries) || force) {
     extract_path <- identify_extract(force = force)
-    extract_data <- suppressWarnings(
-      osmextract::oe_read(
-        extract_path,
-        layer = "multipolygons",
-        query = paste("SELECT geometry FROM \"multipolygons\"",
-                      "WHERE boundary = \"administrative\"",
-                      "AND admin_level IS NOT NULL"),
-        quiet = TRUE
+    
+    if (interactive()) {
+      cli::cli_progress_step(
+        msg = "Reading and processing extract file...",
+        msg_done = "Extract file successfully read in!",
+        msg_failed = "Extract file could either not be read or not converted.",
+        spinner = TRUE
       )
+    }
+    
+    proc <- callr::r_bg(
+      function(extract_path) {
+        extract_data <- suppressWarnings(
+          osmextract::oe_read(
+            extract_path,
+            layer = "multipolygons",
+            query = paste("SELECT geometry FROM \"multipolygons\"",
+                          "WHERE boundary = \"administrative\"",
+                          "AND admin_level IS NOT NULL"),
+            quiet = TRUE
+          )
+        )
+        sf::st_union(sf::st_geometry(extract_data))
+      },
+      args = list(extract_path)
     )
-    extract_geom <- sf::st_union(sf::st_geometry(extract_data))
+    
+    while (proc$is_alive()) {
+      if (interactive()) cli::cli_progress_update()
+    }
 
+    if (interactive()) cli::cli_progress_done()
+    
+    extract_geom <- proc$get_result()
+    
     assign("extract_boundaries", extract_geom, envir = pkg_cache)
-    extract_data
+    extract_geom
   } else {
     pkg_cache$extract_boundaries
   }
