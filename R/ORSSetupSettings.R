@@ -31,9 +31,16 @@ ORSSetupSettings <- R6::R6Class(
     #' specified by assigning a character string.
     ors_name = function(name) ORSSetupSettings$funs$ors_name(self, name),
     
-    #' @field ors_port Port of the ORS container. A non-default port can be
-    #' specified by assigning an integer.
-    ors_port = function(port) ORSSetupSettings$funs$ors_port(self, port)
+    #' @field ors_port Ports of the ORS container. Non-default ports can be
+    #' specified by assigning a length-1 vector or a list of ports. The list of
+    #' ports must contain 4 ports in the format
+    #' \code{list(host1, docker1, host2, docker2)}. Since, most of the time,
+    #' you will want to change only the first host port, passing a length-1
+    #' vector will change the first host port. Passing \code{NULL} (either in a
+    #' list or as a length-1 vector) is interpreted as "no change". Passing
+    #' \code{NA} will assign a random port using the \code{\link{httpuv}}
+    #' package.
+    ors_ports = function(ports) ORSSetupSettings$funs$ors_ports(self, ports)
   ),
 
   public = list(
@@ -208,21 +215,39 @@ ORSSetupSettings$funs$ors_name <- function(self, name) {
 }
 
 
-ORSSetupSettings$funs$ors_port <- function(self, port) {
-  cur_port <- strsplit(self$compose$services$`ors-app`$ports[1], ":")[[1]]
-  if (missing(port)) {
-    cur_port[1]
+ORSSetupSettings$funs$ors_ports <- function(self, ports) {
+  cur_ports <- strsplit(self$compose$services$`ors-app`$ports, ":")
+  cur_ports <- do.call(rbind.data.frame, cur_ports)
+  cur_ports_vec <- as.numeric(c(t(cur_ports)))
+  names(cur_ports) <- c("host", "docker")
+  
+  if (missing(ports)) {
+    cur_ports
   } else {
-    if (is.na(port)) {
-      if (requireNamespace("httpuv")) {
-        port <- httpuv::randomPort()
-      } else {
-        cli::cli_abort("To assign a random port, install the {.pkg httpuv} package.")
-      }
+    if (length(ports) == 1 || is.null(ports)) {
+      if (is.list(ports)) ports <- unlist(ports)
+      ports <- list(ports, NULL, NULL, NULL)
     }
-    self$compose$services$`ors-app`$ports[1] <- sprintf("%s:%s", port, 8080)
+    
+    ports <- sapply(seq(1, length(ports)), function(pi) {
+      if (is.null(ports[[pi]])) {
+        cur_ports_vec[pi]
+      } else if (is.na(ports[[pi]])) {
+        if (requireNamespace("httpuv")) {
+          httpuv::randomPort()
+        } else {
+          cli::cli_abort("To assign a random port, install the {.pkg httpuv} package.")
+        }
+      } else ports[[pi]]
+    })
+    
+    ports <- as.data.frame(matrix(ports, ncol = 2, nrow = 2, byrow = TRUE))
+    names(ports) <- c("host", "docker")
+
+    self$compose$services$`ors-app`$ports[1] <- sprintf("%s:%s", ports$host[1], ports$docker[1])
+    self$compose$services$`ors-app`$ports[2] <- sprintf("%s:%s", ports$host[2], ports$docker[2])
     self$save_compose()
-    port
+    ports
   }
 }
 
@@ -287,16 +312,23 @@ ORSSetupSettings$funs$open_compose <- function(self) {
 
 ORSSetupSettings$funs$read_memory <- function(self, num) {
   java_options <- self$compose$services$`ors-app`$environment[2]
-  java_mem <- tail(unlist(strsplit(java_options, " ")), 2)
+  java_mem <- java_mem_chr <- tail(unlist(strsplit(java_options, " ")), 2)
   
   if (num) {
-    java_mem <- as.numeric(gsub(".*?([0-9]+).*", "\\1", java_mem))
+    java_mem <- as.numeric(gsub(".*?([0-9]+).*", "\\1", java_mem_chr))
+
+    java_mem <- sapply(c(1, 2), function(mi) {
+      if (grepl("[0-9]g", java_mem_chr[mi])) {
+        java_mem[mi] <- java_mem[mi] * 1000
+      } else java_mem[mi]
+    })
   }
   
   java_mem
 }
 
 ORSSetupSettings$funs$write_memory <- function(self, private, init, max) {
+  java_options <- self$compose$services$`ors-app`$environment[2]
   java_mem <- private$.read_memory(num = FALSE)
 
   init_mem_allocation <- java_mem[1]
@@ -398,21 +430,4 @@ ORSSetupSettings$funs$write_dockercompose <- function(self) {
   self$compose$services$`ors-app`$environment[2] <- java_opts
   self$compose$services$`ors-app`$environment[3] <- catalina_opts
   self$compose$services$`ors-app`$user <- user
-}
-
-
-#' @export
-
-print.ORSSetupSettings <- function(x, ...) {
-  names(x$memory) <- c("Total memory", "Free memory", "Initial memory", "Max memory")
-  cli::cli_text("Class\u00a0: {.cls {class(x)}}")
-  cli::cli_text("Path\u00a0\u00a0: {x$dir}")
-  cli::cli_text("Mode\u00a0\u00a0: {x$graph_building}")
-  cli::cli_text("Name\u00a0\u00a0: {x$ors_name}")
-  cli::cli_text("Port\u00a0\u00a0: {x$ors_port}")
-  cat("\n")
-  print(as.data.frame(t(x$memory)), right = FALSE, row.names = FALSE)
-  cat("\n")
-  cli::cli_text("Public methods:")
-  print(names(ORSSetupSettings$public_methods), ...)
 }
