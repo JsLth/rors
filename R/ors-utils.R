@@ -14,11 +14,13 @@ clear_cache <- function() {
 }
 
 
-inspect_container <- function() {
+inspect_container <- function(id = NULL) {
   if (is.null(pkg_cache$container_info)) {
-    name <- getOption("ors_name", "ors-app")
+    if (missing(id) || is.null(id)) {
+      id <- getOption("ors_name", "ors-app")
+    }
     
-    cmd <- c("container", "inspect", name)
+    cmd <- c("container", "inspect", id)
     
     container_info <- callr::run(
       command = "docker",
@@ -232,32 +234,4 @@ last_ors_conditions <- function(last = 1L) {
     class(selected_conditions) <- "ors_condition"
     selected_conditions
   }
-}
-
-
-#' @export
-
-print.ors_condition <- function(x, ...) {
-  timestamps <- names(x)
-  calls <- sapply(timestamps, function(time) {
-    indices <- attr(x[[time]], "row.names")
-    messages <- x[[time]]$conditions
-    max_nc <- nchar(max(indices))
-    messages <- lapply(seq(1, length(messages)), function(mi) {
-      nc <- nchar(indices[mi])
-      fmsg <- strwrap(
-        messages[[mi]],
-        exdent = nc + 3,
-        initial = paste0(indices[mi], strrep(" ", max_nc - nc), " - "),
-        simplify = TRUE
-      )
-      if (length(fmsg) > 1) {
-        paste(fmsg, collapse = "\n")
-      } else fmsg
-    })
-    
-    printed_time <- paste0("Function call from ", time, ":")
-    paste(printed_time, paste(messages, collapse = "\n"), sep = "\n")
-  })
-  cat(paste0(paste(calls, collapse = "\n\n"), "\n"))
 }
