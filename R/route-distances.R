@@ -163,11 +163,12 @@ ors_distances <- function(source,
   }
 
   if (identical(row(source), row(destination))) {
-    # If both datasets have the same shape, prepare a rowwise iterator for pmap.
-    zipped_locations <- list(source = source, dest = destination)
-    attr(zipped_locations, "row.names") <- seq_len(nrow(source))
-    class(zipped_locations) <- "data.frame"
-
+    # If both datasets have the same shape, prepare a nested iterator.
+    zipped_locations <- structure(
+      list(source = source, dest = destination),
+      row.names = seq_len(nrow(source)),
+      class = "data.frame"
+    )
   } else {
     source_shape <- cli::cli_vec(nrow(source), style = list(vec_last = ":"))
     dest_shape <- cli::cli_vec(nrow(destination), style = list(vec_last = ":"))
@@ -186,7 +187,7 @@ ors_distances <- function(source,
 
   options <- format_ors_options(list(...), profile)
 
-  call_index <- format(Sys.time(), format = "%H:%M:%S")
+  call_index <- format(Sys.time(), format = "%H:%M:%OS6")
 
   extract_lengths <- function(i) {
     res <- query_ors_directions(source = zipped_locations[i, "source"],
@@ -209,7 +210,7 @@ ors_distances <- function(source,
         return(sf::st_sf(distance = NA, duration = NA, geometry = empty_line))
       }
     } else if (isFALSE(attr(cond, "error"))) {
-      pkg_cache$routing_conditions[[call_index]][i] <- cond
+      pkg_cache$routing_conditions[[call_index]][i] <- unlist(cond)
     } else {
       pkg_cache$routing_conditions[[call_index]][i] <- NA
     }
@@ -228,7 +229,8 @@ ors_distances <- function(source,
   }
 
   # Apply a directions query to each row
-  route_df <- do.call(rbind, lapply(seq_len(nrow(zipped_locations)), extract_lengths))
+  route_df <- lapply(seq_len(nrow(zipped_locations)), extract_lengths)
+  route_df <- suppressWarnings(do.call(rbind, route_df))
 
   route_missing <- sapply(unlist(route_df), is.na)
   conds <- pkg_cache$routing_conditions[[call_index]]
@@ -332,17 +334,19 @@ ors_shortest_distances <- function(source,
   }
 
   calculate_shortest_routes <- function(i) {
-    routes <- ors_distances(
-      source = source[nested_iterator[i, "point_number"], ],
-      destination = if (is.data.frame(destination)) {
-        destination
-      } else if (is.list(destination)) {
-        destination[[nested_iterator[i, "point_number"]]]
-      },
-      profile = nested_iterator[i, "profile"],
-      units = units,
-      geometry = geometry,
-      ...
+    routes <- suppressWarnings(
+      ors_distances(
+        source = source[nested_iterator[i, "point_number"], ],
+        destination = if (is.data.frame(destination)) {
+          destination
+        } else if (is.list(destination)) {
+          destination[[nested_iterator[i, "point_number"]]]
+        },
+        profile = nested_iterator[i, "profile"],
+        units = units,
+        geometry = geometry,
+        ...
+      )
     )
 
     if (identical(tolower(proximity_type), "distance")) {
@@ -401,6 +405,16 @@ ors_shortest_distances <- function(source,
 
   if (geometry) {
     route_df <- sf::st_as_sf(route_df)
+  }
+  
+  has_cond <- sapply(tail(pkg_cache$routing_conditions, nrow(source)), is.character)
+  if (any(has_cond)) {
+    tip <- cli::col_grey("For a list of conditions, call {.code last_ors_conditions(last = {nrow(source)})}.")
+    cond_indices <- cli::cli_vec(which(has_cond),
+                                 style = list(vec_sep = ", ", vec_last = ", "))
+    cli::cli_warn(c(paste("For the following input rows, one or multiple routes",
+                          "could not be taken into account: {cond_indices}"),
+                    tip))
   }
   
   structure(
