@@ -365,7 +365,7 @@ ORSInstance$funs$clone_ors_repo <- function(dir) {
                            spinner = interactive())
     
     proc <- callr::r_bg(function(zip, dir) {
-      unzip(zip, dir)
+      unzip(zip, exdir = dir)
     }, args = list(zip_file, dir))
     while(proc$is_alive()) cli::cli_progress_update()
     cli::cli_progress_done()
@@ -374,7 +374,7 @@ ORSInstance$funs$clone_ors_repo <- function(dir) {
                            msg_done = "Removed zip file.",
                            msg_failed = "Could not remove zip file.",
                            spinner = interactive())
-    
+
     proc <- callr::r_bg(function(zip) {
       file.remove(zip)
     }, args = list(zip_file))
