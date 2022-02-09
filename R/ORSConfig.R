@@ -173,36 +173,3 @@ ORSConfig$funs$translate_profiles <- function(profiles) {
   translated_profiles[sapply(translated_profiles, is.null)] <- NULL
   translated_profiles
 }
-
-
-#' @export
-
-print.ORSConfig <- function(x, ...) {
-  if (grepl("docker/data", x$path, fixed = TRUE)) {
-    pd <- "pre-setup"
-  } else if (grepl("docker/conf", x$path, fixed = TRUE)) {
-    pd <- "post-setup"
-  } else {
-    pd <- NULL
-  }
-
-  allp <- c("car", "hgv", "bike-regular", "bike-mountain", "bike-road",
-            "bike-electric", "walking", "hiking", "wheelchair")
-  allp_in <- allp %in% x$active_profiles
-  allp_in <- lapply(allp_in, ifelse, cli::col_green(T), cli::col_red(F))
-  
-  allp <- sapply(allp, function(p) {
-    paste0(p, strrep("\u00a0", 14 - nchar(p)))
-  })
-  
-  names(allp_in) <- allp
-  
-  cli::cli_text("Class\u00a0\u00a0: {.cls {class(x)}}")
-  cli::cli_text("Path\u00a0\u00a0\u00a0: {x$dir}")
-  cli::cli_text("Status\u00a0: {pd}")
-  cat("\n")
-  cli::cli_dl(do.call(c, allp_in))
-  cat("\n")
-  cli::cli_text("Public methods:")
-  print(names(ORSConfig$public_methods), ...)
-}
