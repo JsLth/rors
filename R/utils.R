@@ -120,30 +120,33 @@ df_nest <- function(data, names = NULL) {
 notify <- function(msg) {
   if (interactive()) {
     if (is.windows()) {
-      cmd <- paste(
-        "[reflection.assembly]::loadwithpartialname(\"System.Windows.Forms\");",
-        "[reflection.assembly]::loadwithpartialname(\"System.Drawing\");",
-        "$notify = new-object system.windows.forms.notifyicon;",
-        "$notify.icon = [System.Drawing.SystemIcons]::Information;",
-        "$notify.visible = $true;",
-        "$notify.showballoontip(10,",
-        "\"Message from R\",",
-        sprintf("\"%s\",", msg),
-        "[system.windows.forms.tooltipicon]::None)"
-      )
-      callr::run("powershell", cmd, stdout = NULL, error_on_status = FALSE)
+      if (!identical(system2("powershell", stdout = FALSE), 127L)) {
+        cmd <- paste(
+          "[System.Reflection.Assembly]::LoadWithPartialName(\"System.Windows.Forms\");",
+          "$notify = New-Object System.Windows.Forms.Notifyicon;",
+          "$notify.Icon = [System.Drawing.SystemIcons]::Information;",
+          "$notify.BalloonTipIcon = \"Info\";",
+          sprintf("$notify.BalloonTipText = \"%s\";", msg),
+          "$notify.BalloonTipTitle = \"Message from R\";",
+          "$notify.Visible = $True;",
+          "$notify.ShowBalloonTip(10)"
+        )
+        callr::run("powershell", cmd, stdout = NULL, stderr = NULL, error_on_status = FALSE)
+      } else {
+        system("rundll32 user32.dll, MessageBeep -1")
+      }
     } else if (is.linux()) {
       cmd1 <- "/usr/share/sounds/freedesktop/stereo/complete.oga"
       cmd2 <- "%s \"Message from R\""
-      callr::run("paplay", cmd1, stdout = NULL, error_on_status = FALSE)
-      callr::run("notify-send", cmd2, stdout = NULL, error_on_status = FALSE)
+      callr::run("paplay", cmd1, stdout = NULL, stderr = NULL, error_on_status = FALSE)
+      callr::run("notify-send", cmd2, stdout = NULL, stderr = NULL, error_on_status = FALSE)
     } else if (is.macos()) {
       cmd <- paste(
         "-e 'display notification",
         sprintf("\"%s\"", msg),
         "with title",
         "\"Message from R\"")
-      callr::run("osascript", cmd, stdout = NULL, error_on_status = FALSE)
+      callr::run("osascript", cmd, stdout = NULL, stderr = NULL, error_on_status = FALSE)
     }
     invisible()
   }
@@ -189,7 +192,8 @@ docker_installed <- function() {
 #' Enable non-root docker access on Linux
 #' @description Creates a docker group and adds the current user to it in order
 #' to enable docker commands from within R. Doing this, either manually or by
-#' using this function, is a requirement for using \code{\link{ORSInstance}}.
+#' using this function, is a requirement for using \code{\link{ORSInstance}}
+#' on Linux.
 #' @param run If \code{FALSE}, the function will only return a logical vector
 #' and will not change group membership.
 #' @details For details on what this function does and what security
@@ -224,7 +228,7 @@ grant_docker_privileges <- function(run = TRUE) {
                                    "re-evaluate group membership"))
     }
 
-    return(TRUE)
+    TRUE
   } else TRUE
 }
 
