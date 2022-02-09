@@ -276,9 +276,13 @@ format_extra_info <- function(res, info_type) {
       end,
       MoreArgs = list(waypoints = iterator, by_waypoint = FALSE)
     )
+    
+    if (is.matrix(indices)) indices <- list(c(indices))
 
-    values <- lapply(seq(1, length(indices)),
-                     function(seg) rep(matrix[seg, 3L], length(indices[[seg]])))
+    values <- lapply(
+      seq(1, length(indices)),
+      function(seg) rep(matrix[seg, 3L], length(indices[[seg]]))
+    )
     values <- unlist(values)
 
     profile <- res$metadata$query$profile

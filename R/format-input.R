@@ -248,7 +248,7 @@ format_ors_options <- function(options, profile) {
     avoid_countries = options$avoid_countries,
     avoid_features  = options$avoid_features,
     avoid_polygons  = options$avoid_polygons,
-    profile_param   = options$profile_params,
+    profile_params   = options$profile_params,
     vehicle_type    = options$vehicle_type
   )
 
