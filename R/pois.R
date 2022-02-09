@@ -140,8 +140,14 @@ get_osm_pois <- function(source,
       centroids_from_polygons(res$osm_polygons, as_sf = as_sf)
     }
   }
+  
   # Apply `query.osm` to each point in the dataset
-  pois <- apply(bbox, 2, query.osm)
+  if (!is.null(dim(bbox))) {
+    pois <- apply(bbox, 2, query.osm)
+  } else {
+    pois <- lapply(bbox, query.osm)
+  }
+  
 
   if (length(pois) == 1) pois <- pois[[1]]
 
