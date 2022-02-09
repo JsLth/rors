@@ -68,9 +68,15 @@ ORSDockerInterface <- R6::R6Class(
       self$active <- TRUE
       invisible(self)
     },
-
+    
+    #' @description Returns a data.frame of all docker containers.
+    ls_ors = function() ORSDockerInterface$funs$ls_ors(),
+    
     #' @description Builds the container, starts it and issues a system
     #' notification when the service is ready to be used.
+    #' @param project_name Length-1 character vector specifying the
+    #' docker-compose project name. Defaults to the directory name. Useful if
+    #' you need to set up multiple containers.
     #' @param wait Logical. If \code{TRUE}, the function will not stop running
     #' after the container is being started and will give out a notification as
     #' soon as the service is ready. If \code{FALSE}, the function will start
@@ -78,13 +84,12 @@ ORSDockerInterface <- R6::R6Class(
     #' call \code{$service_ready} or \code{\link{ors_ready}}.
     #' @param verbose Logical. If \code{TRUE}, prints Docker logs for container
     #' setup.
-    container_up = function(wait = TRUE, verbose = TRUE) ORSDockerInterface$funs$container_up(self, private, wait, verbose),
+    container_up = function(wait = TRUE, verbose = TRUE, distinct = TRUE) ORSDockerInterface$funs$container_up(self, private, distinct, wait, verbose),
 
     #' @description Pulls the openrouteservice/openrouteservice image
-    #' @param all_tags Whether to download all tagged images in the repository.
     #' @param verbose Logical. If \code{TRUE}, prints Docker logs for the pull.
     #' Equals the -a tag.
-    pull_ors = function(all_tags = FALSE, verbose = TRUE) ORSDockerInterface$funs$pull_ors(self, private, all_tags, verbose),
+    pull_ors = function(verbose = TRUE) ORSDockerInterface$funs$pull_ors(self, private, verbose),
     
     #' @description Deletes the image.
     #' @param name Optional name of the container. If not provided, the method
@@ -105,12 +110,12 @@ ORSDockerInterface <- R6::R6Class(
     #' as soon as the service is ready. If \code{FALSE}, the function will
     #' start the container and then stop. To check the server status, you can
     #' then call \code{$service_ready} or \code{\link{ors_ready}}.
-    start_container = function(name = NULL, wait = FALSE) ORSDockerInterface$funs$start_container(self, private, name, wait),
+    start_container = function(wait = FALSE) ORSDockerInterface$funs$start_container(self, private,wait),
 
     #' @description Stops the container.
     #' @param name Optional name of the container. If not provided, the method
     #' will use `getOption("ors_name")` as a default.
-    stop_container = function(name = NULL) ORSDockerInterface$funs$stop_container(self, name),
+    stop_container = function() ORSDockerInterface$funs$stop_container(self),
 
     #' @description Takes down the container, removes the image and deletes all
     #' docker directories except /data
@@ -158,21 +163,19 @@ ORSDockerInterface$funs$image_exists <- function(self, arg) {
     cli::cli_abort("{.field $image_exists} is read only.")
   }
   
-  if (self$docker_running) {
-    cmd <- c("images", "openrouteservice/openrouteservice",
-              "--format", "{{.Repository}}")
+  cmd <- c("images", "openrouteservice/openrouteservice",
+            "--format", "{{.Repository}}")
 
-    image_id <- callr::run(
-      command = "docker",
-      args = cmd,
-      stdout = "|",
-      stderr = NULL,
-      error_on_status = FALSE
-    )
-    image_id <- unlist(strsplit(image_id$stdout, "\n"))
+  image_id <- callr::run(
+    command = "docker",
+    args = cmd,
+    stdout = "|",
+    stderr = NULL,
+    error_on_status = FALSE
+  )
+  image_id <- unlist(strsplit(image_id$stdout, "\n"))
 
-    as.logical(length(image_id))
-  } else FALSE
+  as.logical(length(image_id))
 }
 
 
@@ -181,22 +184,20 @@ ORSDockerInterface$funs$container_built <- function(self, arg) {
     cli::cli_abort("{.field $container_built} is read only.")
   }
 
-  if (self$docker_running && self$image_exists) {
-    container_name <- getOption("ors_name", "ors-app")
+  container_name <- self$setup_settings$compose$services$`ors-app`$container_name
 
-    cmd <- c("ps", "-a", "--format", "\"{{.Names}}\"", "--filter",
-              sprintf("name=^/%s$", container_name))
+  cmd <- c("ps", "-a", "--format", "\"{{.Names}}\"", "--filter",
+            sprintf("name=^/%s$", container_name))
 
-    container_check <- callr::run(
-      command = "docker",
-      args = cmd,
-      stdout = "|",
-      stderr = NULL,
-      error_on_status = FALSE
-    )
+  container_check <- callr::run(
+    command = "docker",
+    args = cmd,
+    stdout = "|",
+    stderr = NULL,
+    error_on_status = FALSE
+  )
 
-    grepl(container_name, container_check$stdout)
-  } else FALSE
+  grepl(container_name, container_check$stdout)
 }
 
 
@@ -205,34 +206,34 @@ ORSDockerInterface$funs$container_running <- function(self, arg) {
     cli::cli_abort("{.field $container_running} is read only.")
   }
 
-  if (self$docker_running && self$image_exists && self$container_built) {
-    container_name <- getOption("ors_name", "ors-app")
+  container_name <- self$setup_settings$compose$services$`ors-app`$container_name
 
-    cmd <- c("container", "ls", "-a", "--format", "\"{{.State}}\"",
-              "--filter", sprintf("name=^/%s$", container_name))
+  cmd <- c("container", "ls", "-a", "--format", "\"{{.State}}\"",
+            "--filter", sprintf("name=^/%s$", container_name))
 
-    container_check <- callr::run(
-      command = "docker",
-      args = cmd,
-      stdout = "|",
-      stderr = NULL,
-      error_on_status = FALSE
-    )
+  container_check <- callr::run(
+    command = "docker",
+    args = cmd,
+    stdout = "|",
+    stderr = NULL,
+    error_on_status = FALSE
+  )
 
-    grepl("running", container_check$stdout)
-  } else FALSE
+  grepl("running", container_check$stdout)
 }
 
 
 ORSDockerInterface$funs$service_ready <- function(self, arg) {
-  if (missing(arg)) {
+  if (!missing(arg)) {
+    cli::cli_abort("{.field $service_ready} is read only.")
   }
-    if (self$docker_running &&
-        self$image_exists &&
-        self$container_built &&
-        self$container_running) {
-          ors_ready(force = TRUE)
-    } else FALSE
+  
+  if (self$container_running) {
+    old_name <- getOption("ors_name")
+    on.exit(options(ors_name = old_name))
+    options(ors_name = self$setup_settings$compose$services$`ors-app`$container_name)
+    ors_ready(force = TRUE)
+  } else FALSE
 }
 
 
@@ -258,21 +259,43 @@ ORSDockerInterface$funs$error_log <- function(self, private, arg) {
 }
 
 
-ORSDockerInterface$funs$pull_ors <- function(self, private, all_tags, verbose) {
+
+ORSDockerInterface$funs$ls_ors <- function() {
+  cmd <- c(
+    "container","ls", "-a",
+    "--filter", "ancestor=openrouteservice/openrouteservice",
+    "--format", paste0("{\"id\":\"{{.ID}}\",", "\"name\":\"{{.Names}}\",",
+                       "\"state\":\"{{.State}}\",", "\"running_for\":\"{{.RunningFor}}\",",
+                       "\"size\":\"{{.Size}}\",", "\"ports\":\"{{.Ports}}\"}")
+  )
+
+  proc <- callr::run(
+    "docker",
+    cmd,
+    stdout = "|",
+    stderr = NULL,
+    error_on_status = FALSE
+  )
+  
+  if (nchar(proc$stdout)) {
+    json_list <- strsplit(proc$stdout, "\n")[[1]]
+    ls_list <- lapply(json_list, function(json) {
+      pjson <- jsonlite::fromJSON(json)
+      as.data.frame(t(pjson))
+    })
+    ls_df <- do.call(rbind, ls_list)
+    ls_df
+  } else data.frame()
+}
+
+
+ORSDockerInterface$funs$pull_ors <- function(self, private, verbose) {
   if (!self$docker_running) {
     cli::cli_abort("Docker is not running.")
   }
   
   if (!self$image_exists) {
-    cmd <- c("pull", if (isTRUE(all_tags)) "-a", "openrouteservice/openrouteservice")
-    
-    proc <- callr::process$new(
-      command = "docker",
-      args = cmd,
-      stdout = if (verbose) tempfile(),
-      stderr = if (verbose) "2>&1",
-      encoding = "UTF-8"
-    )
+    cmd <- c("pull", "openrouteservice/openrouteservice")
     
     proc <- callr::run(
       command = "docker",
@@ -289,7 +312,7 @@ ORSDockerInterface$funs$pull_ors <- function(self, private, all_tags, verbose) {
     
     if (!is.na(status) && !identical(status, 0L)) {
       cli::cli_abort(c("The docker command encountered an error.",
-                       paste("Error code", status)))
+                       "Error code {.val {proc$status}}"))
     }
     
   } else {
@@ -300,7 +323,7 @@ ORSDockerInterface$funs$pull_ors <- function(self, private, all_tags, verbose) {
 }
 
 
-ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose) {
+ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose, distinct) {
   if (!self$docker_running) {
     cli::cli_abort("Docker is not running.")
   }
@@ -311,26 +334,30 @@ ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose) {
 
   private$.set_port()
   
-  old_name <- getOption("ors_name", "ors-app")
+  old_name <- getOption("ors_name")
   
-  ors_name <- self$setup_settings$compose$services$`ors-app`$container_name
-  options(ors_name = ors_name)
+  name <- self$setup_settings$compose$services$`ors-app`$container_name
+  options(ors_name = name)
 
   cli::cli_rule(left = "Pulling image")
-  self$pull_ors(all_tags = FALSE, verbose = verbose)
+  self$pull_ors(verbose = verbose)
   
-  cmd <- c("compose", "-f",
-           file.path(self$dir, "docker/docker-compose.yml"),
-           "up", "-d")
+  cmd <- c(
+    "compose",
+    if (isTRUE(distinct)) c("-p", shQuote(name)),
+    "-f", file.path(self$dir, "docker/docker-compose.yml"),
+    "up", "-d",
+    "--no-build"
+  )
 
-  cli::cli_par()
-  cli::cli_rule(left = "Building container")
   cat("\n")
+  cli::cli_rule(left = "Building container")
   proc <- callr::run(
     command = "docker",
     args = cmd,
     stdout = if (isTRUE(verbose)) "" else NULL,
-    stderr = "2>&1"
+    stderr = "2>&1",
+    error_on_status = FALSE
   )
 
   status <- proc$status
@@ -339,11 +366,10 @@ ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose) {
     options(ors_name = old_name)
     
     cli::cli_abort(c("The container setup encountered an error.",
-                     paste("Error code", status)))
+                     "Error code {.val {proc$status}}"))
   }
 
   if (wait) {
-    cli::cli_par()
     cat("\n")
     cli::cli_rule(left = "Setting up service")
     private$.notify_when_ready(interval = 10, silently = FALSE)
@@ -388,7 +414,7 @@ ORSDockerInterface$funs$rm_image <- function(self, force) {
 
         if (!identical(rmvd$status, 0L)) {
           cli::cli_abort(c("The docker command encountered an error",
-                           "Error code {.val {status}}"))
+                           "Error code {.val {proc$status}}"))
         }
       }
       cli::cli_progress_done()
@@ -420,7 +446,7 @@ ORSDockerInterface$funs$container_down <- function(self) {
 
     if (!identical(proc$status, 0L)) {
       cli::cli_abort(c("The docker command encountered an error",
-                       "Error code {.val {status}}"))
+                       "Error code {.val {proc$status}}"))
     }
     
     cli::cli_progress_done()
@@ -431,21 +457,16 @@ ORSDockerInterface$funs$container_down <- function(self) {
 }
 
 
-ORSDockerInterface$funs$start_container <- function(self, private, name, wait) {
-  if (!is.null(name)) {
-    old_name <- getOption("ors_name", "ors-app")
-    options(ors_name = name)
-    on.exit(options(ors_name = old_name))
-  } else {
-    name <- getOption("ors_name", "ors-app")
-  }
-
+ORSDockerInterface$funs$start_container <- function(self, private, wait) {
   if (isFALSE(self$container_built)) {
     cli::cli_abort("Container called {.val {name}} does not exist.")
   }
 
+  old_name <- getOption("ors_name")
+  name <- self$setup_settings$compose$services$`ors-app`$container_name
+  options(ors_name = name)
+  
   if (isFALSE(self$container_running)) {
-
     if (isTRUE(wait)) {
       cli::cli_progress_step("Starting container...",
                              msg_done = "Container is now running.",
@@ -465,8 +486,10 @@ ORSDockerInterface$funs$start_container <- function(self, private, name, wait) {
     )
 
     if (!identical(proc, 0L)) {
+      options(ors_name = old_name)
+      
       cli::cli_abort(c("The docker command encountered an error",
-                       "Error code {.val {status}}"))
+                       "Error code {.val {proc$status}}"))
     }
 
     if (isTRUE(wait)) {
@@ -480,15 +503,11 @@ ORSDockerInterface$funs$start_container <- function(self, private, name, wait) {
 }
 
 
-ORSDockerInterface$funs$stop_container <- function(self, name) {
-  if (!is.null(name)) {
-    old_name <- getOption("ors_name", "ors-app")
-    options(ors_name = name)
-    on.exit(options(ors_name = old_name))
-  } else {
-    name <- getOption("ors_name", "ors-app")
-  }
-
+ORSDockerInterface$funs$stop_container <- function(self) {
+  old_name <- getOption("ors_name")
+  name <- self$setup_settings$compose$services$`ors-app`$container_name
+  options(ors_name = name)
+  
   if (isTRUE(self$container_running)) {
     cli::cli_progress_step("Stopping container...",
                            msg_done = "Container stopped.",
@@ -505,8 +524,10 @@ ORSDockerInterface$funs$stop_container <- function(self, name) {
     )
 
     if (!identical(proc$status, 0L)) {
+      options(ors_name = old_name)
+      
       cli::cli_abort(c("The docker command encountered an error",
-                       "Error code {.val {status}}"))
+                       "Error code {.val {proc$status}}"))
     }
     
     cli::cli_progress_done()
@@ -622,36 +643,6 @@ ORSDockerInterface$funs$pull_callback <- function(newout, proc) {
 }
 
 
-ORSDockerInterface$funs$handle_pull_output <- function(proc) {
-  pr_lv <- list()
-  tmp <- proc$get_output_file()
-  bu.sy <- cli::symbol$bullet
-  sb <- cli::cli_status("{bu.sy} Pulling image layers...")
-  
-  while(proc$is_alive()) {
-    lv <- readLines(tmp)
-    lvb <- lv[grepl("Using|latest", lv)]
-    lv <- lv[grepl(": Pull complete|: Already exists", lv)]
-    lve <- lv[grepl("Digest|Status|docker.io", lv)]
-    lv <- list(lvb, lv, lve)
-    for (i in seq_along(lv)) {
-      for (v in lv[[i]]) {
-        if (!is.element(v, pr_lv)) {
-          if (i != 2 || grepl("Already exists", v)) {
-            cli::cli_alert_info(v)
-          } else {
-            cli::cli_status_clear(id = sb)
-            cli::cli_alert_success(v)
-            sb <- cli::cli_status("{bu.sy} Pulling image layers...")
-          }
-        }
-        pr_lv <- append(pr_lv, v)
-      }
-    }
-  }
-}
-
-
 ORSDockerInterface$funs$notify_when_ready <- function(self, private, interval, silently) {
   # Checks the service status and gives out a visual and audible
   # notification when the server is ready. Also watches out for errors
@@ -675,15 +666,18 @@ ORSDockerInterface$funs$notify_when_ready <- function(self, private, interval, s
     )
   }
   
+  name_opt <- self$setup_settings$compose$services$`ors-app`$container_name
+  
   proc <- callr::r_bg(
-    func = function(private) {
+    func = function(private, name_opt) {
+      options(ors_name = name_opt)
       while(!ORSRouting::ors_ready(force = TRUE)) {
         errors <- private$.watch_for_error()
         if (length(errors)) return(errors)
         Sys.sleep(1L)
       }
     },
-    args = list(private),
+    args = list(private, name_opt),
     package = TRUE
   )
 
@@ -738,41 +732,3 @@ ORSDockerInterface$funs$watch_for_error <- function(self) {
   
   error_msgs
 }
-
-
-#' @export
-
-print.ORSDockerInterface <- function(x, ...) {
-  gl <- list(
-    x$docker_running,
-    x$image_exists,
-    x$container_built,
-    x$container_running,
-    x$service_ready
-  )
-  
-  gln <- c(
-    "Docker running",
-    "Image exists",
-    "Container built",
-    "Container running",
-    "Service exist"
-  )
-  
-  gl <- sapply(gl, ifelse, cli::col_green(TRUE), cli::col_red(FALSE))
-
-  gln <- sapply(gln, function(n) {
-    paste0(n, strrep("\u00a0", 18 - nchar(n)))
-  })
-  
-  names(gl) <- gln
-  
-  cli::cli_text("Class\u00a0: {.cls {class(x)}}")
-  cli::cli_text("Path\u00a0\u00a0: {x$dir}")
-  cat("\n")
-  cli::cli_dl(gl)
-  cat("\n")
-  cli::cli_text("Public methods:")
-  print(names(ORSDockerInterface$public_methods))
-}
-
