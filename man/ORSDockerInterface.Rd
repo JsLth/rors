@@ -64,6 +64,7 @@ occurred.}
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-new}{\code{ORSDockerInterface$new()}}
+\item \href{#method-ls_ors}{\code{ORSDockerInterface$ls_ors()}}
 \item \href{#method-container_up}{\code{ORSDockerInterface$container_up()}}
 \item \href{#method-pull_ors}{\code{ORSDockerInterface$pull_ors()}}
 \item \href{#method-rm_image}{\code{ORSDockerInterface$rm_image()}}
@@ -100,13 +101,23 @@ and specifies the port.
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ls_ors"></a>}}
+\if{latex}{\out{\hypertarget{method-ls_ors}{}}}
+\subsection{Method \code{ls_ors()}}{
+Returns a data.frame of all docker containers.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$ls_ors()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-container_up"></a>}}
 \if{latex}{\out{\hypertarget{method-container_up}{}}}
 \subsection{Method \code{container_up()}}{
 Builds the container, starts it and issues a system
 notification when the service is ready to be used.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$container_up(wait = TRUE, verbose = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$container_up(wait = TRUE, verbose = TRUE, distinct = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -120,6 +131,14 @@ call \code{$service_ready} or \code{\link{ors_ready}}.}
 
 \item{\code{verbose}}{Logical. If \code{TRUE}, prints Docker logs for container
 setup.}
+
+\item{\code{distinct}}{Logical. If \code{TRUE}, adds a project name flag which
+makes it possible to build multiple containers from the same image and
+compose file.}
+
+\item{\code{project_name}}{Length-1 character vector specifying the
+docker-compose project name. Defaults to the directory name. Useful if
+you need to set up multiple containers.}
 }
 \if{html}{\out{</div>}}
 }
@@ -130,14 +149,12 @@ setup.}
 \subsection{Method \code{pull_ors()}}{
 Pulls the openrouteservice/openrouteservice image
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$pull_ors(all_tags = FALSE, verbose = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$pull_ors(verbose = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{all_tags}}{Whether to download all tagged images in the repository.}
-
 \item{\code{verbose}}{Logical. If \code{TRUE}, prints Docker logs for the pull.
 Equals the -a tag.}
 }
@@ -182,20 +199,20 @@ Removes the container after stopping it if necessary.
 \subsection{Method \code{start_container()}}{
 Starts the container.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$start_container(name = NULL, wait = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$start_container(wait = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{name}}{Optional name of the container. If not provided, the method
-will use \code{getOption("ors_name")} as a default.}
-
 \item{\code{wait}}{Logical. If \code{TRUE}, the function will not stop running
 after the container is being started and will give out a notification
 as soon as the service is ready. If \code{FALSE}, the function will
 start the container and then stop. To check the server status, you can
 then call \code{$service_ready} or \code{\link{ors_ready}}.}
+
+\item{\code{name}}{Optional name of the container. If not provided, the method
+will use \code{getOption("ors_name")} as a default.}
 }
 \if{html}{\out{</div>}}
 }
@@ -206,7 +223,7 @@ then call \code{$service_ready} or \code{\link{ors_ready}}.}
 \subsection{Method \code{stop_container()}}{
 Stops the container.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$stop_container(name = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSDockerInterface$stop_container()}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

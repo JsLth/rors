@@ -65,7 +65,7 @@
 
 get_osm_pois <- function(source,
                          ...,
-                         radius = 5000,
+                         radius = 5000L,
                          crs = NA,
                          trim = TRUE,
                          timeout = NULL,
@@ -83,8 +83,8 @@ get_osm_pois <- function(source,
 
   # Convert sf object to matrix
   if (is.sf(source)) {
-    if (sf::st_crs(source) != 4326) source <- sf::st_transform(source, 4326)
-    source_coords <- sf::st_coordinates(sf::st_geometry(source))[, c(1, 2)]
+    if (sf::st_crs(source) != 4326L) source <- sf::st_transform(source, 4326L)
+    source_coords <- sf::st_coordinates(sf::st_geometry(source))[, c(1L, 2L)]
     crs <- sf::st_crs(source)
   } else {
     source_coords <- source
@@ -103,28 +103,28 @@ get_osm_pois <- function(source,
     bbox <- t(buffer_bbox_from_coordinates(source_coords, radius, crs))
 
     # Estimate the timeout for point data
-    timeout <- round(10 + (nrow(source_coords) * radius / 1000))
+    timeout <- round(10L + (nrow(source_coords) * radius / 1000L))
   } else {
     bbox <- list(source_coords)
     if(is.sf(source) &&
        sf::st_is(source, c("POLYGON", "MULTIPOLYGON"))) {
       # Estimate the timeout for polygon data
       area <- as.numeric(sf::st_area(source))
-      timeout <- round(sqrt(area / 1000000))
+      timeout <- round(sqrt(area / 1000000L))
     } else if (!is.null(names(source))) {
       # Estimate the timeout for named vector bboxes
       area_pol <- sf::st_sf(sf::st_as_sfc(sf::st_bbox(source)), crs = crs)
       area <- as.numeric(sf::st_area(area_pol))
-      timeout <- round(sqrt(area / 1000000))
+      timeout <- round(sqrt(area / 1000000L))
     } else {
       # Fix the timeout for strings, matrices or unnamed vectors
       if (is.null(timeout)) {
-        timeout <- 100
+        timeout <- 100L
       }
     }
   }
 
-  timeout <- min(timeout, 25)
+  timeout <- min(timeout, 25L)
 
   # Function that queries points of interest within a bbox
   query.osm <- function(bbox) {
@@ -143,13 +143,13 @@ get_osm_pois <- function(source,
   
   # Apply `query.osm` to each point in the dataset
   if (!is.null(dim(bbox))) {
-    pois <- apply(bbox, 2, query.osm)
+    pois <- apply(bbox, 2L, query.osm)
   } else {
     pois <- lapply(bbox, query.osm)
   }
   
 
-  if (length(pois) == 1) pois <- pois[[1]]
+  if (length(pois) == 1L) pois <- pois[[1L]]
 
   pois
 }
@@ -257,7 +257,7 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
   create_distance_matrix <- function(spi) {
     comb_data <- rbind(source[spi, ], poi_coordinates)
     dist_matrix <- stats::dist(comb_data, method = "euclidean")
-    cross_dist <- matrix(dist_matrix[seq_len(nrow(poi_coordinates))], nrow = 1)
+    cross_dist <- matrix(dist_matrix[seq_len(nrow(poi_coordinates))], nrow = 1L)
     cross_dist
   }
   
@@ -275,8 +275,8 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
   nested_iterator <- expand.grid(seq_len(n), seq_len(nrow(source)))
   output <- lapply(seq_len(nrow(nested_iterator)), function(i) {
     select_lowest_distance(
-      nested_iterator[i, 1],
-      nested_iterator[i, 2],
+      nested_iterator[i, 1L],
+      nested_iterator[i, 2L],
       distance_matrices,
       sorted_distance_matrices
     )
@@ -285,7 +285,7 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
   not_assigned <- sapply(output, is.null)
   nal <- length(output[not_assigned])
   if (nal) {
-    i <- get("i", envir = parent.frame(2))
+    i <- get("i", envir = parent.frame(2L))
     if (!n - nal) {
       cli::cli_warn("Point {.val {i}} could not be assigned any point{?s} of interest.")
     } else {
@@ -296,11 +296,11 @@ n.nearest.pois <- function(source, poi_coordinates, n) {
   output[not_assigned] <- NULL
   if (length(output)) {
     output <- as.data.frame(do.call(rbind, output), row.names = seq_along(output))
-    output <- split(output, nested_iterator[seq_len(nrow(output)), 2])
+    output <- split(output, nested_iterator[seq_len(nrow(output)), 2L])
     output <- unname(output)
     output <- lapply(output, function(r) { row.names(r) <- NULL; r })
     
-    if (length(output) == 1) output <- output[[1]]
+    if (length(output) == 1L) output <- output[[1]]
   } else {
     output <- data.frame()
   }
@@ -323,7 +323,7 @@ pois.within.radius <- function(source, pois, radius, crs = NULL) {
   if (!is.sf(source)) {
     if (!is.na(crs)) {
       points <- sf::st_transform(
-        sf::st_as_sf(source, coords = c(1, 2), crs = crs),
+        sf::st_as_sf(source, coords = c(1L, 2L), crs = crs),
         sf::st_crs(pois)
       )
     } else {

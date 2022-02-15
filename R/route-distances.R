@@ -35,7 +35,7 @@
 #' refer to the
 #' \href{https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post}{API playground}
 #' and
-#' \href{https://github.com/GIScience/openrouteservice-docs#routing-options}{documentation}
+#' \href{https://giscience.github.io/openrouteservice/documentation/routing-options/Routing-Options.html}{documentation}
 #' \describe{
 #'  \item{\strong{geometry_simplify}}{Logical length-1 vector specifying
 #'                                    whether geometry should be simplified.}
@@ -145,8 +145,8 @@ ors_distances <- function(source,
   source <- format_input_data(source)
   destination <- format_input_data(destination)
 
-  verify_crs(source, crs = 4326)
-  verify_crs(destination, crs = 4326)
+  verify_crs(source, crs = 4326L)
+  verify_crs(destination, crs = 4326L)
 
   # If directions is the method of choice but the input suggests one-to-many,
   # replicate the one-element dataframe `nrow` times
@@ -155,7 +155,7 @@ ors_distances <- function(source,
       rbind,
       replicate(nrow(destination), source, simplify = FALSE)
     )
-  } else if (nrow(destination) == 1) {
+  } else if (nrow(destination) == 1L) {
     destination <- do.call(
       rbind,
       replicate(nrow(source), destination, simplify = FALSE)
@@ -206,7 +206,7 @@ ors_distances <- function(source,
       if (!geometry) {
         return(data.frame(distance = NA, duration = NA))
       } else {
-        empty_line <- sf::st_sfc(sf::st_linestring(), crs = 4326)
+        empty_line <- sf::st_sfc(sf::st_linestring(), crs = 4326L)
         return(sf::st_sf(distance = NA, duration = NA, geometry = empty_line))
       }
     } else if (isFALSE(attr(cond, "error"))) {
@@ -221,10 +221,10 @@ ors_distances <- function(source,
     } else {
       distance <- res$features$properties$summary$distance
       duration <- res$features$properties$summary$duration
-      linestring <- sf::st_linestring(res$features$geometry$coordinates[[1]])
+      linestring <- sf::st_linestring(res$features$geometry$coordinates[[1L]])
       sf::st_sf(distance = distance,
                 duration = duration,
-                geometry = sf::st_sfc(linestring, crs = 4326))
+                geometry = sf::st_sfc(linestring, crs = 4326L))
     }
   }
 
@@ -369,7 +369,7 @@ ors_shortest_distances <- function(source,
 
     best_route <- cbind(best_index, routes[best_index, ])
     
-    cli::cli_progress_update(.envir = parent.frame(2))
+    cli::cli_progress_update(.envir = parent.frame(2L))
     best_route
   }
 
@@ -448,7 +448,6 @@ ors_matrix <- function(source,
   source <- format_input_data(source)
   destination <- format_input_data(destination)
 
-  port <- get_ors_port()
   url <- get_ors_url()
 
   res <- query_ors_matrix(source = source,
@@ -460,7 +459,7 @@ ors_matrix <- function(source,
 
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
 
-  if (length(proximity_type) == 1) {
+  if (length(proximity_type) == 1L) {
     matrix <- res[[paste0(proximity_type, "s")]]
   } else {
     matrix <- list(distances = res$distances,

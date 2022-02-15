@@ -31,7 +31,7 @@ ORSSetupSettings <- R6::R6Class(
     #' specified by assigning a character string.
     ors_name = function(name) ORSSetupSettings$funs$ors_name(self, name),
     
-    #' @field ors_port Ports of the ORS container. Non-default ports can be
+    #' @field ors_ports Ports of the ORS container. Non-default ports can be
     #' specified by assigning a length-1 vector or a list of ports. The list of
     #' ports must contain 4 ports in the format
     #' \code{list(host1, docker1, host2, docker2)}. Since, most of the time,
@@ -67,8 +67,8 @@ ORSSetupSettings <- R6::R6Class(
       self$graph_building <- NA
       self$memory$total_memory <- get_memory_info()$total
       self$memory$free_memory <- get_memory_info()$free
-      self$memory$init_memory <- private$.read_memory(num = TRUE)[1] / 1000
-      self$memory$max_memory <- private$.read_memory(num = TRUE)[2] / 1000
+      self$memory$init_memory <- private$.read_memory(num = TRUE)[1L] / 1000L
+      self$memory$max_memory <- private$.read_memory(num = TRUE)[2L] / 1000L
       self$active <- TRUE
       invisible(self)
     },
@@ -121,7 +121,7 @@ ORSSetupSettings$funs <- new.env()
 
 ORSSetupSettings$funs$graph_building <- function(self, private, mode) {
   build <- is.element("build", names(self$compose$services$`ors-app`))
-  change <- !is.na(self$compose$services$`ors-app`$volumes[6])
+  change <- !is.na(self$compose$services$`ors-app`$volumes[6L])
   gb <- self$compose$services$`ors-app`$environment[1]
   gb <- as.logical(unlist(strsplit(gb, "="))[2])
 
@@ -157,7 +157,7 @@ ORSSetupSettings$funs$graph_building <- function(self, private, mode) {
       compose$
       services$
       `ors-app`$
-      volumes <- self$compose$services$`ors-app`$volumes[-6]
+      volumes <- self$compose$services$`ors-app`$volumes[-6L]
 
     if (identical(mode, "build")) {
       private$.force_graphbuilding(handle = FALSE)
@@ -179,7 +179,7 @@ ORSSetupSettings$funs$graph_building <- function(self, private, mode) {
         services$
         `ors-app` <- append(self$compose$services$`ors-app`,
                             build_branch,
-                            after = 3)
+                            after = 3L)
 
       self$save_compose()
       return(mode)
@@ -190,7 +190,7 @@ ORSSetupSettings$funs$graph_building <- function(self, private, mode) {
                              relativePath(pkg_cache$extract_path,
                                           file.path(self$dir, "docker")))
 
-      self$compose$services$`ors-app`$volumes[6] <- change_node
+      self$compose$services$`ors-app`$volumes[6L] <- change_node
 
       self$save_compose()
       return(mode)
@@ -224,12 +224,12 @@ ORSSetupSettings$funs$ors_ports <- function(self, ports) {
   if (missing(ports)) {
     cur_ports
   } else {
-    if (length(ports) == 1 || is.null(ports)) {
+    if (length(ports) == 1L || is.null(ports)) {
       if (is.list(ports)) ports <- unlist(ports)
       ports <- list(ports, NULL, NULL, NULL)
     }
     
-    ports <- sapply(seq(1, length(ports)), function(pi) {
+    ports <- sapply(seq(1L, length(ports)), function(pi) {
       if (is.null(ports[[pi]])) {
         cur_ports_vec[pi]
       } else if (is.na(ports[[pi]])) {
@@ -241,11 +241,11 @@ ORSSetupSettings$funs$ors_ports <- function(self, ports) {
       } else ports[[pi]]
     })
     
-    ports <- as.data.frame(matrix(ports, ncol = 2, nrow = 2, byrow = TRUE))
+    ports <- as.data.frame(matrix(ports, ncol = 2L, nrow = 2L, byrow = TRUE))
     names(ports) <- c("host", "docker")
 
-    self$compose$services$`ors-app`$ports[1] <- sprintf("%s:%s", ports$host[1], ports$docker[1])
-    self$compose$services$`ors-app`$ports[2] <- sprintf("%s:%s", ports$host[2], ports$docker[2])
+    self$compose$services$`ors-app`$ports[1L] <- sprintf("%s:%s", ports$host[1L], ports$docker[1L])
+    self$compose$services$`ors-app`$ports[2L] <- sprintf("%s:%s", ports$host[2L], ports$docker[2L])
     self$save_compose()
     ports
   }
@@ -262,16 +262,16 @@ ORSSetupSettings$funs$allocate_memory <- function(self, private, init = NULL, ma
     max <- init
     private$.write_memory(init, max)
   } else if (is.null(init) && is.numeric(max)) {
-    init <- max / 2
+    init <- max / 2L
     private$.write_memory(init, max)
   } else if (is.null(init) && is.null(max)) {
     if (!is.null(pkg_cache$extract_path) &&
         !is.null(self$config$active_profiles)) {
-      size <- round(file.info(pkg_cache$extract_path)$size * 0.000001, -2)
-      number_of_profiles <- length(self$config$active_profiles) / 1000
+      size <- round(file.info(pkg_cache$extract_path)$size * 0.000001, -2L)
+      number_of_profiles <- length(self$config$active_profiles) / 1000L
 
       max <- size * 2.5 * number_of_profiles
-      init <- max / 2
+      init <- max / 2L
 
       private$.write_memory(init, max)
     } else {
@@ -285,7 +285,7 @@ ORSSetupSettings$funs$allocate_memory <- function(self, private, init = NULL, ma
   gc(verbose = FALSE)
   free_mem <- self$memory$free_memory
 
-  if (free_mem * 0.8 - max <= 0) {
+  if (free_mem * 0.8 - max <= 0L) {
     cli::cli_warn(paste("You are allocating more than your available memory.",
                         "Consider lowering the allocated RAM."))
   }
@@ -311,15 +311,15 @@ ORSSetupSettings$funs$open_compose <- function(self) {
 # Private methods -------------------------------------------------------------
 
 ORSSetupSettings$funs$read_memory <- function(self, num) {
-  java_options <- self$compose$services$`ors-app`$environment[2]
-  java_mem <- java_mem_chr <- tail(unlist(strsplit(java_options, " ")), 2)
+  java_options <- self$compose$services$`ors-app`$environment[2L]
+  java_mem <- java_mem_chr <- tail(unlist(strsplit(java_options, " ")), 2L)
   
   if (num) {
     java_mem <- as.numeric(gsub(".*?([0-9]+).*", "\\1", java_mem_chr))
 
     java_mem <- sapply(c(1, 2), function(mi) {
       if (grepl("[0-9]g", java_mem_chr[mi])) {
-        java_mem[mi] <- java_mem[mi] * 1000
+        java_mem[mi] <- java_mem[mi] * 1000L
       } else java_mem[mi]
     })
   }
@@ -328,18 +328,18 @@ ORSSetupSettings$funs$read_memory <- function(self, num) {
 }
 
 ORSSetupSettings$funs$write_memory <- function(self, private, init, max) {
-  java_options <- self$compose$services$`ors-app`$environment[2]
+  java_options <- self$compose$services$`ors-app`$environment[2L]
   java_mem <- private$.read_memory(num = FALSE)
 
-  init_mem_allocation <- java_mem[1]
-  max_mem_allocation <- java_mem[2]
+  init_mem_allocation <- java_mem[1L]
+  max_mem_allocation <- java_mem[2L]
 
   java_options <- gsub(init_mem_allocation,
-                       sprintf("-Xms%sm", init * 1000),
+                       sprintf("-Xms%sm", init * 1000L),
                        java_options)
 
   java_options <- gsub(max_mem_allocation,
-                       sprintf("-Xmx%sm", max * 1000),
+                       sprintf("-Xmx%sm", max * 1000L),
                        java_options)
 
   self$compose$services$`ors-app`$environment[2] <- java_options
@@ -349,7 +349,7 @@ ORSSetupSettings$funs$write_memory <- function(self, private, init, max) {
 ORSSetupSettings$funs$force_graphbuilding <- function(self, handle) {
   handle <- capitalizeChar(handle)
   build_graphs_string <- sprintf("BUILD_GRAPHS=%s", handle)
-  self$compose$services$`ors-app`$environment[1] <- build_graphs_string
+  self$compose$services$`ors-app`$environment[1L] <- build_graphs_string
 }
 
 
@@ -360,15 +360,15 @@ ORSSetupSettings$funs$disable_auto_deletion <- function(self) {
   dockerfile <- readLines(dockerfile_path, warn = FALSE)
   delete_line <- grep("Delete all profiles but car", dockerfile)
 
-  if (length(delete_line) > 0) {
-    lines_to_be_deleted <- c(delete_line, delete_line + 1, delete_line + 2)
+  if (length(delete_line) > 0L) {
+    lines_to_be_deleted <- c(delete_line, delete_line + 1L, delete_line + 2L)
 
     pr_line_end <- gsub(pattern = " && \\\\",
                         replacement = "",
-                        x = dockerfile[seq(delete_line - 2,
+                        x = dockerfile[seq(delete_line - 2L,
                                            delete_line - 1)])
 
-    dockerfile[seq(delete_line - 2, delete_line - 1)] <- pr_line_end
+    dockerfile[seq(delete_line - 2L, delete_line - 1L)] <- pr_line_end
 
     dockerfile <- paste(dockerfile[-lines_to_be_deleted], collapse = "\n")
 
@@ -385,8 +385,8 @@ ORSSetupSettings$funs$read_dockercompose <- function(self) {
 ORSSetupSettings$funs$write_dockercompose <- function(self) {
   # Preserve options before they get put in quotes to not mess up the
   # parsed yaml after saving the settings
-  java_opts <- self$compose$services$`ors-app`$environment[2]
-  catalina_opts <- self$compose$services$`ors-app`$environment[3]
+  java_opts <- self$compose$services$`ors-app`$environment[2L]
+  catalina_opts <- self$compose$services$`ors-app`$environment[3L]
   user <- self$compose$services$`ors-app`$user
 
   # Put string options in quadruple quotes
@@ -394,13 +394,13 @@ ORSSetupSettings$funs$write_dockercompose <- function(self) {
     compose$
     services$
     `ors-app`$
-    environment[2] <- shQuote(java_opts, type = "cmd")
+    environment[2L] <- shQuote(java_opts, type = "cmd")
 
   self$
     compose$
     services$
     `ors-app`$
-    environment[3] <- shQuote(catalina_opts, type = "cmd")
+    environment[3L] <- shQuote(catalina_opts, type = "cmd")
 
   self$
     compose$
@@ -427,7 +427,7 @@ ORSSetupSettings$funs$write_dockercompose <- function(self) {
   cat(corrected_yml_string,
       file = file.path(self$dir, "docker/docker-compose.yml"))
 
-  self$compose$services$`ors-app`$environment[2] <- java_opts
-  self$compose$services$`ors-app`$environment[3] <- catalina_opts
+  self$compose$services$`ors-app`$environment[2L] <- java_opts
+  self$compose$services$`ors-app`$environment[3L] <- catalina_opts
   self$compose$services$`ors-app`$user <- user
 }

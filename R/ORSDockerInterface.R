@@ -84,6 +84,9 @@ ORSDockerInterface <- R6::R6Class(
     #' call \code{$service_ready} or \code{\link{ors_ready}}.
     #' @param verbose Logical. If \code{TRUE}, prints Docker logs for container
     #' setup.
+    #' @param distinct Logical. If \code{TRUE}, adds a project name flag which
+    #' makes it possible to build multiple containers from the same image and
+    #' compose file.
     container_up = function(wait = TRUE, verbose = TRUE, distinct = TRUE) ORSDockerInterface$funs$container_up(self, private, distinct, wait, verbose),
 
     #' @description Pulls the openrouteservice/openrouteservice image
@@ -245,7 +248,7 @@ ORSDockerInterface$funs$error_log <- function(self, private, arg) {
       logs_dir <- file.path(self$dir, "docker/logs")
       if (dir.exists(logs_dir)) {
         code <- unlink(logs_dir, recursive = TRUE, force = TRUE)
-        if (code == 0) {
+        if (code == 0L) {
           private$.watch_for_error()
         } else {
           cli::cli_abort("Logs could not be removed.")
@@ -278,7 +281,7 @@ ORSDockerInterface$funs$ls_ors <- function() {
   )
   
   if (nchar(proc$stdout)) {
-    json_list <- strsplit(proc$stdout, "\n")[[1]]
+    json_list <- strsplit(proc$stdout, "\n")[[1L]]
     ls_list <- lapply(json_list, function(json) {
       pjson <- jsonlite::fromJSON(json)
       as.data.frame(t(pjson))
@@ -372,7 +375,7 @@ ORSDockerInterface$funs$container_up <- function(self, private, wait, verbose, d
   if (wait) {
     cat("\n")
     cli::cli_rule(left = "Setting up service")
-    private$.notify_when_ready(interval = 10, silently = FALSE)
+    private$.notify_when_ready(interval = 10L, silently = FALSE)
   }
 
   self$setup_settings$graph_building <- NA
@@ -485,7 +488,7 @@ ORSDockerInterface$funs$start_container <- function(self, private, wait) {
       error_on_status = FALSE
     )
 
-    if (!identical(proc, 0L)) {
+    if (!identical(proc$status, 0L)) {
       options(ors_name = old_name)
       
       cli::cli_abort(c("The docker command encountered an error",
@@ -497,7 +500,7 @@ ORSDockerInterface$funs$start_container <- function(self, private, wait) {
       cli::cli_progress_done()
     }
   } else {
-    cli::cli_inform(c("i" = "Container {.val {name} is already running.}"))
+    cli::cli_inform(c("i" = "Container {.val {name}} is already running."))
   }
   invisible()
 }
@@ -570,7 +573,7 @@ ORSDockerInterface$funs$cleanup <- function(self) {
 ORSDockerInterface$funs$set_port <- function(self) {
   port <- self$setup_settings$compose$services$`ors-app`$ports[1L]
   port <- as.numeric(unique(unlist(strsplit(port, ":"))))
-  assign("port", port[1], envir = pkg_cache)
+  assign("port", port[1L], envir = pkg_cache)
 }
 
 

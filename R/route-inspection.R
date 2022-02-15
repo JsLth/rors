@@ -106,8 +106,8 @@ inspect_route <- function(source,
   source <- format_input_data(source)
   destination <- format_input_data(destination)
 
-  verify_crs(source, crs = 4326)
-  verify_crs(destination, crs = 4326)
+  verify_crs(source, crs = 4326L)
+  verify_crs(destination, crs = 4326L)
 
   profile <- match.arg(profile)
 
@@ -131,31 +131,31 @@ inspect_route <- function(source,
   geometry <- ors_multiple_linestrings(res, elev_as_z)
   elevation <- data.frame(elevation = attr(geometry, "elevation"))
 
-  waypoints <- res$features$properties$segments[[1]]$steps[[1]]$way_points
+  waypoints <- res$features$properties$segments[[1L]]$steps[[1L]]$way_points
 
   distances <- calculate_distances(geometry)
   durations <- calculate_durations(res, distances$distance)
   speeds <- calculate_avgspeed(distances$distance, durations$duration)
 
   if (is.element("avgspeed", options$attributes)) {
-    avgspeed <- res$features$properties$segments[[1]]$avgspeed
+    avgspeed <- res$features$properties$segments[[1L]]$avgspeed
   } else avgspeed <- NULL
 
   if (is.element("detourfactor", options$attributes)) {
-    detourfactor <- res$features$properties$segments[[1]]$detourfactor
+    detourfactor <- res$features$properties$segments[[1L]]$detourfactor
   } else detourfactor <- NULL
 
-  names_wp <- res$features$properties$segments[[1]]$steps[[1]]$name
+  names_wp <- res$features$properties$segments[[1L]]$steps[[1L]]$name
   expanded_names <- expand_by_waypoint(names_wp, waypoints)
   names <- gsub(pattern = "-", replacement = NA, expanded_names)
   names <- data.frame(names = names)
 
-  ascent <- res$features$properties$segments[[1]]$ascent
-  descent <- res$features$properties$segments[[1]]$descent
+  ascent <- res$features$properties$segments[[1L]]$ascent
+  descent <- res$features$properties$segments[[1L]]$descent
 
   extra_info <- vapply(options$extra_info,
                        function(x) format_extra_info(res, x),
-                       data.frame(1))
+                       data.frame(1L))
 
   elements <- list(
     names,
@@ -168,7 +168,7 @@ inspect_route <- function(source,
     stringsAsFactors = TRUE
   )
 
-  elements <- elements[lengths(elements) != 0]
+  elements <- elements[lengths(elements) != 0L]
   route <- do.call(data.frame, elements)
 
   route_sf <- structure(
@@ -208,8 +208,8 @@ summarize_route <- function(source,
   source <- format_input_data(source)
   destination <- format_input_data(destination)
 
-  verify_crs(source, crs = 4326)
-  verify_crs(destination, crs = 4326)
+  verify_crs(source, crs = 4326L)
+  verify_crs(destination, crs = 4326L)
 
   profile <- match.arg(profile)
 
@@ -241,7 +241,7 @@ summarize_route <- function(source,
 
   # ORS summary tables
   get_ors_summaries <- function(info_type) {
-    summary <- extras[[info_type]]$summary[[1]]
+    summary <- extras[[info_type]]$summary[[1L]]
     summary$value <- fill_extra_info(summary$value, info_type, profile)
     summary
   }
@@ -250,7 +250,7 @@ summarize_route <- function(source,
   summaries <- sapply(names(extras), get_ors_summaries, simplify = FALSE)
 
   summaries <- sapply(summaries, function(summary) {
-    summary <- stats::aggregate(summary[, 2:3],
+    summary <- stats::aggregate(summary[, c(2L, 3L)],
                          by = summary["value"],
                          sum)
     row.names(summary) <- summary$value
@@ -262,7 +262,7 @@ summarize_route <- function(source,
   elev_speeds <- list(elevation = elevation_summary, avgspeed = speeds_summary)
   summaries <- append(summaries,
                       elev_speeds,
-                      after = 0)
+                      after = 0L)
 
   if (requireNamespace("units")) {
     summaries <- lapply(summaries, function(s) {

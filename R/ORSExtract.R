@@ -78,7 +78,7 @@ ORSExtract$funs <- new.env()
 ORSExtract$funs$get_extract <- function(self, private, place, provider = NULL, ...) {
   data_dir <- file.path(self$dir, "docker/data")
   ok <- TRUE
-  i <- 0
+  i <- 0L
 
   if (is.null(provider)) {
     providers <- suppressMessages({
@@ -88,7 +88,7 @@ ORSExtract$funs$get_extract <- function(self, private, place, provider = NULL, .
     providers <- provider
   }
 
-  if (!interactive() && length(providers) > 1) {
+  if (!interactive() && length(providers) > 1L) {
     cli::cli_abort(paste("In batch mode, explicitly pass",
                          "a single provider name."))
   }
@@ -98,14 +98,14 @@ ORSExtract$funs$get_extract <- function(self, private, place, provider = NULL, .
   # While there are providers left to try out, keep trying until
   # an extract provider is chosen
   while (ok && i < length(providers)) {
-    i <- i + 1
+    i <- i + 1L
     place_match <- osmextract::oe_match(place = place,
                                         provider = providers[i],
                                         quiet = TRUE,
                                         ...)
 
     file_name <- basename(place_match$url)
-    file_size <- round(place_match$file_size / 1024 / 1024)
+    file_size <- round(place_match$file_size / 1024L / 1024L)
 
     cli::cli_alert_info(paste("The extract {.file {file_name}} is",
                               "{.field {file_size}} MB in size",
@@ -141,7 +141,7 @@ ORSExtract$funs$get_extract <- function(self, private, place, provider = NULL, .
 
   # If a file with the same name already exists, skip the download
   file_occurences <- grepl(file_name, dir(data_dir))
-  if (sum(file_occurences) == 1) {
+  if (sum(file_occurences) == 1L) {
     cli::cli_alert_info(paste("The extract already exists in",
                               "{.file /docker/data}.",
                               "Download will be skipped."))
@@ -187,8 +187,8 @@ ORSExtract$funs$get_extract <- function(self, private, place, provider = NULL, .
   }
 
   # If the size is over 6 GB in size, give out a warning
-  size <- file.info(path)$size / 1024 / 1024
-  if (size >= 6000) {
+  size <- file.info(path)$size / 1024L / 1024L
+  if (size >= 6000L) {
     cli::cli_alert_warning(paste("The OSM extract is very large.",
                                  "Make sure that you have enough",
                                  "working memory available."))
@@ -205,7 +205,7 @@ ORSConfig$funs$set_extract <- function(self, private, extract_path) {
   cli_abortifnot(file.exists(extract_path))
 
   self$path <- private$.move_extract(extract_path)
-  self$size <- round(file.info(extract_path)$size * 0.000001, 2)
+  self$size <- round(file.info(extract_path)$size * 0.000001, 2L)
 
   assign("extract_path", self$path, envir = pkg_cache)
   return(self$path)
@@ -240,12 +240,12 @@ ORSConfig$funs$set_current_extract <- function(self, private) {
   extract_occurences <- private$.identify_extract_files()
 
   # If exactly one file is an extract, set it
-  if (sum(extract_occurences) == 1) {
+  if (sum(extract_occurences) == 1L) {
     path <- file.path(data_dir, dir(data_dir)[extract_occurences])
     self$set_extract(path)
 
     # If more than one file is an extract, can't choose one.
-  } else if (sum(extract_occurences) > 1) {
+  } else if (sum(extract_occurences) > 1L) {
     cli::cli_alert_warning(paste("Multiple OSM files found in the data",
                                  "directory. Please set an extract manually."))
   }
@@ -256,7 +256,7 @@ ORSConfig$funs$rm_old_extracts <- function(self, private) {
   data_dir <- file.path(self$dir, "docker/data")
   extract_occurences <- private$.identify_extract_files()
 
-  if (sum(extract_occurences) > 0) {
+  if (sum(extract_occurences) > 0L) {
     cli::cli_alert_info("Removing old extracts...")
     for (extract in dir(data_dir)[extract_occurences]) {
       file.remove(file.path(data_dir, extract))

@@ -123,7 +123,7 @@ get_ors_dir <- function(force = TRUE) {
     container_info <- inspect_container()
     mdir <- container_info$Config$Labels$com.docker.compose.project.working_dir
     mdir <- unlist(strsplit(normalizePath(mdir, winslash = "/"), "/"))
-    mdir <- paste0(utils::head(mdir, -1), collapse = "/")
+    mdir <- paste0(utils::head(mdir, -1L), collapse = "/")
 
     if (!dir.exists(mdir)) {
       cli::cli_abort("The current ORS container directory does not exist")
@@ -148,8 +148,8 @@ identify_extract <- function(force = FALSE) {
 
     # Check if build argument is set
     if (is.null(extract_path)) {
-      volume <- compose$services$`ors-app`$volumes[6]
-      extract_path <- gsub("\\./", "", strsplit(volume, ":")[[1]][1])
+      volume <- compose$services$`ors-app`$volumes[6L]
+      extract_path <- gsub("\\./", "", strsplit(volume, ":")[[1L]][1L])
 
       # If not, check if change volume is set
       if (is.null(extract_path) || is.na(extract_path)) {
@@ -157,7 +157,7 @@ identify_extract <- function(force = FALSE) {
         osm_file_occurences <- grepl(".pbf|.osm.gz|.osm.zip|.osm", dir(data_dir))
 
         # As a last resort, check if we can just pick it up from the data folder
-        if (sum(osm_file_occurences) == 1) {
+        if (sum(osm_file_occurences) == 1L) {
           extract_path <- dir(data_dir)[osm_file_occurences]
         } else {
           cli::cli_abort(paste("Cannot identify current extract file.",
@@ -228,7 +228,7 @@ last_ors_conditions <- function(last = 1L) {
     names(cond_df) <- time
 
     end <- length(names(cond_df))
-    start <- length(names(cond_df)) + 1 - last
+    start <- length(names(cond_df)) + 1L - last
     selected_conditions <- cond_df[seq(start, end)]
 
     class(selected_conditions) <- "ors_condition"

@@ -36,7 +36,7 @@ building:win:
     - cmd.exe /C R -e "remotes::install_deps(dependencies = TRUE, lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.com/')"
     - cmd.exe /C R -e "devtools::check(vignettes = FALSE, check_dir = Sys.getenv('CHECK_DIR'), args = '--no-tests')"
   cache:
-    key: win-lib-cache-$CI_COMMIT_REF_SLUG
+    key: win-lib-cache-$CI_COMMIT_SHORT_SHA
     paths:
       - $R_LIBS_USER
   artifacts:
@@ -69,7 +69,7 @@ testing:win:
     - cmd.exe /C R -e "install.packages('DT', lib = Sys.getenv('R_LIBS_USER'), repos = 'https://cran.rstudio.org')"
     - cmd.exe /C R -e "covr::gitlab(quiet = FALSE, line_exclusions = list('R/test-helpers.R'))"
   cache:
-    key: win-lib-cache-$CI_COMMIT_REF_SLUG
+    key: win-lib-cache-$CI_COMMIT_SHORT_SHA
     paths:
       - $R_LIBS_USER
   artifacts:

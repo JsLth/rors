@@ -7,7 +7,7 @@
 format_input_data <- function(data) {
   if (is.sf(data)) {
     if (all(sf::st_is(data, c("POINT", "MULTIPOINT")))) {
-      data <- sf::st_transform(data, 4326)
+      data <- sf::st_transform(data, 4326L)
       data <- reformat_vectordata(data)[, c("X", "Y")]
     } else {
       geom_type <- sf::st_geometry_type(data)
@@ -16,7 +16,7 @@ format_input_data <- function(data) {
   } else {
     if (is.matrix(data) || is.list(data) || is.array(data)) {
       data <- as.data.frame(data)
-    } else if (is.double(data) && length(data) == 2) {
+    } else if (is.double(data) && length(data) == 2L) {
       data <- as.data.frame(t(data))
     } else if (is.null(data) || is.na(data)) {
       data <- NULL
@@ -24,13 +24,13 @@ format_input_data <- function(data) {
       cli::cli_abort(paste("Input data of class {.cls class(data)} is not (yet)",
                            "supported."))
     }
-    if (ncol(data) > 2 && !is.null(data)) {
+    if (ncol(data) > 2L && !is.null(data)) {
       if (all(is.element(c("X", "Y"), colnames(data)))) {
         data <- data[, c("X", "Y")]
       } else if (all(is.element(c("Lon", "Lat"), colnames(data)))) {
         data <- data[, c("Lon", "Lat")]
-      } else if (is.double(unlist(data[, c(1, 2)]))) {
-        data <- data[, c(1, 2)]
+      } else if (is.double(unlist(data[, c(1L, 2L)]))) {
+        data <- data[, c(1L, 2L)]
       } else {
         cli::cli_abort(paste("Cannot determine coordinate columns of",
                              "dataframe {.var {deparse(substitute(data))}}"))
@@ -114,7 +114,7 @@ format_ors_options <- function(options, profile) {
 
   if (!is.null(options$avoid_borders)) {
     if (is.character(options$avoid_borders) &&
-        length(options$avoid_borders) == 1 &&
+        length(options$avoid_borders) == 1L &&
         is.element(options$avoid_borders, c("all", "controlled", "none")) &&
         identical(base_profile(profile), "driving")) {
       options_check["avoid_borders"] <- TRUE
@@ -216,7 +216,7 @@ format_ors_options <- function(options, profile) {
 
   if (!is.null(options$preference)) {
     if (is.character(options$preference) &&
-        length(options$preference) == 1 &&
+        length(options$preference) == 1L &&
         is.element(options$preference, c("fastest", "shortest", "recommended"))) {
       options_check["preference"] <- TRUE
     } else {
@@ -226,7 +226,7 @@ format_ors_options <- function(options, profile) {
   }
 
   if (!is.null(options$radiuses)) {
-    if (is.numeric(options$radiuses) && length(options$radiuses) == 1) {
+    if (is.numeric(options$radiuses) && length(options$radiuses) == 1L) {
       options_check["radiuses"] <- TRUE
     } else {
       options_check["radiuses"] <- FALSE
@@ -235,7 +235,7 @@ format_ors_options <- function(options, profile) {
   }
 
   if (!is.null(options$maximum_speed)) {
-    if (is.numeric(options$maximum_speed) && length(options$maximum_speed) == 1) {
+    if (is.numeric(options$maximum_speed) && length(options$maximum_speed) == 1L) {
       options_check["maximum_speed"] <- TRUE
     } else {
       options_check["maximum_speed"] <- FALSE
@@ -252,7 +252,7 @@ format_ors_options <- function(options, profile) {
     vehicle_type    = options$vehicle_type
   )
 
-  adv_options_list <- adv_options_list[lengths(adv_options_list) > 0]
+  adv_options_list <- adv_options_list[lengths(adv_options_list) > 0L]
 
   options_list <- list(
     attributes        = options$attributes,
@@ -266,7 +266,7 @@ format_ors_options <- function(options, profile) {
     maximum_speed     = options$maximum_speed
   )
 
-  options_list <- options_list[lengths(options_list) > 0]
+  options_list <- options_list[lengths(options_list) > 0L]
 
   if (!all(options_check)) {
     option_names <- names(options_check)[!options_check]

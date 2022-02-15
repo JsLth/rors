@@ -81,7 +81,7 @@ get_extract_boundaries <- function(force = FALSE) {
 ors_sample <- function(size, ..., as_sf = FALSE, force_new_extract = FALSE) {
   extract <- lonlat_to_utm(get_extract_boundaries(force_new_extract))
   sample <- sf::st_sample(extract, size, ...)
-  sample <- sf::st_geometry(sf::st_transform(sample, 4326))
+  sample <- sf::st_geometry(sf::st_transform(sample, 4326L))
   if (isTRUE(as_sf)) {
     sample
   } else {

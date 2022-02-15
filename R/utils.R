@@ -32,13 +32,13 @@ get_memory_info <- function() {
     
     mem_json <- callr::run("powershell", cmd, stdout = "|", stderr = NULL)
     parsed_json <- jsonlite::fromJSON(mem_json$stdout)
-    lapply(parsed_json, function(x) as.numeric(x) / 1048576)
+    lapply(parsed_json, function(x) as.numeric(x) / 1048576L)
   } else if (is.linux()) {
     mem_csv <- callr::run("free", args = "--kibi", stdout = "|", stderr = NULL)
     mem_csv <- unlist(strsplit(mem_csv$stdout, "\n"))
     mem_csv <- paste(gsub("\\s+", ",", mem_csv), "\n")
     mem_df <- utils::read.csv(text = mem_csv)[1, c("total", "free")]
-    lapply(mem_df, function(x) x / 1048576)
+    lapply(mem_df, function(x) x / 1048576L)
   }
 }
 
@@ -56,34 +56,34 @@ relativePath <- function(targetdir, basedir = getwd()) {
 
 capitalizeChar <- function(string) {
   cap_string <- tolower(as.character(string))
-  substr(cap_string, 1, 1) <- toupper(substr(string, 1, 1))
+  substr(cap_string, 1L, 1L) <- toupper(substr(string, 1L, 1L))
   cap_string
 }
 
 
 base_profile <- function(profile) {
-  strsplit(profile, "-")[[1]][1]
+  strsplit(profile, "-")[[1L]][1L]
 }
 
 
 decode_base2 <- function(code) {
-  is.base2 <- log2(code) %% 1 == 0 || code == 0
+  is.base2 <- log2(code) %% 1L == 0L || code == 0L
   if (isTRUE(is.base2)) {
     return(code)
   }
-  base2_vector <- 0
-  i <- 0
-  while (utils::tail(base2_vector, 1) < code) {
-    base2_vector[i + 1] <- 2 ^ i
-    i <- i + 1
+  base2_vector <- 0L
+  i <- 0L
+  while (utils::tail(base2_vector, 1L) < code) {
+    base2_vector[i + 1L] <- 2L ^ i
+    i <- i + 1L
   }
-  base2_vector <- rev(utils::head(base2_vector, -1))
-  for (b in seq(1, length(base2_vector))) {
-    if (b > 1) {
-      rbase2 <- utils::tail(base2_vector, -(b - 1))
+  base2_vector <- rev(utils::head(base2_vector, -1L))
+  for (b in seq(1L, length(base2_vector))) {
+    if (b > 1L) {
+      rbase2 <- utils::tail(base2_vector, -(b - 1L))
     } else rbase2 <- base2_vector
     res <- NULL
-    for (ni in seq(1, length(rbase2))) {
+    for (ni in seq(1L, length(rbase2))) {
       num <- rbase2[ni]
       code_sum <- num + sum(res[!is.na(res)])
       if (code_sum <= code) {
@@ -98,7 +98,7 @@ decode_base2 <- function(code) {
 
 
 box <- function(x) {
-  if (length(x) == 1) {
+  if (length(x) == 1L) {
     list(x)
   } else x
 }
@@ -106,7 +106,7 @@ box <- function(x) {
 
 df_nest <- function(data, names = NULL) {
   rows <- unique(sapply(data, nrow))
-  if (length(rows) > 1) {
+  if (length(rows) > 1L) {
     cli::cli_abort("Data have different number of rows.")
   }
 
@@ -237,6 +237,6 @@ cli_abortifnot <- function(expr) {
   if (isFALSE(expr)) {
     uneval_expr <- deparse(substitute(expr))
     cli::cli_abort("{.code {uneval_expr}} is {.val {FALSE}}.",
-                   call = sys.call(-1))
+                   call = sys.call(-1L))
   }
 }

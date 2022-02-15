@@ -117,7 +117,7 @@ ORSConfig$funs$active_profiles <- function(self, private, profiles) {
     profiles <- private$.translate_profiles(profiles)
     profiles <- profiles[!duplicated(profiles)]
 
-    if (length(profiles) > 0) {
+    if (length(profiles) > 0L) {
       self$ors_config$ors$services$routing$profiles$active <- as.list(profiles)
     }
     self$save_config()
