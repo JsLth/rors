@@ -40,7 +40,7 @@ print.ORSConfig <- function(x, ...) {
   allp_in <- lapply(allp_in, ifelse, cli::col_green(T), cli::col_red(F))
   
   allp <- sapply(allp, function(p) {
-    paste0(p, strrep("\u00a0", 14 - nchar(p)))
+    paste0(p, strrep("\u00a0", 14L - nchar(p)))
   })
   
   names(allp_in) <- allp
@@ -64,10 +64,10 @@ print.ORSSetupSettings <- function(x, ...) {
   mem_df <- as.data.frame(t(mem_list))
   port_chr <- sprintf(
     "%s -> %s, %s -> %s",
-    x$ors_ports[1, 1],
-    x$ors_ports[1, 2],
-    x$ors_ports[2, 1],
-    x$ors_ports[2, 2]
+    x$ors_ports[1L, 1L],
+    x$ors_ports[1L, 2L],
+    x$ors_ports[2L, 1L],
+    x$ors_ports[2L, 2L]
   )
   
   cli::cli_text("Class\u00a0: {.cls {class(x)}}")
@@ -105,7 +105,7 @@ print.ORSDockerInterface <- function(x, ...) {
   gl <- sapply(gl, ifelse, cli::col_green(TRUE), cli::col_red(FALSE))
   
   gln <- sapply(gln, function(n) {
-    paste0(n, strrep("\u00a0", 18 - nchar(n)))
+    paste0(n, strrep("\u00a0", 18L - nchar(n)))
   })
   
   names(gl) <- gln
@@ -129,18 +129,18 @@ print.ors_matrix <- function(x, ...) {
 
 #' @export
 
-print.route_summary <- function(x, ncols = 3, ...) {
+print.route_summary <- function(x, ncols = 3L, table_gap = 2L, ...) {
   cli::cli_text("{.strong Attributes}")
   for (n in names(x[1:5])) {
     name <- capitalizeChar(n)
     if (identical(n, "Detourfactor")) name <- "Detour factor"
-    attribute_row <- paste(name, ": ", round(x[[n]], 2), "\n")
+    attribute_row <- paste(name, ": ", round(x[[n]], 2L), "\n")
     cat(attribute_row)
   }
   
   cat("\n")
   
-  for (n in names(x[6:7])) {
+  for (n in names(x[c(6L, 7L)])) {
     name <- capitalizeChar(n)
     cli::cli_text("{.strong {name}}")
     print(x[[n]])
@@ -155,6 +155,14 @@ print.route_summary <- function(x, ncols = 3, ...) {
   row_lengths <- sapply(tables, function(tb) sapply(utils::capture.output(tb), nchar))
   max_row_length <- max(unlist(row_lengths))
   
+  for (nc in seq(1, ncols - 1)) {
+    if (cli::console_width() / ncols < 35) {
+      ncols <- ncols - 1
+    } else {
+      break
+    }
+  }
+  
   # Get an iterator that splits up the tables at the indices defined by ncols
   table_iterator <- split(tables, ceiling(seq_along(tables) / ncols))
   
@@ -164,13 +172,13 @@ print.route_summary <- function(x, ncols = 3, ...) {
     rows <- sapply(t, nrow)
     
     # Cumulated number of rows + table name + column names + empty line
-    border_indices <- cumsum(rows + 3)
+    border_indices <- cumsum(rows + 3L)
     
     # Catch the output of print.data.frame and split it by table
     output <- utils::capture.output(t)
     output_split <- split(output,
                           cumsum(is.element(seq_along(output),
-                                            border_indices + 1)))
+                                            border_indices + 1L)))
     
     # Get the maximum number of rows of one table row
     max_length <- max(sapply(output_split, length))
@@ -178,7 +186,7 @@ print.route_summary <- function(x, ncols = 3, ...) {
     # Iterate through each table of one table row
     op_vec <- lapply(output_split, function(op_vec) {
       # Remove empty character string
-      op_vec <- op_vec[nchar(op_vec) != 0]
+      op_vec <- op_vec[nchar(op_vec) != 0L]
       
       # If the table name is shorter than the row length, fill with white space
       add_ws <- function(char, row_length, max_length) {
@@ -187,10 +195,10 @@ print.route_summary <- function(x, ncols = 3, ...) {
         } else char
       }
       
-      name <- op_vec[1]
+      name <- op_vec[1L]
       name <- add_ws(name, nchar(name), max_row_length)
       
-      columns <- op_vec[2]
+      columns <- op_vec[2L]
       row_length <- nchar(columns)
       columns <- add_ws(columns, row_length, max_row_length)
       
@@ -201,7 +209,7 @@ print.route_summary <- function(x, ncols = 3, ...) {
       # with the most rows, add rows and fill them with white space
       len <- length(rows)
       if (len < max_length) {
-        rows[seq(len + 1, max_length - 2)] <- strrep(" ", max_row_length)
+        rows[seq(len + 1L, max_length - 2L)] <- strrep(" ", max_row_length)
       }
       c(name, columns, rows)
     })
@@ -211,7 +219,12 @@ print.route_summary <- function(x, ncols = 3, ...) {
     # Piece together character strings
     to_string <- lapply(
       to_vector,
-      function(v) trimws(paste(v, collapse = strrep(" ", 8)), which = "right")
+      function(v) {
+        if (nchar(paste(v, collapse = "")) + table_gap >= cli::console_width()) {
+          table_gap <- 0
+        }
+        trimws(paste(v, collapse = strrep(" ", table_gap)), which = "right")
+      }
     )
     to_string <- lapply(to_string, trimws, which = "right")
     row_string <- paste(to_string, collapse = "\n")

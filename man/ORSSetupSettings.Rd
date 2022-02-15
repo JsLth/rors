@@ -47,8 +47,15 @@ and that graph building should not be forced.}
 \item{\code{ors_name}}{Name of the ORS container. A non-default name can be
 specified by assigning a character string.}
 
-\item{\code{ors_port}}{Port of the ORS container. A non-default port can be
-specified by assigning an integer.}
+\item{\code{ors_ports}}{Ports of the ORS container. Non-default ports can be
+specified by assigning a length-1 vector or a list of ports. The list of
+ports must contain 4 ports in the format
+\code{list(host1, docker1, host2, docker2)}. Since, most of the time,
+you will want to change only the first host port, passing a length-1
+vector will change the first host port. Passing \code{NULL} (either in a
+list or as a length-1 vector) is interpreted as "no change". Passing
+\code{NA} will assign a random port using the \code{\link{httpuv}}
+package.}
 }
 \if{html}{\out{</div>}}
 }

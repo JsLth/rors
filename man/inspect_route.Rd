@@ -61,7 +61,7 @@ options that modify the routing results. For details on each argument,
 refer to the
 \href{https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post}{API playground}
 and
-\href{https://github.com/GIScience/openrouteservice-docs#routing-options}{documentation}
+\href{https://giscience.github.io/openrouteservice/documentation/routing-options/Routing-Options.html}{documentation}
 \describe{
 \item{\strong{geometry_simplify}}{Logical length-1 vector specifying
 whether geometry should be simplified.}

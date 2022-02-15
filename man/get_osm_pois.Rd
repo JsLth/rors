@@ -7,7 +7,7 @@
 get_osm_pois(
   source,
   ...,
-  radius = 5000,
+  radius = 5000L,
   crs = NA,
   trim = TRUE,
   timeout = NULL,
