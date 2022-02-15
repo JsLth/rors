@@ -193,7 +193,7 @@ docker_installed <- function() {
 #' @description Creates a docker group and adds the current user to it in order
 #' to enable docker commands from within R. Doing this, either manually or by
 #' using this function, is a requirement for using \code{\link{ORSInstance}}
-#' on Linux.
+#' on Linux as a non-root user.
 #' @param run If \code{FALSE}, the function will only return a logical vector
 #' and will not change group membership.
 #' @details For details on what this function does and what security
