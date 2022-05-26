@@ -55,11 +55,9 @@ inspect_container <- function(id = NULL) {
 
 get_profiles <- function(force = TRUE) {
   if (is.null(pkg_cache$profiles) || isTRUE(force)) {
-    if (ors_ready()) {
-      url <- sprintf("http://localhost:%s/ors/v2/status", get_ors_port())
-    } else {
-      cli::cli_abort("ORS service is not reachable.")
-    }
+    ors_ready(force = force, error = TRUE)
+    
+    url <- sprintf("http://localhost:%s/ors/v2/status", get_ors_port())
 
     status_res <- httr::content(
       httr::GET(url),
@@ -71,9 +69,9 @@ get_profiles <- function(force = TRUE) {
 
     profiles <- unname(sapply(ors_info$profiles, function(x) x$profiles))
     assign("profiles", profiles, envir = pkg_cache)
-    return(profiles)
+    profiles
   } else {
-    return(pkg_cache$profiles)
+    pkg_cache$profiles
   }
 }
 

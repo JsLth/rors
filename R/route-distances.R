@@ -148,8 +148,7 @@ ors_distances <- function(source,
   verify_crs(source, crs = 4326L)
   verify_crs(destination, crs = 4326L)
 
-  # If directions is the method of choice but the input suggests one-to-many,
-  # replicate the one-element dataframe `nrow` times
+  # If input suggests one-to-many, replicate the one-element dataframe `nrow` times
   if (nrow(source) == 1) {
     source <- do.call(
       rbind,
@@ -164,11 +163,7 @@ ors_distances <- function(source,
 
   if (identical(row(source), row(destination))) {
     # If both datasets have the same shape, prepare a nested iterator.
-    zipped_locations <- structure(
-      list(source = source, dest = destination),
-      row.names = seq_len(nrow(source)),
-      class = "data.frame"
-    )
+    zipped_locations <- df_nest(source = source, dest = destination)
   } else {
     source_shape <- cli::cli_vec(nrow(source), style = list(vec_last = ":"))
     dest_shape <- cli::cli_vec(nrow(destination), style = list(vec_last = ":"))

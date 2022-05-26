@@ -104,16 +104,13 @@ box <- function(x) {
 }
 
 
-df_nest <- function(data, names = NULL) {
-  rows <- unique(sapply(data, nrow))
-  if (length(rows) > 1L) {
-    cli::cli_abort("Data have different number of rows.")
-  }
-
-  if (!is.null(names)) {
-    names(data) <- names
-  }
-  data
+df_nest <- function(...) {
+  data <- list(...)
+  structure(
+    data,
+    row.names = seq_len(nrow(data[[1]])),
+    class = "data.frame"
+  )
 }
 
 
@@ -179,13 +176,9 @@ isTRUEorFALSE <- function(x) {
 
 
 docker_installed <- function() {
-  inst <- callr::run(
-    command = "which",
-    args = "docker",
-    stdout = NULL,
-    stderr = NULL
-  )
-  identical(inst$status, 0L)
+  docker_path <- Sys.which("docker")
+  installed <- any(as.logical(nchar(docker_path)))
+  installed
 }
 
 
