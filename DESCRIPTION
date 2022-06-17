@@ -26,17 +26,17 @@ Imports:
     sf,
     osmextract (>= 0.2.0),
     cli (>= 3.0.0),
-    callr
+    callr,
+    httpuv
 Suggests:
     rmarkdown (>= 2.7),
     knitr (>= 1.31),
     testthat (>= 3.0.0),
     osmdata,
     units,
-    raster,
-    httpuv
+    raster
 SystemRequirements: Docker Engine on Linux systems, Docker Desktop on Windows (>= 20.10.6)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Config/testthat/edition: 3

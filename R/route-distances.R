@@ -196,7 +196,7 @@ ors_distances <- function(source,
     cond <- handle_ors_conditions(res)
 
     if (isTRUE(attr(cond, "error"))) {
-      pkg_cache$routing_conditions[[call_index]][i] <- cond
+      ors_cache$routing_conditions[[call_index]][i] <- cond
 
       if (!geometry) {
         return(data.frame(distance = NA, duration = NA))
@@ -205,9 +205,9 @@ ors_distances <- function(source,
         return(sf::st_sf(distance = NA, duration = NA, geometry = empty_line))
       }
     } else if (isFALSE(attr(cond, "error"))) {
-      pkg_cache$routing_conditions[[call_index]][i] <- unlist(cond)
+      ors_cache$routing_conditions[[call_index]][i] <- unlist(cond)
     } else {
-      pkg_cache$routing_conditions[[call_index]][i] <- NA
+      ors_cache$routing_conditions[[call_index]][i] <- NA
     }
 
     if (!geometry) {
@@ -228,7 +228,7 @@ ors_distances <- function(source,
   route_df <- suppressWarnings(do.call(rbind, route_df))
 
   route_missing <- sapply(unlist(route_df), is.na)
-  conds <- pkg_cache$routing_conditions[[call_index]]
+  conds <- ors_cache$routing_conditions[[call_index]]
   warn_indices <- which(grepl("Warning", conds))
   tip <- cli::col_grey("For a list of conditions, call {.fn last_ors_conditions}.")
   if (all(route_missing)) {
@@ -402,7 +402,7 @@ ors_shortest_distances <- function(source,
     route_df <- sf::st_as_sf(route_df)
   }
   
-  has_cond <- sapply(tail(pkg_cache$routing_conditions, nrow(source)), is.character)
+  has_cond <- sapply(tail(ors_cache$routing_conditions, nrow(source)), is.character)
   if (any(has_cond)) {
     tip <- cli::col_grey("For a list of conditions, call {.code last_ors_conditions(last = {nrow(source)})}.")
     cond_indices <- cli::cli_vec(which(has_cond),

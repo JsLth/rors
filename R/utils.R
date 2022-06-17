@@ -22,6 +22,11 @@ file_path_up <- function(path, times_back = NULL) {
 }
 
 
+is_local <- function(url) {
+  grepl("[[:alnum:]\\.]+\\:[[:digit:]]+", url)
+}
+
+
 get_memory_info <- function() {
   if (is.windows()) {
     cmd <- paste(
@@ -43,13 +48,18 @@ get_memory_info <- function() {
 }
 
 
-relativePath <- function(targetdir, basedir = getwd()) {
+relativePath <- function(targetdir, basedir = getwd(), pretty = FALSE) {
   relative_path <- gsub(pattern = sprintf("%s|%s/", basedir, basedir),
                         replacement = "",
                         x = targetdir)
   if (relative_path == "") {
     relative_path <- "."
   }
+  
+  if (pretty) {
+    relative_path <- paste0("~/", relative_path)
+  }
+  
   relative_path
 }
 
@@ -63,6 +73,11 @@ capitalizeChar <- function(string) {
 
 base_profile <- function(profile) {
   strsplit(profile, "-")[[1L]][1L]
+}
+
+
+regex_match <- function(text, pattern, ...) {
+  regmatches(text, regexec(pattern, text, ...))
 }
 
 

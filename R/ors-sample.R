@@ -15,7 +15,7 @@
 #' @export
 
 get_extract_boundaries <- function(force = FALSE) {
-  if (is.null(pkg_cache$extract_boundaries) || force) {
+  if (is.null(ors_cache$extract_boundaries) || force) {
     extract_path <- identify_extract(force = force)
     
     if (interactive()) {
@@ -52,10 +52,10 @@ get_extract_boundaries <- function(force = FALSE) {
     
     extract_geom <- proc$get_result()
     
-    assign("extract_boundaries", extract_geom, envir = pkg_cache)
+    assign("extract_boundaries", extract_geom, envir = ors_cache)
     extract_geom
   } else {
-    pkg_cache$extract_boundaries
+    ors_cache$extract_boundaries
   }
 }
 

@@ -207,7 +207,7 @@ ORSConfig$funs$set_extract <- function(self, private, extract_path) {
   self$path <- private$.move_extract(extract_path)
   self$size <- round(file.info(extract_path)$size * 0.000001, 2L)
 
-  assign("extract_path", self$path, envir = pkg_cache)
+  assign("extract_path", self$path, envir = ors_cache)
   return(self$path)
 }
 

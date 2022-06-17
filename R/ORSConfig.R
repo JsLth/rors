@@ -122,7 +122,7 @@ ORSConfig$funs$active_profiles <- function(self, private, profiles) {
     }
     self$save_config()
   }
-  assign("profiles", profiles, envir = pkg_cache)
+  assign("profiles", profiles, envir = ors_cache)
 }
 
 

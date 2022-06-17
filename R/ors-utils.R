@@ -5,17 +5,17 @@
 # Created on: 29.09.2021
 
 
-pkg_cache <- new.env(parent = emptyenv())
+ors_cache <- new.env(parent = emptyenv())
 
 
 clear_cache <- function() {
-  cache_items <- ls(pkg_cache)
-  remove(list = cache_items, envir = pkg_cache)
+  cache_items <- ls(ors_cache)
+  remove(list = cache_items, envir = ors_cache)
 }
 
 
 inspect_container <- function(id = NULL) {
-  if (is.null(pkg_cache$container_info)) {
+  if (is.null(ors_cache$container_info)) {
     if (missing(id) || is.null(id)) {
       id <- getOption("ors_name", "ors-app")
     }
@@ -37,11 +37,11 @@ inspect_container <- function(id = NULL) {
     
     container_info <- jsonlite::fromJSON(container_info$stdout)
 
-    assign("container_info", container_info, envir = pkg_cache)
+    assign("container_info", container_info, envir = ors_cache)
     
     invisible(container_info)
   } else {
-    invisible(pkg_cache$container_info)
+    invisible(ors_cache$container_info)
   }
 }
 
@@ -54,7 +54,7 @@ inspect_container <- function(id = NULL) {
 #' @export
 
 get_profiles <- function(force = TRUE) {
-  if (is.null(pkg_cache$profiles) || isTRUE(force)) {
+  if (is.null(ors_cache$profiles) || isTRUE(force)) {
     ors_ready(force = force, error = TRUE)
     
     url <- sprintf("http://localhost:%s/ors/v2/status", get_ors_port())
@@ -68,10 +68,10 @@ get_profiles <- function(force = TRUE) {
     ors_info <- jsonlite::fromJSON(status_res)
 
     profiles <- unname(sapply(ors_info$profiles, function(x) x$profiles))
-    assign("profiles", profiles, envir = pkg_cache)
+    assign("profiles", profiles, envir = ors_cache)
     profiles
   } else {
-    pkg_cache$profiles
+    ors_cache$profiles
   }
 }
 
@@ -85,11 +85,44 @@ get_profiles <- function(force = TRUE) {
 #' @export
 
 ors_ready <- function(force = TRUE, error = FALSE) {
-  if (is.null(pkg_cache$ors_ready) || isFALSE(pkg_cache$ors_ready) || force) {
+  if (is.null(ors_cache$ors_ready) || isFALSE(ors_cache$ors_ready) || force) {
+    url <- get_ors_url()
+    port <- get_ors_port()
+    host <- get_ors_host()
+
+    if (is_local(url)) {
+      if (host == "localhost") host <- "127.0.0.1"
+
+      in_use <- tryCatch(
+        expr = {
+          s <- httpuv::startServer(
+            host = host,
+            port = as.numeric(port),
+            app = list(),
+            quiet = TRUE
+          )
+          s$stop()
+          FALSE
+        },
+        error = function(e) {
+          TRUE
+        }
+      )
+
+      if (!in_use) {
+        if (isTRUE(error)) {
+          cli::cli_abort(c(
+            "OpenRouteService instance is not reachable",
+            "{.path {url}} is not currently in use."
+          ))
+        } else return(in_use)
+      }
+    }
+
     ready <- tryCatch(
       expr = {
-        port <- get_ors_port()
-        res <- httr::GET(sprintf("http://localhost:%s/ors/health", port))
+        url <- file.path(url, "ors/health")
+        res <- httr::GET(url)
         res <- jsonlite::fromJSON(
           httr::content(
             res,
@@ -108,16 +141,16 @@ ors_ready <- function(force = TRUE, error = FALSE) {
         } else FALSE
       }
     )
-    assign("ors_ready", ready, envir = pkg_cache)
+    assign("ors_ready", ready, envir = ors_cache)
     ready
   } else {
-    pkg_cache$ors_ready
+    ors_cache$ors_ready
   }
 }
 
 
 get_ors_dir <- function(force = TRUE) {
-  if (is.null(pkg_cache$mdir) || isTRUE(force)) {
+  if (is.null(ors_cache$mdir) || isTRUE(force)) {
     container_info <- inspect_container()
     mdir <- container_info$Config$Labels$com.docker.compose.project.working_dir
     mdir <- unlist(strsplit(normalizePath(mdir, winslash = "/"), "/"))
@@ -127,16 +160,16 @@ get_ors_dir <- function(force = TRUE) {
       cli::cli_abort("The current ORS container directory does not exist")
     }
 
-    assign("mdir", mdir, envir = pkg_cache)
+    assign("mdir", mdir, envir = ors_cache)
     mdir
   } else {
-    pkg_cache$mdir
+    ors_cache$mdir
   }
 }
 
 
 identify_extract <- function(force = FALSE) {
-  if (is.null(pkg_cache$extract_path) || force) {
+  if (is.null(ors_cache$extract_path) || force) {
     # Save docker working directory
     mdir <- get_ors_dir()
 
@@ -173,22 +206,22 @@ identify_extract <- function(force = FALSE) {
       ), winslash = "/"
     )
 
-    assign("extract_path", extract_path, envir = pkg_cache)
+    assign("extract_path", extract_path, envir = ors_cache)
     extract_path
   } else {
-    pkg_cache$extract_path
+    ors_cache$extract_path
   }
 }
 
 
 get_ors_port <- function(force = FALSE) {
-  if (is.null(pkg_cache$port) || force == TRUE) {
+  if (is.null(ors_cache$port) || force == TRUE) {
     container_info <- inspect_container()
     port <- container_info$NetworkSettings$Ports[[1]][[1]]$HostPort[1][1]
-    assign("port", port, envir = pkg_cache)
+    assign("port", port, envir = ors_cache)
     port
   } else {
-    pkg_cache$port
+    ors_cache$port
   }
 }
 
@@ -203,6 +236,14 @@ get_ors_url <- function() {
 }
 
 
+get_ors_host <- function() {
+  url <- get_ors_url()
+  if (is_local(url)) {
+    regex_match(url, "([[:alnum:]\\.]+)(?:\\:[[:digit:]]+)")[[1]][2]
+  } else NULL
+}
+
+
 #' Return ORS conditions
 #' @description Return the error and warning messages that ORS returned in the
 #' last \code{\link{ors_distances}} or \code{get_route_attributes} function calls.
@@ -212,7 +253,7 @@ get_ors_url <- function() {
 #' @export
 
 last_ors_conditions <- function(last = 1L) {
-  conditions <- pkg_cache$routing_conditions
+  conditions <- ors_cache$routing_conditions
 
   if (length(conditions)) {
     cli_abortifnot(is.numeric(last))

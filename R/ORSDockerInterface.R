@@ -573,7 +573,7 @@ ORSDockerInterface$funs$cleanup <- function(self) {
 ORSDockerInterface$funs$set_port <- function(self) {
   port <- self$setup_settings$compose$services$`ors-app`$ports[1L]
   port <- as.numeric(unique(unlist(strsplit(port, ":"))))
-  assign("port", port[1L], envir = pkg_cache)
+  assign("port", port[1L], envir = ors_cache)
 }
 
 

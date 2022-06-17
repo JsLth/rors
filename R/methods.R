@@ -1,5 +1,15 @@
 #' @export
+print.ORSInstance <- function(x, ...) {
+  cli::cli_text("Class\u00a0: {.cls {class(x)}}")
+  cli::cli_text("Path\u00a0\u00a0: {x$dir}")
+  cli::cat_line()
+  cli::cli_text("Public methods:")
+  print(names(ORSInstance$public_methods), ...)
+  invisible(x)
+}
 
+
+#' @export
 print.ORSExtract <- function(x, ...) {
   if (is.null(x$path)) {
     extract_file <- NA_character_
@@ -17,14 +27,14 @@ print.ORSExtract <- function(x, ...) {
   cli::cli_text("Path\u00a0\u00a0\u00a0\u00a0: {x$dir}")
   cli::cli_text("Extract\u00a0: {extract_file}")
   cli::cli_text("Size\u00a0\u00a0\u00a0\u00a0: {extract_size}")
-  cat("\n")
+  cli::cat_line()
   cli::cli_text("Public methods:")
   print(names(ORSExtract$public_methods), ...)
+  invisible(x)
 }
 
 
 #' @export
-
 print.ORSConfig <- function(x, ...) {
   if (grepl("docker/data", x$path, fixed = TRUE)) {
     pd <- "pre-setup"
@@ -48,16 +58,16 @@ print.ORSConfig <- function(x, ...) {
   cli::cli_text("Class\u00a0\u00a0: {.cls {class(x)}}")
   cli::cli_text("Path\u00a0\u00a0\u00a0: {x$dir}")
   cli::cli_text("Status\u00a0: {pd}")
-  cat("\n")
+  cli::cat_line()
   cli::cli_dl(do.call(c, allp_in))
-  cat("\n")
+  cli::cat_line()
   cli::cli_text("Public methods:")
   print(names(ORSConfig$public_methods), ...)
+  invisible(x)
 }
 
 
 #' @export
-
 print.ORSSetupSettings <- function(x, ...) {
   names(x$memory) <- c("Total memory", "Free memory", "Initial memory", "Max memory")
   mem_list <- lapply(x$memory, function(m) paste(round(m, 2), "GB"))
@@ -75,16 +85,16 @@ print.ORSSetupSettings <- function(x, ...) {
   cli::cli_text("Mode\u00a0\u00a0: {x$graph_building}")
   cli::cli_text("Name\u00a0\u00a0: {x$ors_name}")
   cli::cli_text("Ports\u00a0: {port_chr}")
-  cat("\n")
+  cli::cat_line()
   print(mem_df, right = FALSE, row.names = FALSE)
-  cat("\n")
+  cli::cat_line()
   cli::cli_text("Public methods:")
   print(names(ORSSetupSettings$public_methods), ...)
+  invisible(x)
 }
 
 
 #' @export
-
 print.ORSDockerInterface <- function(x, ...) {
   gl <- list(
     x$docker_running,
@@ -112,23 +122,22 @@ print.ORSDockerInterface <- function(x, ...) {
   
   cli::cli_text("Class\u00a0: {.cls {class(x)}}")
   cli::cli_text("Path\u00a0\u00a0: {x$dir}")
-  cat("\n")
+  cli::cat_line()
   cli::cli_dl(gl)
-  cat("\n")
+  cli::cat_line()
   cli::cli_text("Public methods:")
   print(names(ORSDockerInterface$public_methods))
+  invisible(x)
 }
 
 
 #' @export
-
 print.ors_matrix <- function(x, ...) {
   prmatrix(x)
 }
 
 
 #' @export
-
 print.route_summary <- function(x, ncols = 3L, table_gap = 2L, ...) {
   cli::cli_text("{.strong Attributes}")
   for (n in names(x[1:5])) {
@@ -228,14 +237,14 @@ print.route_summary <- function(x, ncols = 3L, table_gap = 2L, ...) {
     )
     to_string <- lapply(to_string, trimws, which = "right")
     row_string <- paste(to_string, collapse = "\n")
-    cat(row_string)
-    cat("\n")
+    cat(row_string, "\n")
   }
+  
+  invisible(x)
 }
 
 
 #' @export
-
 print.ors_condition <- function(x, ...) {
   timestamps <- names(x)
   
@@ -265,8 +274,174 @@ print.ors_condition <- function(x, ...) {
   if (!is.null(calls)) {
     calls <- Filter(is.character, calls)
     cat(paste0(paste(calls, collapse = "\n\n"), "\n"))
-  } else {
-    invisible()
   }
   
+  invisible(x)
+}
+
+
+#' @export
+print.ors_constructor <- function(x, ...) {
+  active <- "compose" %in% names(x) &&
+    "instance" %in% names(ors_cache) &&
+    x$paths$dir == ors_cache$instance$paths$dir
+  cat(
+    "<ors_constructor>", "\n",
+    " active :", active, "\n",
+    " alive  :", attr(x, "alive"), "\n",
+    " built  :", attr(x, "built"), "\n"
+  )
+  invisible(x)
+}
+
+
+#' @export
+print.ors_constructor_paths <- function(x, ...) {
+  basedir <- relativePath(x$dir, path.expand("~"))
+  compose <- if (!is.null(x$compose_path)) basename(x$compose_path) else NULL
+  config  <- if (!is.null(x$config_path)) basename(x$config_path) else NULL
+  extract <- if (!is.null(x$extract_path)) basename(x$extract_path) else NULL
+  
+  config_dir <- ifelse(grepl("conf", config), "conf", "data")
+  docker_path <- file.path(x$dir, "docker")
+  subdocker_paths <- file.path(docker_path, dir(docker_path))
+  subdocker_paths_files <- lapply(seq_along(subdocker_paths), function(i) {
+    d <- dir(subdocker_paths[i])
+    if (basename(subdocker_paths[i]) != config_dir && "ors-config.json" %in% d) {
+      ci <- which("ors-config.json" == d)
+      d[ci] <- paste0(d[ci], " ")
+    }
+    d
+  })
+  
+  if (compose %in% basename(subdocker_paths)) {
+    compose_i <- which(compose == basename(subdocker_paths)) + 2
+  }
+  if (!is.null(config) && config %in% unlist(subdocker_paths_files)) {
+    config_i <- which(config == unlist(subdocker_paths_files)) + 2 + length(subdocker_paths)
+  } else config_i <- NULL
+  if (!is.null(extract) && config %in% unlist(subdocker_paths_files)) {
+    extract_i <- which(extract == unlist(subdocker_paths_files)) + 2 + length(subdocker_paths)
+  } else extract_i <- NULL
+  
+  top_dir <- c(
+    basedir,
+    "docker",
+    basename(file.path(docker_path, dir(docker_path))),
+    unlist(subdocker_paths_files)
+  )
+  
+  children <- c(
+    list("docker"),
+    list(basename(file.path(docker_path, dir(docker_path)))),
+    subdocker_paths_files,
+    lapply(seq(1, length(unlist(subdocker_paths_files))), function(i) character(0))
+  )
+
+  annot <- top_dir
+  annot[compose_i] <- paste(annot[compose_i], "\033[33m<- compose file\033[39m")
+  annot[config_i]  <- paste(annot[config_i], "\033[34m<- config file\033[39m")
+  annot[extract_i] <- paste(annot[extract_i], "\033[32m<- extract file\033[39m")
+  
+  tree <- cli::tree(
+    data.frame(
+      stringsAsFactors = FALSE,
+      dir = top_dir,
+      children = I(children),
+      annot = annot
+    ),
+    ...
+  )
+  
+  tree <- gsub(" ", "\u00a0", tree)
+  
+  for (node in tree) {
+    cli::cli_text(node)
+  }
+  
+  invisible(x)
+}
+
+
+#' @export
+print.ors_constructor_extract <- function(x, ...) {
+  cat("Name :", x$name, "\n")
+  cat("Size :", x$size, "MB")
+  invisible(x)
+}
+
+
+#' @export
+print.ors_constructor_config <- function(x, ...) {
+  allp <- get_all_profiles(x$parsed)
+  allp_in <- allp %in% x$profiles
+  allp_in <- lapply(allp_in, ifelse, cli::col_green(T), cli::col_red(F))
+  
+  allp <- sapply(allp, function(p) {
+    paste0(p, strrep("\u00a0", 14L - nchar(p)))
+  })
+  
+  names(allp_in) <- allp
+  
+  cli::cli_dl(do.call(c, allp_in))
+  invisible(x)
+}
+
+
+#' @export
+print.ors_constructor_settings <- function(x, ...) {
+  names(x$memory) <- c("Total memory", "Free memory", "Initial memory", "Max memory")
+  mem_list <- lapply(x$memory, function(m) paste(round(m, 2), "GB"))
+  mem_df <- as.data.frame(t(mem_list))
+  port_chr <- sprintf(
+    "%s -> %s, %s -> %s",
+    x$ports[1L, 1L],
+    x$ports[1L, 2L],
+    x$ports[2L, 1L],
+    x$ports[2L, 2L]
+  )
+
+  cli::cli_text("Mode\u00a0\u00a0: {x$graph_building}")
+  cli::cli_text("Name\u00a0\u00a0: {x$name}")
+  cli::cli_text("Ports\u00a0: {port_chr}")
+  cli::cat_line()
+  print(mem_df, right = FALSE, row.names = FALSE)
+  invisible(x)
+}
+
+
+#' @export
+print.ors_constructor_status <- function(x, ...) {
+  gln <- c(
+    "Docker running",
+    "Image exists",
+    "Container built",
+    "Container running",
+    "Service ready"
+  )
+  
+  gl <- sapply(x, ifelse, cli::col_green(TRUE), cli::col_red(FALSE))
+  
+  gln <- sapply(gln, function(n) {
+    paste0(n, strrep("\u00a0", 18L - nchar(n)))
+  })
+  
+  names(gl) <- gln
+  
+  cli::cli_dl(gl)
+  invisible(x)
+}
+
+
+#' @export
+print.ors_compose <- function(x, ...) {
+  cat(jsonlite::toJSON(unclass(x), pretty = TRUE, auto_unbox = TRUE), "\n")
+  invisible(x)
+}
+
+
+#' @export
+print.ors_config <- function(x, ...) {
+  str(x, max.level = 3, give.attr = FALSE)
+  invisible(x)
 }

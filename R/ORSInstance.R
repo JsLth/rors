@@ -97,7 +97,7 @@ ORSInstance <- R6::R6Class(
       }
 
       dir <- private$.clone_ors_repo(dir)
-      assign("mdir", dir, envir = pkg_cache)
+      assign("mdir", dir, envir = ors_cache)
 
       self$active <- TRUE
       self$docker
@@ -176,7 +176,7 @@ ORSInstance$funs <- new.env()
 # Public methods --------------------------------------------------------------
 
 ORSInstance$funs$dir <- function() {
-  pkg_cache$mdir
+  ors_cache$mdir
 }
 
 
@@ -337,9 +337,7 @@ ORSInstance$funs$get_subclass <- function(self, private, env) {
 
 
 ORSInstance$funs$clone_ors_repo <- function(dir) {
-  download_url <- paste0("https://github.com/",
-                         "GIScience/openrouteservice/archive/",
-                         "refs/heads/master.zip")
+  download_url <- "https://github.com/GIScience/openrouteservice/archive/refs/heads/master.zip"
 
   cli_abortifnot(dir.exists(dir))
 
@@ -381,16 +379,6 @@ ORSInstance$funs$clone_ors_repo <- function(dir) {
     while(proc$is_alive()) cli::cli_progress_update()
     cli::cli_progress_done()
   }
+  
   basedir
-}
-
-
-#' @export
-
-print.ORSInstance <- function(x, ...) {
-  cli::cli_text("Class\u00a0: {.cls {class(x)}}")
-  cli::cli_text("Path\u00a0\u00a0: {x$dir}")
-  cat("\n")
-  cli::cli_text("Public methods:")
-  print(names(ORSInstance$public_methods), ...)
 }

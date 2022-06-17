@@ -139,7 +139,7 @@ ORSSetupSettings$funs$graph_building <- function(self, private, mode) {
     }
 
   } else {
-    if(is.null(pkg_cache$extract_path) && !is.na(mode)) {
+    if(is.null(ors_cache$extract_path) && !is.na(mode)) {
       cli::cli_warn(paste("Please set an extract before",
                           "calling {.var $graph_building}"))
       return(NA)
@@ -168,7 +168,7 @@ ORSSetupSettings$funs$graph_building <- function(self, private, mode) {
             ORS_CONFIG = sprintf("./%s",
                                  "docker/data/ors-config.json"),
             OSM_FILE = sprintf("./%s",
-                               relativePath(pkg_cache$extract_path,
+                               relativePath(ors_cache$extract_path,
                                             self$dir))
           )
         )
@@ -187,7 +187,7 @@ ORSSetupSettings$funs$graph_building <- function(self, private, mode) {
     } else if (identical(mode, "change")) {
       private$.force_graphbuilding(handle = TRUE)
       change_node <- sprintf("./%s:/ors-core/data/osm_file.pbf",
-                             relativePath(pkg_cache$extract_path,
+                             relativePath(ors_cache$extract_path,
                                           file.path(self$dir, "docker")))
 
       self$compose$services$`ors-app`$volumes[6L] <- change_node
@@ -265,9 +265,9 @@ ORSSetupSettings$funs$allocate_memory <- function(self, private, init = NULL, ma
     init <- max / 2L
     private$.write_memory(init, max)
   } else if (is.null(init) && is.null(max)) {
-    if (!is.null(pkg_cache$extract_path) &&
+    if (!is.null(ors_cache$extract_path) &&
         !is.null(self$config$active_profiles)) {
-      size <- round(file.info(pkg_cache$extract_path)$size * 0.000001, -2L)
+      size <- round(file.info(ors_cache$extract_path)$size * 0.000001, -2L)
       number_of_profiles <- length(self$config$active_profiles) / 1000L
 
       max <- size * 2.5 * number_of_profiles
