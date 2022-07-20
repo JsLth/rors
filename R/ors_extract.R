@@ -12,7 +12,7 @@
 #' @param file Path or URL to an extract to be mounted.
 #' @param ... Further arguments passed to \code{\link[osmextract]{oe_match}}.
 #' 
-#' @returns Nested list of class \code{ors_constructor}.
+#' @returns Nested list of class \code{ors_instance}.
 #' 
 #' @family ORS setup functions
 #' 
@@ -29,14 +29,16 @@ ors_extract <- function(instance, place = NULL, provider = "geofabrik", file = N
   if (!is.null(place)) {
     extract_path <- get_extract(place, provider, instance$paths, ...)
   }
-  
-  relative_extract_path <- relativePath(extract_path, instance$paths$dir)
-  if (isTRUE(attr(instance, "built"))) {
-    set_graphbuilding("change", instance$compose$parsed, relative_extract_path)
+
+  graphs_dir <- file.path(instance$paths$dir, "docker/graphs")
+  relative_extract_path <- relativePath(extract_path, file.path(instance$paths$dir, "docker"))
+  if (length(dir(graphs_dir))) {
+    compose <- set_graphbuilding("change", instance$compose$parsed, relative_extract_path)
   } else {
-    
-    set_graphbuilding("build", instance$compose$parsed, relative_extract_path)
+    compose <- set_graphbuilding("build", instance$compose$parsed, relative_extract_path)
   }
+  write_dockercompose(compose, instance$paths$dir)
+  instance[["compose"]] <- NULL
 
   instance <- .instance(instance, extract_path = extract_path)
   
@@ -192,4 +194,23 @@ get_current_extract <- function(obj, compose, dir) {
   }
   
   current_extract
+}
+
+
+validate_extract <- function(extract_path) {
+  if (!is.null(extract_path) && dir.exists(extract_path)) {
+    extract_path
+  }
+}
+
+
+get_existing_extract <- function(ors_dir) {
+  data_dir <- file.path(ors_dir, "docker/data")
+  
+  files <- dir(data_dir)
+  i <- grepl("\\.pbf$|\\.osm.gz$|\\.osm\\.zip$|\\.osm$", files)
+
+  if (sum(i) == 1) {
+    file.path(data_dir, files[i])
+  }
 }

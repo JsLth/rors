@@ -1,10 +1,3 @@
-# Title     : OpenRouteService Docker Interface
-# Objective : Communicate with Docker
-# Created by: Jonas Lieth
-# Created on: 17.08.2021
-
-
-
 #' OpenRouteService Docker interface
 #' @description R6 class that interacts with the Docker daemon and is able to
 #' run basic commands on the openrouteservice:latest image and the ORS
@@ -28,6 +21,7 @@
 #' }
 #'
 #' @family ORSSetup
+#' @noRd
 
 ORSDockerInterface <- R6::R6Class(
   classname = "ORSDockerInterface",

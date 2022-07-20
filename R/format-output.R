@@ -1,9 +1,67 @@
-# Title     : Response formatting
-# Objective : Extract and format information from ORS response
-# Created by: Jonas Lieth
-# Created on: 22.10.2021
+#' Gets and extracts distance and durations values from a Directions request.
+#' @param index Row index of input dataset
+#' @param env Environment containing all parameters necessary to query ORS
+#' @noRd
+extract_summary <- function(index, env) {
+  call_index <- env$call_index
+  
+  res <- query_ors_directions(
+    source = env$locations[index, "source"],
+    destination = env$locations[index, "dest"],
+    profile = env$profile,
+    units = env$units,
+    geometry = env$geometry,
+    options = env$options,
+    url = env$url,
+    token = env$instance$token
+  )
+  
+  cond <- handle_ors_conditions(res)
+  
+  if (isTRUE(attr(cond, "error"))) {
+    ors_cache$routing_conditions[[call_index]][index] <- cond
+    
+    if (!env$geometry) {
+      return(data.frame(distance = NA, duration = NA))
+    } else {
+      empty_line <- sf::st_sfc(sf::st_linestring(), crs = 4326L)
+      return(sf::st_sf(distance = NA, duration = NA, geometry = empty_line))
+    }
+  } else if (isFALSE(attr(cond, "error"))) {
+    ors_cache$routing_conditions[[call_index]][index] <- unlist(cond)
+  } else {
+    ors_cache$routing_conditions[[call_index]][index] <- NA
+  }
+  
+  if (!env$geometry) {
+    distance <- res$routes$summary$distance
+    duration <- res$routes$summary$duration
+    if (is.null(distance)) distance <- 0
+    if (is.null(duration)) duration <- 0
+    data.frame(
+      distance = distance,
+      duration = duration
+    )
+  } else {
+    distance <- res$features$properties$summary$distance
+    duration <- res$features$properties$summary$duration
+    if (is.null(distance)) distance <- 0
+    if (is.null(duration)) duration <- 0
+    linestring <- sf::st_linestring(res$features$geometry$coordinates[[1L]])
+    sf::st_sf(
+      distance = distance,
+      duration = duration,
+      geometry = sf::st_sfc(linestring, crs = 4326L)
+    )
+  }
+}
 
 
+
+#' Dispenser function to replace response values with more informative ones
+#' @param values Object from the response list
+#' @param info_type Type of information to be replaced
+#' @noRd
 fill_extra_info <- function(values, info_type, profile) {
   fill_fun_name <- paste("fill", info_type, sep = "_")
   if (exists(fill_fun_name)) {
@@ -143,6 +201,8 @@ fill_roadaccessrestrictions <- function(code) {
 }
 
 
+#' Replaces empty error message strings based on their error code
+#' @noRd
 fill_empty_error_message <- function(code) {
   switch(
     as.character(code),
@@ -169,8 +229,15 @@ fill_empty_error_message <- function(code) {
 }
 
 
+
+#' Accepts a result list and handles error and warning codes
+#' @param res Response list from `query_ors_directions`
+#' @param abort_on_error Whether to abort when an error code is returned
+#' @param warn_on_warning Whether to warn when a warning code is returned
+#' @noRd
 handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning = FALSE) {
   if (!is.null(res$error)) {
+    
     message <- res$error$message
     code <- res$error$code
     if (is.null(res$error$message)) {

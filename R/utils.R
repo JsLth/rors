@@ -1,9 +1,6 @@
-# Title     : General utility functions
-# Objective : Manipulate character strings and execute system commands
-# Created by: Jonas Lieth
-# Created on: 11.06.2021
-
-
+#' Opens a file
+#' @returns Exit status
+#' @noRd
 file.open <- function(file) {
   file <- file
   if (is.linux()) {
@@ -15,6 +12,9 @@ file.open <- function(file) {
 }
 
 
+#' Given a path, returns the parent path
+#' @param times_back Number of times to up a folder
+#' @noRd
 file_path_up <- function(path, times_back = NULL) {
   path <- normalizePath(path, winslash = "/")
   new_path <- utils::head(unlist(strsplit(path, "/")), -times_back)
@@ -22,11 +22,30 @@ file_path_up <- function(path, times_back = NULL) {
 }
 
 
+#' Checks if a URL is local (i.e. localhost or 127.0.0.1)
+#' @noRd
 is_local <- function(url) {
-  grepl("[[:alnum:]\\.]+\\:[[:digit:]]+", url)
+  grepl("^(https?:\\/\\/)?[[:alnum:]\\.]+\\:[[:digit:]]+\\/?", url, perl = TRUE)
 }
 
 
+#' Checks if a character string is a valid URL
+#' @noRd
+is_url <- function(url) {
+  grepl("^(https?:\\/\\/)?[[:alnum:]\\.]+\\.[[:lower:]]+\\/?", url, perl = TRUE)
+}
+
+
+#' Checks if a URL leads to the public API of OpenRouteService (api.openrouteservice)
+#' @noRd
+is_ors_api <- function(url) {
+  grepl("api.openrouteservice.org", url, fixed = TRUE)
+}
+
+
+#' For Windows and Linux, returns the total and available memory of the system
+#' @returns List containing total and available memory
+#' @noRd
 get_memory_info <- function() {
   if (is.windows()) {
     cmd <- paste(
@@ -48,6 +67,11 @@ get_memory_info <- function() {
 }
 
 
+#' Given two absolute paths, constructs a relative path
+#' @param targetdir Path that should be turned to a relative path
+#' @param basedir Path that contains `targetdir`
+#' @param pretty Whether to add a tilde and a slash in front
+#' @noRd
 relativePath <- function(targetdir, basedir = getwd(), pretty = FALSE) {
   relative_path <- gsub(pattern = sprintf("%s|%s/", basedir, basedir),
                         replacement = "",
@@ -64,6 +88,8 @@ relativePath <- function(targetdir, basedir = getwd(), pretty = FALSE) {
 }
 
 
+#' Capitalizes the first symbol of a character string
+#' @noRd
 capitalizeChar <- function(string) {
   cap_string <- tolower(as.character(string))
   substr(cap_string, 1L, 1L) <- toupper(substr(string, 1L, 1L))
@@ -71,16 +97,48 @@ capitalizeChar <- function(string) {
 }
 
 
+#' Given an ORS profile name, returns the first part of the profile, e.g.,
+#' driving-car -> driving
+#' @noRd
 base_profile <- function(profile) {
   strsplit(profile, "-")[[1L]][1L]
 }
 
 
+#' Simple wrapper around regexec and regmatches to find a regex pattern in a text
+#' @noRd
 regex_match <- function(text, pattern, ...) {
   regmatches(text, regexec(pattern, text, ...))
 }
 
 
+#' Binds list of (sf) data.frames to a single data.frame. If the number of
+#' columns differs, fills empty columns with NA
+#' @param args List of data.frames or sf objects
+#' @returns data.frame or sf data.frame
+#' @noRd
+rbind_list <- function(args) {
+  nam <- lapply(args, names)
+  unam <- unique(unlist(nam))
+  len <- vapply(args, length, numeric(1))
+  out <- vector("list", length(len))
+  for (i in seq_along(len)) {
+    out[[i]] <- unname(as.data.frame(args[[i]]))[match(unam, nam[[i]])]
+    names(out[[i]]) <- unam
+    if (is.sf(args[[i]])) {
+      out[[i]] <- sf::st_as_sf(out[[i]])
+    }
+    out[[i]][sapply(out[[i]], is.null)] <- NA
+  }
+  out <- do.call(rbind, out)
+  rownames(out) <- NULL
+  if (!is.sf(out)) as.data.frame(out, stringsAsFactors = FALSE) else out 
+}
+
+
+#' Converts a decimal to its binary representation, e.g. 3 -> c(2, 1)
+#' @returns Numeric vector of varying length
+#' @noRd
 decode_base2 <- function(code) {
   is.base2 <- log2(code) %% 1L == 0L || code == 0L
   if (isTRUE(is.base2)) {
@@ -112,6 +170,8 @@ decode_base2 <- function(code) {
 }
 
 
+#' Turns a length-1 vector to a single-element list
+#' @noRd
 box <- function(x) {
   if (length(x) == 1L) {
     list(x)
@@ -119,6 +179,14 @@ box <- function(x) {
 }
 
 
+#' Turns input data.frames to a single data.frame without seperating the columns.
+#' Comparable to tidyr::nest, just with base R
+#' @param ... Data.frames where the argument name is the column name of the
+#' entire data.frame within the output data.frame and the names are the column
+#' names within the data.frame that should be nested.
+#' @returns Nested data.frame where each nested data.frame can be accessed using
+#' their argument in `...`.
+#' @noRd
 df_nest <- function(...) {
   data <- list(...)
   structure(
@@ -129,6 +197,9 @@ df_nest <- function(...) {
 }
 
 
+#' Makes a subtle system sound and displays a notification window
+#' @param msg Message to be displayed.
+#' @noRd
 notify <- function(msg) {
   if (interactive()) {
     if (is.windows()) {
@@ -165,31 +236,36 @@ notify <- function(msg) {
 }
 
 
-is.rstudio <- function() {
-  .Platform$GUI == "RStudio"
-}
-
-
+#' Checks if Windows is the current OS
+#' @noRd
 is.windows <- function() {
   .Platform$OS.type == "windows"
 }
 
 
+#' Checks if Linux is the current OS
+#' @noRd
 is.linux <- function() {
   Sys.info()["sysname"] == "Linux"
 }
 
 
+#' Checks if Mac OS is the current OS
+#' @noRd
 is.macos <- function() {
   Sys.info()["sysname"] == "Darwin"
 }
 
 
+#' Checks if a logical is either TRUE or FALSE
+#' @noRd
 isTRUEorFALSE <- function(x) {
-  is.logical(x) && length(x) == 1L && !is.na(x)
+  isTRUE(x) || isFALSE(x)
 }
 
 
+#' Checks if Docker is installed on the system.
+#' @noRd
 docker_installed <- function() {
   docker_path <- Sys.which("docker")
   installed <- any(as.logical(nchar(docker_path)))
@@ -241,6 +317,8 @@ grant_docker_privileges <- function(run = TRUE) {
 }
 
 
+#' stopifnot but with the cli package
+#' @noRd
 cli_abortifnot <- function(expr) {
   if (isFALSE(expr)) {
     uneval_expr <- deparse(substitute(expr))

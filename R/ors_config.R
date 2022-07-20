@@ -2,7 +2,7 @@
 #' 
 #' @description Activate profiles and make other changes to the OpenRouteService
 #' configuration file. You can either make changes by passing a parsed
-#' configuration file as contained in \code{ors_constructor} objects or by
+#' configuration file as contained in \code{ors_instance} objects or by
 #' using one of the convenience arguments.
 #' 
 #' @param profiles List of characters specifying the active profiles of an
@@ -21,11 +21,11 @@
 #' location. Defaults to 10.
 #' @param isochrones.maximum_locations Maximum number of locations per request.
 #' Defaults to 2.
-#' @param config Parsed configuration file as contained in \code{ors_constructor}
+#' @param config Parsed configuration file as contained in \code{ors_instance}
 #' objects or path to a configuration file.
 #' @inheritParams ors_extract
 #' 
-#' @returns Nested list of class \code{ors_constructor}.
+#' @returns Nested list of class \code{ors_instance}.
 #' 
 #' @family ORS setup functions
 #' 
@@ -70,7 +70,7 @@ ors_config <- function(
     config$ors$services$isochrones$maximum_locations <- isochrones.maximum_locations
   }
   
-  write_config(config, instance$paths$dir)
+  write_config(config, instance$paths$config_path)
   
   instance[["config"]] <- NULL
   
@@ -111,7 +111,7 @@ detect_config <- function(dir, config_path = NULL) {
     # If everything fails, copy the sample config from the ORS backend
   } else {
     config_sample <- file.path(
-      "openrouteservice", "src", "main", "resources", "ors-config-sample.json"
+      dir, "openrouteservice", "src", "main", "resources", "ors-config-sample.json"
     )
     
     copied <- file.rename(config_sample, file.path(data_dir, "ors-config.json"))
@@ -127,6 +127,13 @@ detect_config <- function(dir, config_path = NULL) {
 read_config <- function(config_path, ...) {
   jsonlite::read_json(config_path, ...)
 }
+
+
+write_config <- function(config, config_path) {
+  config_json <- jsonlite::toJSON(config, auto_unbox = TRUE, pretty = TRUE)
+  cat(config_json, file = config_path)
+}
+
 
 
 get_all_profiles <- function(config) {

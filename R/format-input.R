@@ -1,16 +1,10 @@
-# Title     : Input data formatting
-# Objective : Get datasets into shape for processing in the main functions
-# Created by: Jonas Lieth
-# Created on: 14.10.2021
-
-
 format_input_data <- function(data) {
   if (is.sf(data)) {
     if (all(sf::st_is(data, c("POINT", "MULTIPOINT")))) {
       data <- sf::st_transform(data, 4326L)
       data <- reformat_vectordata(data)[, c("X", "Y")]
     } else {
-      geom_type <- sf::st_geometry_type(data)
+      geom_type <- unique(sf::st_geometry_type(data))
       cli::cli_abort("Input data must contain points, not {.val geom_type}.")
     }
   } else {
@@ -21,8 +15,7 @@ format_input_data <- function(data) {
     } else if (is.null(data) || is.na(data)) {
       data <- NULL
     } else {
-      cli::cli_abort(paste("Input data of class {.cls class(data)} is not (yet)",
-                           "supported."))
+      cli::cli_abort("Input data of class {.cls class(data)} is not (yet) supported.")
     }
     if (ncol(data) > 2L && !is.null(data)) {
       if (all(is.element(c("X", "Y"), colnames(data)))) {
@@ -32,11 +25,14 @@ format_input_data <- function(data) {
       } else if (is.double(unlist(data[, c(1L, 2L)]))) {
         data <- data[, c(1L, 2L)]
       } else {
-        cli::cli_abort(paste("Cannot determine coordinate columns of",
-                             "dataframe {.var {deparse(substitute(data))}}"))
+        cli::cli_abort(paste(
+          "Cannot determine coordinate columns of",
+          "dataframe {.var {deparse(substitute(data))}}"
+        ))
       }
     }
   }
+  
   data
 }
 

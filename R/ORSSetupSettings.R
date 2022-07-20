@@ -12,6 +12,7 @@
 #' from within \code{\link{ORSInstance}}}.
 #'
 #' @family ORSSetup
+#' @noRd
 
 ORSSetupSettings <- R6::R6Class(
   classname = "ORSSetupSettings",

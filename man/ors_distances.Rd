@@ -8,9 +8,10 @@
 ors_distances(
   source,
   destination,
-  profile = get_profiles(),
+  profile = get_profiles()[1],
   units = c("m", "km", "mi"),
   geometry = FALSE,
+  instance = NULL,
   ...
 )
 
@@ -25,32 +26,50 @@ ors_shortest_distances(
 )
 }
 \arguments{
-\item{source}{Source dataset that represents points that should be routed
-from. It can be passed as:
+\item{source}{\code{[various]}
+
+Source dataset that represents points that should be routed from. It can be
+passed as:
 \itemize{
+\item An \code{sf}/\code{sfc} object containing point geometries.
 \item Any two-dimensional base data structure, e.g. dataframes
 \item A nested list
-\item An \code{sf}/\code{sfc} object containing point geometries.
 }
 Each row represents a \code{lon/lat} coordinate pair. The coordinate
 reference system for the source data is expected to be \code{EPSG:4326}. If
 an object with \code{length > 2} is passed (not \code{sf}/\code{sfc}), it
 will be tried to heuristically determine the columns containing coordinates.}
 
-\item{destination}{Destination dataset that represents point coordinates
-that are to be routed to. The destination dataset follows the same format
-requirements as the source dataset.}
+\item{destination}{\code{[various]}
 
-\item{profile}{Character vector. Means of transport as supported by
-OpenRouteService. For a list of active profiles, call
-\code{\link{get_profiles}}. For details on all profiles, refer to the
+Destination dataset that represents point coordinates that are to be routed
+to. The destination dataset follows the same format requirements as the
+source dataset.}
+
+\item{profile}{\code{[character]}
+
+Character vector. Means of transport as supported by OpenRouteService. For a
+list of active profiles, call \code{\link{get_profiles}}. For details on all
+profiles, refer to the
 \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
-\item{units}{Distance unit for distance calculations (\code{"m"},
-\code{"km"} or \code{"mi"})}
+\item{units}{\code{[character]}
 
-\item{geometry}{If \code{TRUE}, returns a \code{sf} object containing route
-geometries. If \code{FALSE}, returns route distance measures.}
+Distance unit for distance calculations (\code{"m"}, \code{"km"} or
+\code{"mi"})}
+
+\item{geometry}{\code{[logical]}
+
+If \code{TRUE}, returns a \code{sf} object containing route geometries. If
+\code{FALSE}, returns route distance measures. Defaults to \code{FALSE}, to
+increase performance.}
+
+\item{instance}{\code{[ors_instance]}
+
+Object of an OpenRouteService instance that should be used for route
+computations. It is recommended to use \code{ors_instance} to set an instance
+globally. This argument should only be used if activating an instance globally
+is not feasible.}
 
 \item{...}{Additional arguments passed to the ORS API. This includes all
 options that modify the routing results. For details on each argument,
@@ -93,7 +112,9 @@ in the ORS service configurations.}
 maximum speed.}
 }}
 
-\item{proximity_type}{Type of proximity that the calculations should be
+\item{proximity_type}{\code{[character]}
+
+Type of proximity that the calculations should be
 based on. If \code{distance}, the shortest physical distance will be calculated
 and if \code{duration}, the shortest temporal distance will be calculated.}
 }

@@ -4,13 +4,39 @@
 # Created on: 14.10.2021
 
 
-query_ors_directions <- function(source,
-                                 destination,
-                                 profile,
-                                 units,
-                                 geometry,
-                                 options,
-                                 url) {
+perform_query <- function(url, body, header) {
+  for (i in seq(1, 2)) {
+    res_object <- httr::POST(url, body = body, encode = "json", header)
+    res_text <- httr::content(
+      x = res_object,
+      as = "text",
+      type = "application/json",
+      encoding = "UTF-8"
+    )
+
+    res <- jsonlite::fromJSON(res_text)
+    if (identical(res$error, "Rate limit exceeded")) {
+      cli::cli_alert_info("Waiting out rate limit... (60s)")
+      Sys.sleep(60)
+      next
+    } else break
+  }
+
+  res
+}
+
+
+
+query_ors_directions <- function(
+  source,
+  destination,
+  profile,
+  units,
+  geometry,
+  options,
+  url,
+  token
+  ) {
   # Get coordinates in shape
   locations <- list(
     c(as.numeric(source[1L]), as.numeric(source[2L])),
@@ -18,54 +44,56 @@ query_ors_directions <- function(source,
   )
 
   # Create http body of the request
-  body_list <- list(coordinates       = locations,
-                    attributes        = box(options$attributes),
-                    continue_straight = options$continue_straight,
-                    elevation         = options$elevation,
-                    extra_info        = box(options$extra_info),
-                    geometry_simplify = options$geometry_simplify,
-                    options           = options$options,
-                    preference        = options$preference,
-                    radiuses          = options$radiuses,
-                    units             = units,
-                    geometry          = geometry,
-                    maximum_speed     = options$maximum_speed)
+  body_list <- list(
+    coordinates       = locations,
+    attributes        = box(options$attributes),
+    continue_straight = options$continue_straight,
+    elevation         = options$elevation,
+    extra_info        = box(options$extra_info),
+    geometry_simplify = options$geometry_simplify,
+    options           = options$options,
+    preference        = options$preference,
+    radiuses          = options$radiuses,
+    units             = units,
+    geometry          = geometry,
+    maximum_speed     = options$maximum_speed
+  )
   body_list <- body_list[lengths(body_list) > 0L]
   body <- jsonlite::toJSON(body_list, auto_unbox = TRUE, digits = NA)
 
   # Create request headers
   header <- httr::add_headers(
-    Accept = sprintf("application/%s; charset=utf-8",
-                     ifelse(geometry, yes = "geo+json", no = "json")),
+    Accept = sprintf(
+      "application/%s; charset=utf-8",
+      ifelse(geometry, yes = "geo+json", no = "json")
+    ),
+    Authorization = token,
     `Content-Type` = "application/json; charset=utf-8"
   )
 
   # Prepare the url
-  path <- paste0("ors/v2/directions/", profile, if (geometry) "/geojson")
+  path <- paste0(
+    if (is_ors_api(url)) "" else "ors",
+    "/v2/directions/",
+    profile,
+    if (geometry) "/geojson"
+  )
   url <- httr::modify_url(url = url, path = path)
 
   # Calculate routes for every profile
-  res_object <- httr::POST(url,
-                           body = body,
-                           encode = "json",
-                           header)
-  res_text <- httr::content(x = res_object,
-                            as = "text",
-                            type = "application/json",
-                            encoding = "UTF-8")
-
-  res <- jsonlite::fromJSON(res_text)
-  res
+  perform_query(url, body, header)
 }
 
 
 
-query_ors_matrix <- function(source,
-                             destination,
-                             profile,
-                             metrics,
-                             units,
-                             url) {
+query_ors_matrix <- function(
+  source,
+  destination,
+  profile,
+  metrics,
+  units,
+  url
+) {
   # Format source and destination
   source_list <- unname(split(source, seq_len(nrow(source))))
   source_list <- lapply(source_list, as.numeric)
@@ -73,9 +101,7 @@ query_ors_matrix <- function(source,
   destinations_list <- lapply(destinations_list, as.numeric)
 
   # Coerce destinations and source
-  locations <- append(destinations_list,
-                      source_list,
-                      after = 0L)
+  locations <- append(destinations_list, source_list, after = 0L)
 
   dest_index <- if (nrow(destination) > 1L) {
     seq(nrow(source), length(locations) - 1L)
@@ -90,43 +116,50 @@ query_ors_matrix <- function(source,
   }
 
   # Create http body of the request
-  body_list <- list(locations = locations,
-                    destinations = dest_index,
-                    sources = source_index,
-                    metrics = box(metrics),
-                    units = units)
+  body_list <- list(
+    locations = locations,
+    destinations = dest_index,
+    sources = source_index,
+    metrics = box(metrics),
+    units = units
+  )
   
   body <- jsonlite::toJSON(body_list, auto_unbox = TRUE, digits = NA)
 
   # Create request headers
   header <- httr::add_headers(
     Accept = "application/json; charset=utf-8",
+    Authorization = token,
     `Content-Type` = "application/json; charset=utf-8"
   )
 
   # Prepare the url
-  url <- httr::modify_url(url = url,
-                          path = paste0("ors/v2/matrix/",
-                                        profile))
+  url <- httr::modify_url(
+    url = url,
+    path = paste0("ors/v2/matrix/", profile)
+  )
 
-  res_object <- httr::POST(url = url,
-                           body = body,
-                           encode = 'json',
-                           header)
-  res_text <- httr::content(x = res_object,
-                            as = "text",
-                            type = "application/json",
-                            encoding = "UTF-8")
-
-  res <- jsonlite::fromJSON(res_text)
-  res
+  perform_query(url, body, header)
 }
 
 
 
-query_isochrone <- function(source, profile, range, attributes, intersections,
-                            interval, location_type, options, range_type,
-                            smoothing, area_units, units, url) {
+query_isochrone <- function(
+  source,
+  profile,
+  range,
+  attributes,
+  intersections,
+  interval,
+  location_type,
+  options,
+  range_type,
+  smoothing,
+  area_units,
+  units,
+  url,
+  token
+) {
   locations <- unname(split(source, seq_len(nrow(source))))
   locations <- lapply(locations, as.numeric)
   
@@ -149,6 +182,7 @@ query_isochrone <- function(source, profile, range, attributes, intersections,
   # Create request headers
   header <- httr::add_headers(
     Accept = "application/geo+json; charset=utf-8",
+    Authorization = token,
     `Content-Type` = "application/json; charset=utf-8"
   )
   
@@ -158,15 +192,5 @@ query_isochrone <- function(source, profile, range, attributes, intersections,
     path = sprintf("ors/v2/isochrones/%s/geojson", profile)
   )
   
-  res_object <- httr::POST(url = url,
-                           body = body,
-                           encode = 'json',
-                           header)
-  res_text <- httr::content(x = res_object,
-                            as = "text",
-                            type = "application/json",
-                            encoding = "UTF-8")
-  
-  res <- jsonlite::fromJSON(res_text)
-  res
+  perform_query(url, body, header)
 }

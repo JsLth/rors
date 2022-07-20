@@ -34,9 +34,9 @@ Suggests:
     testthat (>= 3.0.0),
     osmdata,
     units,
-    raster
+    terra
 SystemRequirements: Docker Engine on Linux systems, Docker Desktop on Windows (>= 20.10.6)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Config/testthat/edition: 3

@@ -7,36 +7,30 @@
 R6 class that acts as a setup wizard and control panel for the
 OpenRouteService backend service. The class facilitates the setup of the
 Docker container and allows making changes to the setup from within R.
+
+This R6 class is deprecated in favor of \code{\link[ORSRouting]{ors_instance}}.
 }
 \details{
 The purpose of this class is to facilitate the OpenRouteService
 installation process. Alternatively, you can follow the official
 instructions from the \href{https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html}{OpenRouteService documentation}.
-The developer team recently extended the installation guide considerably.
 
-The class has four sub classes. \code{\link{ORSExtract}} manages the
+The class has four sub classes. \code{ORSExtract} manages the
 OpenRouteService extract and is able to download \code{.pbf} files from different
-sources using the \code{osmextract} package. \code{\link{ORSConfig}} controls the
+sources using the \code{osmextract} package. \code{ORSConfig} controls the
 configuration file (\code{ors-config.json}) which is also used to set active
-profiles. \code{\link{ORSSetupSettings}} can be used to make changes to the
+profiles. \code{ORSSetupSettings} can be used to make changes to the
 Docker setup, e.g. to allocate RAM, assign extracts or change the local
-server access. \code{\link{ORSDockerInterface}} provides a basic interface
+server access. \code{ORSDockerInterface} provides a basic interface
 to Docker commands and can be used to check the status of the image,
-container and service. The \code{\link{ORSSetupSettings}} should be set up
-after \code{\link{ORSExtract}} and \code{\link{ORSConfig}} as the Docker setup
+container and service. The \code{ORSSetupSettings} should be set up
+after \code{ORSExtract} and \code{ORSConfig} as the Docker setup
 needs information on the extract and the number of profiles to assign the
 extract and estimate the required RAM to be allocated.
 
 An initial default can be set up using \code{$init_setup}. This method
 should only be used for the initial container startup. Subsequent changes
 to the setup need to be done using the subclasses.
-}
-\seealso{
-Other ORSSetup: 
-\code{\link{ORSConfig}},
-\code{\link{ORSDockerInterface}},
-\code{\link{ORSExtract}},
-\code{\link{ORSSetupSettings}}
 }
 \concept{ORSSetup}
 \section{Public fields}{
@@ -70,14 +64,14 @@ of \code{ORSInstance} lose their functionality.}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{ORSInstance$new()}}
-\item \href{#method-initial_setup}{\code{ORSInstance$initial_setup()}}
-\item \href{#method-remove}{\code{ORSInstance$remove()}}
+\item \href{#method-ORSInstance-new}{\code{ORSInstance$new()}}
+\item \href{#method-ORSInstance-initial_setup}{\code{ORSInstance$initial_setup()}}
+\item \href{#method-ORSInstance-remove}{\code{ORSInstance$remove()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-ORSInstance-new"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSInstance-new}{}}}
 \subsection{Method \code{new()}}{
 Initialize \code{\link{ORSInstance}} as well as \code{\link{ORSExtract}},
 \code{\link{ORSConfig}}, \code{\link{ORSSetupSettings}} and
@@ -103,8 +97,8 @@ necessity to force-delete the container.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-initial_setup"></a>}}
-\if{latex}{\out{\hypertarget{method-initial_setup}{}}}
+\if{html}{\out{<a id="method-ORSInstance-initial_setup"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSInstance-initial_setup}{}}}
 \subsection{Method \code{initial_setup()}}{
 Changes the necessary settings and configurations for the
 first startup, builds the image and starts the container. This function
@@ -166,8 +160,8 @@ whether the initial setup is done or not.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-remove"></a>}}
-\if{latex}{\out{\hypertarget{method-remove}{}}}
+\if{html}{\out{<a id="method-ORSInstance-remove"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSInstance-remove}{}}}
 \subsection{Method \code{remove()}}{
 Take down all Docker containers and images and wipe the
 OpenRouteService main directory.

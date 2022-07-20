@@ -8,28 +8,46 @@
 #' @description
 #' \code{ors_distances} calculates the routing distance between two
 #' datasets using the Directions service from ORS.
-#' @param source Source dataset that represents points that should be routed
-#' from. It can be passed as:
+#' 
+#' @param source \code{[various]} 
+#' 
+#' Source dataset that represents points that should be routed from. It can be
+#' passed as:
 #' \itemize{
+#'  \item An \code{sf}/\code{sfc} object containing point geometries.
 #'  \item Any two-dimensional base data structure, e.g. dataframes
 #'  \item A nested list
-#'  \item An \code{sf}/\code{sfc} object containing point geometries.
 #' }
 #' Each row represents a \code{lon/lat} coordinate pair. The coordinate
 #' reference system for the source data is expected to be \code{EPSG:4326}. If
 #' an object with \code{length > 2} is passed (not \code{sf}/\code{sfc}), it
 #' will be tried to heuristically determine the columns containing coordinates.
-#' @param destination Destination dataset that represents point coordinates
-#' that are to be routed to. The destination dataset follows the same format
-#' requirements as the source dataset.
-#' @param profile Character vector. Means of transport as supported by
-#' OpenRouteService. For a list of active profiles, call
-#' \code{\link{get_profiles}}. For details on all profiles, refer to the
+#' @param destination \code{[various]} 
+#' 
+#' Destination dataset that represents point coordinates that are to be routed
+#' to. The destination dataset follows the same format requirements as the
+#' source dataset.
+#' @param profile \code{[character]}
+#' 
+#' Character vector. Means of transport as supported by OpenRouteService. For a
+#' list of active profiles, call \code{\link{get_profiles}}. For details on all
+#' profiles, refer to the
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
-#' @param units Distance unit for distance calculations (\code{"m"},
-#' \code{"km"} or \code{"mi"})
-#' @param geometry If \code{TRUE}, returns a \code{sf} object containing route
-#' geometries. If \code{FALSE}, returns route distance measures.
+#' @param units \code{[character]}
+#' 
+#' Distance unit for distance calculations (\code{"m"}, \code{"km"} or
+#' \code{"mi"})
+#' @param geometry \code{[logical]}
+#' 
+#' If \code{TRUE}, returns a \code{sf} object containing route geometries. If
+#' \code{FALSE}, returns route distance measures. Defaults to \code{FALSE}, to
+#' increase performance.
+#' @param instance \code{[ors_instance]}
+#' 
+#' Object of an OpenRouteService instance that should be used for route
+#' computations. It is recommended to use \code{ors_instance} to set an instance
+#' globally. This argument should only be used if activating an instance globally
+#' is not feasible.
 #' @param ... Additional arguments passed to the ORS API. This includes all
 #' options that modify the routing results. For details on each argument,
 #' refer to the
@@ -132,21 +150,27 @@
 #'                                     preference = "fastest")
 #' }
 
-ors_distances <- function(source,
-                          destination,
-                          profile = get_profiles(),
-                          units = c("m", "km", "mi"),
-                          geometry = FALSE,
-                          ...) {
+ors_distances <- function(
+  source,
+  destination,
+  profile = get_profiles()[1],
+  units = c("m", "km", "mi"),
+  geometry = FALSE,
+  instance = NULL,
+  ...
+) {
+  if (is.null(instance)) {
+    instance <- get_instance()
+    
+  }
+  iid <- get_id(instance = instance)
+  
   # Check if ORS is ready to use
-  ors_ready(force = FALSE, error = TRUE)
+  ors_ready(force = FALSE, error = TRUE, id = iid)
 
   # Bring input data into shape
   source <- format_input_data(source)
   destination <- format_input_data(destination)
-
-  verify_crs(source, crs = 4326L)
-  verify_crs(destination, crs = 4326L)
 
   # If input suggests one-to-many, replicate the one-element dataframe `nrow` times
   if (nrow(source) == 1) {
@@ -163,69 +187,35 @@ ors_distances <- function(source,
 
   if (identical(row(source), row(destination))) {
     # If both datasets have the same shape, prepare a nested iterator.
-    zipped_locations <- df_nest(source = source, dest = destination)
+    locations <- df_nest(source = source, dest = destination)
   } else {
     source_shape <- cli::cli_vec(nrow(source), style = list(vec_last = ":"))
     dest_shape <- cli::cli_vec(nrow(destination), style = list(vec_last = ":"))
 
-    cli::cli_abort(c(paste("Datasets have non-matching number of rows.",
-                           "Can only handle one-to-many, many-to-many,",
-                           "or many-to-one calls."),
-                     "Source dataset rows: {source_shape}",
-                     "Destination dataset rows: {dest_shape}"))
+    cli::cli_abort(c(
+      paste(
+        "Datasets have non-matching number of rows.",
+        "Can only handle one-to-many, many-to-many,",
+        "or many-to-one calls."
+      ),
+      "Source dataset rows: {source_shape}",
+      "Destination dataset rows: {dest_shape}"
+    ))
   }
 
   profile <- match.arg(profile)
   units <- match.arg(units)
 
-  url <- get_ors_url()
+  url <- get_ors_url(id = iid)
 
   options <- format_ors_options(list(...), profile)
 
   call_index <- format(Sys.time(), format = "%H:%M:%OS6")
-
-  extract_lengths <- function(i) {
-    res <- query_ors_directions(source = zipped_locations[i, "source"],
-                                destination = zipped_locations[i, "dest"],
-                                profile = profile,
-                                units = units,
-                                geometry = geometry,
-                                options = options,
-                                url = url)
-
-    cond <- handle_ors_conditions(res)
-
-    if (isTRUE(attr(cond, "error"))) {
-      ors_cache$routing_conditions[[call_index]][i] <- cond
-
-      if (!geometry) {
-        return(data.frame(distance = NA, duration = NA))
-      } else {
-        empty_line <- sf::st_sfc(sf::st_linestring(), crs = 4326L)
-        return(sf::st_sf(distance = NA, duration = NA, geometry = empty_line))
-      }
-    } else if (isFALSE(attr(cond, "error"))) {
-      ors_cache$routing_conditions[[call_index]][i] <- unlist(cond)
-    } else {
-      ors_cache$routing_conditions[[call_index]][i] <- NA
-    }
-
-    if (!geometry) {
-      data.frame(distance = res$routes$summary$distance,
-                 duration = res$routes$summary$duration)
-    } else {
-      distance <- res$features$properties$summary$distance
-      duration <- res$features$properties$summary$duration
-      linestring <- sf::st_linestring(res$features$geometry$coordinates[[1L]])
-      sf::st_sf(distance = distance,
-                duration = duration,
-                geometry = sf::st_sfc(linestring, crs = 4326L))
-    }
-  }
-
+  
   # Apply a directions query to each row
-  route_df <- lapply(seq_len(nrow(zipped_locations)), extract_lengths)
-  route_df <- suppressWarnings(do.call(rbind, route_df))
+  env <- environment()
+  route_df <- lapply(seq_len(nrow(locations)), extract_summary, env)
+  route_df <- do.call(rbind, route_df)
 
   route_missing <- sapply(unlist(route_df), is.na)
   conds <- ors_cache$routing_conditions[[call_index]]
@@ -247,9 +237,13 @@ ors_distances <- function(source,
   } else if (length(warn_indices)) {
     warn_indices <- cli::cli_vec(warn_indices,
                                  style = list(vec_sep = ", ", vec_last = ", "))
-    cli::cli_warn(c(paste("ORS returned a warning for {length(warn_indices)}",
-                          "route{?s}: {warn_indices}"),
-                    tip))
+    cli::cli_warn(c(
+      paste(
+        "ORS returned a warning for {length(warn_indices)}",
+        "route{?s}: {warn_indices}"
+      ),
+      tip
+    ))
   }
   
   if (requireNamespace("units")) {
@@ -259,8 +253,8 @@ ors_distances <- function(source,
 
   structure(
     route_df,
-    call = sys.call(),
-    data = zipped_locations,
+    call = match.call(),
+    data = locations,
     class = c("ors_dist", class(route_df))
   )
 }
@@ -273,7 +267,9 @@ ors_distances <- function(source,
 #' from the destination dataset and then extracts the route with the shortest
 #' distance.
 #'
-#' @param proximity_type Type of proximity that the calculations should be
+#' @param proximity_type \code{[character]}
+#' 
+#' Type of proximity that the calculations should be
 #' based on. If `distance`, the shortest physical distance will be calculated
 #' and if `duration`, the shortest temporal distance will be calculated.
 #' @returns \code{ors_shortest_distances} returns a dataframe containing
@@ -311,15 +307,20 @@ ors_distances <- function(source,
 #' nearest_hospitals
 #' }
 
-ors_shortest_distances <- function(source,
-                                   destination,
-                                   profile = get_profiles(),
-                                   units = c("m", "km", "mi"),
-                                   geometry = FALSE,
-                                   ...,
-                                   proximity_type = c("duration", "distance")) {
+ors_shortest_distances <- function(
+  source,
+  destination,
+  profile = get_profiles(),
+  units = c("m", "km", "mi"),
+  geometry = FALSE,
+  ...,
+  proximity_type = c("duration", "distance")
+) {
+  if (is.null(instance)) {
+    instance <- get_instance()
+  }
+  
   proximity_type <- match.arg(proximity_type)
-
   source <- format_input_data(source)
 
   if (inherits(destination, "list")) {
@@ -340,6 +341,7 @@ ors_shortest_distances <- function(source,
         profile = nested_iterator[i, "profile"],
         units = units,
         geometry = geometry,
+        instance = instance,
         ...
       )
     )
@@ -414,7 +416,7 @@ ors_shortest_distances <- function(source,
   
   structure(
     route_df,
-    call = sys.call(),
+    call = match.call(),
     source = source,
     dest = destination,
     class = c("ors_sdist", class(route_df))
@@ -436,6 +438,15 @@ ors_matrix <- function(source,
                        profile = get_profiles(),
                        units = c("m", "km", "mi"),
                        proximity_type = c("distance", "duration")) {
+  if (is.null(instance)) {
+    instance <- get_instance()
+    
+  }
+  iid <- get_id(instance = instance)
+  
+  # Check if ORS is ready to use
+  ors_ready(force = FALSE, error = TRUE, id = iid)
+  
   profile <- match.arg(profile)
   proximity_type <- match.arg(proximity_type)
   units <- match.arg(units)
@@ -443,27 +454,29 @@ ors_matrix <- function(source,
   source <- format_input_data(source)
   destination <- format_input_data(destination)
 
-  url <- get_ors_url()
+  url <- get_ors_url(id = iid)
 
-  res <- query_ors_matrix(source = source,
-                          destination = destination,
-                          profile = profile,
-                          metrics = proximity_type,
-                          units = units,
-                          url = url)
+  res <- query_ors_matrix(
+    source = source,
+    destination = destination,
+    profile = profile,
+    metrics = proximity_type,
+    units = units,
+    url = url,
+    token = instance$token
+  )
 
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
 
   if (length(proximity_type) == 1L) {
     matrix <- res[[paste0(proximity_type, "s")]]
   } else {
-    matrix <- list(distances = res$distances,
-                   durations = res$durations)
+    matrix <- list(distances = res$distances, durations = res$durations)
   }
 
   structure(
     matrix,
-    call = sys.call(),
+    call = match.call(),
     data = cbind(source, destination),
     class = c("ors_matrix", class(matrix))
   )

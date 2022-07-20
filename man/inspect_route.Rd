@@ -19,24 +19,34 @@ inspect_route(
 summarize_route(source, destination, profile = get_profiles(), ...)
 }
 \arguments{
-\item{source}{Any kind of numeric vector containing \code{x/y} values of a
+\item{source}{\code{[various]}
+
+Any kind of numeric vector containing \code{x/y} values of a
 route segment that should be routed from. Refer to
 \code{\link{ors_distances}}.}
 
-\item{destination}{Any kind of numeric vector containing \code{x/y} values
+\item{destination}{\code{[various]}
+
+Any kind of numeric vector containing \code{x/y} values
 of a route segment that should be routed to.}
 
-\item{profile}{Character vector. Means of transport as supported by
-OpenRouteService. For a list of active profiles, call
-\code{\link{get_profiles}}. For details on all profiles, refer to the
+\item{profile}{\code{[character]}
+
+Character vector. Means of transport as supported by OpenRouteService. For a
+list of active profiles, call \code{\link{get_profiles}}. For details on all
+profiles, refer to the
 \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
-\item{attributes}{List of attributes that summarize route characteristics.
+\item{attributes}{\code{[list]}
+
+List of attributes that summarize route characteristics.
 This includes two values: \code{avgspeed} states the average vehicle speed
 along the route, \code{detourfactor} indicates how much the route deviates
 from a straight line. If \code{TRUE}, both values are included.}
 
-\item{elevation}{If \code{TRUE}, elevation data is included in the output.}
+\item{elevation}{\code{[logical]}
+
+If \code{TRUE}, elevation data is included in the output.}
 
 \item{extra_info}{List of keywords that add extra information regarding each
 linestring segment of the output. Possible values include:
@@ -97,7 +107,9 @@ in the ORS service configurations.}
 maximum speed.}
 }}
 
-\item{elev_as_z}{If \code{TRUE}, elevation data is stored as z-values in the
+\item{elev_as_z}{\code{[logical]}
+
+If \code{TRUE}, elevation data is stored as z-values in the
 geometry of the output \code{sf} dataframe. If \code{FALSE}, elevation is
 stored as a distinct dataframe column. Ignored if \code{elevation = FALSE}.}
 }

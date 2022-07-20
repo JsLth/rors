@@ -28,36 +28,44 @@
 #' disables graph building.
 #' @inheritParams ors_extract
 #' 
-#' @returns Nested list of class \code{ors_constructor}.
+#' @returns Nested list of class \code{ors_instance}.
 #' 
 #' @family ORS setup functions
 #' 
 #' @export
 ors_settings <- function(
   instance,
-  name = "ors-app",
-  ports = 8080,
+  name = NULL,
+  ports = NULL,
   memory = list(),
   graph_building = NULL
 ) {
   compose <- instance$compose$parsed
   
+  if (!is.null(instance$paths$extract_path) && is.null(graph_building)) {
+    graphs_dir <- file.path(instance$paths$dir, "docker/graphs")
+    if (!length(dir(graphs_dir))) {
+      graph_building <- "build"
+    }
+  }
+
   if (!is.null(name)) {
     compose$services$`ors-app`$container_name <- name
   }
-  
+
   if (!is.null(ports)) {
-    compose$services$`ors-app`$ports <- format_ports(instance$settings$parsed, ports)
+    compose$services$`ors-app`$ports <- format_ports(compose, ports)
   }
   
-  if (!is.null(memory)) {
-    compose <- write_memory(instance, memory)
+  if (length(memory)) {
+    compose <- write_memory(compose, instance, memory)
   }
-  
+
   if (!is.null(graph_building)) {
-    compose <- set_graphbuilding(compose, graph_building)
+    relative_path <- relativePath(instance$paths$extract_path, file.path(instance$paths$dir, "dir"))
+    compose <- set_graphbuilding(graph_building, compose, relative_path)
   }
-  
+
   write_dockercompose(compose, instance$paths$dir)
   
   instance[["compose"]] <- NULL
@@ -90,7 +98,7 @@ format_ports <- function(compose, ports) {
   }
   
   cur_ports <- read_ports(compose)
-  cur_ports <- cur_ports$df
+  cur_ports_df <- cur_ports$df
   cur_ports_vec <- cur_ports$vec
   
   ports <- lapply(seq(1L, length(ports)), function(pi) {
@@ -139,21 +147,21 @@ read_memory <- function(compose, num, gb = TRUE) {
 }
 
 
-write_memory <- function(instance, memory) {
+write_memory <- function(compose, instance, memory) {
   init <- NULL
   max <- NULL
   if (length(memory)) {
-    init <- memory[[1]]
+    init <- memory[[1]] * 1000
   }
   if (length(memory) == 2) {
-    max <- memory[[2]]
+    max <- memory[[2]] * 1000
   }
   if (is.numeric(init) && is.null(max)) {
-    max <- init
+    max <- init * 1000
   } else if (is.null(init) && is.numeric(max)) {
-    init <- max / 2L
+    init <- max / 2L * 1000
   } else if (is.null(init) && is.null(max)) {
-    if (!is.null(size) && !is.null(active_profiles)) {
+    if (!is.null(instance$extract$size) && !is.null(instance$config$profiles)) {
       size <- round(instance$extract$size * 0.000001, -2L)
       number_of_profiles <- length(instance$config$profiles) / 1000L
       
@@ -173,7 +181,7 @@ write_memory <- function(instance, memory) {
   
   gc(verbose = FALSE)
   
-  if (instance$settings$memory$free * 0.8 - max <= 0L) {
+  if (instance$compose$memory$free * 0.8 - max / 1024 <= 0L) {
     cli::cli_warn(paste(
       "You are allocating more than your available memory.",
       "Consider lowering the allocated RAM."
@@ -236,7 +244,7 @@ set_graphbuilding <- function(mode, compose, extract_path) {
     services$
     `ors-app`$
     volumes <- compose$services$`ors-app`$volumes[-6L]
-  
+
   # Then, turn things on selectively
   if (identical(mode, "build") && !missing(extract_path)) {
     build_branch <- list(
@@ -260,7 +268,7 @@ set_graphbuilding <- function(mode, compose, extract_path) {
     
     compose$services$`ors-app`$volumes[6L] <- change_node
   }
-  
+
   compose
 }
 

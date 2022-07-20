@@ -1,137 +1,4 @@
 #' @export
-print.ORSInstance <- function(x, ...) {
-  cli::cli_text("Class\u00a0: {.cls {class(x)}}")
-  cli::cli_text("Path\u00a0\u00a0: {x$dir}")
-  cli::cat_line()
-  cli::cli_text("Public methods:")
-  print(names(ORSInstance$public_methods), ...)
-  invisible(x)
-}
-
-
-#' @export
-print.ORSExtract <- function(x, ...) {
-  if (is.null(x$path)) {
-    extract_file <- NA_character_
-  } else {
-    extract_file <- basename(x$path)
-  }
-  
-  if (is.null(x$size)) {
-    extract_size <- NA_character_
-  } else {
-    extract_size <- paste(x$size, "MB")
-  }
-  
-  cli::cli_text("Class\u00a0\u00a0\u00a0: {.cls {class(x)}}")
-  cli::cli_text("Path\u00a0\u00a0\u00a0\u00a0: {x$dir}")
-  cli::cli_text("Extract\u00a0: {extract_file}")
-  cli::cli_text("Size\u00a0\u00a0\u00a0\u00a0: {extract_size}")
-  cli::cat_line()
-  cli::cli_text("Public methods:")
-  print(names(ORSExtract$public_methods), ...)
-  invisible(x)
-}
-
-
-#' @export
-print.ORSConfig <- function(x, ...) {
-  if (grepl("docker/data", x$path, fixed = TRUE)) {
-    pd <- "pre-setup"
-  } else if (grepl("docker/conf", x$path, fixed = TRUE)) {
-    pd <- "post-setup"
-  } else {
-    pd <- NULL
-  }
-  
-  allp <- c("car", "hgv", "bike-regular", "bike-mountain", "bike-road",
-            "bike-electric", "walking", "hiking", "wheelchair")
-  allp_in <- allp %in% x$active_profiles
-  allp_in <- lapply(allp_in, ifelse, cli::col_green(T), cli::col_red(F))
-  
-  allp <- sapply(allp, function(p) {
-    paste0(p, strrep("\u00a0", 14L - nchar(p)))
-  })
-  
-  names(allp_in) <- allp
-  
-  cli::cli_text("Class\u00a0\u00a0: {.cls {class(x)}}")
-  cli::cli_text("Path\u00a0\u00a0\u00a0: {x$dir}")
-  cli::cli_text("Status\u00a0: {pd}")
-  cli::cat_line()
-  cli::cli_dl(do.call(c, allp_in))
-  cli::cat_line()
-  cli::cli_text("Public methods:")
-  print(names(ORSConfig$public_methods), ...)
-  invisible(x)
-}
-
-
-#' @export
-print.ORSSetupSettings <- function(x, ...) {
-  names(x$memory) <- c("Total memory", "Free memory", "Initial memory", "Max memory")
-  mem_list <- lapply(x$memory, function(m) paste(round(m, 2), "GB"))
-  mem_df <- as.data.frame(t(mem_list))
-  port_chr <- sprintf(
-    "%s -> %s, %s -> %s",
-    x$ors_ports[1L, 1L],
-    x$ors_ports[1L, 2L],
-    x$ors_ports[2L, 1L],
-    x$ors_ports[2L, 2L]
-  )
-  
-  cli::cli_text("Class\u00a0: {.cls {class(x)}}")
-  cli::cli_text("Path\u00a0\u00a0: {x$dir}")
-  cli::cli_text("Mode\u00a0\u00a0: {x$graph_building}")
-  cli::cli_text("Name\u00a0\u00a0: {x$ors_name}")
-  cli::cli_text("Ports\u00a0: {port_chr}")
-  cli::cat_line()
-  print(mem_df, right = FALSE, row.names = FALSE)
-  cli::cat_line()
-  cli::cli_text("Public methods:")
-  print(names(ORSSetupSettings$public_methods), ...)
-  invisible(x)
-}
-
-
-#' @export
-print.ORSDockerInterface <- function(x, ...) {
-  gl <- list(
-    x$docker_running,
-    x$image_exists,
-    x$container_built,
-    x$container_running,
-    x$service_ready
-  )
-  
-  gln <- c(
-    "Docker running",
-    "Image exists",
-    "Container built",
-    "Container running",
-    "Service ready"
-  )
-  
-  gl <- sapply(gl, ifelse, cli::col_green(TRUE), cli::col_red(FALSE))
-  
-  gln <- sapply(gln, function(n) {
-    paste0(n, strrep("\u00a0", 18L - nchar(n)))
-  })
-  
-  names(gl) <- gln
-  
-  cli::cli_text("Class\u00a0: {.cls {class(x)}}")
-  cli::cli_text("Path\u00a0\u00a0: {x$dir}")
-  cli::cat_line()
-  cli::cli_dl(gl)
-  cli::cat_line()
-  cli::cli_text("Public methods:")
-  print(names(ORSDockerInterface$public_methods))
-  invisible(x)
-}
-
-
-#' @export
 print.ors_matrix <- function(x, ...) {
   prmatrix(x)
 }
@@ -281,22 +148,33 @@ print.ors_condition <- function(x, ...) {
 
 
 #' @export
-print.ors_constructor <- function(x, ...) {
-  active <- "compose" %in% names(x) &&
-    "instance" %in% names(ors_cache) &&
-    x$paths$dir == ors_cache$instance$paths$dir
+print.ors_instance <- function(x, ...) {
+  if (any_mounted()) {
+    mounted <- get("instance", envir = ors_cache)
+    active <- if (!is.null(x$url)) {
+      identical(x$url, mounted$url)
+    } else {
+      "compose" %in% names(x) && x$paths$dir == mounted$paths$dir
+    }
+  } else active <- FALSE
+  
+  alive <- attr(x, "alive")
+  built <- x$status[3]
+  type  <- attr(x, "type")
+
   cat(
-    "<ors_constructor>", "\n",
+    "<ors_instance>", "\n",
     " active :", active, "\n",
-    " alive  :", attr(x, "alive"), "\n",
-    " built  :", attr(x, "built"), "\n"
+    " alive  :", alive, "\n",
+    if (!is.null(built)) c(" built  :", built, "\n"),
+    " type   :", type, "\n"
   )
   invisible(x)
 }
 
 
 #' @export
-print.ors_constructor_paths <- function(x, ...) {
+print.ors_instance_paths <- function(x, ...) {
   basedir <- relativePath(x$dir, path.expand("~"))
   compose <- if (!is.null(x$compose_path)) basename(x$compose_path) else NULL
   config  <- if (!is.null(x$config_path)) basename(x$config_path) else NULL
@@ -364,7 +242,7 @@ print.ors_constructor_paths <- function(x, ...) {
 
 
 #' @export
-print.ors_constructor_extract <- function(x, ...) {
+print.ors_instance_extract <- function(x, ...) {
   cat("Name :", x$name, "\n")
   cat("Size :", x$size, "MB")
   invisible(x)
@@ -372,7 +250,7 @@ print.ors_constructor_extract <- function(x, ...) {
 
 
 #' @export
-print.ors_constructor_config <- function(x, ...) {
+print.ors_instance_config <- function(x, ...) {
   allp <- get_all_profiles(x$parsed)
   allp_in <- allp %in% x$profiles
   allp_in <- lapply(allp_in, ifelse, cli::col_green(T), cli::col_red(F))
@@ -389,7 +267,7 @@ print.ors_constructor_config <- function(x, ...) {
 
 
 #' @export
-print.ors_constructor_settings <- function(x, ...) {
+print.ors_instance_settings <- function(x, ...) {
   names(x$memory) <- c("Total memory", "Free memory", "Initial memory", "Max memory")
   mem_list <- lapply(x$memory, function(m) paste(round(m, 2), "GB"))
   mem_df <- as.data.frame(t(mem_list))
@@ -411,7 +289,7 @@ print.ors_constructor_settings <- function(x, ...) {
 
 
 #' @export
-print.ors_constructor_status <- function(x, ...) {
+print.ors_instance_status <- function(x, ...) {
   gln <- c(
     "Docker running",
     "Image exists",
@@ -435,7 +313,7 @@ print.ors_constructor_status <- function(x, ...) {
 
 #' @export
 print.ors_compose <- function(x, ...) {
-  cat(jsonlite::toJSON(unclass(x), pretty = TRUE, auto_unbox = TRUE), "\n")
+  cat(yaml::as.yaml(x, indent.mapping.sequence = TRUE), "\n")
   invisible(x)
 }
 

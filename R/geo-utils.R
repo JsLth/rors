@@ -4,23 +4,13 @@
 # Created on: 14.10.2021
 
 
-centroids_from_polygons <- function(polygons, as_sf = FALSE) {
+#' 
+centroids_from_polygons <- function(polygons) {
   crs <- sf::st_crs(polygons)
-  # Polygone zu projiziertem CRS transformieren
-  polygons_metric <- lonlat_to_utm(sf::st_geometry(polygons))
-  
-  # Zentroide der Polygone berechnen
-  centroids <- lonlat_to_utm(sf::st_centroid(polygons_metric), crs, reverse = TRUE)
-
-  if (as_sf) {
-    sf::st_geometry(polygons) <- centroids
-    polygons
-  } else {
-    centroid_coords <- as.data.frame(sf::st_coordinates(centroids))
-    sf::st_geometry(polygons) <- NULL
-    cbind(centroid_coords, polygons)
-  }
-
+  polygons_metric <- sf::st_geometry(polygons)
+  centroids <- sf::st_centroid(polygons_metric)
+  sf::st_geometry(polygons) <- centroids
+  polygons
 }
 
 
@@ -83,177 +73,39 @@ ors_polygon <- function(res) {
   })
 
   poly <- do.call(rbind, poly)
-  poly <- sf:::cbind.sf(res$features$properties, poly)
+  poly <- cbind(poly, res$features$properties[-3])
   poly <- sf::st_set_crs(poly, 4326)
   
+  poly <- tapply(
+    seq_len(nrow(poly)),
+    INDEX = as.factor(poly$group_index),
+    FUN = function(i) {
+      poly[i, ][seq(dim(poly[i, ])[1], 1), ]
+    },
+    simplify = FALSE
+  )
+  poly <- do.call(rbind.data.frame, poly)
+  row.names(poly) <- NULL
   poly
 }
 
 
 rasterize_isochrones <- function(isochrones, resolution) {
-  if (!requireNamespace("raster")) {
+  if (!requireNamespace("terra")) {
     cli::cli_abort("The {.pkg raster} package is needed to rasterize isochrones.")
   }
   
-  isochrones <- lonlat_to_utm(isochrones)
-  
-  base_raster <- raster::raster(
-    crs = sf::st_crs(isochrones)$proj4string,
-    ext = raster::extent(sf::st_bbox(isochrones)),
-    resolution = resolution
+  # Transform to projected CRS with global coverage (world mercator)
+  isochrones <- sf::st_transform(isochrones, 3395)
+  grid <- sf::st_make_grid(isochrones, n = resolution)
+  grid <- aggregate(isochrones, by = grid, FUN = min, join = sf::st_intersects)
+  grid <- terra::vect(grid)
+  rasterized <- terra::rasterize(
+    grid,
+    terra::rast(grid, resolution = resolution),
+    field = "value"
   )
-  
-  rasterized <- raster::rasterize(
-    x = isochrones,
-    y = base_raster,
-    field = "value",
-    fun = min,
-    background = NA
-  )
-  
-  rasterized <- raster::projectRaster(rasterized, crs = 4326, method = "ngb")
-  
-  max_value <- paste(">", max(isochrones$value))
-  values <- rev(unique(rasterized[]))
-  codes <- seq(1, length(values))
-  levels <- sapply(values, function(v) {
-    if (is.na(v)) {
-      max_value
-    } else {
-      paste("<=", v)
-    }
-  })
-  
-  rasterized <- raster::reclassify(rasterized, matrix(c(values, codes), ncol = 2))
-  rasterized <- raster::ratify(rasterized)
-  attributes(rasterized)$data@attributes <- list(data.frame(ID = levels))
-  
-  rasterized
-}
-
-
-reformat_vectordata <- function(data) {
-  as.data.frame(sf::st_coordinates(data))
-}
-
-
-swap_xy <- function(data) {
-  data[, c(2L, 1L)]
-}
-
-
-ctransform <- function(coordinates, from_crs, to_crs) {
-  # Convert coordinates to sf features
-  coordinates_sf <- sf::st_as_sf(coordinates, coords = c(1L, 2L), crs = from_crs)
-  
-  # Transform sf features and extract coordinates
-  transf_coordinates <- sf::st_transform(coordinates_sf, to_crs)
-  transf_coordinates <- as.data.frame(sf::st_coordinates(transf_coordinates))
-  transf_coordinates
-}
-
-
-parse_proj4string <- function(proj4_string) {
-  crs_props <- lapply(strsplit(proj4_string, " "), strsplit, split = "=")
-  crs_props <- do.call(data.frame, unlist(crs_props, recursive = FALSE))
-  
-  names(crs_props) <- as.character(unlist(crs_props[1, ]))
-  crs_props <- crs_props[-1L, ]
-  rownames(crs_props) <- NULL
-  crs_props
-}
-
-
-lonlat_to_utm <- function(
-  coordinates,
-  crs = NA,
-  reverse = FALSE,
-  zone = NULL
-) {
-  sf_check <- is.sf(coordinates)
-  if (!reverse) {
-    if (!sf_check) {
-      if (is.na(crs)) {
-        cli::cli_abort("A valid CRS must be passed.")
-      } 
-      coordinates <- sf::st_as_sf(coordinates, coords = c(1L, 2L), crs = crs)
-      crs <- sf::st_crs(crs)
-    } else {
-      crs <- sf::st_crs(coordinates)
-    }
-
-    if (!crs$IsGeographic) {
-      return(coordinates)
-    }
-
-    from_crs_props <- parse_proj4string(crs$proj4string)
-    if (is.null(zone)) {
-      get_zone <- function(longitudes) {
-        longitude_median <- stats::median(longitudes)
-        floor((longitude_median + 180L) / 6L) + 1L
-      }
-      zone <- get_zone(as.vector(sf::st_coordinates(coordinates)[, 1L]))
-    }
-    to_crs_wkt <- sf::st_crs(
-      sprintf(
-        "+proj=utm +zone=%s +datum=%s +units=m",
-        zone,
-        from_crs_props$`+datum`
-      )
-    )
-    if (!sf_check) {
-      transf_coordinates <- sf::st_transform(coordinates, to_crs_wkt)
-      transf_coordinates <- as.data.frame(sf::st_coordinates(transf_coordinates))
-      transf_coordinates <- list(coords = transf_coordinates, zone = zone)
-    } else {
-      transf_coordinates <- sf::st_transform(coordinates, to_crs_wkt)
-    }
-    transf_coordinates
-  } else {
-    if (sf_check) {
-      transf_coordinates <- sf::st_transform(coordinates, crs)
-    } else {
-      to_crs_props <- parse_proj4string(sf::st_crs(crs)$proj4string)
-      from_crs_wkt <- sf::st_crs(
-        sprintf(
-          "+proj=utm +zone=%s +datum=%s +units=m",
-          zone, to_crs_props$`+datum`
-        )
-      )
-      transf_coordinates <- ctransform(coordinates, from_crs_wkt, crs)
-    }
-    transf_coordinates
-  }
-}
-
-
-verify_crs <- function(data, crs, silent = FALSE) {
-  parsed_crs <- sf::st_crs(crs)
-
-  if (is.na(parsed_crs$wkt)) {
-    cli::cli_abort("CRS {.val {crs}} is invalid.")
-  }
-
-  wkt <- strsplit(unlist(parsed_crs$wkt), "\n")
-
-  crs_bbox <- sapply(wkt, function(x) grep("BBOX", x, value = TRUE))
-  crs_bbox <- gsub("\\s+|[A-Z]+|\\[|\\]+,", "", crs_bbox, perl = TRUE)
-  crs_bbox <- as.numeric(unlist(strsplit(crs_bbox, ",")))
-
-  if (!parsed_crs$IsGeographic) {
-    data <- ctransform(data, parsed_crs, 4326L)
-  }
-
-  x_ok <- sapply(data[, 1L], function(x, left, right) x >= left & x <= right, crs_bbox[2L], crs_bbox[4L])
-  y_ok <- sapply(data[, 2L], function(y, left, right) y >= left & y <= right, crs_bbox[1L], crs_bbox[3L])
-  crs_ok <- all(c(x_ok, y_ok))
-
-  if (!silent && !crs_ok) {
-    cli::cli_alert_warning(paste0("Coordinates either fall outside of the EPSG:",
-                                  "{.val {parsed_crs$epsg}} boundaries or ",
-                                  "don't match its coordinate notation."))
-  }
-  crs_ok
+  terra::project(rasterized, y = "epsg:4326", method = "near")
 }
 
 

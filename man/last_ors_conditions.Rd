@@ -7,10 +7,13 @@
 last_ors_conditions(last = 1L)
 }
 \arguments{
-\item{last}{Number of error lists that should be returned. \code{last = 2L},
+\item{last}{\code{[integer]}
+
+Number of error lists that should be returned. \code{last = 2L},
 for example, returns errors from the last two function calls.}
 }
 \description{
 Return the error and warning messages that ORS returned in the
-last \code{\link{ors_distances}} or \code{get_route_attributes} function calls.
+last \code{\link{ors_distances}} function call. Also works for
+\code{\link[ORSRouting]{ors_shortest_distances}}.
 }

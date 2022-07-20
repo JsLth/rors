@@ -12,7 +12,7 @@
 #' compose file. This is useful for running multiple instances at the same time.
 #' @inheritParams ors_extract
 #' 
-#' @returns Nested list of class \code{ors_constructor}.
+#' @returns Nested list of class \code{ors_instance}.
 #' 
 #' @family ORS setup functions
 #' 
@@ -59,7 +59,7 @@ ors_up <- function(instance, wait = TRUE, verbose = TRUE, distinct = TRUE) {
   }
   
   compose <- set_graphbuilding(NA, instance$compose$parsed)
-  instance[["status"]] <- get_ors_status(compose)
+  instance[["status"]] <- get_ors_status(compose, instance$paths)
   attr(instance, "built") <- TRUE
   
   assign("instance", instance, envir = ors_cache)
@@ -74,7 +74,7 @@ ors_up <- function(instance, wait = TRUE, verbose = TRUE, distinct = TRUE) {
 #' changed.
 #' @inheritParams ors_up
 #' 
-#' @returns Nested list of class \code{ors_constructor}.
+#' @returns Nested list of class \code{ors_instance}.
 #' 
 #' @family ORS setup functions
 #' 
@@ -87,9 +87,12 @@ ors_down <- function(instance) {
       msg_done = "Successfully took down container {instance$compose$name}."
     )
     
+    name <- instance$compose$parsed$services$`ors-app`$container_name
+
     cmd <- c(
-      "compose", "-f",
-      file.path(instance$paths$dir, "docker/docker-compose.yml"),
+      "compose",
+      "-p", name,
+      "-f", file.path(instance$paths$dir, "docker/docker-compose.yml"),
       "down"
     )
     
@@ -98,8 +101,7 @@ ors_down <- function(instance) {
       args = cmd,
       stdout = "|",
       stderr = "|",
-      error_on_status = FALSE,
-      echo_cmd = TRUE
+      error_on_status = FALSE
     )
 
     if (!identical(proc$status, 0L)) {
@@ -113,7 +115,7 @@ ors_down <- function(instance) {
     cli::cli_inform(c("i" = "Container is already down."))
   }
   
-  instance[["status"]] <- get_ors_status(compose)
+  instance[["status"]] <- get_ors_status(compose, instance$paths)
   attr(instance, "built") <- FALSE
   
   assign("instance", instance, envir = ors_cache)
@@ -128,7 +130,7 @@ ors_down <- function(instance) {
 #' OpenRouteService application, see \code{\link[ORSRouting]{ors_up}}.
 #' @inheritParams ors_up
 #' 
-#' @returns Nested list of class \code{ors_constructor}.
+#' @returns Nested list of class \code{ors_instance}.
 #' 
 #' @family ORS setup functions
 #' 
@@ -141,12 +143,6 @@ ors_start <- function(instance, wait = TRUE) {
   name <- instance$compose$parsed$services$`ors-app`$container_name
   
   if (isFALSE(instance$status[4])) {
-    if (isTRUE(wait)) {
-      cli::cli_progress_step("Starting container...",
-                             msg_done = "Container is now running.",
-                             msg_failed = "Cannot start container.")
-    }
-    
     cmd <- c("start", name)
     
     proc <- callr::run(
@@ -167,11 +163,11 @@ ors_start <- function(instance, wait = TRUE) {
       cli::cli_progress_done()
     }
   } else {
-    cli::cli_inform(c("i" = "Container {.val {name}} is already running."))
+    cli::cli_inform(c("i" = "Container {name} is already running."))
   }
   
   compose <- set_graphbuilding(NA, instance$compose$parsed)
-  instance[["status"]] <- get_ors_status(compose)
+  instance[["status"]] <- get_ors_status(compose, instance$paths)
   attr(instance, "built") <- TRUE
   
   assign("instance", instance, envir = ors_cache)
@@ -186,7 +182,7 @@ ors_start <- function(instance, wait = TRUE) {
 #' require rebuilding the graphs (i.e. everything except profiles).
 #' @inheritParams ors_up
 #' 
-#' @returns Nested list of class \code{ors_constructor}.
+#' @returns Nested list of class \code{ors_instance}.
 #' 
 #' @family ORS setup functions
 #' 
@@ -216,11 +212,11 @@ ors_stop <- function(instance) {
     
     cli::cli_progress_done()
   } else {
-    cli::cli_inform(c("i" = "Container {.val {name}} is already stopped."))
+    cli::cli_inform(c("i" = "Container {name} is already stopped."))
   }
   
   compose <- set_graphbuilding(NA, instance$compose$parsed)
-  instance[["status"]] <- get_ors_status(compose)
+  instance[["status"]] <- get_ors_status(compose, instance$paths)
 
   assign("instance", instance, envir = ors_cache)
   invisible(instance)
@@ -238,7 +234,7 @@ ors_stop <- function(instance) {
 #' \code{\link[ORSRouting]{ors_settings}} and \code{\link[ORSRouting]{ors_extract}}.
 #' @inheritParams ors_up
 #' 
-#' @returns Nested list of class \code{ors_constructor}.
+#' @returns Nested list of class \code{ors_instance}.
 #' 
 #' @family ORS setup functions
 #' 
@@ -272,7 +268,7 @@ ors_change <- function(instance, ..., wait = TRUE) {
 #' can be useful, if the image is to be used for other purposes.
 #' @inheritParams ors_up
 #' 
-#' @returns Empty list of class \code{ors_constructor}.
+#' @returns Empty list of class \code{ors_instance}.
 #' 
 #' @family ORS setup functions
 #' 
@@ -301,7 +297,7 @@ ors_remove <- function(instance, ignore_image = TRUE) {
                          msg_failed = "Cannot remove R6 class object.")
   
   rm(instance, envir = ors_cache)
-  structure(list(), class = "ors_constructor", alive = FALSE)
+  structure(list(), class = "ors_instance", alive = FALSE)
 }
 
 
@@ -417,21 +413,31 @@ image_exists <- function() {
 }
 
 
-container_built <- function(compose) {
+container_built <- function(compose, file) {
   container_name <- compose$services$`ors-app`$container_name
   
-  cmd <- c("ps", "-a", "--format", "\"{{.Names}}\"", "--filter",
-           sprintf("name=^/%s$", container_name))
+  cmd <- c(
+    "ps",
+    "--format",
+    "{{ .Label \"com.docker.compose.project.config_files\" }}",
+    "-a"
+  )
   
-  container_check <- callr::run(
-    command = "docker",
+  compose_files <- callr::run(
+    "docker",
     args = cmd,
     stdout = "|",
     stderr = NULL,
     error_on_status = FALSE
   )
+  
+  compose_files <- normalizePath(
+    unlist(strsplit(compose_files$stdout, "\n")),
+    "/",
+    mustWork = FALSE
+  )
 
-  grepl(container_name, container_check$stdout)
+  file %in% compose_files
 }
 
 
@@ -453,12 +459,16 @@ container_running <- function(compose) {
 }
 
 
-get_ors_status <- function(compose) {
+get_ors_status <- function(compose, file) {
+  compose <- compose$parsed
+  file <- file$compose_path
+  name <- compose$services$`ors-app`$container_name
+  
   if (docker <- docker_running()) {
     if (exists <- image_exists()) {
-      if (built <- container_built(compose)) {
+      if (built <- container_built(compose, file)) {
         if (running <- container_running(compose)) {
-          ready <- ors_ready()
+          ready <- ors_ready(id = name)
         } else ready <- FALSE
       } else ready <- running <- FALSE
     } else ready <- running <- built <- FALSE
@@ -526,7 +536,7 @@ notify_when_ready <- function(ors_name, interval, silently) {
 
   proc <- callr::r_bg(
     func = function(ors_name, ors_ready, watch_for_error) {
-      while(!ors_ready(force = TRUE)) {
+      while(!ors_ready(force = TRUE, id = ors_name)) {
         errors <- watch_for_error(ors_name)
         if (length(errors)) return(errors)
         Sys.sleep(1L)
@@ -539,11 +549,13 @@ notify_when_ready <- function(ors_name, interval, silently) {
   while (proc$is_alive()) {
     if (interactive()) cli::cli_progress_update()
   }
-  
+
   errors <- proc$get_result()
   if (!is.null(errors)) {
-    cli::cli_abort(c("The service ran into the following errors:",
-                     cli::cli_vec(errors, style = list(vec_sep = "\n"))))
+    cli::cli_abort(c(
+      "The service ran into the following errors:",
+      cli::cli_vec(errors, style = list(vec_sep = "\n"))
+    ))
   }
   
   if (interactive()) cli::cli_progress_done()
@@ -568,22 +580,24 @@ watch_for_error <- function(ors_name) {
     error_on_status = FALSE,
     encoding = "UTF-8"
   )$stdout
-  logs <- strsplit(logs, "\n")
-  
+  logs <- strsplit(logs, "\n")[[1]]
+
   errors <- grep(
-    "error | exception",
+    "error|exception",
     logs,
     value = TRUE,
     ignore.case = TRUE
   )
   error_msgs <- do.call(rbind, strsplit(unlist(errors), " - "))
   
+  if (is.null(error_msgs)) return()
+  
   # CLI logs are formatted differently and are therefore not split
   # by strsplit. If this is the case, just return the whole thing,
   # else return only the messages.
-  if (length(error_msgs) > 1L) {
+  if (ncol(error_msgs) > 1L) {
     error_msgs <- error_msgs[, 2L]
   }
   
-  error_msgs
+  unique(error_msgs)
 }

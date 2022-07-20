@@ -13,31 +13,41 @@ ors_matrix(
 )
 }
 \arguments{
-\item{source}{Source dataset that represents points that should be routed
-from. It can be passed as:
+\item{source}{\code{[various]}
+
+Source dataset that represents points that should be routed from. It can be
+passed as:
 \itemize{
+\item An \code{sf}/\code{sfc} object containing point geometries.
 \item Any two-dimensional base data structure, e.g. dataframes
 \item A nested list
-\item An \code{sf}/\code{sfc} object containing point geometries.
 }
 Each row represents a \code{lon/lat} coordinate pair. The coordinate
 reference system for the source data is expected to be \code{EPSG:4326}. If
 an object with \code{length > 2} is passed (not \code{sf}/\code{sfc}), it
 will be tried to heuristically determine the columns containing coordinates.}
 
-\item{destination}{Destination dataset that represents point coordinates
-that are to be routed to. The destination dataset follows the same format
-requirements as the source dataset.}
+\item{destination}{\code{[various]}
 
-\item{profile}{Character vector. Means of transport as supported by
-OpenRouteService. For a list of active profiles, call
-\code{\link{get_profiles}}. For details on all profiles, refer to the
+Destination dataset that represents point coordinates that are to be routed
+to. The destination dataset follows the same format requirements as the
+source dataset.}
+
+\item{profile}{\code{[character]}
+
+Character vector. Means of transport as supported by OpenRouteService. For a
+list of active profiles, call \code{\link{get_profiles}}. For details on all
+profiles, refer to the
 \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
-\item{units}{Distance unit for distance calculations (\code{"m"},
-\code{"km"} or \code{"mi"})}
+\item{units}{\code{[character]}
 
-\item{proximity_type}{Type of proximity that the calculations should be
+Distance unit for distance calculations (\code{"m"}, \code{"km"} or
+\code{"mi"})}
+
+\item{proximity_type}{\code{[character]}
+
+Type of proximity that the calculations should be
 based on. If \code{distance}, the shortest physical distance will be calculated
 and if \code{duration}, the shortest temporal distance will be calculated.}
 }

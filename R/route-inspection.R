@@ -1,25 +1,27 @@
-# Title     : Route inspection functions
-# Objective : Acquire more in-depth information about single routes
-# Created by: Jonas Lieth
-# Created on: 22.10.2021
-
-
 #' Route inspection
 #' @description Calls the directions service once to get a closer look at route
 #' characteristics and attributes.
 #'
 #' \code{inspect_route} returns all line segments of a route along with a set
 #' of additional attributes
-#' @param source Any kind of numeric vector containing \code{x/y} values of a
+#' @param source \code{[various]}
+#' 
+#' Any kind of numeric vector containing \code{x/y} values of a
 #' route segment that should be routed from. Refer to
 #' \code{\link{ors_distances}}.
-#' @param destination Any kind of numeric vector containing \code{x/y} values
+#' @param destination \code{[various]}
+#' 
+#' Any kind of numeric vector containing \code{x/y} values
 #' of a route segment that should be routed to.
-#' @param attributes List of attributes that summarize route characteristics.
+#' @param attributes \code{[list]}
+#' 
+#' List of attributes that summarize route characteristics.
 #' This includes two values: \code{avgspeed} states the average vehicle speed
 #' along the route, \code{detourfactor} indicates how much the route deviates
 #' from a straight line. If \code{TRUE}, both values are included.
-#' @param elevation If \code{TRUE}, elevation data is included in the output.
+#' @param elevation \code{[logical]}
+#' 
+#' If \code{TRUE}, elevation data is included in the output.
 #' @param extra_info List of keywords that add extra information regarding each
 #' linestring segment of the output. Possible values include:
 #' \itemize{
@@ -37,7 +39,9 @@
 #'  \item noise
 #' }
 #' If \code{TRUE}, all values are included.
-#' @param elev_as_z If \code{TRUE}, elevation data is stored as z-values in the
+#' @param elev_as_z \code{[logical]}
+#' 
+#' If \code{TRUE}, elevation data is stored as z-values in the
 #' geometry of the output \code{sf} dataframe. If \code{FALSE}, elevation is
 #' stored as a distinct dataframe column. Ignored if \code{elevation = FALSE}.
 #' @inheritParams ors_distances
@@ -91,40 +95,47 @@
 #'                            maximum_speed = 80)
 #' }
 
-inspect_route <- function(source,
-                          destination,
-                          profile = get_profiles(),
-                          attributes = list(),
-                          elevation = TRUE,
-                          extra_info = list(),
-                          ...,
-                          elev_as_z = FALSE) {
+inspect_route <- function(
+  source,
+  destination,
+  profile = get_profiles(),
+  attributes = list(),
+  elevation = TRUE,
+  extra_info = list(),
+  ...,
+  elev_as_z = FALSE
+) {
+  if (is.null(instance)) {
+    instance <- get_instance()
+    
+  }
+  iid <- get_id(instance = instance)
+  
   # Check if ORS is ready to use
-  ors_ready(force = TRUE, error = TRUE)
+  ors_ready(force = TRUE, error = TRUE, id = iid)
 
   # Bring input data into shape
   source <- format_input_data(source)
   destination <- format_input_data(destination)
 
-  verify_crs(source, crs = 4326L)
-  verify_crs(destination, crs = 4326L)
-
   profile <- match.arg(profile)
 
-  url <- get_ors_url()
+  url <- get_ors_url(id = iid)
 
   features <- list(attributes = attributes,
                    elevation = elevation,
                    extra_info = extra_info)
   options <- format_ors_options(append(features, list(...)), profile)
 
-  res <- query_ors_directions(source = source,
-                              destination = destination,
-                              profile = profile,
-                              units = "m",
-                              geometry = TRUE,
-                              options = options,
-                              url = url)
+  res <- query_ors_directions(
+    source = source,
+    destination = destination,
+    profile = profile,
+    units = "m",
+    geometry = TRUE,
+    options = options,
+    url = url
+  )
 
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
 
@@ -153,9 +164,11 @@ inspect_route <- function(source,
   ascent <- res$features$properties$segments[[1L]]$ascent
   descent <- res$features$properties$segments[[1L]]$descent
 
-  extra_info <- vapply(options$extra_info,
-                       function(x) format_extra_info(res, x),
-                       data.frame(1L))
+  extra_info <- vapply(
+    options$extra_info,
+    function(x) format_extra_info(res, x),
+    data.frame(1L)
+  )
 
   elements <- list(
     names,
@@ -197,34 +210,36 @@ inspect_route <- function(source,
 #' route_summary <- summarize_route(sample_source, sample_dest, profile)
 #' }
 
-summarize_route <- function(source,
-                            destination,
-                            profile = get_profiles(),
-                            ...) {
+summarize_route <- function(source, destination, profile = get_profiles(), ...) {
+  if (is.null(instance)) {
+    instance <- get_instance()
+    
+  }
+  iid <- get_id(instance = instance)
+  
   # Check if ORS is ready to use
-  ors_ready(force = TRUE, error = TRUE)
+  ors_ready(force = TRUE, error = TRUE, id = iid)
 
   # Bring input data into shape
   source <- format_input_data(source)
   destination <- format_input_data(destination)
 
-  verify_crs(source, crs = 4326L)
-  verify_crs(destination, crs = 4326L)
-
   profile <- match.arg(profile)
 
-  url <- get_ors_url()
+  url <- get_ors_url(id = iid)
 
   features <- list(attributes = TRUE, elevation = TRUE, extra_info = TRUE)
   options <- format_ors_options(append(features, list(...)), profile)
 
-  res <- query_ors_directions(source = source,
-                              destination = destination,
-                              profile = profile,
-                              units = "m",
-                              geometry = TRUE,
-                              options = options,
-                              url = url)
+  res <- query_ors_directions(
+    source = source,
+    destination = destination,
+    profile = profile,
+    units = "m",
+    geometry = TRUE,
+    options = options,
+    url = url
+  )
 
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = FALSE)
 
@@ -260,9 +275,7 @@ summarize_route <- function(source,
 
   # Append summary tables and set units
   elev_speeds <- list(elevation = elevation_summary, avgspeed = speeds_summary)
-  summaries <- append(summaries,
-                      elev_speeds,
-                      after = 0L)
+  summaries <- append(summaries, elev_speeds, after = 0L)
 
   if (requireNamespace("units")) {
     summaries <- lapply(summaries, function(s) {

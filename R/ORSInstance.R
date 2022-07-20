@@ -4,36 +4,37 @@
 # Created on: 29.07.2021
 
 
-options(
-  cli.spinner = "line",
-  cli.spinner_unicode = "line",
-  cli.spinner_ascii = "line",
-  cli.progress_bar_style = "fillsquares",
-  cli.progress_bar_style_unicode = "fillsquares",
-  cli.progress_bar_style_ascii = "fillsquares"
-)
+#options(
+#  cli.spinner = "line",
+#  cli.spinner_unicode = "line",
+#  cli.spinner_ascii = "line",
+#  cli.progress_bar_style = "fillsquares",
+#  cli.progress_bar_style_unicode = "fillsquares",
+#  cli.progress_bar_style_ascii = "fillsquares"
+#)
 
 
 #' OpenRouteService backend control panel
 #' @description R6 class that acts as a setup wizard and control panel for the
 #' OpenRouteService backend service. The class facilitates the setup of the
 #' Docker container and allows making changes to the setup from within R.
+#' 
+#' This R6 class is deprecated in favor of \code{\link[ORSRouting]{ors_instance}}.
 #'
 #' @details The purpose of this class is to facilitate the OpenRouteService
 #' installation process. Alternatively, you can follow the official
 #' instructions from the \href{https://giscience.github.io/openrouteservice/installation/Advanced-Docker-Setup.html}{OpenRouteService documentation}.
-#' The developer team recently extended the installation guide considerably.
 #'
-#' The class has four sub classes. \code{\link{ORSExtract}} manages the
+#' The class has four sub classes. \code{ORSExtract} manages the
 #' OpenRouteService extract and is able to download `.pbf` files from different
-#' sources using the `osmextract` package. \code{\link{ORSConfig}} controls the
+#' sources using the `osmextract` package. \code{ORSConfig} controls the
 #' configuration file (`ors-config.json`) which is also used to set active
-#' profiles. \code{\link{ORSSetupSettings}} can be used to make changes to the
+#' profiles. \code{ORSSetupSettings} can be used to make changes to the
 #' Docker setup, e.g. to allocate RAM, assign extracts or change the local
-#' server access. \code{\link{ORSDockerInterface}} provides a basic interface
+#' server access. \code{ORSDockerInterface} provides a basic interface
 #' to Docker commands and can be used to check the status of the image,
-#' container and service. The \code{\link{ORSSetupSettings}} should be set up
-#' after \code{\link{ORSExtract}} and \code{\link{ORSConfig}} as the Docker setup
+#' container and service. The \code{ORSSetupSettings} should be set up
+#' after \code{ORSExtract} and \code{ORSConfig} as the Docker setup
 #' needs information on the extract and the number of profiles to assign the
 #' extract and estimate the required RAM to be allocated.
 #'
@@ -42,8 +43,8 @@ options(
 #' to the setup need to be done using the subclasses.
 #'
 #' @family ORSSetup
-#'
-#' @export
+#' 
+#' @rdname ORSInstance-deprecated
 
 ORSInstance <- R6::R6Class(
   classname = "ORSInstance",
@@ -86,6 +87,8 @@ ORSInstance <- R6::R6Class(
     #' of problems can emerge ranging from broken ORSRouting functions to the
     #' necessity to force-delete the container.
     initialize = function(dir = "~") {
+      .Deprecated("ors_instance", package = "ORSRouting", old = "ORSInstance")
+      
       if (!docker_installed()) {
         cli::cli_abort("Docker does not seem to be installed.")
       }

@@ -4,10 +4,12 @@
 \alias{get_profiles}
 \title{Get active ORS profiles}
 \usage{
-get_profiles(force = TRUE)
+get_profiles(id = NULL, force = TRUE)
 }
 \arguments{
-\item{force}{If \code{TRUE}, function must query the local host. If
+\item{force}{\code{[logical]}
+
+If \code{TRUE}, function must query the local host. If
 \code{FALSE}, profiles will be read from the cache if possible.}
 }
 \description{

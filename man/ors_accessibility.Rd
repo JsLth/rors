@@ -7,7 +7,7 @@
 ors_accessibility(
   source,
   profile = get_profiles(force = TRUE),
-  range = c(300L, 200L),
+  range = c(200L, 300L),
   attributes = "area",
   intersections = FALSE,
   interval = 30L,
@@ -18,62 +18,97 @@ ors_accessibility(
   units = c("m", "km", "mi"),
   rasterize = FALSE,
   raster_resolution = c(100L, 100L),
+  instance = NULL,
   ...
 )
 }
 \arguments{
-\item{source}{Source dataset that represents points that should be routed
-from. It can be passed as:
+\item{source}{\code{[various]}
+
+Source dataset that represents points that should be routed from. It can be
+passed as:
 \itemize{
+\item An \code{sf}/\code{sfc} object containing point geometries.
 \item Any two-dimensional base data structure, e.g. dataframes
 \item A nested list
-\item An \code{sf}/\code{sfc} object containing point geometries.
 }
 Each row represents a \code{lon/lat} coordinate pair. The coordinate
 reference system for the source data is expected to be \code{EPSG:4326}. If
 an object with \code{length > 2} is passed (not \code{sf}/\code{sfc}), it
 will be tried to heuristically determine the columns containing coordinates.}
 
-\item{profile}{Character vector. Means of transport as supported by
-OpenRouteService. For a list of active profiles, call
-\code{\link{get_profiles}}. For details on all profiles, refer to the
+\item{profile}{\code{[character]}
+
+Character vector. Means of transport as supported by OpenRouteService. For a
+list of active profiles, call \code{\link{get_profiles}}. For details on all
+profiles, refer to the
 \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
-\item{range}{Character. If length-1, specifies the maximum range which
+\item{range}{\code{[character]}
+
+If length-1, specifies the maximum range which
 can be further broken down using the argument \code{interval}. If of length
 larger than 1, specifies manual breaks. The unit can be controlled using the
 argument \code{range_type}.}
 
-\item{attributes}{Additional features to be included the output. Only relevant
+\item{attributes}{\code{[character]}
+
+Additional features to be included the output. Only relevant
 if \code{rasterize = FALSE}. Can be one of \code{"area"}, \code{"reachfactor"}
 and \code{"total_pop"}.}
 
-\item{intersections}{Logical. Wether to return overlapping polygons.}
+\item{intersections}{\code{[logical]}
 
-\item{interval}{Integer. If \code{range} is a length-1 vector, defines the
-distance interval to break down the isochrones.}
+Wether to return overlapping polygons.}
 
-\item{location_type}{Character. Whether to route from (\code{"start"}) or to
-(\code{"destination"}) the points of the input data.}
+\item{interval}{\code{[integer]}
 
-\item{range_type}{Character. Type of distance that the calculations should be
-based on. \code{"time"} produces isochrones while \code{"distance"} produces
-isodistance polygons.}
+If \code{range} is a length-1 vector, defines the distance interval to break
+down the isochrones.}
 
-\item{smoothing}{Integer. Smoothing factor between 0 and 100 to be applied to
-the polygon geometries. For details, refer to the API playground.}
+\item{location_type}{\code{[character]}
 
-\item{area_units}{Character. Distance unit to use for the \code{area} attribute
-from \code{attributes}.}
+Whether to route from (\code{"start"}) or to (\code{"destination"}) the
+points of the input data.}
 
-\item{units}{Character. Units to be used for the \code{range} argument if
-\code{range_type = "distance"}.}
+\item{range_type}{\code{[character]}
 
-\item{rasterize}{Logical. If \code{FALSE}, simply returns the isochrone polygon
-geometries. If \code{TRUE}, converts isochrones to a raster.}
+Type of distance that the calculations should be based on. \code{"time"}
+produces isochrones while \code{"distance"} produces isodistance polygons.}
 
-\item{raster_resolution}{Numeric. Length-1 vector specifying the resolution of
-the output raster in meters (x, y) if \code{rasterize = TRUE}.}
+\item{smoothing}{\code{[integer]}
+
+Smoothing factor between 0 and 100 to be applied to the polygon geometries.
+For details, refer to the API playground.}
+
+\item{area_units}{\code{[character]}
+
+Distance unit to use for the \code{area} attribute from \code{attributes}.}
+
+\item{units}{\code{[character]}
+
+Units to be used for the \code{range} argument if \code{range_type = "distance"}.}
+
+\item{rasterize}{\code{[logical]}
+
+If \code{FALSE}, returns the isochrone polygon geometries. If \code{TRUE},
+aggregates polygon distance values onto a vector grid and then rasterizes
+the vector grid to a \code{SpatRaster} object. When rasterizing, only the
+distance value is preserved while all variables specified in \code{attributes}
+are discarded.}
+
+\item{raster_resolution}{\code{[numeric]}
+
+If \code{rasterize = TRUE}, specifies the resolution of the template raster.
+Corresponds to the number of cells in each direction (x, y). This argument is
+passed on to \code{\link[sf]{st_make_grid}} and \code{\link[terra]{rast}}.}
+
+\item{instance}{\code{[ors_instance]}
+
+Object of an OpenRouteService instance that should be used for route
+computations. It is recommended to use \code{ors_instance} to set an instance
+globally. This argument should only be used if activating an instance globally
+is not feasible.}
 
 \item{...}{Additional arguments passed to the ORS API. This includes all
 options that modify the routing results. For details on each argument,

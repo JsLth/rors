@@ -4,63 +4,50 @@
 \alias{get_osm_pois}
 \title{Extract points of interest from OpenStreetMap}
 \usage{
-get_osm_pois(
-  source,
-  ...,
-  radius = 5000L,
-  crs = NA,
-  trim = TRUE,
-  timeout = NULL,
-  as_sf = FALSE
-)
+get_osm_pois(source, ..., radius = 5000L, timeout = NULL, do_bind = FALSE)
 }
 \arguments{
-\item{source}{Either (1) a source dataset as used for
-\code{\link{ors_distances}}, (2) a character string of a place or
-region, (3) a spatial polygon as an sf or sfc object or (4) any bbox format
-supported by \code{\link[osmdata]{opq}}. The source argument is passed to
-osmdata to derive a bounding box for the Overpass query.}
+\item{source}{\code{[various]}
+
+Either (1) an \code{sf} object containing coordinates, (2) a
+character string of a place or region, (3) a spatial polygon as an sf or sfc
+object or (4) any bbox format supported by \code{\link[osmdata]{opq}}. The
+source argument is passed to osmdata to derive a bounding box for the
+Overpass query.}
 
 \item{...}{Can be used to pass key-value combinations of OSM map features.
-Map features are passed as arguments: key = value. For a list of features,
+Map features are passed as arguments: key = "value". For a list of features,
 refer to the
 \href{https://wiki.openstreetmap.org/wiki/Map_features}{documentation}.}
 
-\item{radius}{Numeric scalar. Specifies the buffer size if a source dataset
-is passed (see details).}
+\item{radius}{\code{[numeric]}
 
-\item{crs}{Any object that is recognized by \code{\link[sf]{st_crs}}.
-Specifies the coordinate notation of the source dataset, if it is provided
-(see details).}
+If \code{source} is an \code{sf} data.frame containing point geometries,
+specifies the buffer radius within which points of interest should be
+searched.}
 
-\item{trim}{If TRUE and if a spatial polygon is passed as \code{source}, trim
-the output data to the provided polygon shape.}
+\item{timeout}{\code{[integer]}
 
-\item{timeout}{Timeout limit for the Overpass query. See
-\code{\link[osmdata]{opq}}. If an sf object, a named vector, or a source
-dataset is passed, this value can be estimated. For any other format, the
-timeout is fixed to 100 seconds and may need adjustment for larger queries.}
+Timeout limit for the Overpass query. See \code{\link[osmdata]{opq}}. For
+larger queries, make sure to pass a high enough timeout.}
 
-\item{as_sf}{If TRUE, returns an sf dataframe containing point geometries.
-If FALSE, returns a dataframe containing coordinates.}
+\item{do_bind}{\code{[logical]}
+
+If \code{TRUE} and \code{source} is an \code{sf} data.frame containing point
+geometries, binds results to a single data.frame and returns only distinct
+points of interest. Otherwise, returns a list of data.frames.}
 }
 \value{
-If a source dataset is provided, either as sf or coordinate pairs, the
-function will generate bounding boxes from buffers generated around each
-coordinate pair in the dataframe. This results in a list of dataframes with
-each element corresponding one coordinate pair in the source dataset.
-If any other format is provided, the function will return a single dataframe
-containing all points of interest within the provided area.
+If \code{do_bind = FALSE} and \code{source} is an \code{sf} data.frame
+containing point, geometries, returns a list of \code{sf} data.frames that
+can be used for \code{\link[ORSRouting]{ors_shortest_distances}}. If
+\code{do_bind = TRUE} or if \code{source} is a polygon, a place name or a
+bounding box, returns a single \code{sf} data.frame with distinct points of
+interest.
 }
 \description{
 Makes Overpass requests to extract points of interest within
 a specified area or list of areas.
-}
-\details{
-The function tries to transform coordinate notations according to
-the passed CRS. For vectors or matrices, this does not currently work. So
-if you need to pass a vecorized bbox, make sure to pass geographic
-coordinates, preferably EPSG:4326.
 }
 \examples{
 \dontrun{

@@ -4,19 +4,42 @@
 \alias{ors_sample}
 \title{ORS dependent sampling}
 \usage{
-ors_sample(size, ..., as_sf = FALSE, force_new_extract = FALSE)
+ors_sample(
+  size,
+  ...,
+  force_new_extract = FALSE,
+  id = NULL,
+  poly = NULL,
+  verbose = TRUE
+)
 }
 \arguments{
-\item{size}{Number of points to be sampled}
+\item{size}{\code{[integer]}
+
+Number of points to be sampled.}
 
 \item{...}{Passed to \code{\link[sf]{st_sample}}, which passes it to
 \code{\link[base]{sample}} or \code{\link[spatstat.core]{rThomas}}.}
 
-\item{as_sf}{If \code{TRUE}, returns an \code{sfc} object, if \code{FALSE},
-returns a dataframe containing coordinates.}
+\item{force_new_extract}{\code{[logical]}
 
-\item{force_new_extract}{If \code{TRUE}, forces the cached extract path to
-be overwritten.}
+If \code{TRUE}, forces the cached extract path to be overwritten.}
+
+\item{id}{\code{[character]}
+
+ID or name of a container that contains the OSM extract file whose boundaries
+should be extracted. If \code{NULL}, the default, retrieves the ID from the
+current instance as set by \code{\link[ORSRouting]{ors_instance}}.}
+
+\item{poly}{\code{[sf/sfc]}
+
+Boundary polygon used to sample points. If \code{NULL}, the default, boundary
+polygons are extracted from the current instance as set by
+\code{\link[ORSRouting]{ors_instance}}.}
+
+\item{verbose}{\code{[logical]}
+
+If \code{TRUE}, prints a loading spinner.}
 }
 \value{
 \code{sfc} object containing the sampled \code{POINT} geometries
@@ -26,7 +49,7 @@ Sample point geometries within the boundaries of the running
 ORS extract.
 }
 \details{
-The function reads the extract file as an \code{sf} object.
+The function vectortranslates the extract file to an \code{sf} object.
 Depending on the file, this can take a while. The unionized boundaries are
 then cached making subsequent function calls a lot faster.
 }

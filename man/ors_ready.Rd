@@ -4,13 +4,20 @@
 \alias{ors_ready}
 \title{Is ORS usable?}
 \usage{
-ors_ready(force = TRUE, error = FALSE)
+ors_ready(id = NULL, force = TRUE, error = FALSE)
 }
 \arguments{
-\item{force}{If \code{TRUE}, function must query local host. If
-\code{FALSE}, the status will be read from the cache if possible.}
+\item{id}{\link{character}
+ID or name of a container or URL of a server that should be checked. If NULL,
+retrieves the ID from the current instance set by
+\code{\link[ORSRouting]{ors_instance}}}
 
-\item{error}{If \code{TRUE}, gives out an error if the service is not ready.}
+\item{force}{\link{logical}
+If \code{TRUE}, function must query server. If \code{FALSE}, the status will
+be read from the cache if possible.}
+
+\item{error}{\link{logical}
+If \code{TRUE}, gives out an error if the service is not ready.}
 }
 \description{
 States whether the ORS service is set up and ready to use.

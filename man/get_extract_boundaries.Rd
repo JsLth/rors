@@ -4,11 +4,23 @@
 \alias{get_extract_boundaries}
 \title{Extract boundaries}
 \usage{
-get_extract_boundaries(force = FALSE)
+get_extract_boundaries(id = NULL, force = FALSE, verbose = TRUE)
 }
 \arguments{
-\item{force}{If \code{TRUE}, function must query local host. If
+\item{id}{\code{[character]}
+
+ID or name of a container that contains the OSM extract file whose boundaries
+should be extracted. If \code{NULL}, the default, retrieves the ID from the
+current instance as set by \code{\link[ORSRouting]{ors_instance}}.}
+
+\item{force}{\code{[logical]}
+
+If \code{TRUE}, function must query local host. If
 \code{FALSE}, the status will be read from the cache if possible.}
+
+\item{verbose}{\code{[logical]}
+
+If \code{TRUE}, prints a loading spinner.}
 }
 \value{
 An \code{sfc} object of the currently mounted extract boundaries.

@@ -1,10 +1,3 @@
-# Title     : OSM extract control panel
-# Objective : Download, set or manage OSM extracts
-# Created by: Jonas Lieth
-# Created on: 17.08.2021
-
-
-
 #' OpenRouteService OSM extract control panel
 #' @description R6 class to download, set or manage an OpenStreetMap extract.
 #' \strong{This class is initialized from within \code{\link{ORSInstance}}}.
@@ -16,6 +9,7 @@
 #' in \code{\link{ORSSetupSettings}}.
 #'
 #' @family ORSSetup
+#' @noRd
 
 ORSExtract <- R6::R6Class(
   classname = "ORSExtract",
