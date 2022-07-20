@@ -1,46 +1,40 @@
-# Title     : Functions to acquire data regarding points of interest
-# Objective : Get points of interest in the proximity of a source dataset
-# Created by: Jonas Lieth
-# Created on: 18.06.2021
-
-
 #' Extract points of interest from OpenStreetMap
+#' 
 #' @description Makes Overpass requests to extract points of interest within
 #' a specified area or list of areas.
 #'
-#' @param source Either (1) a source dataset as used for
-#' \code{\link{ors_distances}}, (2) a character string of a place or
-#' region, (3) a spatial polygon as an sf or sfc object or (4) any bbox format
-#' supported by \code{\link[osmdata]{opq}}. The source argument is passed to
-#' osmdata to derive a bounding box for the Overpass query.
+#' @param source \code{[various]}
+#' 
+#' Either (1) an \code{sf} object containing coordinates, (2) a
+#' character string of a place or region, (3) a spatial polygon as an sf or sfc
+#' object or (4) any bbox format supported by \code{\link[osmdata]{opq}}. The
+#' source argument is passed to osmdata to derive a bounding box for the
+#' Overpass query.
 #' @param ... Can be used to pass key-value combinations of OSM map features.
-#' Map features are passed as arguments: key = value. For a list of features,
+#' Map features are passed as arguments: key = "value". For a list of features,
 #' refer to the
 #' \href{https://wiki.openstreetmap.org/wiki/Map_features}{documentation}.
-#' @param radius Numeric scalar. Specifies the buffer size if a source dataset
-#' is passed (see details).
-#' @param crs Any object that is recognized by \code{\link[sf]{st_crs}}.
-#' Specifies the coordinate notation of the source dataset, if it is provided
-#' (see details).
-#' @param trim If TRUE and if a spatial polygon is passed as `source`, trim
-#' the output data to the provided polygon shape.
-#' @param timeout Timeout limit for the Overpass query. See
-#' \code{\link[osmdata]{opq}}. If an sf object, a named vector, or a source
-#' dataset is passed, this value can be estimated. For any other format, the
-#' timeout is fixed to 100 seconds and may need adjustment for larger queries.
-#' @param as_sf If TRUE, returns an sf dataframe containing point geometries.
-#' If FALSE, returns a dataframe containing coordinates.
+#' @param radius \code{[numeric]}
+#' 
+#' If \code{source} is an \code{sf} data.frame containing point geometries,
+#' specifies the buffer radius within which points of interest should be
+#' searched.
+#' @param timeout \code{[integer]}
+#' 
+#' Timeout limit for the Overpass query. See \code{\link[osmdata]{opq}}. For
+#' larger queries, make sure to pass a high enough timeout.
+#' @param do_bind \code{[logical]}
+#' 
+#' If \code{TRUE} and \code{source} is an \code{sf} data.frame containing point
+#' geometries, binds results to a single data.frame and returns only distinct
+#' points of interest. Otherwise, returns a list of data.frames.
 #' @returns
-#' If a source dataset is provided, either as sf or coordinate pairs, the
-#' function will generate bounding boxes from buffers generated around each
-#' coordinate pair in the dataframe. This results in a list of dataframes with
-#' each element corresponding one coordinate pair in the source dataset.
-#' If any other format is provided, the function will return a single dataframe
-#' containing all points of interest within the provided area.
-#' @details The function tries to transform coordinate notations according to
-#' the passed CRS. For vectors or matrices, this does not currently work. So
-#' if you need to pass a vecorized bbox, make sure to pass geographic
-#' coordinates, preferably EPSG:4326.
+#' If \code{do_bind = FALSE} and \code{source} is an \code{sf} data.frame
+#' containing point, geometries, returns a list of \code{sf} data.frames that
+#' can be used for \code{\link[ORSRouting]{ors_shortest_distances}}. If
+#' \code{do_bind = TRUE} or if \code{source} is a polygon, a place name or a
+#' bounding box, returns a single \code{sf} data.frame with distinct points of
+#' interest.
 #'
 #' @export
 #'
@@ -63,93 +57,75 @@
 #' get_osm_pois(test_place, landuse = "allotments", timeout = 200, as_sf = TRUE)
 #' }
 
-get_osm_pois <- function(source,
-                         ...,
-                         radius = 5000L,
-                         crs = NA,
-                         trim = TRUE,
-                         timeout = NULL,
-                         as_sf = FALSE) {
+get_osm_pois <- function(source, ..., radius = 5000L, timeout = NULL, do_bind = FALSE) {
   if (!missing(...)) {
-    named_values <- list(...)
-    features <- paste(
-      shQuote(names(named_values), type = "cmd"),
-      shQuote(named_values, type = "cmd"),
+    feat <- list(...)
+    feat <- paste(
+      paste0('"', names(feat), '"'),
+      paste0('"', feat, '"'),
       sep = "="
     )
   } else {
-    cli::cli_abort("No map features passed.")
+    cli::cli_abort(c(
+      "No map features specified.",
+      "i" = "To provide map features, pass key-value combinations like so: {.code amenity = \"hospital\"}"
+    ))
   }
 
-  # Convert sf object to matrix
   if (is.sf(source)) {
-    if (sf::st_crs(source) != 4326L) source <- sf::st_transform(source, 4326L)
-    source_coords <- sf::st_coordinates(sf::st_geometry(source))[, c(1L, 2L)]
-    crs <- sf::st_crs(source)
-  } else {
-    source_coords <- source
-  }
-
-  # If multiple points are passed, generate buffers around them
-  if ((is.data.frame(source) && !is.sf(source)) ||
-      (is.sf(source) && sf::st_is(source, c("POINT", "MULTIPOINT")))) {
-    source_coords <- as.data.frame(source_coords)
-    if (missing(crs)) {
-      cli::cli_abort("CRS must be specified for non-sf objects.")
-    }
-    verify_crs(source_coords, crs)
-
-    # Generate a buffer for each point in the source dataset
-    bbox <- t(buffer_bbox_from_coordinates(source_coords, radius, crs))
-
-    # Estimate the timeout for point data
-    timeout <- round(10L + (nrow(source_coords) * radius / 1000L))
-  } else {
-    bbox <- list(source_coords)
-    if(is.sf(source) &&
-       sf::st_is(source, c("POLYGON", "MULTIPOLYGON"))) {
-      # Estimate the timeout for polygon data
-      area <- as.numeric(sf::st_area(source))
-      timeout <- round(sqrt(area / 1000000L))
-    } else if (!is.null(names(source))) {
-      # Estimate the timeout for named vector bboxes
-      area_pol <- sf::st_sf(sf::st_as_sfc(sf::st_bbox(source)), crs = crs)
-      area <- as.numeric(sf::st_area(area_pol))
-      timeout <- round(sqrt(area / 1000000L))
+    if (all(sf::st_is(source, c("POINT", "MULTIPOINT")))) {
+      if (sf::st_crs(source)$epsg != 4326L) source <- sf::st_transform(source, 4326L)
+      buffers <- sf::st_buffer(source, dist = radius)
+      bbox <- lapply(seq_len(nrow(buffers)), function(i) {
+        sf::st_bbox(buffers[i, ])
+      })
+      bbox <- do.call(rbind.data.frame, bbox)
+    } else if (all(sf::st_is(source, c("POLYGON", "MULTIPOLYGON")))) {
+      source <- sf::st_as_sf(source)
+      buffers <- source
+      bbox <- sf::st_bbox(source)
     } else {
-      # Fix the timeout for strings, matrices or unnamed vectors
-      if (is.null(timeout)) {
-        timeout <- 100L
-      }
+      geom_type <- unique(sf::st_geometry_type(data))
+      cli::cli_abort("Cannot derive boundaries from geometry type{?s} {.val geom_type}")
     }
+  } else if (is.character(source) || is.numeric(source)) {
+    bbox <- source
+    buffers <- NULL
+  } else {
+    cli::cli_abort("Input of class {.cls class(source)} is not a supported format.")
   }
 
   timeout <- min(timeout, 25L)
 
-  # Function that queries points of interest within a bbox
-  query.osm <- function(bbox) {
-    q <- osmdata::opq(bbox = bbox,timeout = timeout)
-    q <- osmdata::add_osm_features(q, features = features)
-    res <- osmdata::osmdata_sf(q)
+  query_osm <- function(bbox, buffer) {
+    if (is.character(bbox)) buffer <- osmdata::getbb(bbox, format_out = "sf_polygon")
+    q <- osmdata::opq(bbox = unlist(bbox, use.names = FALSE), timeout = timeout)
+    q <- osmdata::add_osm_features(q, features = feat)
+    res <- osmdata::osmdata_sf(q)$osm_polygons
     
-    if (isTRUE(trim) && is.sf(source) && sf::st_is(source, c("POLYGON", "MULTIPOLYGON"))) {
-      res <- osmdata::trim_osmdata(res, bbox)
+    if (nrow(res)) {
+      sf::st_geometry(res) <- sf::st_centroid(sf::st_geometry(res))
+      
+      if (!is.null(buffers)) {
+        within <- sf::st_within(res, buffer, sparse = FALSE)
+        poly <- res[within, ]
+      }
     }
     
-    if (nrow(res$osm_polygons)) {
-      centroids_from_polygons(res$osm_polygons, as_sf = as_sf)
-    }
+    res
   }
-  
-  # Apply `query.osm` to each point in the dataset
-  if (!is.null(dim(bbox))) {
-    pois <- apply(bbox, 2L, query.osm)
-  } else {
-    pois <- lapply(bbox, query.osm)
-  }
-  
 
-  if (length(pois) == 1L) pois <- pois[[1L]]
+  if (is.sf(source) && nrow(source) > 1) {
+    pois <- lapply(seq_len(nrow(source)), function(i) query_osm(bbox[i, ], buffers[i, ]))
+    if (isTRUE(do_bind)) {
+      pois <- rbind_list(pois)
+      pois <- pois[!duplicated(pois), ]
+    } else {
+      if (length(pois) == 1L) pois <- pois[[1L]]
+    }
+  } else {
+    pois <- query_osm(bbox, buffers)
+  }
 
   pois
 }
