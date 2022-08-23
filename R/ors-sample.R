@@ -5,22 +5,20 @@
 #' 
 #' If \code{TRUE}, function must query local host. If
 #' \code{FALSE}, the status will be read from the cache if possible.
-#' @param id \code{[character]}
-#' 
-#' ID or name of a container that contains the OSM extract file whose boundaries
-#' should be extracted. If \code{NULL}, the default, retrieves the ID from the
-#' current instance as set by \code{\link[ORSRouting]{ors_instance}}.
 #' @param verbose \code{[logical]}
 #' 
 #' If \code{TRUE}, prints a loading spinner.
 #' @returns An \code{sfc} object of the currently mounted extract boundaries.
+#' @inheritParams ors_distances
 #' 
 #' @export
-
-get_extract_boundaries <- function(id = NULL, force = FALSE, verbose = TRUE) {
+get_extract_boundaries <- function(instance = NULL, force = FALSE, verbose = TRUE) {
   if (is.null(ors_cache$extract_boundaries) || force) {
-    id <- get_id(id)
-    if (is_url(id)) {
+    if (is.null(instance)) {
+      instance <- get_instance()
+    }
+    
+    if (!is.null(instance$url)) {
       cli::cli_abort(c(
         "Cannot get extract from a server URL.",
         "i" = paste(
@@ -29,7 +27,11 @@ get_extract_boundaries <- function(id = NULL, force = FALSE, verbose = TRUE) {
         )
       ))
     }
-    extract_path <- identify_extract(force = force, id = id)
+
+    extract_path <- identify_extract(instance)
+    if (is.null(extract_path)) {
+      cli::cli_abort("Cannot identify current extract file. Pass it explicitly.")
+    }
     
     if (interactive() && verbose) {
       cli::cli_progress_step(
@@ -46,9 +48,11 @@ get_extract_boundaries <- function(id = NULL, force = FALSE, verbose = TRUE) {
           osmextract::oe_read(
             extract_path,
             layer = "multipolygons",
-            query = paste("SELECT geometry FROM \"multipolygons\"",
-                          "WHERE boundary = \"administrative\"",
-                          "AND admin_level IS NOT NULL"),
+            query = paste(
+              "SELECT geometry FROM \"multipolygons\"",
+              "WHERE boundary = \"administrative\"",
+              "AND admin_level IS NOT NULL"
+            ),
             quiet = TRUE
           )
         )
@@ -80,8 +84,7 @@ get_extract_boundaries <- function(id = NULL, force = FALSE, verbose = TRUE) {
 #' @param size \code{[integer]}
 #' 
 #' Number of points to be sampled.
-#' @param ... Passed to \code{\link[sf]{st_sample}}, which passes it to
-#' \code{\link[base]{sample}} or \code{\link[spatstat.core]{rThomas}}.
+#' @param ... Passed to \code{\link[sf]{st_sample}}.
 #' @param force_new_extract \code{[logical]}
 #' 
 #' If \code{TRUE}, forces the cached extract path to be overwritten.
@@ -89,7 +92,7 @@ get_extract_boundaries <- function(id = NULL, force = FALSE, verbose = TRUE) {
 #' 
 #' Boundary polygon used to sample points. If \code{NULL}, the default, boundary
 #' polygons are extracted from the current instance as set by
-#' \code{\link[ORSRouting]{ors_instance}}.
+#' \code{\link{ors_instance}}.
 #' @inheritParams get_extract_boundaries
 #' @returns \code{sfc} object containing the sampled \code{POINT} geometries
 #' @details The function vectortranslates the extract file to an \code{sf} object.
@@ -97,13 +100,20 @@ get_extract_boundaries <- function(id = NULL, force = FALSE, verbose = TRUE) {
 #' then cached making subsequent function calls a lot faster.
 #'
 #' @export
-
-ors_sample <- function(size, ..., force_new_extract = FALSE, id = NULL, poly = NULL, verbose = TRUE) {
+ors_sample <- function(
+  size,
+  ...,
+  force_new_extract = FALSE,
+  instance = NULL,
+  poly = NULL,
+  verbose = TRUE
+) {
   if (is.null(poly)) {
-    poly <- get_extract_boundaries(force_new_extract, id, verbose)
+    poly <- get_extract_boundaries(instance, force_new_extract, verbose)
   }
   
   sample <- sf::st_sample(poly, size, ...)
-
-  sf::st_sf(geometry = sample)
+  sample <- sf::st_sf(geometry = sample)
+  
+  sf::st_as_sf(tibble::as_tibble(sample))
 }

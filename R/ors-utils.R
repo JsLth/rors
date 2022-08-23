@@ -8,26 +8,22 @@
 ors_cache <- new.env(parent = emptyenv())
 
 
-clear_cache <- function() {
-  cache_items <- ls(ors_cache)
-  remove(list = cache_items, envir = ors_cache)
-}
-
-
+#' Checks if an instance is stored in ors_cache and, if so, returns it
+#' @noRd
 get_instance <- function() {
-  instance <- get("instance", envir = ors_cache)
-  
-  if (is.null(instance)) {
+  if (any_mounted()) {
+    get("instance", envir = ors_cache)
+  } else {
     cli::cli_abort(c(
       "No OpenRouteService instance initialized.",
       "i" = "You can initialize an instance using {.code ors_instance}"
     ))
   }
-  
-  instance
 }
 
 
+#' Returns the output of `docker inspect` as parsed json
+#' @noRd
 inspect_container <- function(id = NULL) {
   if (is.null(ors_cache$container_info)) {
     if (is.null(id)) {
@@ -64,19 +60,22 @@ inspect_container <- function(id = NULL) {
 }
 
 
+#' Returns the content of /ors/status as parsed json
+#' @noRd
 get_status <- function(id = NULL) {
   id <- get_id(id)
   ors_ready(id = id, force = TRUE, error = TRUE)
   url <- file.path(get_ors_url(id), "ors/v2/status", fsep = "/")
   if (!is_ors_api(url)) {
     url <- url
-    status_res <- httr::content(
-      httr::GET(url),
-      as = "text",
-      type = "application/json",
-      encoding = "UTF-8"
+    req <- httr2::request(url)
+    req <- httr2::req_method(req, "GET")
+    req <- httr2::req_error(
+      req,
+      is_error = \(res) if (res$status_code == 200L) FALSE else TRUE
     )
-    jsonlite::fromJSON(status_res, simplifyVector = TRUE, flatten = TRUE)
+    res <- httr2::req_perform(req, verbosity = 0L)
+    httr2::resp_body_json(res, simplifyVector = TRUE, flatten = TRUE)
   } else {
     list(profiles = list(
       "profile 1" = list(profiles = "driving-car"),
@@ -95,13 +94,14 @@ get_status <- function(id = NULL) {
 
 #' Get active ORS profiles
 #' @description Returns a list of active profiles from the cache or local host.
+#' Requires OpenRouteService to be running.
 #' @param force \code{[logical]}
 #' 
 #' If \code{TRUE}, function must query the local host. If
 #' \code{FALSE}, profiles will be read from the cache if possible.
+#' @inheritParams ors_ready
 #'
 #' @export
-
 get_profiles <- function(id = NULL, force = TRUE) {
   if (is.null(ors_cache$profiles) || isTRUE(force)) {
     id <- get_id(id)
@@ -122,9 +122,9 @@ get_profiles <- function(id = NULL, force = TRUE) {
 #' Is ORS usable?
 #' @description States whether the ORS service is set up and ready to use.
 #' @param id [character]
-#' ID or name of a container or URL of a server that should be checked. If NULL,
-#' retrieves the ID from the current instance set by
-#' \code{\link[ORSRouting]{ors_instance}}
+#' ID or name of a container or URL of a server that is to be checked. If
+#' \code{NULL}, retrieves the ID from the current instance set by
+#' \code{\link{ors_instance}}
 #' @param force [logical]
 #' If \code{TRUE}, function must query server. If \code{FALSE}, the status will
 #' be read from the cache if possible.
@@ -132,34 +132,31 @@ get_profiles <- function(id = NULL, force = TRUE) {
 #' If \code{TRUE}, gives out an error if the service is not ready.
 #'
 #' @export
-
 ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
   if (is.null(ors_cache$ors_ready) || isFALSE(ors_cache$ors_ready) || force) {
     id <- get_id(id)
     url <- file.path(get_ors_url(id), "ors/health", fsep = "/")
     
     if (!is_ors_api(url)) {
-      ready <- tryCatch(
-        expr = {
-          res <- httr::GET(url)
-          res <- jsonlite::fromJSON(
-            httr::content(
-              res,
-              as = "text",
-              type = "application/json",
-              encoding = "UTF-8"
-            )
-          )
-          stopifnot(r <- identical(res$status, "ready"))
-          r
-        },
-        error = function(e) {
-          if (isTRUE(error)) {
-            e <- gsub("Error", "Cause", as.character(e))
-            cli::cli_abort(c("ORS service is not reachable.", e))
-          } else FALSE
-        }
-      )
+        req <- httr2::request(url)
+        req <- httr2::req_method(req, "GET")
+        tryCatch(
+          expr = {
+            res <- httr2::req_perform(req)
+            res <- httr2::resp_body_json(res)
+            stopifnot(ready <- res$status == "ready")
+          },
+          error = function(e) {
+            if (error) {
+              cli::cli_abort(
+                "x" = "Cannot reach the OpenRouteService server.",
+                "i" = "Did you start your local instance?"
+              )
+            } else {
+              ready <<- FALSE
+            }
+          }
+        )
     } else ready <- TRUE
 
     assign("ors_ready", ready, envir = ors_cache)
@@ -170,72 +167,49 @@ ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
 }
 
 
-get_ors_dir <- function(force = TRUE, id = NULL) {
-  if (is.null(ors_cache$mdir) || isTRUE(force)) {
-    container_info <- inspect_container(id)
-    
-    mdir <- container_info$Config$Labels$com.docker.compose.project.working_dir
-    mdir <- unlist(strsplit(normalizePath(mdir, winslash = "/"), "/"))
-    mdir <- paste0(utils::head(mdir, -1L), collapse = "/")
+#' Searches for a (mention of) an OSM extract inside the ORS directory.
+#' First checks the compose file, then looks in the data path.
+#' @noRd
+identify_extract <- function(instance) {
+  # Read extract file location from compose file
+  compose <- instance$compose$parsed
+  mdir <- instance$paths$dir
+  extract_path <- compose$services$`ors-app`$build$args$OSM_FILE
 
-    if (!dir.exists(mdir)) {
-      cli::cli_abort("The current ORS container directory does not exist")
-    }
+  # Check if build argument is set
+  if (is.null(extract_path)) {
+    volume <- compose$services$`ors-app`$volumes[6L]
+    extract_path <- gsub("\\./", "", strsplit(volume, ":")[[1L]][1L])
 
-    assign("mdir", mdir, envir = ors_cache)
-    mdir
-  } else {
-    ors_cache$mdir
-  }
-}
+    # If not, check if change volume is set
+    if (is.null(extract_path) || is.na(extract_path)) {
+      data_dir <- file.path(mdir, "docker/data")
+      osm_file_occurences <- grepl("\\.pbf$|\\.osm.gz$|\\.osm\\.zip$|\\.osm$", dir(data_dir))
 
-
-identify_extract <- function(force = FALSE, id = NULL) {
-  if (is.null(ors_cache$extract_path) || force) {
-    # Save docker working directory
-    mdir <- get_ors_dir(id = id)
-
-    # Read extract file location from compose file
-    compose <- yaml::yaml.load_file(file.path(mdir, "docker/docker-compose.yml"))
-    extract_path <- compose$services$`ors-app`$build$args$OSM_FILE
-
-    # Check if build argument is set
-    if (is.null(extract_path)) {
-      volume <- compose$services$`ors-app`$volumes[6L]
-      extract_path <- gsub("\\./", "", strsplit(volume, ":")[[1L]][1L])
-
-      # If not, check if change volume is set
-      if (is.null(extract_path) || is.na(extract_path)) {
-        data_dir <- file.path(mdir, "docker/data")
-        osm_file_occurences <- grepl(".pbf|.osm.gz|.osm.zip|.osm", dir(data_dir))
-
-        # As a last resort, check if we can just pick it up from the data folder
-        if (sum(osm_file_occurences) == 1L) {
-          extract_path <- dir(data_dir)[osm_file_occurences]
-        } else {
-          cli::cli_abort(paste("Cannot identify current extract file.",
-                               "Pass it explicitly."))
-        }
+      # As a last resort, check if we can just pick it up from the data folder
+      if (sum(osm_file_occurences) == 1L) {
+        extract_path <- dir(data_dir)[osm_file_occurences]
       }
     }
-
+  }
+  
+  if (!is.null(extract_path)) {
     # Convert relative to absolute path
     extract_path <- normalizePath(
       file.path(
-        mdir,
+        instance$paths$dir,
         "docker/data",
         basename(extract_path)
       ), winslash = "/"
     )
-
-    assign("extract_path", extract_path, envir = ors_cache)
-    extract_path
-  } else {
-    ors_cache$extract_path
   }
+
+  extract_path
 }
 
 
+#' Returns the name of an ORS instance
+#' @noRd
 get_id <- function(id = NULL, instance = NULL) {
   if (is.null(id)) {
     if (is.null(instance)) {
@@ -253,6 +227,8 @@ get_id <- function(id = NULL, instance = NULL) {
 }
 
 
+#' Returns the host port of an ORS instance
+#' @noRd
 get_ors_port <- function(force = FALSE, id = NULL) {
   if (is.null(ors_cache$instance) || force == TRUE) {
     container_info <- inspect_container(id)
@@ -266,6 +242,8 @@ get_ors_port <- function(force = FALSE, id = NULL) {
 }
 
 
+#' Returns the URL of an ORS instance
+#' @noRd
 get_ors_url <- function(id = NULL) {
   if (!is_url(id)) {
     sprintf("http://localhost:%s/", get_ors_port(id = id))
@@ -273,14 +251,8 @@ get_ors_url <- function(id = NULL) {
 }
 
 
-get_ors_host <- function() {
-  url <- get_ors_url()
-  if (is_local(url)) {
-    regex_match(url, "([[:alnum:]\\.]+)(?:\\:[[:digit:]]+)")[[1]][2]
-  } else NULL
-}
-
-
+#' Checks if an instance is stored in ors_cache
+#' @noRd
 any_mounted <- function() {
   "instance" %in% names(ors_cache)
 }
@@ -298,19 +270,19 @@ corrupt_instance <- function(instance) {
 #' Return ORS conditions
 #' @description Return the error and warning messages that ORS returned in the
 #' last \code{\link{ors_distances}} function call. Also works for
-#' \code{\link[ORSRouting]{ors_shortest_distances}}.
+#' \code{\link{ors_shortest_distances}}.
 #' @param last \code{[integer]}
 #' 
 #' Number of error lists that should be returned. \code{last = 2L},
 #' for example, returns errors from the last two function calls.
 #'
 #' @export
-
 last_ors_conditions <- function(last = 1L) {
   conditions <- ors_cache$routing_conditions
 
   if (length(conditions)) {
-    cli_abortifnot(is.numeric(last))
+    assert_class(last, "numeric")
+    assert_value(last, min = 1L)
     last <- min(last, length(conditions))
 
     time <- names(conditions)
