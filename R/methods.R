@@ -320,6 +320,6 @@ print.ors_compose <- function(x, ...) {
 
 #' @export
 print.ors_config <- function(x, ...) {
-  str(x, max.level = 3, give.attr = FALSE)
+  utils::str(x, max.level = 3, give.attr = FALSE)
   invisible(x)
 }
