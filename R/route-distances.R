@@ -1,32 +1,24 @@
-# Title     : Routing distance functions
-# Objective : Compute the routing distances between two datasets
-# Created by: Jonas Lieth
-# Created on: 17.04.2021
-
-
 #' Routing distance computations
 #' @description
 #' \code{ors_distances} calculates the routing distance between two
-#' datasets using the Directions service from ORS.
+#' datasets using the Directions service from ORS. \code{ors_shortest_distances}
+#' is a wrapper around \code{ors_distances} that matches each point of the
+#' source dataset to a dataset of points of interest from the destination dataset
+#' and then extracts the route with the shortest distance.
 #' 
-#' @param source \code{[various]} 
+#' @param source \code{[sf]} 
 #' 
-#' Source dataset that represents points that should be routed from. It can be
-#' passed as:
-#' \itemize{
-#'  \item An \code{sf}/\code{sfc} object containing point geometries.
-#'  \item Any two-dimensional base data structure, e.g. dataframes
-#'  \item A nested list
-#' }
-#' Each row represents a \code{lon/lat} coordinate pair. The coordinate
-#' reference system for the source data is expected to be \code{EPSG:4326}. If
-#' an object with \code{length > 2} is passed (not \code{sf}/\code{sfc}), it
-#' will be tried to heuristically determine the columns containing coordinates.
-#' @param destination \code{[various]} 
+#' Source dataset containing point geometries that shall be routed from.
+#' @param destination \code{[sf]} 
 #' 
-#' Destination dataset that represents point coordinates that are to be routed
-#' to. The destination dataset follows the same format requirements as the
-#' source dataset.
+#' Destination dataset containing point geometries that shall be routed from.
+#' The destination dataset follows the same format requirements as the source
+#' dataset. For \code{ors_shortest_distances}, the destination argument can also
+#' be a dataframe containing a grouping column specified by the \code{group}
+#' argument that indicates which destinations refer to which row in the source
+#' dataset (as returned by \code{\link{get_closest_pois}}). This is
+#' recommended for large datasets because passing a plain sf dataframe routes
+#' from each source point to each point in the entire destination dataset.
 #' @param profile \code{[character]}
 #' 
 #' Character vector. Means of transport as supported by OpenRouteService. For a
@@ -45,9 +37,9 @@
 #' @param instance \code{[ors_instance]}
 #' 
 #' Object of an OpenRouteService instance that should be used for route
-#' computations. It is recommended to use \code{ors_instance} to set an instance
-#' globally. This argument should only be used if activating an instance globally
-#' is not feasible.
+#' computations. It is recommended to use \code{\link{ors_instance}}
+#' to set an instance globally. This argument should only be used if activating
+#' an instance globally is not feasible.
 #' @param ... Additional arguments passed to the ORS API. This includes all
 #' options that modify the routing results. For details on each argument,
 #' refer to the
@@ -90,6 +82,12 @@
 #' }
 #' @returns \code{ors_distances} returns a dataframe with distances and
 #' travel durations between source and destination.
+#' \code{ors_shortest_distances} returns a dataframe containing distances,
+#' travel durations and the index number of the point of interest with the
+#' shortest routing distance to the respective place of the source dataset.
+#' Depending on the \code{geometry} argument, these outputs can either be
+#' simple dataframes or objects of class \code{sf} containing the linestring
+#' geometries of the respective routes.
 #'
 #' @details
 #' For \code{ors_distances}, the profile argument supports only length-1
@@ -105,7 +103,7 @@
 #' indices of the routes in question. After the process has finished, they can
 #' be accessed by calling \code{\link{last_ors_conditions}}. Specific routes
 #' can be examined by inspecting its route attributes using
-#' \code{\link{inspect_route}}.
+#' \code{\link{ors_inspect}}.
 #'
 #' @export
 #'
@@ -131,37 +129,58 @@
 #' route_lengths_df
 #'
 #' # Returns route geometries
-#' route_lengths_geom <- ors_distances(source_df,
-#'                                     dest_df,
-#'                                     profile = car,
-#'                                     geometry = TRUE)
+#' route_lengths_geom <- ors_distances(
+#'   source_df,
+#'   dest_df,
+#'   profile = car,
+#'   geometry = TRUE
+#' )
 #'
 #' # Returns routes in kilometers
-#' route_lengths_km <- ors_distances(source_df,
-#'                                   dest_df,
-#'                                   profile = bike,
-#'                                   units = "km")
+#' route_lengths_km <- ors_distances(
+#'   source_df,
+#'   dest_df,
+#'   profile = bike,
+#'   units = "km"
+#' )
 #'
 #' # Running with additional arguments
-#' route_lengths_opts <- ors_distances(source_df,
-#'                                     dest_df,
-#'                                     profile = car,
-#'                                     continue_straight = TRUE,
-#'                                     preference = "fastest")
+#' route_lengths_opts <- ors_distances(
+#'   source_df,
+#'   dest_df,
+#'   profile = car,
+#'   continue_straight = TRUE,
+#'   preference = "fastest"
+#' )
+#'                                     
+#' # Finding shortest routes from each point in sample_a to sample_b
+#' shortest_routes <- ors_shortest_distances(source_df, dest_df, units = "km")
+#' shortest_routes
+#'
+#' # Finding the shortest routes to the nearest hospitals
+#' pois <- get_osm_pois(sf::st_bbox(source_sf), amenity = "hospital")
+#'
+#' nearest_hospitals <- ors_shortest_distances(
+#'   source,
+#'   pois,
+#'   geometry = TRUE
+#' )
+#' nearest_hospitals
 #' }
-
 ors_distances <- function(
   source,
   destination,
-  profile = get_profiles()[1],
+  profile = get_profiles(),
   units = c("m", "km", "mi"),
   geometry = FALSE,
   instance = NULL,
   ...
 ) {
+  assert(geometry, class = "logical", len = rep(1, 2))
+  assert(profile, class = "character", len = c(1, 9))
+  
   if (is.null(instance)) {
     instance <- get_instance()
-    
   }
   iid <- get_id(instance = instance)
   
@@ -169,8 +188,8 @@ ors_distances <- function(
   ors_ready(force = FALSE, error = TRUE, id = iid)
 
   # Bring input data into shape
-  source <- format_input_data(source)
-  destination <- format_input_data(destination)
+  source <- format_input_data(source, to_coords = TRUE)
+  destination <- format_input_data(destination, to_coords = TRUE)
 
   # If input suggests one-to-many, replicate the one-element dataframe `nrow` times
   if (nrow(source) == 1) {
@@ -251,6 +270,12 @@ ors_distances <- function(
     units(route_df$duration) <- "s"
   }
 
+  if (is_sf(route_df)) {
+    route_df <- sf::st_as_sf(tibble::as_tibble(route_df))
+  } else {
+    route_df <- tibble::as_tibble(route_df)
+  }
+  
   structure(
     route_df,
     call = match.call(),
@@ -261,12 +286,13 @@ ors_distances <- function(
 
 
 #' Calculate shortest routes to nearby points of interest
-#' @description
-#' \code{ors_shortest_distances} is a wrapper around \code{ors_distances} that
-#' matches each point of the source dataset to a list of points of interest
-#' from the destination dataset and then extracts the route with the shortest
-#' distance.
-#'
+#' @param group \code{[character/numeric]}
+#' 
+#' Column name or index providing a grouping column that indicates which row
+#' in the destination dataset corresponds to which row in the source dataset
+#' (as in the output of \code{\link{get_closest_pois}}). Providing
+#' a grouping column can considerably reduce the processing load for larger
+#' datasets.
 #' @param proximity_type \code{[character]}
 #' 
 #' Type of proximity that the calculations should be
@@ -277,16 +303,6 @@ ors_distances <- function(
 #' with the shortest routing distance to the respective place of the source
 #' dataset.
 #'
-#' Depending on the \code{geometry} argument, these outputs can either be
-#' simple dataframes or objects of class \code{sf} containing the linestring
-#' geometries of the respective routes.
-#'
-#' @details
-#' For \code{ors_shortest_distances}, the destination argument can argument can
-#' also be a list of accordingly formatted datasets (as returned by
-#' \code{get_nearest_pois}). If a list is passed, each list element corresponds
-#' to one row in the source dataset. If a two-dimensional data structure is
-#' passed, each row in the source dataset feeds from the entire dataframe.
 #'
 #' @export
 #'
@@ -294,25 +310,15 @@ ors_distances <- function(
 #'
 #' @examples
 #' \dontrun{
-#' # Finding shortest routes from each point in sample_a to sample_b
-#' shortest_routes <- ors_shortest_distances(source_df, dest_df, units = "km")
-#' shortest_routes
-#'
-#' # Finding the shortest routes to the nearest hospitals
-#' pois <- get_osm_pois(sf::st_bbox(source_sf), amenity = "hospital")
-#'
-#' nearest_hospitals <- ors_shortest_distances(source,
-#'                                          pois,
-#'                                          geometry = TRUE)
-#' nearest_hospitals
 #' }
-
 ors_shortest_distances <- function(
   source,
   destination,
+  group = NULL,
   profile = get_profiles(),
   units = c("m", "km", "mi"),
   geometry = FALSE,
+  instance = NULL,
   ...,
   proximity_type = c("duration", "distance")
 ) {
@@ -322,11 +328,10 @@ ors_shortest_distances <- function(
   
   proximity_type <- match.arg(proximity_type)
   source <- format_input_data(source)
+  destination <- format_input_data(destination)
 
-  if (inherits(destination, "list")) {
-    destination <- lapply(destination, format_input_data)
-  } else {
-    destination <- format_input_data(destination)
+  if (!is.null(group)) {
+    destination <- split(destination, f = destination$.group)
   }
 
   calculate_shortest_routes <- function(i) {
@@ -372,13 +377,15 @@ ors_shortest_distances <- function(
 
   # Create a nested iterator that iterates through every point number for each
   # profile
-  nested_iterator <- expand.grid(list(profile = profile,
-                                      point_number = seq_len(nrow(source))),
-                                 stringsAsFactors = FALSE)
+  nested_iterator <- expand.grid(
+    list(profile = profile, point_number = seq_len(nrow(source))),
+    stringsAsFactors = FALSE
+  )
 
-  cli::cli_progress_bar(name = "Calculating shortest routes...",
-                        total = nrow(source) * length(profile),
-                        type = "iterator")
+  cli::cli_progress_bar(
+    name = "Calculating shortest routes...",
+    total = nrow(source) * length(profile),
+  )
 
   # Find shortest route for each coordinate pair
   route_df <- lapply(seq_len(nrow(nested_iterator)), calculate_shortest_routes)
@@ -388,14 +395,10 @@ ors_shortest_distances <- function(
     do.call(rbind, route_df)
   )
 
-  cli::cli_progress_done()
-
-  output_cols <- c("point_number",
-                   "route_type",
-                   "poi_number",
-                   "distance",
-                   "duration",
-                   if (geometry) "geometry")
+  output_cols <- c(
+    "point_number", "route_type", "poi_number",
+    "distance", "duration", if (geometry) "geometry"
+  )
 
   colnames(route_df) <- output_cols
   rownames(route_df) <- NULL
@@ -404,14 +407,20 @@ ors_shortest_distances <- function(
     route_df <- sf::st_as_sf(route_df)
   }
   
-  has_cond <- sapply(tail(ors_cache$routing_conditions, nrow(source)), is.character)
+  has_cond <- sapply(
+    utils::tail(ors_cache$routing_conditions, nrow(source)),
+    is.character
+  )
   if (any(has_cond)) {
     tip <- cli::col_grey("For a list of conditions, call {.code last_ors_conditions(last = {nrow(source)})}.")
-    cond_indices <- cli::cli_vec(which(has_cond),
-                                 style = list(vec_sep = ", ", vec_last = ", "))
-    cli::cli_warn(c(paste("For the following input rows, one or multiple routes",
-                          "could not be taken into account: {cond_indices}"),
-                    tip))
+    cond_indices <- cli::cli_vec(
+      which(has_cond),
+      style = list(vec_sep = ", ", vec_last = ", ")
+    )
+    cli::cli_warn(c(paste(
+      "For the following input rows, one or multiple routes",
+      "could not be taken into account: {cond_indices}"
+    ), tip))
   }
   
   structure(
@@ -432,15 +441,16 @@ ors_shortest_distances <- function(
 #' returns a list containing two matrices accordingly.
 #' 
 #' @export
-
-ors_matrix <- function(source,
-                       destination,
-                       profile = get_profiles(),
-                       units = c("m", "km", "mi"),
-                       proximity_type = c("distance", "duration")) {
+ors_matrix <- function(
+  source,
+  destination,
+  profile = get_profiles(),
+  units = c("m", "km", "mi"),
+  proximity_type = c("distance", "duration"),
+  instance = NULL
+) {
   if (is.null(instance)) {
     instance <- get_instance()
-    
   }
   iid <- get_id(instance = instance)
   
