@@ -2,8 +2,9 @@
 #' 
 #' @description Add an extract to an existing OpenRouteService instance.
 #' 
-#' @param instance ORS instance object created by
-#' \code{\link[ORSRouting]{ors_instance}}.
+#' @param instance \code{[ors_instance]}
+#' 
+#' Object created by \code{\link{ors_instance}}.
 #' @param place Place description of desired OpenStreetMap extract. This
 #' argument is passed to \code{\link[osmextract]{oe_match}} which will try to
 #' match it with an existing extract from a provider specified in \code{provider}.
@@ -18,36 +19,46 @@
 #' 
 #' @export
 ors_extract <- function(instance, place = NULL, provider = "geofabrik", file = NULL, ...) {
-  if (is.null(place) && is.null(file)) {
-    extract_path <- get_current_extract()
-  }
-  
+  verbose <- attr(instance, "verbose")
+
   if (!is.null(file) && file.exists(file)) {
     extract_path <- file
   }
   
   if (!is.null(place)) {
-    extract_path <- get_extract(place, provider, instance$paths, ...)
+    extract_path <- get_extract(
+      place = place,
+      provider = provider,
+      paths = instance$paths,
+      verbose = verbose, 
+      ...
+    )
+  }
+  
+  if (is.null(file) && is.null(place)) {
+    extract_path <- NULL
   }
 
-  graphs_dir <- file.path(instance$paths$dir, "docker/graphs")
-  relative_extract_path <- relativePath(extract_path, file.path(instance$paths$dir, "docker"))
-  if (length(dir(graphs_dir))) {
-    compose <- set_graphbuilding("change", instance$compose$parsed, relative_extract_path)
-  } else {
-    compose <- set_graphbuilding("build", instance$compose$parsed, relative_extract_path)
+  if (!is.null(extract_path)) {
+    graphs_dir <- file.path(instance$paths$dir, "docker/graphs")
+    relative_extract_path <- relativePath(extract_path, file.path(instance$paths$dir, "docker"))
+    if (length(dir(graphs_dir))) {
+      compose <- set_graphbuilding("change", instance$compose$parsed, relative_extract_path)
+    } else {
+      compose <- set_graphbuilding("build", instance$compose$parsed, relative_extract_path)
+    }
+    write_dockercompose(compose, instance$paths$dir)
+    instance[["compose"]] <- NULL
   }
-  write_dockercompose(compose, instance$paths$dir)
-  instance[["compose"]] <- NULL
 
-  instance <- .instance(instance, extract_path = extract_path)
+  instance <- .instance(instance, extract_path = extract_path, verbose = verbose)
   
   assign("instance", instance, envir = ors_cache)
   invisible(instance)
 }
 
 
-get_extract <- function(place, provider, paths, ...) {
+get_extract <- function(place, provider, paths, verbose, ...) {
   if (!requireNamespace("osmextract")) {
     cli::cli_abort("{.pkg osmextract} required to match extracts by name.")
   }
@@ -56,28 +67,32 @@ get_extract <- function(place, provider, paths, ...) {
   i <- 0L
   
   if (is.null(provider)) {
-    providers <- suppressMessages({
-      osmextract::oe_providers()$available_providers
-    })
+    providers <- osmextract::oe_providers(quiet = TRUE)$available_providers
   } else {
     providers <- provider
   }
   
   if (!interactive() && length(providers) > 1L) {
-    cli::cli_abort(paste("In batch mode, explicitly pass",
-                         "a single provider name."))
+    cli::cli_abort(paste(
+      "In batch mode, explicitly pass",
+      "a single provider name to {.fun ors_extract}."
+    ))
   }
   
-  if (length(providers) > 1) cli::cli_alert_info("Trying different extract providers...")
+  if (length(providers) > 1 && verbose) {
+    cli::cli_alert_info("Trying different extract providers...")
+  }
   
   # While there are providers left to try out, keep trying until
   # an extract provider is chosen
   while (ok && i < length(providers)) {
     i <- i + 1L
-    place_match <- osmextract::oe_match(place = place,
-                                        provider = providers[i],
-                                        quiet = TRUE,
-                                        ...)
+    place_match <- osmextract::oe_match(
+      place = place,
+      provider = providers[i],
+      quiet = TRUE,
+      ...
+    )
     
     file_name <- basename(place_match$url)
     file_size <- round(place_match$file_size / 1024L / 1024L)
@@ -113,10 +128,10 @@ get_extract <- function(place, provider, paths, ...) {
     cli::cli_alert_warning("All providers have been searched. Please download the extract manually.")
     return(invisible())
   }
-  
+
   # If a file with the same name already exists, skip the download
   file_occurences <- grepl(file_name, dir(data_dir))
-  if (sum(file_occurences) == 1L) {
+  if (sum(file_occurences) == 1L && verbose) {
     cli::cli_alert_info(
       "The extract already exists in {.path ~/docker/data}. Download will be skipped."
     )
@@ -125,13 +140,15 @@ get_extract <- function(place, provider, paths, ...) {
                   dir(data_dir)[file_occurences],
                   sep = "/")
     
-    cli::cli_text("Download path: {.file {relativePath(path, paths$dir, pretty = TRUE)}}")
+    if (verbose) {
+      cli::cli_text("Download path: {.file {relativePath(path, paths$dir, pretty = TRUE)}}")
+    }
     
     # If no file exists, remove all download a new one
   } else {
     path <- file.path(data_dir, paste0(providers[i], "_", file_name))
     
-    if (interactive()) {
+    if (interactive() && verbose) {
       rel_path <- relativePath(path, paths$dir, pretty = TRUE)
       cli::cli_progress_step(
         "Downloading OSM extract...",
@@ -153,18 +170,19 @@ get_extract <- function(place, provider, paths, ...) {
     )
     
     while(proc$is_alive()) {
-      if (interactive()) cli::cli_progress_update()
+      if (interactive() && verbose) cli::cli_progress_update()
     }
     
-    if (interactive()) cli::cli_progress_done()
+    if (interactive() && verbose) cli::cli_progress_done()
   }
   
   # If the size is over 6 GB in size, give out a warning
   size <- file.info(path)$size / 1024L / 1024L
   if (size >= 6000L) {
-    cli::cli_alert_warning(paste("The OSM extract is very large.",
-                                 "Make sure that you have enough",
-                                 "working memory available."))
+    cli::cli_alert_warning(paste(
+      "The OSM extract is very large. Make sure that you have enough",
+      "working memory available."
+    ))
   }
 
   invisible(path)
@@ -176,14 +194,7 @@ get_current_extract <- function(obj, compose, dir) {
     obj <- list(compose = list(parsed = compose), paths = list(dir = dir))
   }
 
-  build <- obj$compose$parsed$services$`ors-app`$build
-  if (is.null(build)) {
-    return()
-  }
-
-  current_extract <- build$args$OSM_FILE
-  current_extract <- gsub("./", "", current_extract, fixed = TRUE)
-  current_extract <- file.path(obj$paths$dir, current_extract)
+  current_extract <- identify_extract(obj)
   
   if (!file.exists(current_extract)) {
     pretty_path <- relativePath(current_extract, obj$paths$dir, pretty = TRUE)
@@ -198,19 +209,7 @@ get_current_extract <- function(obj, compose, dir) {
 
 
 validate_extract <- function(extract_path) {
-  if (!is.null(extract_path) && dir.exists(extract_path)) {
+  if (!is.null(extract_path) && file.exists(extract_path)) {
     extract_path
-  }
-}
-
-
-get_existing_extract <- function(ors_dir) {
-  data_dir <- file.path(ors_dir, "docker/data")
-  
-  files <- dir(data_dir)
-  i <- grepl("\\.pbf$|\\.osm.gz$|\\.osm\\.zip$|\\.osm$", files)
-
-  if (sum(i) == 1) {
-    file.path(data_dir, files[i])
   }
 }
