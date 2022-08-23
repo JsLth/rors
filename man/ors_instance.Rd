@@ -10,7 +10,6 @@ ors_instance(
   server = NULL,
   version = "master",
   overwrite = FALSE,
-  auto_deletion = TRUE,
   verbose = TRUE
 )
 }
@@ -34,7 +33,9 @@ Ignored if \code{server} is not \code{NULL}.}
 
 URL of a server that accepts OpenRouteService requests. This can be a URL
 to a local or a remote server. The official public API can be accessed using
-the shortcut \code{"public"}.}
+the shortcut \code{"api"}. Keep in mind that the public API is
+rate-restricted and requests are automatically throttled to 40 requests per
+minute. Routing functions \emph{will} be slow for larger datasets.}
 
 \item{version}{\code{[character]}
 
@@ -46,28 +47,20 @@ The OpenRouteService version to use. Can either be a version number (e.g.
 Whether to overwrite the current OpenRouteService directory
 if it exists.}
 
-\item{auto_deletion}{\code{[logical]}
-
-By default, OpenRouteService prevents all profiles from
-being built on first setup. If \code{FALSE}, disables this behavior. Otherwise,
-all profiles other than car have to be enabled after the first setup.
-Defaults to \code{TRUE}, because the OpenRouteService team recommends
-building graphs for only the car profile in the initial setup.}
-
 \item{verbose}{\code{[logical]}
 
 If \code{TRUE}, prints informative messages and spinners.}
 }
 \value{
 Nested list of class \code{ors_instance}. The object contains all
-information relevant for a complete server setup, namely, paths,
+information relevant for a complete server setup, namely paths,
 configurations, settings, and status helpers. The object auto-prints
 additional attributes, that describe the setup state:
 \describe{
 \item{active}{Whether an ORS instance is currently used inside the package
 environment.}
 \item{alive}{Whether an ORS object refers to an existing instance or if the
-instance was removed using \code{\link[ORSROuting]{ors_remove}}.}
+instance was removed using \code{\link{ors_remove}}.}
 \item{built}{Whether an initial setup of an ORS instance was done.}
 \item{type}{Whether an instance represents a remote server or a local
 server/directory}
@@ -78,30 +71,32 @@ Creates an OpenRouteService instance object. An instance
 represents either a local/remote server or a directory from which
 OpenRouteService can be set up. Running this function or any of the related
 functions listed below stores the instance in an internal environment object
-and enables functions like \code{\link[ORSRouting]{ors_distances}} to
+and enables functions like \code{\link{ors_distances}} to
 automatically detect the appropriate server information needed to make a
-successful request. Hence, this function should be always be run after
-loading \code{ORSRouting} so that the package functions know which server to
-query.
+successful request. Hence, this function should always be run after
+loading \code{ORSRouting} as a means of fixing an instance to the current
+session.
 
 While initializing an instance using an already running server requires no
-further action, this function excels at building a local OpenRouteService
-server from source. Setting up a local server effectively removes any
-server-side rate limits and allows you to conveniently use the package
-functions on much larger datasets.
-
-To set up a custom local server, the instance object can be modified and
-complemented using the following functions:
+further action, this function family excels at building a local
+OpenRouteService server from source. Setting up a local server effectively
+removes any server-side rate limits and allows you to conveniently use the
+package functions on much larger datasets. For setting up a local server,
+it is required to build and start a Docker container.
+To do this, \code{ors_instance}
+starts Docker (if necessary), downloads and unpacks the OpenRouteService
+source code and returns an object of class \code{ors_instance} that can be
+modified and complemented using the following functions:
 
 \itemize{
-\item Mount an extract with \code{\link[ORSRouting]{ors_extract}}
-\item Change the ORS configuration with \code{\link[ORSRouting]{ors_config}}
-\item Change container settings with \code{\link[ORSRouting]{ors_settings}}
-\item Build and start a container with \code{\link[ORSRouting]{ors_up}}
-\item Take a container down with \code{\link[ORSRouting]{ors_down}}
-\item Start an existing container with \code{\link[ORSRouting]{ors_start}}
-\item Stop a running container with \code{\link[ORSRouting]{ors_stop}}
-\item Remove OpenRouteService with \code{\link[ORSRouting]{ors_remove}}
+\item Mount an extract with \code{\link{ors_extract}}
+\item Change the ORS configuration with \code{\link{ors_config}}
+\item Change container settings with \code{\link{ors_settings}}
+\item Build and start a container with \code{\link{ors_up}}
+\item Take a container down with \code{\link{ors_down}}
+\item Start an existing container with \code{\link{ors_start}}
+\item Stop a running container with \code{\link{ors_stop}}
+\item Remove OpenRouteService with \code{\link{ors_remove}}
 }
 }
 \examples{
@@ -121,12 +116,11 @@ ors <- ors_instance(ors)
 Other ORS setup functions: 
 \code{\link{ors_change}()},
 \code{\link{ors_config}()},
-\code{\link{ors_down}()},
 \code{\link{ors_extract}()},
+\code{\link{ors_image}()},
 \code{\link{ors_remove}()},
 \code{\link{ors_settings}()},
 \code{\link{ors_start}()},
-\code{\link{ors_stop}()},
 \code{\link{ors_up}()}
 }
 \concept{ORS setup functions}

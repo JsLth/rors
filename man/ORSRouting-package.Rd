@@ -5,41 +5,17 @@
 \name{ORSRouting-package}
 \alias{ORSRouting}
 \alias{ORSRouting-package}
-\title{ORSRouting: Bulk routing distance computations using OpenRouteService}
+\title{ORSRouting: Batch routing distance computations using OpenRouteService}
 \description{
-Interface to custom OpenRouteService setups that allows computing the (shortest) routing distances of entire georeferenced datasets to certain points of interest and inspecting specific routes in greater detail. To process larger datasets and allow for unrestricted API requests, the package functions rely on a local Docker setup of the OpenRouteService backend that can be set up and controlled using an integrated R6 class.
+Flexible interface to (custom) OpenRouteService instances. The package enables qualitative and quantitative route computations, accessibility analyses and distance matrix calculations using route distances (i.e., routing through real streets). It is primarily aimed at processing moderately large datasets and thus supports the setup and usage of custom OpenRouteService instances. However, it is also possible to use the public API given a valid key.
 }
-\section{Main exports}{
+\section{Usage}{
 
-ORS setup and control panel:
-\itemize{
-\item \code{\link{ORSInstance}}
-}
-
-Points of interest data extraction and formatting:
-\itemize{
-\item \code{\link{get_osm_pois}}
-\item \code{\link{get_nearest_pois}}
-}
-
-Route distance computation:
-\itemize{
-\item \code{\link{ors_distances}}
-\item \code{\link{ors_shortest_distances}}
-}
-
-Route inspection and summary:
-\itemize{
-\item \code{\link{inspect_route}}
-\item \code{\link{summarize_route}}
-}
-
-Utility functions:
-\itemize{
-\item \code{\link{get_profiles}}
-\item \code{\link{ors_ready}}
-\item \code{\link{last_ors_conditions}}
-\item \code{\link{grant_docker_privileges}}
+To learn more about the usage of this package, look into the two
+vignettes for this package:
+\preformatted{
+vignette("ors-installation", package = "ORSRouting")
+vignette("ors-routing", package = "ORSROuting")
 }
 }
 

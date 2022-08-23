@@ -2,38 +2,43 @@
 % Please edit documentation in R/ors_docker.R
 \name{ors_start}
 \alias{ors_start}
-\title{Start an ORS container}
+\alias{ors_stop}
+\title{Start or stop an ORS container}
 \usage{
 ors_start(instance, wait = TRUE)
+
+ors_stop(instance)
 }
 \arguments{
-\item{instance}{ORS instance object created by
-\code{\link[ORSRouting]{ors_instance}}.}
+\item{instance}{\code{[ors_instance]}
 
-\item{wait}{Logical. If \code{TRUE}, the function will not stop running
-after the container is being started and will give out a notification as
-soon as the service is ready. If \code{FALSE}, the function will start
-the container and then stop. To check the server status, you can then
-call \code{\link{ors_ready}}.}
+Object created by \code{\link{ors_instance}}.}
+
+\item{wait}{\code{[logical]}
+
+If \code{TRUE}, the function will not stop running after the container is
+being started and will give out a notification as soon as the service is
+ready. If \code{FALSE}, the function will start the container and then stop.
+To check the server status, you can then call \code{\link{ors_ready}}.}
 }
 \value{
 Nested list of class \code{ors_instance}.
 }
 \description{
-Starts an OpenRouteService container. This can only be used to
-start existing containers. For building a container and setting up the
-OpenRouteService application, see \code{\link[ORSRouting]{ors_up}}.
+Starts or stops an existing ORS container. This can be used
+to control containers after starting Docker or when making changes to
+the configuration file. It \emph{cannot} be used to start the service from
+scratch. To do this, use \code{ors_up}.
 }
 \seealso{
 Other ORS setup functions: 
 \code{\link{ors_change}()},
 \code{\link{ors_config}()},
-\code{\link{ors_down}()},
 \code{\link{ors_extract}()},
+\code{\link{ors_image}()},
 \code{\link{ors_instance}()},
 \code{\link{ors_remove}()},
 \code{\link{ors_settings}()},
-\code{\link{ors_stop}()},
 \code{\link{ors_up}()}
 }
 \concept{ORS setup functions}

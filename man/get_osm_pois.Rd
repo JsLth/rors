@@ -40,7 +40,7 @@ points of interest. Otherwise, returns a list of data.frames.}
 \value{
 If \code{do_bind = FALSE} and \code{source} is an \code{sf} data.frame
 containing point, geometries, returns a list of \code{sf} data.frames that
-can be used for \code{\link[ORSRouting]{ors_shortest_distances}}. If
+can be used for \code{\link{ors_shortest_distances}}. If
 \code{do_bind = TRUE} or if \code{source} is a polygon, a place name or a
 bounding box, returns a single \code{sf} data.frame with distinct points of
 interest.
@@ -57,14 +57,14 @@ sample_a <- ors_sample(20)
 pois_source <- get_osm_pois(sample_a, amenity = "hospital", radius = 5000, crs = 4326)
 
 set.seed(123)
-test_sf <- ors_sample(20, as_sf = TRUE)
+test_sf <- ors_sample(20)
 test_poly <- sf::st_convex_hull(sf::st_union(test_sf))
 get_osm_pois(test_poly, amenity = "post_box", building = "residential", trim = FALSE)
 
 test_bbox <- as.numeric(sf::st_bbox(test_poly))
-get_osm_pois(test_bbox, amenity = "marketplace", as_sf = TRUE)
+get_osm_pois(test_bbox, amenity = "marketplace")
 
 test_place <- "Cologne"
-get_osm_pois(test_place, landuse = "allotments", timeout = 200, as_sf = TRUE)
+get_osm_pois(test_place, landuse = "allotments", timeout = 200)
 }
 }

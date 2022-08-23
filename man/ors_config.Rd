@@ -12,16 +12,19 @@ ors_config(
   matrix.maximum_search_radius = NULL,
   isochrones.maximum_intervals = NULL,
   isochrones.maximum_locations = NULL,
-  config = NULL
+  config = NULL,
+  interactive = FALSE
 )
 }
 \arguments{
-\item{instance}{ORS instance object created by
-\code{\link[ORSRouting]{ors_instance}}.}
+\item{instance}{\code{[ors_instance]}
+
+Object created by \code{\link{ors_instance}}.}
 
 \item{profiles}{List of characters specifying the active profiles of an
-instance. By default, can be one of the following: car, hgv, bike-regular,
-bike-mountain, bike-road, bike-electric, walking, hiking, wheelchair.}
+instance. By default, can be one of the following: \code{car}, \code{hgv},
+\code{bike-regular}, \code{bike-mountain}, \code{bike-road},
+\code{bike-electric}, \code{walking}, \code{hiking}, \code{wheelchair}.}
 
 \item{...}{Key-value pairs containing profile-specific routing options.
 The argument name is interpreted as the profile whose configuration should be
@@ -56,13 +59,12 @@ using one of the convenience arguments.
 \seealso{
 Other ORS setup functions: 
 \code{\link{ors_change}()},
-\code{\link{ors_down}()},
 \code{\link{ors_extract}()},
+\code{\link{ors_image}()},
 \code{\link{ors_instance}()},
 \code{\link{ors_remove}()},
 \code{\link{ors_settings}()},
 \code{\link{ors_start}()},
-\code{\link{ors_stop}()},
 \code{\link{ors_up}()}
 }
 \concept{ORS setup functions}

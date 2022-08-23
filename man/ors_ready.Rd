@@ -8,9 +8,9 @@ ors_ready(id = NULL, force = TRUE, error = FALSE)
 }
 \arguments{
 \item{id}{\link{character}
-ID or name of a container or URL of a server that should be checked. If NULL,
-retrieves the ID from the current instance set by
-\code{\link[ORSRouting]{ors_instance}}}
+ID or name of a container or URL of a server that is to be checked. If
+\code{NULL}, retrieves the ID from the current instance set by
+\code{\link{ors_instance}}}
 
 \item{force}{\link{logical}
 If \code{TRUE}, function must query server. If \code{FALSE}, the status will

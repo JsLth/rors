@@ -7,8 +7,9 @@
 ors_extract(instance, place = NULL, provider = "geofabrik", file = NULL, ...)
 }
 \arguments{
-\item{instance}{ORS instance object created by
-\code{\link[ORSRouting]{ors_instance}}.}
+\item{instance}{\code{[ors_instance]}
+
+Object created by \code{\link{ors_instance}}.}
 
 \item{place}{Place description of desired OpenStreetMap extract. This
 argument is passed to \code{\link[osmextract]{oe_match}} which will try to
@@ -31,12 +32,11 @@ Add an extract to an existing OpenRouteService instance.
 Other ORS setup functions: 
 \code{\link{ors_change}()},
 \code{\link{ors_config}()},
-\code{\link{ors_down}()},
+\code{\link{ors_image}()},
 \code{\link{ors_instance}()},
 \code{\link{ors_remove}()},
 \code{\link{ors_settings}()},
 \code{\link{ors_start}()},
-\code{\link{ors_stop}()},
 \code{\link{ors_up}()}
 }
 \concept{ORS setup functions}

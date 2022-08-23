@@ -4,14 +4,15 @@
 \alias{get_extract_boundaries}
 \title{Extract boundaries}
 \usage{
-get_extract_boundaries(id = NULL, force = FALSE, verbose = TRUE)
+get_extract_boundaries(instance = NULL, force = FALSE, verbose = TRUE)
 }
 \arguments{
-\item{id}{\code{[character]}
+\item{instance}{\code{[ors_instance]}
 
-ID or name of a container that contains the OSM extract file whose boundaries
-should be extracted. If \code{NULL}, the default, retrieves the ID from the
-current instance as set by \code{\link[ORSRouting]{ors_instance}}.}
+Object of an OpenRouteService instance that should be used for route
+computations. It is recommended to use \code{\link{ors_instance}}
+to set an instance globally. This argument should only be used if activating
+an instance globally is not feasible.}
 
 \item{force}{\code{[logical]}
 

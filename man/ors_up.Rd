@@ -2,40 +2,47 @@
 % Please edit documentation in R/ors_docker.R
 \name{ors_up}
 \alias{ors_up}
-\title{Start an ORS container}
+\alias{ors_down}
+\title{Build or take down an ORS container}
 \usage{
-ors_up(instance, wait = TRUE, verbose = TRUE, distinct = TRUE)
+ors_up(instance, wait = TRUE, ...)
+
+ors_down(instance)
 }
 \arguments{
-\item{instance}{ORS instance object created by
-\code{\link[ORSRouting]{ors_instance}}.}
+\item{instance}{\code{[ors_instance]}
 
-\item{wait}{Logical. If \code{TRUE}, the function will not stop running
-after the container is being started and will give out a notification as
-soon as the service is ready. If \code{FALSE}, the function will start
-the container and then stop. To check the server status, you can then
-call \code{\link{ors_ready}}.}
+Object created by \code{\link{ors_instance}}.}
 
-\item{distinct}{Logical. If \code{TRUE}, adds a project name flag which
-makes it possible to build multiple containers from the same image and
-compose file. This is useful for running multiple instances at the same time.}
+\item{wait}{\code{[logical]}
+
+If \code{TRUE}, the function will not stop running after the container is
+being started and will give out a notification as soon as the service is
+ready. If \code{FALSE}, the function will start the container and then stop.
+To check the server status, you can then call \code{\link{ors_ready}}.}
+
+\item{...}{\code{[character]}
+
+Flags to be attached to the \code{docker compose up} command.
+Notable mentions include \code{--force-recreate} and \code{--no-recreate}.}
 }
 \value{
 Nested list of class \code{ors_instance}.
 }
 \description{
-Build and start an OpenRouteService container.
+Build and start an OpenRouteService container or take it down.
+These functions are a means to initialize the service (\code{ors_up}) and to
+rebuild it, e.g., to rebuild routing graphs (\code{ors_down}).
 }
 \seealso{
 Other ORS setup functions: 
 \code{\link{ors_change}()},
 \code{\link{ors_config}()},
-\code{\link{ors_down}()},
 \code{\link{ors_extract}()},
+\code{\link{ors_image}()},
 \code{\link{ors_instance}()},
 \code{\link{ors_remove}()},
 \code{\link{ors_settings}()},
-\code{\link{ors_start}()},
-\code{\link{ors_stop}()}
+\code{\link{ors_start}()}
 }
 \concept{ORS setup functions}

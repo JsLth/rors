@@ -8,40 +8,49 @@ ors_settings(
   instance,
   name = NULL,
   ports = NULL,
-  memory = list(),
+  memory = NULL,
+  auto_deletion = FALSE,
   graph_building = NULL
 )
 }
 \arguments{
-\item{instance}{ORS instance object created by
-\code{\link[ORSRouting]{ors_instance}}.}
+\item{instance}{\code{[ors_instance]}
 
-\item{name}{Name of the OpenRouteService container.}
+Object created by \code{\link{ors_instance}}.}
 
-\item{ports}{Ports of the ORS container. Non-default ports can be
-specified by assigning a length-1 vector or a list of ports. The list of
-ports must contain 4 ports in the format
-\code{list(host1, docker1, host2, docker2)}. Since, most of the time,
-you will want to change only the first host port, passing a length-1
-vector will change the first host port. Passing \code{NULL} (either in a
-list or as a length-1 vector) is interpreted as "no change". Passing
-\code{NA} will assign a random port using the \code{\link{httpuv}}
-package.}
+\item{name}{\code{[character]}
 
-\item{memory}{List of initial and maximum memory values. Initial memory is
+Name of the OpenRouteService container.}
+
+\item{ports}{\code{[numeric/character]}
+
+Host port that the container should be running on. Passing \code{NULL}
+is interpreted as "no change". Passing \code{NA} will assign a random port
+using the \code{\link{httpuv}} package.}
+
+\item{memory}{\code{[character]}
+
+List of initial and maximum memory values. Initial memory is
 the memory that is allocated to the Docker container from the start.
 Maximum memory refers to the memory threshold that a Docker container cannot
-exceed. Only one of both values has to be passed using list names (either
-\code{$init} or \code{$max}). If only \code{init} has been passed, the
-maximum memory is set equal to the initial memory. If only \code{max} is
-passed, the initial value will be set to half this value.}
+exceed. If only a single value is passed, initial and maximum memory are
+assumed to be identical.}
 
-\item{graph_building}{Mode of graph building to be applied. Graphs need to
-be built for each profile and are required to route with a given profile.
-Possible values include \code{"build"}, \code{"change"} and \code{NA}.
-\code{"build"} is used when no graphs are built yet. \code{"change"} needs to
-be set before mounting a new extract file to an existing setup. \code{NA}
-disables graph building.}
+\item{auto_deletion}{\code{[logical]}
+
+By default, OpenRouteService prevents all profiles other than \code{"car"}
+from being built on first setup. If \code{FALSE}, disables this behavior.
+Otherwise, all profiles other than car have to be enabled after the first
+setup. Defaults to \code{TRUE}, because the OpenRouteService team recommends
+building graphs for only the car profile in the initial setup.}
+
+\item{graph_building}{\code{[character]}
+
+Mode of graph building to be applied. Graphs need to be built for each
+profile and are required to route with a given profile. Possible values
+include \code{"build"}, \code{"change"} and \code{NA}. \code{"build"} is used
+when no graphs are built yet. \code{"change"} needs to be set before mounting
+a new extract file to an existing setup. \code{NA} disables graph building.}
 }
 \value{
 Nested list of class \code{ors_instance}.
@@ -54,12 +63,11 @@ of an OpenRouteService instance by making changes to the docker-compose file.
 Other ORS setup functions: 
 \code{\link{ors_change}()},
 \code{\link{ors_config}()},
-\code{\link{ors_down}()},
 \code{\link{ors_extract}()},
+\code{\link{ors_image}()},
 \code{\link{ors_instance}()},
 \code{\link{ors_remove}()},
 \code{\link{ors_start}()},
-\code{\link{ors_stop}()},
 \code{\link{ors_up}()}
 }
 \concept{ORS setup functions}

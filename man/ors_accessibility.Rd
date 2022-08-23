@@ -23,19 +23,9 @@ ors_accessibility(
 )
 }
 \arguments{
-\item{source}{\code{[various]}
+\item{source}{\code{[sf]}
 
-Source dataset that represents points that should be routed from. It can be
-passed as:
-\itemize{
-\item An \code{sf}/\code{sfc} object containing point geometries.
-\item Any two-dimensional base data structure, e.g. dataframes
-\item A nested list
-}
-Each row represents a \code{lon/lat} coordinate pair. The coordinate
-reference system for the source data is expected to be \code{EPSG:4326}. If
-an object with \code{length > 2} is passed (not \code{sf}/\code{sfc}), it
-will be tried to heuristically determine the columns containing coordinates.}
+Source dataset containing point geometries that shall be routed from.}
 
 \item{profile}{\code{[character]}
 
@@ -106,9 +96,9 @@ passed on to \code{\link[sf]{st_make_grid}} and \code{\link[terra]{rast}}.}
 \item{instance}{\code{[ors_instance]}
 
 Object of an OpenRouteService instance that should be used for route
-computations. It is recommended to use \code{ors_instance} to set an instance
-globally. This argument should only be used if activating an instance globally
-is not feasible.}
+computations. It is recommended to use \code{\link{ors_instance}}
+to set an instance globally. This argument should only be used if activating
+an instance globally is not feasible.}
 
 \item{...}{Additional arguments passed to the ORS API. This includes all
 options that modify the routing results. For details on each argument,

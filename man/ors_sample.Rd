@@ -8,7 +8,7 @@ ors_sample(
   size,
   ...,
   force_new_extract = FALSE,
-  id = NULL,
+  instance = NULL,
   poly = NULL,
   verbose = TRUE
 )
@@ -18,24 +18,24 @@ ors_sample(
 
 Number of points to be sampled.}
 
-\item{...}{Passed to \code{\link[sf]{st_sample}}, which passes it to
-\code{\link[base]{sample}} or \code{\link[spatstat.core]{rThomas}}.}
+\item{...}{Passed to \code{\link[sf]{st_sample}}.}
 
 \item{force_new_extract}{\code{[logical]}
 
 If \code{TRUE}, forces the cached extract path to be overwritten.}
 
-\item{id}{\code{[character]}
+\item{instance}{\code{[ors_instance]}
 
-ID or name of a container that contains the OSM extract file whose boundaries
-should be extracted. If \code{NULL}, the default, retrieves the ID from the
-current instance as set by \code{\link[ORSRouting]{ors_instance}}.}
+Object of an OpenRouteService instance that should be used for route
+computations. It is recommended to use \code{\link{ors_instance}}
+to set an instance globally. This argument should only be used if activating
+an instance globally is not feasible.}
 
 \item{poly}{\code{[sf/sfc]}
 
 Boundary polygon used to sample points. If \code{NULL}, the default, boundary
 polygons are extracted from the current instance as set by
-\code{\link[ORSRouting]{ors_instance}}.}
+\code{\link{ors_instance}}.}
 
 \item{verbose}{\code{[logical]}
 

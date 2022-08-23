@@ -9,29 +9,25 @@ ors_matrix(
   destination,
   profile = get_profiles(),
   units = c("m", "km", "mi"),
-  proximity_type = c("distance", "duration")
+  proximity_type = c("distance", "duration"),
+  instance = NULL
 )
 }
 \arguments{
-\item{source}{\code{[various]}
+\item{source}{\code{[sf]}
 
-Source dataset that represents points that should be routed from. It can be
-passed as:
-\itemize{
-\item An \code{sf}/\code{sfc} object containing point geometries.
-\item Any two-dimensional base data structure, e.g. dataframes
-\item A nested list
-}
-Each row represents a \code{lon/lat} coordinate pair. The coordinate
-reference system for the source data is expected to be \code{EPSG:4326}. If
-an object with \code{length > 2} is passed (not \code{sf}/\code{sfc}), it
-will be tried to heuristically determine the columns containing coordinates.}
+Source dataset containing point geometries that shall be routed from.}
 
-\item{destination}{\code{[various]}
+\item{destination}{\code{[sf]}
 
-Destination dataset that represents point coordinates that are to be routed
-to. The destination dataset follows the same format requirements as the
-source dataset.}
+Destination dataset containing point geometries that shall be routed from.
+The destination dataset follows the same format requirements as the source
+dataset. For \code{ors_shortest_distances}, the destination argument can also
+be a dataframe containing a grouping column specified by the \code{group}
+argument that indicates which destinations refer to which row in the source
+dataset (as returned by \code{\link{get_closest_pois}}). This is
+recommended for large datasets because passing a plain sf dataframe routes
+from each source point to each point in the entire destination dataset.}
 
 \item{profile}{\code{[character]}
 
@@ -50,6 +46,13 @@ Distance unit for distance calculations (\code{"m"}, \code{"km"} or
 Type of proximity that the calculations should be
 based on. If \code{distance}, the shortest physical distance will be calculated
 and if \code{duration}, the shortest temporal distance will be calculated.}
+
+\item{instance}{\code{[ors_instance]}
+
+Object of an OpenRouteService instance that should be used for route
+computations. It is recommended to use \code{\link{ors_instance}}
+to set an instance globally. This argument should only be used if activating
+an instance globally is not feasible.}
 }
 \value{
 If \code{length(proximity_type) == 1}, returns a

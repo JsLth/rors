@@ -8,7 +8,7 @@
 ors_distances(
   source,
   destination,
-  profile = get_profiles()[1],
+  profile = get_profiles(),
   units = c("m", "km", "mi"),
   geometry = FALSE,
   instance = NULL,
@@ -18,33 +18,30 @@ ors_distances(
 ors_shortest_distances(
   source,
   destination,
+  group = NULL,
   profile = get_profiles(),
   units = c("m", "km", "mi"),
   geometry = FALSE,
+  instance = NULL,
   ...,
   proximity_type = c("duration", "distance")
 )
 }
 \arguments{
-\item{source}{\code{[various]}
+\item{source}{\code{[sf]}
 
-Source dataset that represents points that should be routed from. It can be
-passed as:
-\itemize{
-\item An \code{sf}/\code{sfc} object containing point geometries.
-\item Any two-dimensional base data structure, e.g. dataframes
-\item A nested list
-}
-Each row represents a \code{lon/lat} coordinate pair. The coordinate
-reference system for the source data is expected to be \code{EPSG:4326}. If
-an object with \code{length > 2} is passed (not \code{sf}/\code{sfc}), it
-will be tried to heuristically determine the columns containing coordinates.}
+Source dataset containing point geometries that shall be routed from.}
 
-\item{destination}{\code{[various]}
+\item{destination}{\code{[sf]}
 
-Destination dataset that represents point coordinates that are to be routed
-to. The destination dataset follows the same format requirements as the
-source dataset.}
+Destination dataset containing point geometries that shall be routed from.
+The destination dataset follows the same format requirements as the source
+dataset. For \code{ors_shortest_distances}, the destination argument can also
+be a dataframe containing a grouping column specified by the \code{group}
+argument that indicates which destinations refer to which row in the source
+dataset (as returned by \code{\link{get_closest_pois}}). This is
+recommended for large datasets because passing a plain sf dataframe routes
+from each source point to each point in the entire destination dataset.}
 
 \item{profile}{\code{[character]}
 
@@ -67,9 +64,9 @@ increase performance.}
 \item{instance}{\code{[ors_instance]}
 
 Object of an OpenRouteService instance that should be used for route
-computations. It is recommended to use \code{ors_instance} to set an instance
-globally. This argument should only be used if activating an instance globally
-is not feasible.}
+computations. It is recommended to use \code{\link{ors_instance}}
+to set an instance globally. This argument should only be used if activating
+an instance globally is not feasible.}
 
 \item{...}{Additional arguments passed to the ORS API. This includes all
 options that modify the routing results. For details on each argument,
@@ -112,6 +109,14 @@ in the ORS service configurations.}
 maximum speed.}
 }}
 
+\item{group}{\code{[character/numeric]}
+
+Column name or index providing a grouping column that indicates which row
+in the destination dataset corresponds to which row in the source dataset
+(as in the output of \code{\link{get_closest_pois}}). Providing
+a grouping column can considerably reduce the processing load for larger
+datasets.}
+
 \item{proximity_type}{\code{[character]}
 
 Type of proximity that the calculations should be
@@ -121,36 +126,30 @@ and if \code{duration}, the shortest temporal distance will be calculated.}
 \value{
 \code{ors_distances} returns a dataframe with distances and
 travel durations between source and destination.
+\code{ors_shortest_distances} returns a dataframe containing distances,
+travel durations and the index number of the point of interest with the
+shortest routing distance to the respective place of the source dataset.
+Depending on the \code{geometry} argument, these outputs can either be
+simple dataframes or objects of class \code{sf} containing the linestring
+geometries of the respective routes.
 
 \code{ors_shortest_distances} returns a dataframe containing
 distances, travel durations and the index number of the point of interest
 with the shortest routing distance to the respective place of the source
 dataset.
-
-Depending on the \code{geometry} argument, these outputs can either be
-simple dataframes or objects of class \code{sf} containing the linestring
-geometries of the respective routes.
 }
 \description{
 \code{ors_distances} calculates the routing distance between two
-datasets using the Directions service from ORS.
-
-\code{ors_shortest_distances} is a wrapper around \code{ors_distances} that
-matches each point of the source dataset to a list of points of interest
-from the destination dataset and then extracts the route with the shortest
-distance.
+datasets using the Directions service from ORS. \code{ors_shortest_distances}
+is a wrapper around \code{ors_distances} that matches each point of the
+source dataset to a dataset of points of interest from the destination dataset
+and then extracts the route with the shortest distance.
 }
 \details{
 For \code{ors_distances}, the profile argument supports only length-1
 vectors while \code{ors_shortest_distances} supports multiple profiles.
 \code{ors_shortest_distances} finds the shortest route for each source
 point and each profile, respectively.
-
-For \code{ors_shortest_distances}, the destination argument can argument can
-also be a list of accordingly formatted datasets (as returned by
-\code{get_nearest_pois}). If a list is passed, each list element corresponds
-to one row in the source dataset. If a two-dimensional data structure is
-passed, each row in the source dataset feeds from the entire dataframe.
 }
 \section{Error handling}{
 
@@ -161,7 +160,7 @@ process. They are saved to an environment and issue a warning containing the
 indices of the routes in question. After the process has finished, they can
 be accessed by calling \code{\link{last_ors_conditions}}. Specific routes
 can be examined by inspecting its route attributes using
-\code{\link{inspect_route}}.
+\code{\link{ors_inspect}}.
 }
 
 \examples{
@@ -186,25 +185,30 @@ route_lengths_df <- ors_distances(source_df, dest_df, profile = bike)
 route_lengths_df
 
 # Returns route geometries
-route_lengths_geom <- ors_distances(source_df,
-                                    dest_df,
-                                    profile = car,
-                                    geometry = TRUE)
+route_lengths_geom <- ors_distances(
+  source_df,
+  dest_df,
+  profile = car,
+  geometry = TRUE
+)
 
 # Returns routes in kilometers
-route_lengths_km <- ors_distances(source_df,
-                                  dest_df,
-                                  profile = bike,
-                                  units = "km")
+route_lengths_km <- ors_distances(
+  source_df,
+  dest_df,
+  profile = bike,
+  units = "km"
+)
 
 # Running with additional arguments
-route_lengths_opts <- ors_distances(source_df,
-                                    dest_df,
-                                    profile = car,
-                                    continue_straight = TRUE,
-                                    preference = "fastest")
-}
-\dontrun{
+route_lengths_opts <- ors_distances(
+  source_df,
+  dest_df,
+  profile = car,
+  continue_straight = TRUE,
+  preference = "fastest"
+)
+                                    
 # Finding shortest routes from each point in sample_a to sample_b
 shortest_routes <- ors_shortest_distances(source_df, dest_df, units = "km")
 shortest_routes
@@ -212,9 +216,13 @@ shortest_routes
 # Finding the shortest routes to the nearest hospitals
 pois <- get_osm_pois(sf::st_bbox(source_sf), amenity = "hospital")
 
-nearest_hospitals <- ors_shortest_distances(source,
-                                         pois,
-                                         geometry = TRUE)
+nearest_hospitals <- ors_shortest_distances(
+  source,
+  pois,
+  geometry = TRUE
+)
 nearest_hospitals
+}
+\dontrun{
 }
 }

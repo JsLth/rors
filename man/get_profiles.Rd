@@ -7,6 +7,11 @@
 get_profiles(id = NULL, force = TRUE)
 }
 \arguments{
+\item{id}{\link{character}
+ID or name of a container or URL of a server that is to be checked. If
+\code{NULL}, retrieves the ID from the current instance set by
+\code{\link{ors_instance}}}
+
 \item{force}{\code{[logical]}
 
 If \code{TRUE}, function must query the local host. If
@@ -14,4 +19,5 @@ If \code{TRUE}, function must query the local host. If
 }
 \description{
 Returns a list of active profiles from the cache or local host.
+Requires OpenRouteService to be running.
 }

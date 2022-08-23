@@ -13,7 +13,7 @@ and will not change group membership.}
 \description{
 Creates a docker group and adds the current user to it in order
 to enable docker commands from within R. Doing this, either manually or by
-using this function, is a requirement for using \code{\link{ORSInstance}}
+using this function, is a requirement for using \code{\link{ors_instance}}
 on Linux as a non-root user.
 }
 \details{
