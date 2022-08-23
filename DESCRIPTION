@@ -1,17 +1,18 @@
 Package: ORSRouting
 Type: Package
-Title: Bulk routing distance computations using OpenRouteService
-Version: 0.8.0
-Date: 2022-02-14
+Title: Batch routing distance computations using OpenRouteService
+Version: 0.9.0
+Date: 2022-08-23
 Authors@R: person("Lieth", "Jonas", email = "jonas.lieth@gesis.org",
                   role = c("aut", "cre"))
 Maintainer: Jonas Lieth <jonas.lieth@gesis.org>
-Description: Interface to custom OpenRouteService setups that allows computing
-    the (shortest) routing distances of entire georeferenced datasets to certain
-    points of interest and inspecting specific routes in greater detail. To
-    process larger datasets and allow for unrestricted API requests, the
-    package functions rely on a local Docker setup of the OpenRouteService
-    backend that can be set up and controlled using an integrated R6 class.
+Description: Flexible interface to (custom) OpenRouteService instances.
+    The package enables qualitative and quantitative route computations,
+    accessibility analyses and distance matrix calculations using route
+    distances (i.e., routing through real streets). It is primarily aimed at
+    processing moderately large datasets and thus supports the setup and usage
+    of custom OpenRouteService instances. However, it is also possible to use
+    the public API given a valid key.
 Encoding: UTF-8
 LazyData: true
 Depends:
@@ -19,24 +20,25 @@ Depends:
 Imports:
     utils,
     stats,
-    httr,
+    httr2 (>= 0.2.0),
     jsonlite,
     yaml,
-    R6,
     sf,
     osmextract (>= 0.2.0),
     cli (>= 3.0.0),
-    callr,
-    httpuv
+    callr (>= 3.5.0),
+    httpuv,
+    tibble
 Suggests:
     rmarkdown (>= 2.7),
     knitr (>= 1.31),
     testthat (>= 3.0.0),
     osmdata,
     units,
-    terra
+    terra,
+    ggplot2
 SystemRequirements: Docker Engine on Linux systems, Docker Desktop on Windows (>= 20.10.6)
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
