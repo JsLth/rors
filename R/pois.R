@@ -31,7 +31,7 @@
 #' @returns
 #' If \code{do_bind = FALSE} and \code{source} is an \code{sf} data.frame
 #' containing point, geometries, returns a list of \code{sf} data.frames that
-#' can be used for \code{\link[ORSRouting]{ors_shortest_distances}}. If
+#' can be used for \code{\link{ors_shortest_distances}}. If
 #' \code{do_bind = TRUE} or if \code{source} is a polygon, a place name or a
 #' bounding box, returns a single \code{sf} data.frame with distinct points of
 #' interest.
@@ -46,17 +46,16 @@
 #' pois_source <- get_osm_pois(sample_a, amenity = "hospital", radius = 5000, crs = 4326)
 #'
 #' set.seed(123)
-#' test_sf <- ors_sample(20, as_sf = TRUE)
+#' test_sf <- ors_sample(20)
 #' test_poly <- sf::st_convex_hull(sf::st_union(test_sf))
 #' get_osm_pois(test_poly, amenity = "post_box", building = "residential", trim = FALSE)
 #'
 #' test_bbox <- as.numeric(sf::st_bbox(test_poly))
-#' get_osm_pois(test_bbox, amenity = "marketplace", as_sf = TRUE)
+#' get_osm_pois(test_bbox, amenity = "marketplace")
 #'
 #' test_place <- "Cologne"
-#' get_osm_pois(test_place, landuse = "allotments", timeout = 200, as_sf = TRUE)
+#' get_osm_pois(test_place, landuse = "allotments", timeout = 200)
 #' }
-
 get_osm_pois <- function(source, ..., radius = 5000L, timeout = NULL, do_bind = FALSE) {
   if (!missing(...)) {
     feat <- list(...)
@@ -72,7 +71,7 @@ get_osm_pois <- function(source, ..., radius = 5000L, timeout = NULL, do_bind = 
     ))
   }
 
-  if (is.sf(source)) {
+  if (is_sf(source)) {
     if (all(sf::st_is(source, c("POINT", "MULTIPOINT")))) {
       if (sf::st_crs(source)$epsg != 4326L) source <- sf::st_transform(source, 4326L)
       buffers <- sf::st_buffer(source, dist = radius)
@@ -85,7 +84,7 @@ get_osm_pois <- function(source, ..., radius = 5000L, timeout = NULL, do_bind = 
       buffers <- source
       bbox <- sf::st_bbox(source)
     } else {
-      geom_type <- unique(sf::st_geometry_type(data))
+      geom_type <- unique(sf::st_geometry_type(source))
       cli::cli_abort("Cannot derive boundaries from geometry type{?s} {.val geom_type}")
     }
   } else if (is.character(source) || is.numeric(source)) {
@@ -101,21 +100,23 @@ get_osm_pois <- function(source, ..., radius = 5000L, timeout = NULL, do_bind = 
     if (is.character(bbox)) buffer <- osmdata::getbb(bbox, format_out = "sf_polygon")
     q <- osmdata::opq(bbox = unlist(bbox, use.names = FALSE), timeout = timeout)
     q <- osmdata::add_osm_features(q, features = feat)
-    res <- osmdata::osmdata_sf(q)$osm_polygons
+    res <- osmdata::osmdata_sf(q)
     
-    if (nrow(res)) {
-      sf::st_geometry(res) <- sf::st_centroid(sf::st_geometry(res))
+    if (nrow(res$osm_polygons)) {
+      sf::st_geometry(res$osm_polygons) <- sf::st_centroid(sf::st_geometry(res$osm_polygons))
       
       if (!is.null(buffers)) {
-        within <- sf::st_within(res, buffer, sparse = FALSE)
-        poly <- res[within, ]
+        within <- sf::st_within(res$osm_polygons, buffer, sparse = FALSE)
+        poly <- res$osm_polygons[within, ]
       }
     }
+    
+    res <- rbind_list(res[names(res) %in% c("osm_points", "osm_polygons")])
     
     res
   }
 
-  if (is.sf(source) && nrow(source) > 1) {
+  if (is_sf(source) && nrow(source) > 1) {
     pois <- lapply(seq_len(nrow(source)), function(i) query_osm(bbox[i, ], buffers[i, ]))
     if (isTRUE(do_bind)) {
       pois <- rbind_list(pois)
@@ -127,200 +128,145 @@ get_osm_pois <- function(source, ..., radius = 5000L, timeout = NULL, do_bind = 
     pois <- query_osm(bbox, buffers)
   }
 
-  pois
+  sf::st_as_sf(tibble::as_tibble(pois))
 }
 
 
-#' Find the nearest points of interest from a local dataset
-#' @description Returns points of interest in the proximity of the source
-#' dataset. Unlike \code{\link{get_osm_pois}}, this function requires a local
-#' dataset of points of interest.
+#' Group a POI dataset
+#' @description Groups a dataset containing points of interest based on their
+#' proximity to a source dataset. Proximity can be defined through physical
+#' distance (argument \code{n}) and/or a distance buffer (\code{radius}).
 #'
-#' @param source Source dataset that represents point coordinates that are to
-#' be routed from. The source dataset should be passed as a dataframe or plain
-#' nested list with each row representing a x/y or lon/lat coordinate pair.
-#' @param pois Dataset that represents a list of points of interest to be
-#' routed to for each coordinate pair in the source dataset. The POI dataset
-#' can either be passed as a dataframe or plain nested list with each row
-#' representing a x/y or lon/lat coordinate pair, or, alternatively, as a
-#' simple features object. If radius is not `NULL`, the POI dataset will be
-#' converted to an sf object if it is not already.
-#' @param number_of_points Integer scalar. Number of points to be returned.
-#' @param radius Numeric scalar. Specifies the buffer size to select points of
-#' interest by distance
-#' @param crs Any object that is recognized by \code{\link[sf]{st_crs}}.
-#' Specifies the coordinate notation of the source and pois dataset, if it they
-#' are provided as simple coordinates.
-#' @returns List of dataframes with each dataframe containing all points of
-#' interest in a given type of proximity to the respective source point.
+#' @param pois \code{[sf]}
+#' 
+#' Dataset that represents a list of points of interest to be routed to for each
+#' row in the source dataset
+#' @param n \code{[numeric]}
+#' 
+#' Maximum number of points of interest around each point in the source dataset
+#' that shall be returned. The actual number might be lower depending on the
+#' rows in the \code{pois} dataset and the remaining number of points if
+#' \code{radius} is not \code{NULL}. If \code{NULL}, \code{radius} must be
+#' provided.
+#' @param radius \code{[numeric]}
+#' 
+#' Maximum distance of a point of interest around each point in the source
+#' dataset. All returned points of interest lie within this distance to the
+#' source points. If \code{NULL}, \code{n} must be provided.
+#' @inheritParams ors_distances
+#' @returns Returns \code{pois} with an added \code{.groups} column that links
+#' each row to a row in the \code{source} dataset.
 #'
-#' @export
-#'
-#' @details The proximity can either be defined by the number of points to be selected, by a
-#' distance buffer or by both. If both measures are defined, the function will select points
-#' of interest within a certain radius first and will then select a given number of points
-#' within that radius. The proximity type can be controlled by either passing or not passing
-#' a value to `number_of_points` and `radius`.
 #' @examples
 #' \dontrun{
 #' sample <- ors_sample(20)
 #' pois <- get_osm_pois("Cologne", amenity = "hospital")
 #' 
-#' by_points <- get_nearest_pois(sample, pois, number_of_points = 5)
-#' by_buffer <- get_nearest_pois(sample, pois, radius = 5000)
-#' by_both <- get_nearest_pois(sample_pois, number_of_points = 5, radius = 5000)
+#' by_points <- get_closest_pois(sample, pois, n = 5)
+#' by_buffer <- get_closest_pois(sample, pois, radius = 5000)
+#' by_both <- get_closest_pois(sample_pois, n = 5, radius = 5000)
 #' }
-
-get_nearest_pois <- function(source,
-                             pois,
-                             number_of_points = NULL,
-                             radius = NULL,
-                             crs = NA) {
-  if (is.numeric(number_of_points)) {
+#' 
+#' @export
+get_closest_pois <- function(
+  source,
+  pois,
+  n = NULL,
+  radius = NULL
+) {
+  source <- format_input_data(source)
+  pois <- format_input_data(pois)
+  
+  if (!is.null(n) && n > nrow(pois)) {
+    cli::cli_warn(c(
+      "!" = "Argument {.var n} is greater than the number of rows in {.var pois}",
+      "i" = "{.var n} changed to {.code nrow(pois)}."
+    ))
+    n <- nrow(pois)
+  }
+  
+  if (is.numeric(n)) {
     if (is.null(radius)) {
       # A number of points, but no radius is given -> n.nearest.pois
-      n.nearest.pois(source, pois, number_of_points)
-    }
-
-    else if (is.numeric(radius)) {
-      # A number of points and a radius is given -> pois.within.radius and then
-      # n.nearest.pois
-      pois_within_radius <- pois.within.radius(source, pois, radius, crs)
-      n_pois_within_radius <- lapply(seq_along(pois_within_radius), function(x) {
-        p <- n.nearest.pois(source[x, ], pois_within_radius[[x]], number_of_points)
+      n_nearest_pois(source, pois, n)
+    } else if (is.numeric(radius)) {
+      # A number of points and a radius is given -> pois_within_radius and then
+      # n_nearest_pois
+      within_radius <- pois_within_radius(source, pois, radius)
+      n_within_radius <- lapply(within_radius$.group, function(i) {
+        n_nearest_pois(
+          source[i, ],
+          within_radius[which(within_radius$.group == i), ],
+          n = n,
+          group_index = i
+        )
       })
-      n_pois_within_radius
+      tibble::as_tibble(do.call(rbind.data.frame, n_within_radius))
+    } else {
+      cli::cli_abort(c(
+        "Radius must be either numeric or {.var NULL}.",
+        "Got {.cls {class(radius)}} instead."))
     }
-
-    else {
-      cli::cli_abort(c("Radius must be either numeric or {.var NULL}.",
-                       "Got {.cls {class(radius)}} instead."))
-    }
-  }
-
-  else if (is.null(number_of_points) && is.numeric(radius)) {
-    # No number of points, but a radius is given -> pois.within.radius
-    pois.within.radius(source, pois, radius, crs)
-  }
-
-  else {
-    cli::cli_abort("Either a radius, number of points, or both must be defined.")
+  } else if (is.null(n) && is.numeric(radius)) {
+    # No number of points, but a radius is given -> pois_within_radius
+    pois_within_radius(source, pois, radius)
+  } else {
+    cli::cli_abort("Either a radius, number of points, or both must be provided.")
   }
 }
 
 
-n.nearest.pois <- function(source, poi_coordinates, n) {
-  if(is.sf(poi_coordinates)) {
-    poi_coordinates <- reformat_vectordata(poi_coordinates)
-  }
-
-  if (is.sf(source)) {
-    source <- reformat_vectordata(source)
-  }
+#' Returns the n closest points of interest around each point in source
+#' 
+#' @noRd
+n_nearest_pois <- function(source, pois, n, group_index = NULL) {
+  # Remove former groupings
+  pois$.group <- NULL
   
-  select_lowest_distance <- function(number_index, matrix_index, dist_mat, sorted_dist_mat) {
-    if (number_index <= nrow(poi_coordinates)) {
-      # Selects the POI dataset index with the lowest distance to the
-      # respective source coordinate
-      index <- which(
-        dist_mat[[matrix_index]] == sorted_dist_mat[[matrix_index]][number_index]
+  select_lowest_distance <- function(ni, mi, dmat, smat) {
+    if (ni <= nrow(pois)) {
+      index <- which(dmat[mi, ] %in% smat[mi, ni])
+      sel <- pois[index, ]
+      cbind(
+        tibble::tibble(.group = if (is.null(group_index)) mi else group_index),
+        sel
       )
-      # ... and returns the POIs with the selected index
-      poi_coordinates[index, ]
+    } else {
+      tibble::tibble()
     }
   }
 
-  create_distance_matrix <- function(spi) {
-    comb_data <- rbind(source[spi, ], poi_coordinates)
-    dist_matrix <- stats::dist(comb_data, method = "euclidean")
-    cross_dist <- matrix(dist_matrix[seq_len(nrow(poi_coordinates))], nrow = 1L)
-    cross_dist
-  }
+  # Create a distance matrix and sort it row-wise by distance
+  dist_matrix <- unclass(sf::st_distance(source, pois))
+  sorted_matrix <- t(apply(dist_matrix, MARGIN = 1, sort.int, method = "quick"))
   
-  # Creates unsorted distance matrices that keep the index order of the POI dataset so that
-  # the shortest distance can easily be matched with their true index
-  distance_matrices <- lapply(seq_len(nrow(source)), create_distance_matrix)
+  # For each source point, select the n pois with the lowest distance
+  iter <- expand.grid(n = seq_len(n), m = seq_len(nrow(source)))
+  output <- mapply(
+    FUN = select_lowest_distance,
+    iter[["n"]],
+    iter[["m"]],
+    MoreArgs = list(dmat = dist_matrix, smat = sorted_matrix),
+    SIMPLIFY = FALSE
+  )
   
-  # Creates sorted distance matrices to easily get the shortest distance by index number
-  sorted_distance_matrices <- lapply(seq_len(nrow(source)), function(x) {
-    as.matrix(sort(create_distance_matrix(x)))
-  })
-  
-  # Creates a dataframe to nest the pmap loop so that it loops over n with each
-  # iteration of the source dataset
-  nested_iterator <- expand.grid(seq_len(n), seq_len(nrow(source)))
-  output <- lapply(seq_len(nrow(nested_iterator)), function(i) {
-    select_lowest_distance(
-      nested_iterator[i, 1L],
-      nested_iterator[i, 2L],
-      distance_matrices,
-      sorted_distance_matrices
+  sf::st_as_sf(tibble::as_tibble(do.call(rbind.data.frame, output)))
+}
+
+
+#' Returns points of interest that lie within a specified radius around each
+#' point in source
+#' 
+#' @noRd
+pois_within_radius <- function(source, pois, radius) {
+  buffers <- sf::st_buffer(source, radius)
+  within <- sf::st_within(pois, buffers, sparse = FALSE)
+  sel <- lapply(seq_len(ncol(within)), \(i) {
+    cbind(
+      tibble::tibble(.group = rep.int(i, sum(within[, i]))),
+      pois[within[, i], ]
     )
   })
-  
-  not_assigned <- sapply(output, is.null)
-  nal <- length(output[not_assigned])
-  if (nal) {
-    i <- get("i", envir = parent.frame(2L))
-    if (!n - nal) {
-      cli::cli_warn("Point {.val {i}} could not be assigned any point{?s} of interest.")
-    } else {
-      cli::cli_warn("Point {.val {i}} could only be assigned {.val {n - nal}} point{?s} of interest.")
-    }
-
-  }
-  output[not_assigned] <- NULL
-  if (length(output)) {
-    output <- as.data.frame(do.call(rbind, output), row.names = seq_along(output))
-    output <- split(output, nested_iterator[seq_len(nrow(output)), 2L])
-    output <- unname(output)
-    output <- lapply(output, function(r) { row.names(r) <- NULL; r })
-    
-    if (length(output) == 1L) output <- output[[1]]
-  } else {
-    output <- data.frame()
-  }
-  
-  output
-}
-
-
-pois.within.radius <- function(source, pois, radius, crs = NULL) {
-  if (!is.sf(pois)) {
-    if (!is.na(crs)) {
-      # If the POIs are passed as coordinates and the coordinate notation is
-      # known, convert coordinates to features.
-      pois <-  sf::st_as_sf(as.data.frame(pois), coords = c(1,2), crs = crs)
-    } else {
-      cli::cli_abort("CRS must be specified for non-sf objects.")
-    }
-  }
-
-  if (!is.sf(source)) {
-    if (!is.na(crs)) {
-      points <- sf::st_transform(
-        sf::st_as_sf(source, coords = c(1L, 2L), crs = crs),
-        sf::st_crs(pois)
-      )
-    } else {
-      cli::cli_abort("CRS must be specified for non-sf objects.")
-    }
-  }
-
-  crs <- sf::st_crs(pois) # Save old crs
-  pois <- lonlat_to_utm(pois) # ... then reproject
-
-  # Create distance radius as buffer polygon
-  buffers <- buffers_from_points(points, radius)
-  buffers <- sf::st_transform(buffers, sf::st_crs(pois))
-  
-  select.pois.within <- function (source_index) {
-    # Selects all POIs within the respective distance buffer
-    pois_within <- sf::st_within(pois, buffers[source_index, ], sparse = FALSE)
-    sf::st_coordinates(sf::st_transform(sf::st_geometry(pois)[pois_within], crs))
-  }
-  
-  selected_pois <- lapply(seq_len(nrow(source)), select.pois.within)
-  
-  selected_pois
+  sel <- sf::st_as_sf(tibble::as_tibble(do.call(rbind.data.frame, sel)))
+  sel
 }
