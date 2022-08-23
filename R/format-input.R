@@ -1,39 +1,17 @@
-format_input_data <- function(data) {
-  if (is.sf(data)) {
-    if (all(sf::st_is(data, c("POINT", "MULTIPOINT")))) {
-      data <- sf::st_transform(data, 4326L)
-      data <- reformat_vectordata(data)[, c("X", "Y")]
+format_input_data <- function(.data, to_coords = FALSE) {
+  assert_class(.data, c("sf", "sfc"))
+  
+  if (all(sf::st_is(.data, c("POINT", "MULTIPOINT")))) {
+    .data <- sf::st_transform(.data, 4326L)
+    if (to_coords) {
+      st_coordinates2(.data)[, c("X", "Y")]
     } else {
-      geom_type <- unique(sf::st_geometry_type(data))
-      cli::cli_abort("Input data must contain points, not {.val geom_type}.")
+      sf::st_as_sf(tibble::as_tibble(.data))
     }
   } else {
-    if (is.matrix(data) || is.list(data) || is.array(data)) {
-      data <- as.data.frame(data)
-    } else if (is.double(data) && length(data) == 2L) {
-      data <- as.data.frame(t(data))
-    } else if (is.null(data) || is.na(data)) {
-      data <- NULL
-    } else {
-      cli::cli_abort("Input data of class {.cls class(data)} is not (yet) supported.")
-    }
-    if (ncol(data) > 2L && !is.null(data)) {
-      if (all(is.element(c("X", "Y"), colnames(data)))) {
-        data <- data[, c("X", "Y")]
-      } else if (all(is.element(c("Lon", "Lat"), colnames(data)))) {
-        data <- data[, c("Lon", "Lat")]
-      } else if (is.double(unlist(data[, c(1L, 2L)]))) {
-        data <- data[, c(1L, 2L)]
-      } else {
-        cli::cli_abort(paste(
-          "Cannot determine coordinate columns of",
-          "dataframe {.var {deparse(substitute(data))}}"
-        ))
-      }
-    }
+    geom_type <- unique(sf::st_geometry_type(.data))
+    cli::cli_abort("Input data must contain points, not {.val geom_type}.")
   }
-  
-  data
 }
 
 
@@ -99,8 +77,7 @@ format_ors_options <- function(options, profile) {
   }
 
   if (!is.null(options$geometry_simplify)) {
-    if (isTRUE(options$geometry_simplify) ||
-        isFALSE(options$geometry_simplify)) {
+    if (isTRUE(options$geometry_simplify) || isFALSE(options$geometry_simplify)) {
       options_check["geometry_simplify"] <- TRUE
     } else {
       options_check["geometry_simplify"] <- FALSE
@@ -121,8 +98,7 @@ format_ors_options <- function(options, profile) {
   }
 
   if (!is.null(options$avoid_countries)) {
-    if (is.numeric(options$avoid_countries) &&
-        identical(base_profile(profile), "driving")) {
+    if (is.numeric(options$avoid_countries) && identical(base_profile(profile), "driving")) {
       options$avoid_countries <- list(options$avoid_countries)
       options_check["avoid_countries"] <- TRUE
     } else {
@@ -142,7 +118,7 @@ format_ors_options <- function(options, profile) {
   }
 
   if (!is.null(options$avoid_polygons)) {
-    if (is.sf(options$avoid_polygons) &&
+    if (is_sf(options$avoid_polygons) &&
         sf::st_is(options$avoid_polygons, c("POLYGON", "MULTIPOLYGON"))) {
       geom_type <- as.character(sf::st_geometry_type(options$avoid_polygons))
       options$avoid_polygons <- list(
@@ -162,20 +138,23 @@ format_ors_options <- function(options, profile) {
       base_profile <- base_profile(profile)
       allowed_opts <- switch(
         base_profile,
-        wheelchair = c("maximum_incline",
-                       "maximum_sloped_kerb",
-                       "minimum_width",
-                       "smoothness_type",
-                       "surface_type",
-                       "track_type"),
-        hgv        = c("axleload",
-                       "hazmat",
-                       "height",
-                       "length",
-                       "weight",
-                       "width"),
-        cycling    = "steepness_difficulty",
-        walking    = c("green", "quiet"))
+        wheelchair = c(
+          "maximum_incline",
+          "maximum_sloped_kerb",
+          "minimum_width",
+          "smoothness_type",
+          "surface_type",
+          "track_type"),
+        hgv = c(
+          "axleload",
+          "hazmat",
+          "height",
+          "length",
+          "weight",
+          "width"
+        ),
+        cycling = "steepness_difficulty",
+        walking = c("green", "quiet"))
       opt_admitted <- lapply(
         options$profile_params,
         function(x) is.element(names(x), allowed_opts)
