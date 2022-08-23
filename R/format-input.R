@@ -245,9 +245,10 @@ format_ors_options <- function(options, profile) {
 
   if (!all(options_check)) {
     option_names <- names(options_check)[!options_check]
-    cli::cli_warn(paste("The following {length(option_names)} option{?s} ",
-                        "{?is/are} formatted incorrectly and will be",
-                        "skipped:"))
+    cli::cli_warn(paste(
+      "The following {length(option_names)} option{?s} ",
+      "{?is/are} formatted incorrectly and will be",
+      "skipped:"))
     cli::cli_ul(items = option_names)
   }
 

@@ -62,142 +62,115 @@ extract_summary <- function(index, env) {
 #' @param values Object from the response list
 #' @param info_type Type of information to be replaced
 #' @noRd
-fill_extra_info <- function(values, info_type, profile) {
+fill_extra_info <- function(values, info_type, ...) {
   fill_fun_name <- paste("fill", info_type, sep = "_")
   if (exists(fill_fun_name)) {
     fill_fun <- match.fun(fill_fun_name)
-    if (identical(fill_fun_name, "fill_traildifficulty")) {
-      values <- vapply(values, fill_fun, profile, character(1L))
-    } else {
-      values <- vapply(values, fill_fun, character(1L))
-    }
+    values <- fill_fun(values, ...)
   }
   values
 }
 
 
-fill_steepness <- function(code) {
-  switch(
-    as.character(code),
-    `-5` = ">16% decline",
-    `-4` = "12-15% decline",
-    `-3` = "7-11% decline",
-    `-2` = "4-6% decline",
-    `-1` = "1-3% decline",
-    `0`  = "0% incline",
-    `1`  = "1-3% incline",
-    `2`  = "4-6% incline",
-    `3`  = "7-11% incline",
-    `4`  = "12-15% incline",
-    `5`  = ">16% incline"
+fill_steepness <- function(codes, ...) {
+  levels <- seq(-5, 5)
+  labels <- c(
+    ">16% decline", "12-15% decline", "7-11% decline", "4-6% decline",
+    "1-3% decline", "0% incline", "1-3% incline", "4-6% incline",
+    "7-11% incline", "12-15% incline", ">16% incline"
   )
+  
+  ordered(codes, levels = levels, labels = labels)
 }
 
 
-fill_surface <- function(code) {
-  switch(
-    as.character(code),
-    `0`  = "Unknown",
-    `1`  = "Paved",
-    `2`  = "Unpaved",
-    `3`  = "Asphalt",
-    `4`  = "Concrete",
-    `5`  = "Cobblestone",
-    `6`  = "Metal",
-    `7`  = "Wood",
-    `8`  = "Compacted Gravel",
-    `9`  = "Fine Gravel",
-    `10` = "Gravel",
-    `11` = "Dirt",
-    `12` = "Ground",
-    `13` = "Ice",
-    `14` = "Paving Stones",
-    `15` = "Sand",
-    `16` = "Woodchips",
-    `17` = "Grass",
-    `18` = "Grass Paver"
+fill_surface <- function(codes, ...) {
+  levels <- seq(0, 18)
+  labels <- c(
+    "Unknown", "Paved", "Unpaved", "Asphalt", "Concrete", "Cobblestone",
+    "Metal", "Wood", "Compacted Gravel", "Fine Gravel", "Gravel", "Dirt",
+    "Ground", "Ice", "Paving Stones", "Sand", "Woodchips", "Grass", "Grass Paver"
   )
+
+  factor(codes, levels, labels = labels)
 }
 
 
-fill_waycategory <- function(code) {
-  code <- decode_base2(code)
-  cats <- lapply(code, function(c) {
-    switch(
-      as.character(c),
-      `0`   = "No category",
-      `1`   = "Highway",
-      `2`   = "Steps",
-      `4`   = "Unpaved Road",
-      `8`   = "Ferry",
-      `16`  = "Track",
-      `32`  = "Tunnel",
-      `64`  = "Paved road",
-      `128` = "Ford"
+fill_waycategory <- function(codes, ...) {
+  cats <- vapply(codes, function(code) {
+    code <- decode_base2(code)
+    cats <- lapply(code, function(c) {
+      switch(
+        as.character(c),
+        `0`   = "No category",
+        `1`   = "Highway",
+        `2`   = "Steps",
+        `4`   = "Unpaved Road",
+        `8`   = "Ferry",
+        `16`  = "Track",
+        `32`  = "Tunnel",
+        `64`  = "Paved road",
+        `128` = "Ford"
+      )
+    })
+    paste(rev(cats), collapse = "/")
+  }, character(1))
+  
+  as.factor(cats)
+}
+
+
+fill_waytypes <- function(codes, ...) {
+  levels <- seq(0, 10)
+  labels <- c(
+    "Unknown", "State Road", "Road", "Street", "Path", "Track", "Cycleway",
+    "Footway", "Steps", "Ferry", "Construction"
+  )
+
+  factor(codes, levels = levels, labels = labels)
+}
+
+
+fill_traildifficulty <- function(codes, profile) {
+  if (base_profile(profile) == "cycling") {
+    codes <- codes * -1L
+    levels <- seq(-7, 0)
+    labels <- c(
+      "mtb:scale=6", "mtb:scale=5", "mtb:scale=4", "mtb:scale=3", "mtb:scale=2",
+      "mtb:scale=1", "mtb:scale=0", "No Tag"
     )
-  })
-  paste(rev(cats), collapse = "/")
-}
-
-
-fill_waytypes <- function(code) {
-  switch(
-    as.character(code),
-    `0`  = "Unknown",
-    `1`  = "State Road",
-    `2`  = "Road",
-    `3`  = "Street",
-    `4`  = "Path",
-    `5`  = "Track",
-    `6`  = "Cycleway",
-    `7`  = "Footway",
-    `8`  = "Steps",
-    `9`  = "Ferry",
-    `10` = "Construction"
-  )
-}
-
-
-fill_traildifficulty <- function(code, profile) {
-  if (identical(base_profile(profile), "cycling")) {
-    code <- code * -1L
+  } else {
+    levels <- seq(0, 6)
+    labels <- c(
+      "No Tag", "sac_scale=hiking", "sac_scale=mountain_hiking",
+      "sac_scale=demanding_mountain_hiking", "sac_scale=alpine_hiking",
+      "sac_scale=demanding_alpine_hiking", "sac_scale=difficult_alpine_hiking"
+    )
   }
 
-  switch(
-    as.character(code),
-    `-7` = "mtb:scale=6",
-    `-6` = "mtb:scale=5",
-    `-5` = "mtb:scale=4",
-    `-4` = "mtb:scale=3",
-    `-3` = "mtb:scale=2",
-    `-2` = "mtb:scale=1",
-    `-1` = "mtb:scale=0",
-    `0`  = "No Tag",
-    `1`  = "sac_scale=hiking",
-    `2`  = "sac_scale=mountain_hiking",
-    `3`  = "sac_scale=demanding_mountain_hiking",
-    `4`  = "sac_scale=alpine_hiking",
-    `5`  = "sac_scale=demanding_alpine_hiking",
-    `6`  = "sac_scale=difficult_alpine_hiking"
-  )
+  ordered(codes, levels = levels, labels = labels)
 }
 
 
-fill_roadaccessrestrictions <- function(code) {
-  code <- decode_base2(code)
-  cats <- lapply(code, function(c) {
-    switch(
-      as.character(code),
-      `0`  = "None",
-      `1`  = "No",
-      `2`  = "Customers",
-      `4`  = "Destination",
-      `8`  = "Delivery",
-      `16` = "Private",
-      `32` = "Permissive"
-    )
-  })
-  paste(rev(cats), collapse = "/")
+fill_roadaccessrestrictions <- function(codes, ...) {
+  cats <- vapply(codes, function(code) {
+    code <- decode_base2(code)
+    cat <- lapply(code, function(c) {
+      switch(
+        as.character(c),
+        `0`  = "None",
+        `1`  = "No",
+        `2`  = "Customers",
+        `4`  = "Destination",
+        `8`  = "Delivery",
+        `16` = "Private",
+        `32` = "Permissive"
+      )
+    })
+    paste(rev(cat), collapse = "/")
+  }, character(1))
+  
+  as.factor(cats)
 }
 
 
@@ -237,7 +210,6 @@ fill_empty_error_message <- function(code) {
 #' @noRd
 handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning = FALSE) {
   if (!is.null(res$error)) {
-    
     message <- res$error$message
     code <- res$error$code
     if (is.null(res$error$message)) {
@@ -269,9 +241,11 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
       })
       
       if (warn_on_warning) {
-        w_vec <- cli::cli_vec(warnings,
-                              style = list(vec_sep = "\f", vec_last = "\f"))
-        cli::cli_warn(c("ORS returned {length(w_vec)} warning{?s}:", "{w_vec}"))
+        w_vec <- cli::cli_vec(
+          warnings,
+          style = list(vec_sep = "\f", vec_last = "\f")
+        )
+        cli::cli_warn(c("ORS returned {length(w_vec)} warning{?s}:", w_vec))
       } else {
         structure(warnings, error = FALSE)
       }
