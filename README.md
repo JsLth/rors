@@ -2,8 +2,6 @@
 
 <!-- badges: start -->
 
-[![pipeline status](https://git.gesis.org/liethjs/orsrouting/badges/master/pipeline.svg)](https://git.gesis.org/liethjs/orsrouting/-/commits/master) 
-[![coverage report](https://git.gesis.org/liethjs/orsrouting/badges/master/coverage.svg)](https://git.gesis.org/liethjs/orsrouting/-/commits/master)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
