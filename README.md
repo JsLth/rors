@@ -3,6 +3,7 @@
 <!-- badges: start -->
 
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![](https://www.r-pkg.org/badges/version/ORSRouting)](https://cran.r-project.org/package=ORSRouting)
 <!-- badges: end -->
 
 # Overview
