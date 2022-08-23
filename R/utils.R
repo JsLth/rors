@@ -15,7 +15,7 @@ file.open <- function(file) {
 #' Given a path, returns the parent path
 #' @param times_back Number of times to up a folder
 #' @noRd
-file_path_up <- function(path, times_back = NULL) {
+file_path_up <- function(path, times_back = 1L) {
   path <- normalizePath(path, winslash = "/")
   new_path <- utils::head(unlist(strsplit(path, "/")), -times_back)
   do.call(file.path, as.list(new_path))
@@ -73,9 +73,11 @@ get_memory_info <- function() {
 #' @param pretty Whether to add a tilde and a slash in front
 #' @noRd
 relativePath <- function(targetdir, basedir = getwd(), pretty = FALSE) {
-  relative_path <- gsub(pattern = sprintf("%s|%s/", basedir, basedir),
-                        replacement = "",
-                        x = targetdir)
+  relative_path <- gsub(
+    pattern = sprintf("%s|%s/", basedir, basedir),
+    replacement = "",
+    x = targetdir
+  )
   if (relative_path == "") {
     relative_path <- "."
   }
@@ -123,16 +125,18 @@ rbind_list <- function(args) {
   len <- vapply(args, length, numeric(1))
   out <- vector("list", length(len))
   for (i in seq_along(len)) {
-    out[[i]] <- unname(as.data.frame(args[[i]]))[match(unam, nam[[i]])]
-    names(out[[i]]) <- unam
-    if (is.sf(args[[i]])) {
-      out[[i]] <- sf::st_as_sf(out[[i]])
+    if (!nrow(args[[i]])) {
+      for (n in unam) `$<-`(args[[i]], n, character())
+    } else {
+      nam_diff <- setdiff(unam, nam[[i]])
+      if (length(nam_diff)) {
+        args[[i]][setdiff(unam, nam[[i]])] <- NA
+      }
     }
-    out[[i]][sapply(out[[i]], is.null)] <- NA
   }
-  out <- do.call(rbind, out)
+  out <- do.call(rbind, args)
   rownames(out) <- NULL
-  if (!is.sf(out)) as.data.frame(out, stringsAsFactors = FALSE) else out 
+  out
 }
 
 
@@ -276,7 +280,7 @@ docker_installed <- function() {
 #' Enable non-root docker access on Linux
 #' @description Creates a docker group and adds the current user to it in order
 #' to enable docker commands from within R. Doing this, either manually or by
-#' using this function, is a requirement for using \code{\link{ORSInstance}}
+#' using this function, is a requirement for using \code{\link{ors_instance}}
 #' on Linux as a non-root user.
 #' @param run If \code{FALSE}, the function will only return a logical vector
 #' and will not change group membership.
@@ -285,7 +289,6 @@ docker_installed <- function() {
 #' \href{https://docs.docker.com/engine/install/linux-postinstall/}{post-installation guide}
 #'
 #' @export
-
 grant_docker_privileges <- function(run = TRUE) {
   if (is.linux()) {
     is_granted <- function() {
@@ -293,12 +296,16 @@ grant_docker_privileges <- function(run = TRUE) {
     }
 
     if (!is_granted() && isTRUE(run)) {
-      system2(command = "pkexec",
-              args = paste("env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c",
-                           "'sudo addgroup docker;",
-                           "sudo usermod -aG docker $USER'"),
-              stdout = "",
-              stderr = "")
+      system2(
+        command = "pkexec",
+        args = paste(
+          "env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c",
+          "'sudo addgroup docker;",
+          "sudo usermod -aG docker $USER'"
+        ),
+        stdout = "",
+        stderr = ""
+      )
       callr::run("newgrp", args = "docker", stdout = NULL, stderr = NULL)
     }
 
@@ -308,8 +315,10 @@ grant_docker_privileges <- function(run = TRUE) {
 
     works <- callr::run("docker", "ps", stdout = FALSE, stderr = FALSE) == 0L
     if (!works) {
-      cli::cli_alert_warning(paste("You might have to restart your system to",
-                                   "re-evaluate group membership"))
+      cli::cli_alert_warning(paste(
+        "You might have to restart your system to",
+        "re-evaluate group membership"
+      ))
     }
 
     TRUE
@@ -325,4 +334,43 @@ cli_abortifnot <- function(expr) {
     cli::cli_abort("{.code {uneval_expr}} is {.val {FALSE}}.",
                    call = sys.call(-1L))
   }
+}
+
+
+slow_edit <- function(file, ...) {
+  if (!interactive()) {
+    cli::cli_warn("Cannot edit a file interactively in batch mode.")
+  }
+  
+  cli::cli_process_start(
+    "Editing file...",
+    msg_done = "Manually edited file.",
+    msg_failed = "Cannot edit file."
+  )
+  
+  if (!is.null(get0("RStudio.Version"))) {
+    open_file <- get0(".rs.api.documentOpen")
+    get_context <- get0(".rs.api.getSourceEditorContext")
+    if (any(sapply(c(open_file, get_context), is.null))) {
+      cli::cli_abort("Cannot retrieve RStudio specific editor functions.")
+    }
+    open_file(file)
+    path <- .rs.api.getSourceEditorContext()$path
+    while (.rs.api.getSourceEditorContext()$path == path) {
+      Sys.sleep(0.3)
+    }
+  } else {
+    if (!is.windows()) {
+      cli::cli_abort("Interactive editing in RGUI is only supported for windows.")
+    }
+    r_handles <- getWindowsHandles()
+    file.edit(file, ...)
+    r_handles2 <- getWindowsHandles()
+    editor <- r_handles2[!r_handles2 %in% r_handles]
+    while (all(editor %in% getWindowsHandles(minimized = TRUE))) {
+      Sys.sleep(0.3)
+    }
+  }
+
+  cli::cli_process_done()
 }
