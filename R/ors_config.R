@@ -6,8 +6,9 @@
 #' using one of the convenience arguments.
 #' 
 #' @param profiles List of characters specifying the active profiles of an
-#' instance. By default, can be one of the following: car, hgv, bike-regular,
-#' bike-mountain, bike-road, bike-electric, walking, hiking, wheelchair.
+#' instance. By default, can be one of the following: \code{car}, \code{hgv},
+#' \code{bike-regular}, \code{bike-mountain}, \code{bike-road},
+#' \code{bike-electric}, \code{walking}, \code{hiking}, \code{wheelchair}.
 #' @param ... Key-value pairs containing profile-specific routing options.
 #' The argument name is interpreted as the profile whose configuration should be
 #' changed. Pass \code{"default"} to change the default parameters. The argument
@@ -38,43 +39,60 @@ ors_config <- function(
   matrix.maximum_search_radius = NULL,
   isochrones.maximum_intervals = NULL,
   isochrones.maximum_locations = NULL,
-  config = NULL
+  config = NULL,
+  interactive = FALSE
 ) {
-  if (is.null(config)) {
-    config <- instance$config$parsed
-    config_file <- NULL
-  } else {
-    if (file.exists(config)) {
-      config_file <- config
+  verbose <- attr(instance, "verbose")
+  
+  if (!interactive) {
+    if (is.null(config)) {
+      config <- instance$config$parsed
+      config_file <- NULL
+    } else {
+      if (file.exists(config)) {
+        config_file <- config
+      }
     }
+    
+    if (...length()) {
+      config <- apply_config_dots(config, ...)
+    }
+    
+    if (!is.null(profiles)) {
+      profiles <- as.list(profiles)
+      config$ors$services$routing$profiles$active <- profiles
+    }
+    
+    if (!is.null(matrix.maximum_routes)) {
+      config$ors$services$matrix$maximum_routes <- matrix.maximum_routes
+    }
+    
+    if (!is.null(matrix.maximum_search_radius)) {
+      config$ors$services$matrix$maximum_search_radius <- matrix.maximum_search_radius
+    }
+    
+    if (!is.null(isochrones.maximum_intervals)) {
+      config$ors$services$isochrones$maximum_intervals <- isochrones.maximum_intervals
+    }
+    
+    if (!is.null(isochrones.maximum_locations)) {
+      config$ors$services$isochrones$maximum_locations <- isochrones.maximum_locations
+    }
+    
+    config$ors$services$routing$sources[[1]] <- "data/osm_file.pbf"
+    config$ors$services$routing$profiles$default_params$elevation_cache_path <- "data/elevation_cache"
+    config$ors$services$routing$profiles$default_params$graphs_root_path <- "data/graphs"
+    config$ors$services$routing$init_threads <- 1L
+    
+    write_config(config, instance$paths$config_path)
+  } else {
+    slow_edit(instance$paths$config_path, editor = "internal")
   }
-  
-  if (!is.null(profiles)) {
-    profiles <- as.list(profiles)
-    config$parsed$ors$services$routing$profiles$active <- profiles
-  }
-  
-  if (!is.null(matrix.maximum_routes)) {
-    config$ors$services$matrix$maximum_routes <- matrix.maximum_routes
-  }
-  
-  if (!is.null(matrix.maximum_search_radius)) {
-    config$ors$services$matrix$maximum_search_radius <- matrix.maximum_search_radius
-  }
-  
-  if (!is.null(isochrones.maximum_intervals)) {
-    config$ors$services$isochrones$maximum_intervals <- isochrones.maximum_intervals
-  }
-  
-  if (!is.null(isochrones.maximum_locations)) {
-    config$ors$services$isochrones$maximum_locations <- isochrones.maximum_locations
-  }
-  
-  write_config(config, instance$paths$config_path)
+
   
   instance[["config"]] <- NULL
   
-  instance <- .instance(instance, config_file = config_file)
+  instance <- .instance(instance, config_file = config_file, verbose = verbose)
   
   assign("instance", instance, envir = ors_cache)
   invisible(instance)
@@ -135,9 +153,27 @@ write_config <- function(config, config_path) {
 }
 
 
-
 get_all_profiles <- function(config) {
   profile_node <- names(config$ors$services$routing$profiles)
   is_profile <- grepl("profile", profile_node)
   gsub("profile-", "", profile_node[is_profile])
+}
+
+
+apply_config_dots <- function(config, ...) {
+  dots <- list(...)
+  names(dots) <- paste0("profile-", names(dots))
+  names(dots)[grepl("default", names(dots))] <- "default_params"
+  for (profile in names(dots)) {
+    opts <- names(dots[[profile]])
+    for (opt in opts) {
+      val <- dots[[profile]][[opt]]
+      if (profile == "default_params") {
+        config$ors$services$routing$profiles[[profile]][[opt]] <- opts[opt]
+      } else {
+        config$ors$services$routing$profiles[[profile]]$parameters[[opt]] <- opts[opt]
+      }
+    }
+  }
+  config
 }
