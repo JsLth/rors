@@ -3,29 +3,35 @@
 #' @description Allocate memory, manage graph building and set name and ports
 #' of an OpenRouteService instance by making changes to the docker-compose file.
 #' 
-#' @param name Name of the OpenRouteService container.
-#' @param ports Ports of the ORS container. Non-default ports can be
-#' specified by assigning a length-1 vector or a list of ports. The list of
-#' ports must contain 4 ports in the format
-#' \code{list(host1, docker1, host2, docker2)}. Since, most of the time,
-#' you will want to change only the first host port, passing a length-1
-#' vector will change the first host port. Passing \code{NULL} (either in a
-#' list or as a length-1 vector) is interpreted as "no change". Passing
-#' \code{NA} will assign a random port using the \code{\link{httpuv}}
-#' package.
-#' @param memory List of initial and maximum memory values. Initial memory is
+#' @param name \code{[character]}
+#' 
+#' Name of the OpenRouteService container.
+#' @param ports \code{[numeric/character]}
+#' 
+#' Host port that the container should be running on. Passing \code{NULL}
+#' is interpreted as "no change". Passing \code{NA} will assign a random port
+#' using the \code{\link{httpuv}} package.
+#' @param memory \code{[character]}
+#' 
+#' List of initial and maximum memory values. Initial memory is
 #' the memory that is allocated to the Docker container from the start.
 #' Maximum memory refers to the memory threshold that a Docker container cannot
-#' exceed. Only one of both values has to be passed using list names (either
-#' \code{$init} or \code{$max}). If only \code{init} has been passed, the
-#' maximum memory is set equal to the initial memory. If only \code{max} is
-#' passed, the initial value will be set to half this value.
-#' @param graph_building Mode of graph building to be applied. Graphs need to
-#' be built for each profile and are required to route with a given profile.
-#' Possible values include \code{"build"}, \code{"change"} and \code{NA}.
-#' \code{"build"} is used when no graphs are built yet. \code{"change"} needs to
-#' be set before mounting a new extract file to an existing setup. \code{NA}
-#' disables graph building.
+#' exceed. If only a single value is passed, initial and maximum memory are
+#' assumed to be identical.
+#' @param auto_deletion \code{[logical]}
+#' 
+#' By default, OpenRouteService prevents all profiles other than \code{"car"} 
+#' from being built on first setup. If \code{FALSE}, disables this behavior.
+#' Otherwise, all profiles other than car have to be enabled after the first
+#' setup. Defaults to \code{TRUE}, because the OpenRouteService team recommends
+#' building graphs for only the car profile in the initial setup.
+#' @param graph_building \code{[character]}
+#' 
+#' Mode of graph building to be applied. Graphs need to be built for each
+#' profile and are required to route with a given profile. Possible values
+#' include \code{"build"}, \code{"change"} and \code{NA}. \code{"build"} is used
+#' when no graphs are built yet. \code{"change"} needs to be set before mounting
+#' a new extract file to an existing setup. \code{NA} disables graph building.
 #' @inheritParams ors_extract
 #' 
 #' @returns Nested list of class \code{ors_instance}.
@@ -37,9 +43,11 @@ ors_settings <- function(
   instance,
   name = NULL,
   ports = NULL,
-  memory = list(),
+  memory = NULL,
+  auto_deletion = FALSE,
   graph_building = NULL
 ) {
+  verbose <- attr(instance, "verbose")
   compose <- instance$compose$parsed
   
   if (!is.null(instance$paths$extract_path) && is.null(graph_building)) {
@@ -60,6 +68,10 @@ ors_settings <- function(
   if (length(memory)) {
     compose <- write_memory(compose, instance, memory)
   }
+  
+  if (auto_deletion) {
+    compose <- protect_config(compose)
+  }
 
   if (!is.null(graph_building)) {
     relative_path <- relativePath(instance$paths$extract_path, file.path(instance$paths$dir, "dir"))
@@ -70,7 +82,7 @@ ors_settings <- function(
   
   instance[["compose"]] <- NULL
   
-  instance <- .instance(instance)
+  instance <- .instance(instance, verbose = verbose)
   
   assign("instance", instance, envir = ors_cache)
   invisible(instance)
@@ -125,7 +137,7 @@ format_ports <- function(compose, ports) {
 
 read_memory <- function(compose, num, gb = TRUE) {
   java_options <- compose$services$`ors-app`$environment[2L]
-  java_mem <- java_mem_chr <- tail(unlist(strsplit(java_options, " ")), 2L)
+  java_mem <- java_mem_chr <- utils::tail(unlist(strsplit(java_options, " ")), 2L)
 
   if (num) {
     java_mem <- as.numeric(gsub(".*?([0-9]+).*", "\\1", java_mem_chr))
@@ -148,19 +160,16 @@ read_memory <- function(compose, num, gb = TRUE) {
 
 
 write_memory <- function(compose, instance, memory) {
+  verbose <- attr(instance, "verbose")
   init <- NULL
   max <- NULL
-  if (length(memory)) {
+
+  if (length(memory) >= 2) {
     init <- memory[[1]] * 1000
-  }
-  if (length(memory) == 2) {
     max <- memory[[2]] * 1000
-  }
-  if (is.numeric(init) && is.null(max)) {
-    max <- init * 1000
-  } else if (is.null(init) && is.numeric(max)) {
-    init <- max / 2L * 1000
-  } else if (is.null(init) && is.null(max)) {
+  } else if (length(memory) == 1) {
+    max <- memory[[1]] * 1000
+  } else {
     if (!is.null(instance$extract$size) && !is.null(instance$config$profiles)) {
       size <- round(instance$extract$size * 0.000001, -2L)
       number_of_profiles <- length(instance$config$profiles) / 1000L
@@ -168,11 +177,13 @@ write_memory <- function(compose, instance, memory) {
       max <- size * 2.5 * number_of_profiles
       init <- max / 2L
     } else {
-      cli::cli_warn(paste(
-        "Memory allocation options have not been changed.",
-        "Memory estimation is based on extract size and number of profiles.",
-        "Either pass memory specifications explicitly or add extract and configuration first"
-      ))
+      if (verbose) {
+        cli::cli_warn(paste(
+          "Memory allocation options were not changed.",
+          "Memory estimation is based on extract size and number of profiles.",
+          "Either pass memory specifications explicitly or add extract and configuration first"
+        ))
+      }
       return(compose)
     }
   }
@@ -180,12 +191,14 @@ write_memory <- function(compose, instance, memory) {
   compose <- format_memory(compose, init, max)
   
   gc(verbose = FALSE)
-  
+
   if (instance$compose$memory$free * 0.8 - max / 1024 <= 0L) {
-    cli::cli_warn(paste(
-      "You are allocating more than your available memory.",
-      "Consider lowering the allocated RAM."
-    ))
+    if (verbose) {
+      cli::cli_warn(paste(
+        "You are allocating more than your available memory.",
+        "Consider lowering the allocated RAM."
+      ))
+    }
   }
   
   compose
@@ -198,7 +211,7 @@ format_memory <- function(compose, init, max) {
   
   init_mem_allocation <- java_mem[1L]
   max_mem_allocation <- java_mem[2L]
-  
+
   java_options <- gsub(
     init_mem_allocation,
     sprintf("-Xms%sm", format(init, scientific = FALSE)),
@@ -216,19 +229,24 @@ format_memory <- function(compose, init, max) {
 }
 
 
+protect_config <- function(compose) {
+  conf_volume <- compose$services$`ors-app`$volumes[5]
+  if (grepl(":ro", conf_volume, fixed = TRUE)) {
+    compose$services$`ors-app`$volumes[5] <- paste0(conf_volume, ":ro")
+  }
+  compose
+}
+
+
 read_graphbuilding <- function(compose) {
   build <- is.element("build", names(compose$services$`ors-app`))
   change <- !is.na(compose$services$`ors-app`$volumes[6L])
   gb <- compose$services$`ors-app`$environment[1]
   gb <- as.logical(unlist(strsplit(gb, "="))[2])
   
-  if(change) {
-    if (gb) {
-      "change"
-    } else {
-      NA
-    }
-  } else if(build) {
+  if (change) {
+    if (gb) "change" else NA
+  } else if (build) {
     "build"
   } else {
     NA
