@@ -1,49 +1,15 @@
-# Title     : Auxiliary functions for data wrangling and geoprocessing
-# Objective : Convert or process geo information from the main function
-# Created by: Jonas Lieth
-# Created on: 14.10.2021
-
-
-#' 
-centroids_from_polygons <- function(polygons) {
-  crs <- sf::st_crs(polygons)
-  polygons_metric <- sf::st_geometry(polygons)
-  centroids <- sf::st_centroid(polygons_metric)
+#' st_centroid, but returns the input sf instead of an sfc object
+#' @noRd
+st_centroid2 <- function(polygons) {
+  centroids <- sf::st_centroid(polygons)
   sf::st_geometry(polygons) <- centroids
   polygons
 }
 
 
-buffers_from_points <- function(points, radius, cap_style = "ROUND", join_style = "ROUND") {
-  crs <- sf::st_crs(points)
-  points_metric <- lonlat_to_utm(points)
-  buffers <- sf::st_buffer(points_metric,
-                           radius,
-                           endCapStyle = cap_style,
-                           joinStyle = join_style)
-  lonlat_to_utm(buffers, crs = crs, reverse = TRUE)
-}
-
-
-buffer_bbox_from_coordinates <- function(coordinates, radius, crs = 4326L) {
-  # Convert coordinates to metric points
-  points <- sf::st_as_sf(coordinates, coords = c(1L, 2L), crs = crs)
-
-  # Generate buffers
-  buffers <- lonlat_to_utm(
-    sf::st_buffer(lonlat_to_utm(points), dist = radius),
-    crs = crs,
-    reverse = TRUE
-  )
-
-  # Extract bboxes
-  buffer_bbox <- lapply(sf::st_geometry(buffers), sf::st_bbox)
-  buffer_bbox <- do.call(rbind.data.frame, buffer_bbox)
-  buffer_bbox
-}
-
-
-ors_multiple_linestrings <- function(res, elev_as_z) {
+#' Extracts the smallest linestring increment from ORS directions response
+#' @noRd
+ors_multiple_linestrings <- function(res, elev_as_z = FALSE) {
   coordinates <- res$features$geometry$coordinates[[1]]
   cols <- seq(1L, 2L + isTRUE(elev_as_z))
 
@@ -66,6 +32,8 @@ ors_multiple_linestrings <- function(res, elev_as_z) {
 }
 
 
+#' Extracts ordered polygon from ORS isochrones response
+#' @noRd
 ors_polygon <- function(res) {
   poly <- lapply(res$features$geometry$coordinates, function(c) {
     ls <- sf::st_linestring(matrix(c, ncol = 2))
@@ -90,6 +58,8 @@ ors_polygon <- function(res) {
 }
 
 
+#' Rasterizes the isochrone polygons from ORS isochrones
+#' @noRd
 rasterize_isochrones <- function(isochrones, resolution) {
   if (!requireNamespace("terra")) {
     cli::cli_abort("The {.pkg raster} package is needed to rasterize isochrones.")
@@ -98,7 +68,7 @@ rasterize_isochrones <- function(isochrones, resolution) {
   # Transform to projected CRS with global coverage (world mercator)
   isochrones <- sf::st_transform(isochrones, 3395)
   grid <- sf::st_make_grid(isochrones, n = resolution)
-  grid <- aggregate(isochrones, by = grid, FUN = min, join = sf::st_intersects)
+  grid <- stats::aggregate(isochrones, by = grid, FUN = min, join = sf::st_intersects)
   grid <- terra::vect(grid)
   rasterized <- terra::rasterize(
     grid,
@@ -109,6 +79,15 @@ rasterize_isochrones <- function(isochrones, resolution) {
 }
 
 
-is.sf <- function(x) {
+#' Check if an object is of class sf or sfc
+#' @noRd
+is_sf <- function(x) {
   inherits(x, c("sf", "sfc"))
+}
+
+
+#' st_coordinates but returns a data.frame instead of a matrix
+#' @noRd
+st_coordinates2 <- function(x) {
+  tibble::as_tibble(sf::st_coordinates(x))[, c("X", "Y")]
 }
