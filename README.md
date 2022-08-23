@@ -13,26 +13,8 @@ The main purpose of the package is to calculate the routing distances and durati
 
 # Installation
 
-If you have access to the GitLab repository, you can simply pull the package:
+The package is only available over GitHub an can be installed using
 
 ```
-remotes::install_git('https://git.gesis.org/liethjs/orsrouting.git')
-```
-
-If you do not have access, use the following deploy token:
-
-```
-remotes::install_git('https://gitlab+deploy-token-14:vQsKtxX75h2eg5oFjKNW@git.gesis.org/liethjs/orsrouting')
-```
-
-After the installation, the package can be loaded into the R environment using
-
-```
-library(ORSRouting)
-```
-
-Since the package relies on a local installation of the OpenRouteService backend, the functions are only usable after installing the backend. For more details, refer to the vignette on setting up the backend:
-
-```
-vignette('ors-installation', package = 'ORSRouting')
+remotes::install_github("JsLth/ORSRouting")
 ```
