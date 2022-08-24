@@ -2,22 +2,22 @@
 #' @description Returns boundary geometries of the currently mounted extract
 #' either from the local host or from a local cache.
 #' @param force \code{[logical]}
-#' 
+#'
 #' If \code{TRUE}, function must query local host. If
 #' \code{FALSE}, the status will be read from the cache if possible.
 #' @param verbose \code{[logical]}
-#' 
+#'
 #' If \code{TRUE}, prints a loading spinner.
 #' @returns An \code{sfc} object of the currently mounted extract boundaries.
 #' @inheritParams ors_distances
-#' 
+#'
 #' @export
 get_extract_boundaries <- function(instance = NULL, force = FALSE, verbose = TRUE) {
   if (is.null(ors_cache$extract_boundaries) || force) {
     if (is.null(instance)) {
       instance <- get_instance()
     }
-    
+
     if (!is.null(instance$url)) {
       cli::cli_abort(c(
         "Cannot get extract from a server URL.",
@@ -32,16 +32,16 @@ get_extract_boundaries <- function(instance = NULL, force = FALSE, verbose = TRU
     if (is.null(extract_path)) {
       cli::cli_abort("Cannot identify current extract file. Pass it explicitly.")
     }
-    
-    if (interactive() && verbose) {
-      cli::cli_progress_step(
-        msg = "Reading and processing extract file...",
-        msg_done = "Extract file successfully read in!",
-        msg_failed = "Extract file could either not be read or not converted.",
-        spinner = TRUE
-      )
-    }
-    
+
+    ors_cli(
+      progress = "bar",
+      msg = "Reading and processing extract file...",
+      msg_done = "Extract file successfully read in!",
+      msg_failed = "Extract file could either not be read or not converted.",
+      spinner = TRUE,
+      verbose = verbose
+    )
+
     proc <- callr::r_bg(
       function(extract_path) {
         extract_data <- suppressWarnings(
@@ -60,15 +60,15 @@ get_extract_boundaries <- function(instance = NULL, force = FALSE, verbose = TRU
       },
       args = list(extract_path)
     )
-    
+
     while (proc$is_alive()) {
-      if (interactive() && verbose) cli::cli_progress_update()
+      ors_cli(progress = "update", verbose = verbose)
     }
 
-    if (interactive() && verbose) cli::cli_progress_done()
-    
+    ors_cli(progress = "done", verbose = verbose)
+
     extract_geom <- proc$get_result()
-    
+
     assign("extract_boundaries", extract_geom, envir = ors_cache)
     extract_geom
   } else {
@@ -82,14 +82,14 @@ get_extract_boundaries <- function(instance = NULL, force = FALSE, verbose = TRU
 #' ORS extract.
 #'
 #' @param size \code{[integer]}
-#' 
+#'
 #' Number of points to be sampled.
 #' @param ... Passed to \code{\link[sf]{st_sample}}.
 #' @param force_new_extract \code{[logical]}
-#' 
+#'
 #' If \code{TRUE}, forces the cached extract path to be overwritten.
 #' @param poly \code{[sf/sfc]}
-#' 
+#'
 #' Boundary polygon used to sample points. If \code{NULL}, the default, boundary
 #' polygons are extracted from the current instance as set by
 #' \code{\link{ors_instance}}.
@@ -100,20 +100,18 @@ get_extract_boundaries <- function(instance = NULL, force = FALSE, verbose = TRU
 #' then cached making subsequent function calls a lot faster.
 #'
 #' @export
-ors_sample <- function(
-  size,
-  ...,
-  force_new_extract = FALSE,
-  instance = NULL,
-  poly = NULL,
-  verbose = TRUE
-) {
+ors_sample <- function(size,
+                       ...,
+                       force_new_extract = FALSE,
+                       instance = NULL,
+                       poly = NULL,
+                       verbose = TRUE) {
   if (is.null(poly)) {
     poly <- get_extract_boundaries(instance, force_new_extract, verbose)
   }
-  
+
   sample <- sf::st_sample(poly, size, ...)
   sample <- sf::st_sf(geometry = sample)
-  
+
   sf::st_as_sf(tibble::as_tibble(sample))
 }

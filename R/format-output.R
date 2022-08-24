@@ -4,7 +4,7 @@
 #' @noRd
 extract_summary <- function(index, env) {
   call_index <- env$call_index
-  
+
   res <- query_ors_directions(
     source = env$locations[index, "source"],
     destination = env$locations[index, "dest"],
@@ -15,12 +15,12 @@ extract_summary <- function(index, env) {
     url = env$url,
     token = env$instance$token
   )
-  
+
   cond <- handle_ors_conditions(res)
-  
+
   if (isTRUE(attr(cond, "error"))) {
     ors_cache$routing_conditions[[call_index]][index] <- cond
-    
+
     if (!env$geometry) {
       return(data.frame(distance = NA, duration = NA))
     } else {
@@ -32,7 +32,7 @@ extract_summary <- function(index, env) {
   } else {
     ors_cache$routing_conditions[[call_index]][index] <- NA
   }
-  
+
   if (!env$geometry) {
     distance <- res$routes$summary$distance
     duration <- res$routes$summary$duration
@@ -79,7 +79,7 @@ fill_steepness <- function(codes, ...) {
     "1-3% decline", "0% incline", "1-3% incline", "4-6% incline",
     "7-11% incline", "12-15% incline", ">16% incline"
   )
-  
+
   ordered(codes, levels = levels, labels = labels)
 }
 
@@ -100,8 +100,7 @@ fill_waycategory <- function(codes, ...) {
   cats <- vapply(codes, function(code) {
     code <- decode_base2(code)
     cats <- lapply(code, function(c) {
-      switch(
-        as.character(c),
+      switch(as.character(c),
         `0`   = "No category",
         `1`   = "Highway",
         `2`   = "Steps",
@@ -115,7 +114,7 @@ fill_waycategory <- function(codes, ...) {
     })
     paste(rev(cats), collapse = "/")
   }, character(1))
-  
+
   as.factor(cats)
 }
 
@@ -156,8 +155,7 @@ fill_roadaccessrestrictions <- function(codes, ...) {
   cats <- vapply(codes, function(code) {
     code <- decode_base2(code)
     cat <- lapply(code, function(c) {
-      switch(
-        as.character(c),
+      switch(as.character(c),
         `0`  = "None",
         `1`  = "No",
         `2`  = "Customers",
@@ -169,7 +167,7 @@ fill_roadaccessrestrictions <- function(codes, ...) {
     })
     paste(rev(cat), collapse = "/")
   }, character(1))
-  
+
   as.factor(cats)
 }
 
@@ -177,8 +175,7 @@ fill_roadaccessrestrictions <- function(codes, ...) {
 #' Replaces empty error message strings based on their error code
 #' @noRd
 fill_empty_error_message <- function(code) {
-  switch(
-    as.character(code),
+  switch(as.character(code),
     `2000` = "Unable to parse JSON request.",
     `2001` = "Required parameter is missing.",
     `2002` = "Invalid parameter format.",
@@ -239,7 +236,7 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
       warnings <- lapply(seq_along(code), function(w) {
         paste0("Warning code ", code[w], ": ", message[w])
       })
-      
+
       if (warn_on_warning) {
         w_vec <- cli::cli_vec(
           warnings,
@@ -300,7 +297,6 @@ get_waypoint_index <- function(from, to, waypoints, by_waypoint) {
 
 format_extra_info <- function(res, info_type) {
   if (identical(info_type, "waytype")) info_type <- "waytypes"
-  waypoints <- res$features$properties$segments[[1L]]$steps[[1L]]$way_points
   last_waypoint <- res$features$properties$way_points[[1L]][2L]
   matrix <- res$features$properties$extras[[info_type]]$values[[1L]]
 
@@ -308,8 +304,10 @@ format_extra_info <- function(res, info_type) {
     start <- matrix[, 1L]
     end <- matrix[, 2L]
 
-    iterator <- data.frame(V1 = seq(1L, last_waypoint),
-                           V2 = seq(1L, last_waypoint) + 1L)
+    iterator <- data.frame(
+      V1 = seq(1L, last_waypoint),
+      V2 = seq(1L, last_waypoint) + 1L
+    )
 
     indices <- mapply(
       FUN = get_waypoint_index,
@@ -317,7 +315,7 @@ format_extra_info <- function(res, info_type) {
       end,
       MoreArgs = list(waypoints = iterator, by_waypoint = FALSE)
     )
-    
+
     if (is.matrix(indices)) indices <- list(c(indices))
 
     values <- lapply(
@@ -364,7 +362,9 @@ make_summary_table <- function(vector, distances) {
     x * total_distance / 100L
   })
 
-  data.frame(distance = round(unlist(distance_summary), 1L),
-             amount = round(amount_summary$x, 1L),
-             row.names = amount_summary[, 1L])
+  data.frame(
+    distance = round(unlist(distance_summary), 1L),
+    amount = round(amount_summary$x, 1L),
+    row.names = amount_summary[, 1L]
+  )
 }

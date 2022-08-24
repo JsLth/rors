@@ -1,31 +1,29 @@
 perform_query <- function(req) {
   req <- httr2::req_method(req, "POST")
   req <- httr2::req_error(req, is_error = \(e) FALSE)
-  
+
   if (is_ors_api(req$url)) {
     req <- httr2::req_throttle(req, rate = 40 / 60)
   }
-  
+
   res <- httr2::req_perform(req, verbosity = 0L)
   httr2::resp_body_json(res, simplifyVector = TRUE)
 }
 
-query_ors_directions <- function(
-  source,
-  destination,
-  profile,
-  units,
-  geometry,
-  options,
-  url,
-  token
-) {
+query_ors_directions <- function(source,
+                                 destination,
+                                 profile,
+                                 units,
+                                 geometry,
+                                 options,
+                                 url,
+                                 token) {
   # Get coordinates in shape
   locations <- list(
     c(as.numeric(source[1L]), as.numeric(source[2L])),
     c(as.numeric(destination[1L]), as.numeric(destination[2L]))
   )
-  
+
   # Prepare the url
   req <- httr2::request(url)
   req <- httr2::req_url_path(
@@ -35,7 +33,7 @@ query_ors_directions <- function(
     profile,
     ifelse(geometry, "/geojson", "")
   )
-  
+
   req <- httr2::req_headers(
     req,
     Accept = sprintf(
@@ -69,15 +67,13 @@ query_ors_directions <- function(
 
 
 
-query_ors_matrix <- function(
-  source,
-  destination,
-  profile,
-  metrics,
-  units,
-  url,
-  token
-) {
+query_ors_matrix <- function(source,
+                             destination,
+                             profile,
+                             metrics,
+                             units,
+                             url,
+                             token) {
   # Format source and destination
   source_list <- unname(split(source, seq_len(nrow(source))))
   source_list <- lapply(source_list, as.numeric)
@@ -101,14 +97,14 @@ query_ors_matrix <- function(
 
   req <- httr2::request(url)
   req <- httr2::req_url_path(req, "ors/v2/matrix", profile)
-  
+
   req <- httr2::req_headers(
     req,
     Accept = "application/json; charset=utf-8",
     Authorization = token,
     `Content-Type` = "application/json; charset=utf-8"
   )
-  
+
   # Create http body of the request
   body_list <- list(
     locations = locations,
@@ -124,35 +120,33 @@ query_ors_matrix <- function(
 
 
 
-query_isochrone <- function(
-  source,
-  profile,
-  range,
-  attributes,
-  intersections,
-  interval,
-  location_type,
-  options,
-  range_type,
-  smoothing,
-  area_units,
-  units,
-  url,
-  token
-) {
+query_isochrone <- function(source,
+                            profile,
+                            range,
+                            attributes,
+                            intersections,
+                            interval,
+                            location_type,
+                            options,
+                            range_type,
+                            smoothing,
+                            area_units,
+                            units,
+                            url,
+                            token) {
   locations <- unname(split(source, seq_len(nrow(source))))
   locations <- lapply(locations, as.numeric)
-  
+
   req <- httr2::request(url)
   req <- httr2::req_url_path(req, "ors/v2/isochrones", profile, "geojson")
-  
+
   req <- httr2::req_headers(
     req,
     Accept = "application/geo+json; charset=utf-8",
     Authorization = token,
     `Content-Type` = "application/json; charset=utf-8"
   )
-  
+
   body_list <- list(
     locations = locations,
     range = box(range),
@@ -167,6 +161,6 @@ query_isochrone <- function(
     units = units
   )
   req <- httr2::req_body_json(req, body_list, digits = NA)
-  
+
   perform_query(req)
 }

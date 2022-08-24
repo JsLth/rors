@@ -5,12 +5,12 @@
 #' is a wrapper around \code{ors_distances} that matches each point of the
 #' source dataset to a dataset of points of interest from the destination dataset
 #' and then extracts the route with the shortest distance.
-#' 
-#' @param source \code{[sf]} 
-#' 
+#'
+#' @param source \code{[sf]}
+#'
 #' Source dataset containing point geometries that shall be routed from.
-#' @param destination \code{[sf]} 
-#' 
+#' @param destination \code{[sf]}
+#'
 #' Destination dataset containing point geometries that shall be routed from.
 #' The destination dataset follows the same format requirements as the source
 #' dataset. For \code{ors_shortest_distances}, the destination argument can also
@@ -20,22 +20,22 @@
 #' recommended for large datasets because passing a plain sf dataframe routes
 #' from each source point to each point in the entire destination dataset.
 #' @param profile \code{[character]}
-#' 
+#'
 #' Character vector. Means of transport as supported by OpenRouteService. For a
 #' list of active profiles, call \code{\link{get_profiles}}. For details on all
 #' profiles, refer to the
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
 #' @param units \code{[character]}
-#' 
+#'
 #' Distance unit for distance calculations (\code{"m"}, \code{"km"} or
 #' \code{"mi"})
 #' @param geometry \code{[logical]}
-#' 
+#'
 #' If \code{TRUE}, returns a \code{sf} object containing route geometries. If
 #' \code{FALSE}, returns route distance measures. Defaults to \code{FALSE}, to
 #' increase performance.
 #' @param instance \code{[ors_instance]}
-#' 
+#'
 #' Object of an OpenRouteService instance that should be used for route
 #' computations. It is recommended to use \code{\link{ors_instance}}
 #' to set an instance globally. This argument should only be used if activating
@@ -117,8 +117,8 @@
 #' dest_sf <- ors_sample(10, as_sf = TRUE)
 #' dest_df <- ors_sample(10)
 #'
-#' car = "driving-car"
-#' bike = "cycling-regular"
+#' car <- "driving-car"
+#' bike <- "cycling-regular"
 #'
 #' # Running with sf objects
 #' route_lengths_sf <- ors_distances(source_sf, dest_sf, profile = car)
@@ -152,7 +152,7 @@
 #'   continue_straight = TRUE,
 #'   preference = "fastest"
 #' )
-#'                                     
+#'
 #' # Finding shortest routes from each point in sample_a to sample_b
 #' shortest_routes <- ors_shortest_distances(source_df, dest_df, units = "km")
 #' shortest_routes
@@ -167,23 +167,21 @@
 #' )
 #' nearest_hospitals
 #' }
-ors_distances <- function(
-  source,
-  destination,
-  profile = get_profiles(),
-  units = c("m", "km", "mi"),
-  geometry = FALSE,
-  instance = NULL,
-  ...
-) {
+ors_distances <- function(source,
+                          destination,
+                          profile = get_profiles(),
+                          units = c("m", "km", "mi"),
+                          geometry = FALSE,
+                          instance = NULL,
+                          ...) {
   assert(geometry, class = "logical", len = rep(1, 2))
   assert(profile, class = "character", len = c(1, 9))
-  
+
   if (is.null(instance)) {
     instance <- get_instance()
   }
   iid <- get_id(instance = instance)
-  
+
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, id = iid)
 
@@ -230,7 +228,7 @@ ors_distances <- function(
   options <- format_ors_options(list(...), profile)
 
   call_index <- format(Sys.time(), format = "%H:%M:%OS6")
-  
+
   # Apply a directions query to each row
   env <- environment()
   route_df <- lapply(seq_len(nrow(locations)), extract_summary, env)
@@ -241,21 +239,26 @@ ors_distances <- function(
   warn_indices <- which(grepl("Warning", conds))
   tip <- cli::col_grey("For a list of conditions, call {.fn last_ors_conditions}.")
   if (all(route_missing)) {
-    cli::cli_warn(c("No routes could be calculated. Check your service config.",
-                    tip))
+    cli::cli_warn(c(
+      "No routes could be calculated. Check your service config.",
+      tip
+    ))
   } else if (any(route_missing)) {
     cond_indices <- cli::cli_vec(
       which(grepl("Error", conds)),
       style = list(vec_sep = ", ", vec_last = ", ")
     )
     cli::cli_warn(c(
-      paste("{length(cond_indices)} route{?s} could not be",
-            "calculated and {?was/were} skipped: {cond_indices}"),
+      paste(
+        "{length(cond_indices)} route{?s} could not be",
+        "calculated and {?was/were} skipped: {cond_indices}"
+      ),
       tip
     ))
   } else if (length(warn_indices)) {
     warn_indices <- cli::cli_vec(warn_indices,
-                                 style = list(vec_sep = ", ", vec_last = ", "))
+      style = list(vec_sep = ", ", vec_last = ", ")
+    )
     cli::cli_warn(c(
       paste(
         "ORS returned a warning for {length(warn_indices)}",
@@ -264,7 +267,7 @@ ors_distances <- function(
       tip
     ))
   }
-  
+
   if (requireNamespace("units")) {
     units(route_df$distance) <- units
     units(route_df$duration) <- "s"
@@ -275,7 +278,7 @@ ors_distances <- function(
   } else {
     route_df <- tibble::as_tibble(route_df)
   }
-  
+
   structure(
     route_df,
     call = match.call(),
@@ -287,14 +290,14 @@ ors_distances <- function(
 
 #' Calculate shortest routes to nearby points of interest
 #' @param group \code{[character/numeric]}
-#' 
+#'
 #' Column name or index providing a grouping column that indicates which row
 #' in the destination dataset corresponds to which row in the source dataset
 #' (as in the output of \code{\link{get_closest_pois}}). Providing
 #' a grouping column can considerably reduce the processing load for larger
 #' datasets.
 #' @param proximity_type \code{[character]}
-#' 
+#'
 #' Type of proximity that the calculations should be
 #' based on. If `distance`, the shortest physical distance will be calculated
 #' and if `duration`, the shortest temporal distance will be calculated.
@@ -310,22 +313,21 @@ ors_distances <- function(
 #'
 #' @examples
 #' \dontrun{
+#'
 #' }
-ors_shortest_distances <- function(
-  source,
-  destination,
-  group = NULL,
-  profile = get_profiles(),
-  units = c("m", "km", "mi"),
-  geometry = FALSE,
-  instance = NULL,
-  ...,
-  proximity_type = c("duration", "distance")
-) {
+ors_shortest_distances <- function(source,
+                                   destination,
+                                   group = NULL,
+                                   profile = get_profiles(),
+                                   units = c("m", "km", "mi"),
+                                   geometry = FALSE,
+                                   instance = NULL,
+                                   ...,
+                                   proximity_type = c("duration", "distance")) {
   if (is.null(instance)) {
     instance <- get_instance()
   }
-  
+
   proximity_type <- match.arg(proximity_type)
   source <- format_input_data(source)
   destination <- format_input_data(destination)
@@ -353,24 +355,28 @@ ors_shortest_distances <- function(
 
     if (identical(tolower(proximity_type), "distance")) {
       best_index <- suppressWarnings(
-        match(min(routes[["distance"]], na.rm = TRUE),
-              routes[["distance"]])
+        match(
+          min(routes[["distance"]], na.rm = TRUE),
+          routes[["distance"]]
+        )
       )
-
     } else if (identical(tolower(proximity_type), "duration")) {
       best_index <- suppressWarnings(
-        match(min(routes[["duration"]], na.rm = TRUE),
-              routes[["duration"]])
+        match(
+          min(routes[["duration"]], na.rm = TRUE),
+          routes[["duration"]]
+        )
       )
-
     } else {
-      cli::cli_abort(paste("Expected a proximity type",
-                           "({.val duration} or {.val distance}),",
-                           "got {.val {proximity_type}}"))
+      cli::cli_abort(paste(
+        "Expected a proximity type",
+        "({.val duration} or {.val distance}),",
+        "got {.val {proximity_type}}"
+      ))
     }
 
     best_route <- cbind(best_index, routes[best_index, ])
-    
+
     cli::cli_progress_update(.envir = parent.frame(2L))
     best_route
   }
@@ -406,7 +412,7 @@ ors_shortest_distances <- function(
   if (geometry) {
     route_df <- sf::st_as_sf(route_df)
   }
-  
+
   has_cond <- sapply(
     utils::tail(ors_cache$routing_conditions, nrow(source)),
     is.character
@@ -422,7 +428,7 @@ ors_shortest_distances <- function(
       "could not be taken into account: {cond_indices}"
     ), tip))
   }
-  
+
   structure(
     route_df,
     call = match.call(),
@@ -439,24 +445,22 @@ ors_shortest_distances <- function(
 #' @returns If \code{length(proximity_type) == 1}, returns a
 #' \code{nrow(source) * nrow(destination)} routing distance matrix. Otherwise,
 #' returns a list containing two matrices accordingly.
-#' 
+#'
 #' @export
-ors_matrix <- function(
-  source,
-  destination,
-  profile = get_profiles(),
-  units = c("m", "km", "mi"),
-  proximity_type = c("distance", "duration"),
-  instance = NULL
-) {
+ors_matrix <- function(source,
+                       destination,
+                       profile = get_profiles(),
+                       units = c("m", "km", "mi"),
+                       proximity_type = c("distance", "duration"),
+                       instance = NULL) {
   if (is.null(instance)) {
     instance <- get_instance()
   }
   iid <- get_id(instance = instance)
-  
+
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, id = iid)
-  
+
   profile <- match.arg(profile)
   proximity_type <- match.arg(proximity_type)
   units <- match.arg(units)

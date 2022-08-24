@@ -8,29 +8,29 @@ print.ors_matrix <- function(x, ...) {
 print.route_summary <- function(x, ncols = 3L, table_gap = 2L, ...) {
   cli::cli_text("{.strong Attributes}")
   for (n in names(x[1:5])) {
-    name <- capitalizeChar(n)
+    name <- capitalize_char(n)
     if (identical(n, "Detourfactor")) name <- "Detour factor"
     attribute_row <- paste(name, ": ", round(x[[n]], 2L), "\n")
     cat(attribute_row)
   }
-  
+
   cat("\n")
-  
+
   for (n in names(x[c(6L, 7L)])) {
-    name <- capitalizeChar(n)
+    name <- capitalize_char(n)
     cli::cli_text("{.strong {name}}")
     print(x[[n]])
     cat("\n")
   }
-  
+
   cli::cli_text("{.strong Additional infos}")
-  
+
   tables <- x$tables
-  
+
   # Get the maximum row length of the input tables
   row_lengths <- sapply(tables, function(tb) sapply(utils::capture.output(tb), nchar))
   max_row_length <- max(unlist(row_lengths))
-  
+
   for (nc in seq(1, ncols - 1)) {
     if (cli::console_width() / ncols < 35) {
       ncols <- ncols - 1
@@ -38,49 +38,55 @@ print.route_summary <- function(x, ncols = 3L, table_gap = 2L, ...) {
       break
     }
   }
-  
+
   # Get an iterator that splits up the tables at the indices defined by ncols
   table_iterator <- split(tables, ceiling(seq_along(tables) / ncols))
-  
+
   # Iterate through each table row (as defined by ncols)
   for (t in table_iterator) {
     # Number of rows of each table
     rows <- sapply(t, nrow)
-    
+
     # Cumulated number of rows + table name + column names + empty line
     border_indices <- cumsum(rows + 3L)
-    
+
     # Catch the output of print.data.frame and split it by table
     output <- utils::capture.output(t)
-    output_split <- split(output,
-                          cumsum(is.element(seq_along(output),
-                                            border_indices + 1L)))
-    
+    output_split <- split(
+      output,
+      cumsum(is.element(
+        seq_along(output),
+        border_indices + 1L
+      ))
+    )
+
     # Get the maximum number of rows of one table row
     max_length <- max(sapply(output_split, length))
-    
+
     # Iterate through each table of one table row
     op_vec <- lapply(output_split, function(op_vec) {
       # Remove empty character string
       op_vec <- op_vec[nchar(op_vec) != 0L]
-      
+
       # If the table name is shorter than the row length, fill with white space
       add_ws <- function(char, row_length, max_length) {
         if (row_length < max_length) {
           paste0(char, strrep(" ", max_length - row_length))
-        } else char
+        } else {
+          char
+        }
       }
-      
+
       name <- op_vec[1L]
       name <- add_ws(name, nchar(name), max_row_length)
-      
+
       columns <- op_vec[2L]
       row_length <- nchar(columns)
       columns <- add_ws(columns, row_length, max_row_length)
-      
+
       rows <- op_vec[seq(3, length(op_vec))]
       rows <- unlist(lapply(rows, add_ws, row_length, max_row_length))
-      
+
       # Get the number of rows. If the table has less rows than the table
       # with the most rows, add rows and fill them with white space
       len <- length(rows)
@@ -89,7 +95,7 @@ print.route_summary <- function(x, ncols = 3L, table_gap = 2L, ...) {
       }
       c(name, columns, rows)
     })
-    
+
     # Transpose list to align corresponding rows from each table
     to_vector <- lapply(do.call(Map, c(f = c, op_vec)), unlist)
     # Piece together character strings
@@ -106,7 +112,7 @@ print.route_summary <- function(x, ncols = 3L, table_gap = 2L, ...) {
     row_string <- paste(to_string, collapse = "\n")
     cat(row_string, "\n")
   }
-  
+
   invisible(x)
 }
 
@@ -114,7 +120,7 @@ print.route_summary <- function(x, ncols = 3L, table_gap = 2L, ...) {
 #' @export
 print.ors_condition <- function(x, ...) {
   timestamps <- names(x)
-  
+
   calls <- sapply(timestamps, function(time) {
     if (length(x[[time]]$conditions)) {
       indices <- attr(x[[time]], "row.names")
@@ -130,9 +136,11 @@ print.ors_condition <- function(x, ...) {
         )
         if (length(fmsg) > 1) {
           paste(fmsg, collapse = "\n")
-        } else fmsg
+        } else {
+          fmsg
+        }
       })
-      
+
       printed_time <- paste0("Function call from ", time, ":")
       paste(printed_time, paste(messages, collapse = "\n"), sep = "\n")
     }
@@ -142,7 +150,7 @@ print.ors_condition <- function(x, ...) {
     calls <- Filter(is.character, calls)
     cat(paste0(paste(calls, collapse = "\n\n"), "\n"))
   }
-  
+
   invisible(x)
 }
 
@@ -156,11 +164,13 @@ print.ors_instance <- function(x, ...) {
     } else {
       "compose" %in% names(x) && x$paths$dir == mounted$paths$dir
     }
-  } else active <- FALSE
-  
+  } else {
+    active <- FALSE
+  }
+
   alive <- attr(x, "alive")
   built <- x$status[3]
-  type  <- attr(x, "type")
+  type <- attr(x, "type")
 
   cat(
     "<ors_instance>", "\n",
@@ -175,11 +185,11 @@ print.ors_instance <- function(x, ...) {
 
 #' @export
 print.ors_instance_paths <- function(x, ...) {
-  basedir <- relativePath(x$dir, path.expand("~"))
+  basedir <- relative_path(x$dir, path.expand("~"))
   compose <- if (!is.null(x$compose_path)) basename(x$compose_path) else NULL
-  config  <- if (!is.null(x$config_path)) basename(x$config_path) else NULL
+  config <- if (!is.null(x$config_path)) basename(x$config_path) else NULL
   extract <- if (!is.null(x$extract_path)) basename(x$extract_path) else NULL
-  
+
   config_dir <- ifelse(grepl("conf", config), "conf", "data")
   docker_path <- file.path(x$dir, "docker")
   subdocker_paths <- file.path(docker_path, dir(docker_path))
@@ -191,24 +201,28 @@ print.ors_instance_paths <- function(x, ...) {
     }
     d
   })
-  
+
   if (compose %in% basename(subdocker_paths)) {
     compose_i <- which(compose == basename(subdocker_paths)) + 2
   }
   if (!is.null(config) && config %in% unlist(subdocker_paths_files)) {
     config_i <- which(config == unlist(subdocker_paths_files)) + 2 + length(subdocker_paths)
-  } else config_i <- NULL
+  } else {
+    config_i <- NULL
+  }
   if (!is.null(extract) && config %in% unlist(subdocker_paths_files)) {
     extract_i <- which(extract == unlist(subdocker_paths_files)) + 2 + length(subdocker_paths)
-  } else extract_i <- NULL
-  
+  } else {
+    extract_i <- NULL
+  }
+
   top_dir <- c(
     basedir,
     "docker",
     basename(file.path(docker_path, dir(docker_path))),
     unlist(subdocker_paths_files)
   )
-  
+
   children <- c(
     list("docker"),
     list(basename(file.path(docker_path, dir(docker_path)))),
@@ -218,9 +232,9 @@ print.ors_instance_paths <- function(x, ...) {
 
   annot <- top_dir
   annot[compose_i] <- paste(annot[compose_i], "\033[33m<- compose file\033[39m")
-  annot[config_i]  <- paste(annot[config_i], "\033[34m<- config file\033[39m")
+  annot[config_i] <- paste(annot[config_i], "\033[34m<- config file\033[39m")
   annot[extract_i] <- paste(annot[extract_i], "\033[32m<- extract file\033[39m")
-  
+
   tree <- cli::tree(
     data.frame(
       stringsAsFactors = FALSE,
@@ -230,13 +244,13 @@ print.ors_instance_paths <- function(x, ...) {
     ),
     ...
   )
-  
+
   tree <- gsub(" ", "\u00a0", tree)
-  
+
   for (node in tree) {
     cli::cli_text(node)
   }
-  
+
   invisible(x)
 }
 
@@ -254,13 +268,13 @@ print.ors_instance_config <- function(x, ...) {
   allp <- get_all_profiles(x$parsed)
   allp_in <- allp %in% x$profiles
   allp_in <- lapply(allp_in, ifelse, cli::col_green(T), cli::col_red(F))
-  
+
   allp <- sapply(allp, function(p) {
     paste0(p, strrep("\u00a0", 14L - nchar(p)))
   })
-  
+
   names(allp_in) <- allp
-  
+
   cli::cli_dl(do.call(c, allp_in))
   invisible(x)
 }
@@ -297,15 +311,15 @@ print.ors_instance_status <- function(x, ...) {
     "Container running",
     "Service ready"
   )
-  
+
   gl <- sapply(x, ifelse, cli::col_green(TRUE), cli::col_red(FALSE))
-  
+
   gln <- sapply(gln, function(n) {
     paste0(n, strrep("\u00a0", 18L - nchar(n)))
   })
-  
+
   names(gl) <- gln
-  
+
   cli::cli_dl(gl)
   invisible(x)
 }

@@ -1,10 +1,10 @@
 #' Extract points of interest from OpenStreetMap
-#' 
+#'
 #' @description Makes Overpass requests to extract points of interest within
 #' a specified area or list of areas.
 #'
 #' @param source \code{[various]}
-#' 
+#'
 #' Either (1) an \code{sf} object containing coordinates, (2) a
 #' character string of a place or region, (3) a spatial polygon as an sf or sfc
 #' object or (4) any bbox format supported by \code{\link[osmdata]{opq}}. The
@@ -15,16 +15,16 @@
 #' refer to the
 #' \href{https://wiki.openstreetmap.org/wiki/Map_features}{documentation}.
 #' @param radius \code{[numeric]}
-#' 
+#'
 #' If \code{source} is an \code{sf} data.frame containing point geometries,
 #' specifies the buffer radius within which points of interest should be
 #' searched.
 #' @param timeout \code{[integer]}
-#' 
+#'
 #' Timeout limit for the Overpass query. See \code{\link[osmdata]{opq}}. For
 #' larger queries, make sure to pass a high enough timeout.
 #' @param do_bind \code{[logical]}
-#' 
+#'
 #' If \code{TRUE} and \code{source} is an \code{sf} data.frame containing point
 #' geometries, binds results to a single data.frame and returns only distinct
 #' points of interest. Otherwise, returns a list of data.frames.
@@ -42,7 +42,7 @@
 #' \dontrun{
 #' set.seed(123)
 #' sample_a <- ors_sample(20)
-#' 
+#'
 #' pois_source <- get_osm_pois(sample_a, amenity = "hospital", radius = 5000, crs = 4326)
 #'
 #' set.seed(123)
@@ -101,18 +101,18 @@ get_osm_pois <- function(source, ..., radius = 5000L, timeout = NULL, do_bind = 
     q <- osmdata::opq(bbox = unlist(bbox, use.names = FALSE), timeout = timeout)
     q <- osmdata::add_osm_features(q, features = feat)
     res <- osmdata::osmdata_sf(q)
-    
+
     if (nrow(res$osm_polygons)) {
       sf::st_geometry(res$osm_polygons) <- sf::st_centroid(sf::st_geometry(res$osm_polygons))
-      
+
       if (!is.null(buffers)) {
         within <- sf::st_within(res$osm_polygons, buffer, sparse = FALSE)
         poly <- res$osm_polygons[within, ]
       }
     }
-    
+
     res <- rbind_list(res[names(res) %in% c("osm_points", "osm_polygons")])
-    
+
     res
   }
 
@@ -138,18 +138,18 @@ get_osm_pois <- function(source, ..., radius = 5000L, timeout = NULL, do_bind = 
 #' distance (argument \code{n}) and/or a distance buffer (\code{radius}).
 #'
 #' @param pois \code{[sf]}
-#' 
+#'
 #' Dataset that represents a list of points of interest to be routed to for each
 #' row in the source dataset
 #' @param n \code{[numeric]}
-#' 
+#'
 #' Maximum number of points of interest around each point in the source dataset
 #' that shall be returned. The actual number might be lower depending on the
 #' rows in the \code{pois} dataset and the remaining number of points if
 #' \code{radius} is not \code{NULL}. If \code{NULL}, \code{radius} must be
 #' provided.
 #' @param radius \code{[numeric]}
-#' 
+#'
 #' Maximum distance of a point of interest around each point in the source
 #' dataset. All returned points of interest lie within this distance to the
 #' source points. If \code{NULL}, \code{n} must be provided.
@@ -161,22 +161,20 @@ get_osm_pois <- function(source, ..., radius = 5000L, timeout = NULL, do_bind = 
 #' \dontrun{
 #' sample <- ors_sample(20)
 #' pois <- get_osm_pois("Cologne", amenity = "hospital")
-#' 
+#'
 #' by_points <- get_closest_pois(sample, pois, n = 5)
 #' by_buffer <- get_closest_pois(sample, pois, radius = 5000)
 #' by_both <- get_closest_pois(sample_pois, n = 5, radius = 5000)
 #' }
-#' 
+#'
 #' @export
-get_closest_pois <- function(
-  source,
-  pois,
-  n = NULL,
-  radius = NULL
-) {
+get_closest_pois <- function(source,
+                             pois,
+                             n = NULL,
+                             radius = NULL) {
   source <- format_input_data(source)
   pois <- format_input_data(pois)
-  
+
   if (!is.null(n) && n > nrow(pois)) {
     cli::cli_warn(c(
       "!" = "Argument {.var n} is greater than the number of rows in {.var pois}",
@@ -184,7 +182,7 @@ get_closest_pois <- function(
     ))
     n <- nrow(pois)
   }
-  
+
   if (is.numeric(n)) {
     if (is.null(radius)) {
       # A number of points, but no radius is given -> n.nearest.pois
@@ -205,7 +203,8 @@ get_closest_pois <- function(
     } else {
       cli::cli_abort(c(
         "Radius must be either numeric or {.var NULL}.",
-        "Got {.cls {class(radius)}} instead."))
+        "Got {.cls {class(radius)}} instead."
+      ))
     }
   } else if (is.null(n) && is.numeric(radius)) {
     # No number of points, but a radius is given -> pois_within_radius
@@ -217,12 +216,12 @@ get_closest_pois <- function(
 
 
 #' Returns the n closest points of interest around each point in source
-#' 
+#'
 #' @noRd
 n_nearest_pois <- function(source, pois, n, group_index = NULL) {
   # Remove former groupings
   pois$.group <- NULL
-  
+
   select_lowest_distance <- function(ni, mi, dmat, smat) {
     if (ni <= nrow(pois)) {
       index <- which(dmat[mi, ] %in% smat[mi, ni])
@@ -239,7 +238,7 @@ n_nearest_pois <- function(source, pois, n, group_index = NULL) {
   # Create a distance matrix and sort it row-wise by distance
   dist_matrix <- unclass(sf::st_distance(source, pois))
   sorted_matrix <- t(apply(dist_matrix, MARGIN = 1, sort.int, method = "quick"))
-  
+
   # For each source point, select the n pois with the lowest distance
   iter <- expand.grid(n = seq_len(n), m = seq_len(nrow(source)))
   output <- mapply(
@@ -249,14 +248,14 @@ n_nearest_pois <- function(source, pois, n, group_index = NULL) {
     MoreArgs = list(dmat = dist_matrix, smat = sorted_matrix),
     SIMPLIFY = FALSE
   )
-  
+
   sf::st_as_sf(tibble::as_tibble(do.call(rbind.data.frame, output)))
 }
 
 
 #' Returns points of interest that lie within a specified radius around each
 #' point in source
-#' 
+#'
 #' @noRd
 pois_within_radius <- function(source, pois, radius) {
   buffers <- sf::st_buffer(source, radius)

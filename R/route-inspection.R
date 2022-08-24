@@ -6,20 +6,20 @@
 #' \code{ors_inspect} returns all line segments of a route along with a set
 #' of additional attributes
 #' @param source \code{[sf]}
-#' 
+#'
 #' Source dataset containing a single point geometry that shall be routed from.
 #' @param destination \code{[sf]}
-#' 
+#'
 #' Destination dataset containing a single point geometry that shall be routed
 #' to.
 #' @param attributes \code{[list]}
-#' 
+#'
 #' List of attributes that summarize route characteristics.
 #' This includes two values: \code{avgspeed} states the average vehicle speed
 #' along the route, \code{detourfactor} indicates how much the route deviates
 #' from a straight line. If \code{TRUE}, both values are included.
 #' @param elevation \code{[logical]}
-#' 
+#'
 #' If \code{TRUE}, elevation data is included in the output.
 #' @param extra_info List of keywords that add extra information regarding each
 #' linestring segment of the output. Possible values include:
@@ -42,7 +42,7 @@
 #' and the \href{https://openrouteservice.org/dev/#/ap-docs/v2/directions/{profile}/post}{API playground}
 #' for more information on extra information.
 #' @param elev_as_z \code{[logical]}
-#' 
+#'
 #' If \code{TRUE}, elevation data is stored as z-values in the
 #' geometry of the output \code{sf} dataframe. If \code{FALSE}, elevation is
 #' stored as a distinct dataframe column. Ignored if \code{elevation = FALSE}.
@@ -56,16 +56,16 @@
 #' \code{\link{plot_section}}
 #'
 #' @export
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' sample_source <- ors_sample(1)
 #' sample_dest <- ors_sample(1)
-#' profile = get_profiles()[1]
-#' 
+#' profile <- get_profiles()[1]
+#'
 #' # Basic inspection without extra information
 #' insp <- ors_inspect(sample_source, sample_dest, profile)
-#' 
+#'
 #' # Advanced inspection with extra information
 #' insp_adv <- ors_inspect(
 #'   sample_source,
@@ -73,7 +73,7 @@
 #'   profile,
 #'   extra_info = TRUE
 #' )
-#'                           
+#'
 #' # Inspection of route elevation data
 #' insp_elev <- ors_inspect(
 #'   sample_source,
@@ -82,7 +82,7 @@
 #'   elevation = TRUE,
 #'   elev_as_z = FALSE
 #' )
-#' 
+#'
 #' # Inspection of route summary attributes
 #' insp_attr <- ors_inspect(
 #'   sample_source,
@@ -91,7 +91,7 @@
 #'   attributes = "detourfactor"
 #' )
 #' attr(insp_attr, "detourfactor")
-#' 
+#'
 #' # Altering the route by passing further arguments
 #' insp_opts <- ors_inspect(
 #'   sample_source,
@@ -101,27 +101,24 @@
 #'   preference = "shortest",
 #'   maximum_speed = 80
 #' )
-#' 
+#'
 #' # Summarizing route specifics
 #' route_summary <- ors_summary(sample_source, sample_dest, profile)
 #' }
-ors_inspect <- function(
-  source,
-  destination,
-  profile = get_profiles(),
-  attributes = list(),
-  elevation = TRUE,
-  extra_info = list(),
-  instance = NULL,
-  ...,
-  elev_as_z = FALSE
-) {
+ors_inspect <- function(source,
+                        destination,
+                        profile = get_profiles(),
+                        attributes = list(),
+                        elevation = TRUE,
+                        extra_info = list(),
+                        instance = NULL,
+                        ...,
+                        elev_as_z = FALSE) {
   if (is.null(instance)) {
     instance <- get_instance()
-    
   }
   iid <- get_id(instance = instance)
-  
+
   # Check if ORS is ready to use
   ors_ready(force = TRUE, error = TRUE, id = iid)
 
@@ -164,11 +161,15 @@ ors_inspect <- function(
 
   if (is.element("avgspeed", options$attributes)) {
     avgspeed <- res$features$properties$segments[[1L]]$avgspeed
-  } else avgspeed <- NULL
+  } else {
+    avgspeed <- NULL
+  }
 
   if (is.element("detourfactor", options$attributes)) {
     detourfactor <- res$features$properties$segments[[1L]]$detourfactor
-  } else detourfactor <- NULL
+  } else {
+    detourfactor <- NULL
+  }
 
   names_wp <- res$features$properties$segments[[1L]]$steps[[1L]]$name
   expanded_names <- expand_by_waypoint(names_wp, waypoints)
@@ -210,89 +211,87 @@ ors_inspect <- function(
 
 
 #' Plot route cross-sections
-#' 
+#'
 #' @description Plot the segments of a route as an elevation profile or
 #' cross-section. A geographic cross-section describes a two-dimensional cut
 #' through a route where the x-axis denotes the distance and the y-axis denotes
 #' the elevation. The area below the elevation profile can be used to plot an
 #' additional feature.
-#' 
+#'
 #' @param x \code{[sf]}
-#' 
+#'
 #' An \code{sf} data.frame describing segments of a linestring. The data.frame
 #' is expected to have multiple rows (representing the segments) and at least
 #' three columns, \code{"elevation"}, \code{"distance"} and an additional
 #' feature. Preferably, this is a result of \code{ors_inspect}, but other
 #' \code{sf} data.frames might work as well.
-#' 
+#'
 #' @param dist,elev,feat \code{[character]}
-#' 
+#'
 #' Column names of the distance, elevation and feature values inside \code{x}.
 #' @param palette \code{[character]}
-#' 
+#'
 #' Color palette to be used for plotting. Passed on to
 #' \code{\link[ggplot2]{scale_fill_manual}} or
 #' \code{\link[ggplot2]{scale_fill_gradientn}}, depending on the data type of
 #' \code{feat}. Defaults to the Cividis colormap.
 #' @param scale_elevation \code{[logical]}
-#' 
+#'
 #' Whether to scale the elevation axis based on the lowest elevation. If
 #' \code{FALSE}, the y-axis is not scaled and fixed at sea level. Defaults to
 #' \code{TRUE}.
 #' @param size \code{[numeric]}
-#' 
+#'
 #' Size of the line plot. Defaults to \code{1.5}.
 #' @param xlab,ylab,scale_title,title,subtitle,caption \code{[character]}
-#' 
+#'
 #' Arguments to change label names, legend, title, subtitle and caption of the
 #' ggplot object.
 #' @param ... Further arguments passed to
 #' \code{\link[ggplot2]{scale_fill_manual}} or
 #' \code{\link[ggplot2]{scale_fill_gradientn}} depending on the data type of
 #' \code{feat}.
-#' 
+#'
 #' @returns A \code{ggplot} object.
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' sample <- ors_sample(2)
-#' route <- ors_inspect(sample[1,], sample[2,], extra_info = TRUE)
-#' 
+#' route <- ors_inspect(sample[1, ], sample[2, ], extra_info = TRUE)
+#'
 #' plot_section(route, feat = "waytype")
-#' 
+#'
 #' plot_section(route, feat = "steepness", scale_elevation = FALSE)
-#' 
+#'
 #' zissou_pal <- hcl.colors(11, palette = "Zissou 1")
 #' plot_section(route, "steepness", palette = zissou_pal)
-#' 
+#'
 #' terrain_pal <- hcl.colors(10, palette = "Terrain")
 #' plot_section(route, "elevation", palette = terrain_pal, scale_elevation = FALSE)
 #' }
-#' 
-#' @references 
+#'
+#' @references
 #' \url{https://giscience.github.io/openrouteservice-r/articles/openrouteservice.html}
-#' 
+#'
 #' @export
-plot_section <- function(
-  x,
-  feat = "avgspeed",
-  dist = "distance",
-  elev = "elevation",
-  palette = NULL,
-  scale_elevation = TRUE,
-  size = 1.5,
-  xlab = dist,
-  ylab = elev,
-  scale_title = feat,
-  title = NULL,
-  subtitle = NULL,
-  caption = NULL,
-  ...
-) {
+plot_section <- function(x,
+                         feat = "avgspeed",
+                         dist = "distance",
+                         elev = "elevation",
+                         palette = NULL,
+                         scale_elevation = TRUE,
+                         size = 1.5,
+                         xlab = dist,
+                         ylab = elev,
+                         scale_title = feat,
+                         title = NULL,
+                         subtitle = NULL,
+                         caption = NULL,
+                         ...) {
   if (!requireNamespace("ggplot2")) {
     cli::cli_abort("the {.pkg ggplo2} package is necessary to create cross-sections.")
   }
-  
+
   distance <- if (dist %in% names(x)) {
     x[[dist]]
   } else {
@@ -301,7 +300,7 @@ plot_section <- function(
   if (inherits(distance, "units")) {
     distance <- units::drop_units(units::set_units(distance, "km"))
   }
-    
+
   elevation <- if (elev %in% names(x)) {
     x[[elev]]
   } else if (is_sf(x)) {
@@ -321,7 +320,7 @@ plot_section <- function(
   if (inherits(val, "units")) {
     val <- units::drop_units(val)
   }
-  
+
   n <- nrow(x)
 
   seg <- data.frame(
@@ -342,7 +341,7 @@ plot_section <- function(
     xmin2 = seg$xstart,
     SIMPLIFY = FALSE
   ))
-  
+
   zip_y <- unlist(mapply(
     FUN = c,
     ymin1 = rep(y_range[1], n),
@@ -351,15 +350,15 @@ plot_section <- function(
     ymay2 = seg$ystart,
     SIMPLIFY = FALSE
   ))
-  
+
   poly <- data.frame(x = zip_x, y = zip_y, id = rep(ids, each = 4))
 
-  val <- lapply(seq_along(val), function(i) if(is.na(val[i])) val[i - 1] else val[i])
+  val <- lapply(seq_along(val), function(i) if (is.na(val[i])) val[i - 1] else val[i])
   val <- data.frame(
     value = unlist(val),
     id = ids
   )
-  
+
   poly <- merge(poly, val, by = "id")
 
   p <- ggplot2::ggplot() +
@@ -391,12 +390,12 @@ plot_section <- function(
       caption = caption
     ) +
     ggplot2::theme_bw()
-  
+
   if (is.factor(val$value)) {
-    if(is.null(palette)) {
+    if (is.null(palette)) {
       p <- p + ggplot2::scale_fill_viridis_d(option = "E", name = feat)
     } else {
-      p <- p + 
+      p <- p +
         ggplot2::scale_fill_manual(
           values = palette,
           drop = FALSE,
@@ -416,7 +415,7 @@ plot_section <- function(
         )
     }
   }
-  
+
   p
 }
 
@@ -428,7 +427,7 @@ ors_summary <- function(source, destination, profile = get_profiles(), instance 
     instance <- get_instance()
   }
   iid <- get_id(instance = instance)
-  
+
   # Check if ORS is ready to use
   ors_ready(force = TRUE, error = TRUE, id = iid)
 
@@ -479,8 +478,9 @@ ors_summary <- function(source, destination, profile = get_profiles(), instance 
 
   summaries <- sapply(summaries, function(summary) {
     summary <- stats::aggregate(summary[, c(2L, 3L)],
-                         by = summary["value"],
-                         sum)
+      by = summary["value"],
+      sum
+    )
     row.names(summary) <- summary$value
     summary$value <- NULL
     summary

@@ -22,7 +22,9 @@ ors_multiple_linestrings <- function(res, elev_as_z = FALSE) {
   if (ncol(coordinates) == 3L && isFALSE(elev_as_z)) {
     elevation <- coordinates[, 3L]
     units(elevation) <- "m"
-  } else elevation <- NULL
+  } else {
+    elevation <- NULL
+  }
 
   iterator <- seq_len(nrow(coordinates) - 1L)
   linestrings <- lapply(iterator, split_ls)
@@ -43,7 +45,7 @@ ors_polygon <- function(res) {
   poly <- do.call(rbind, poly)
   poly <- cbind(poly, res$features$properties[-3])
   poly <- sf::st_set_crs(poly, 4326)
-  
+
   poly <- tapply(
     seq_len(nrow(poly)),
     INDEX = as.factor(poly$group_index),
@@ -64,7 +66,7 @@ rasterize_isochrones <- function(isochrones, resolution) {
   if (!requireNamespace("terra")) {
     cli::cli_abort("The {.pkg raster} package is needed to rasterize isochrones.")
   }
-  
+
   # Transform to projected CRS with global coverage (world mercator)
   isochrones <- sf::st_transform(isochrones, 3395)
   grid <- sf::st_make_grid(isochrones, n = resolution)

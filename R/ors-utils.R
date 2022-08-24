@@ -29,13 +29,13 @@ inspect_container <- function(id = NULL) {
     if (is.null(id)) {
       return()
     }
-    
+
     if (!docker_running()) {
       cli::cli_abort("Docker is not running. Cannot inspect container.")
     }
-    
+
     cmd <- c("container", "inspect", id)
-    
+
     container_info <- callr::run(
       command = "docker",
       args = cmd,
@@ -43,16 +43,16 @@ inspect_container <- function(id = NULL) {
       stderr = NULL,
       error_on_status = FALSE
     )
-    
+
     if (length(container_info$stderr)) {
       container_info$stderr <- gsub("Error: ", "", container_info$stderr)
       cli::cli_abort("Cannot access container {.val {name}}: {container_info$stderr}")
     }
-    
+
     container_info <- jsonlite::fromJSON(container_info$stdout)
 
     assign("container_info", container_info, envir = ors_cache)
-    
+
     invisible(container_info)
   } else {
     invisible(ors_cache$container_info)
@@ -96,7 +96,7 @@ get_status <- function(id = NULL) {
 #' @description Returns a list of active profiles from the cache or local host.
 #' Requires OpenRouteService to be running.
 #' @param force \code{[logical]}
-#' 
+#'
 #' If \code{TRUE}, function must query the local host. If
 #' \code{FALSE}, profiles will be read from the cache if possible.
 #' @inheritParams ors_ready
@@ -136,28 +136,30 @@ ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
   if (is.null(ors_cache$ors_ready) || isFALSE(ors_cache$ors_ready) || force) {
     id <- get_id(id)
     url <- file.path(get_ors_url(id), "ors/health", fsep = "/")
-    
+
     if (!is_ors_api(url)) {
-        req <- httr2::request(url)
-        req <- httr2::req_method(req, "GET")
-        tryCatch(
-          expr = {
-            res <- httr2::req_perform(req)
-            res <- httr2::resp_body_json(res)
-            stopifnot(ready <- res$status == "ready")
-          },
-          error = function(e) {
-            if (error) {
-              cli::cli_abort(
-                "x" = "Cannot reach the OpenRouteService server.",
-                "i" = "Did you start your local instance?"
-              )
-            } else {
-              ready <<- FALSE
-            }
+      req <- httr2::request(url)
+      req <- httr2::req_method(req, "GET")
+      tryCatch(
+        expr = {
+          res <- httr2::req_perform(req)
+          res <- httr2::resp_body_json(res)
+          stopifnot(ready <- res$status == "ready")
+        },
+        error = function(e) {
+          if (error) {
+            cli::cli_abort(
+              "x" = "Cannot reach the OpenRouteService server.",
+              "i" = "Did you start your local instance?"
+            )
+          } else {
+            ready <<- FALSE
           }
-        )
-    } else ready <- TRUE
+        }
+      )
+    } else {
+      ready <- TRUE
+    }
 
     assign("ors_ready", ready, envir = ors_cache)
     ready
@@ -192,7 +194,7 @@ identify_extract <- function(instance) {
       }
     }
   }
-  
+
   if (!is.null(extract_path)) {
     # Convert relative to absolute path
     extract_path <- normalizePath(
@@ -200,7 +202,8 @@ identify_extract <- function(instance) {
         instance$paths$dir,
         "docker/data",
         basename(extract_path)
-      ), winslash = "/"
+      ),
+      winslash = "/"
     )
   }
 
@@ -215,7 +218,7 @@ get_id <- function(id = NULL, instance = NULL) {
     if (is.null(instance)) {
       instance <- get_instance()
     }
-    
+
     if (attr(instance, "type") == "local") {
       id <- instance$compose$name
     } else if (attr(instance, "type") == "remote") {
@@ -223,7 +226,9 @@ get_id <- function(id = NULL, instance = NULL) {
     } else {
       corrupt_instance(instance)
     }
-  } else id
+  } else {
+    id
+  }
 }
 
 
@@ -232,7 +237,7 @@ get_id <- function(id = NULL, instance = NULL) {
 get_ors_port <- function(force = FALSE, id = NULL) {
   if (is.null(ors_cache$instance) || force == TRUE) {
     container_info <- inspect_container(id)
-    
+
     port <- container_info$HostConfig$PortBindings[[1]][[1]]$HostPort
     assign("port", port, envir = ors_cache)
     port
@@ -247,7 +252,9 @@ get_ors_port <- function(force = FALSE, id = NULL) {
 get_ors_url <- function(id = NULL) {
   if (!is_url(id)) {
     sprintf("http://localhost:%s/", get_ors_port(id = id))
-  } else id
+  } else {
+    id
+  }
 }
 
 
@@ -272,7 +279,7 @@ corrupt_instance <- function(instance) {
 #' last \code{\link{ors_distances}} function call. Also works for
 #' \code{\link{ors_shortest_distances}}.
 #' @param last \code{[integer]}
-#' 
+#'
 #' Number of error lists that should be returned. \code{last = 2L},
 #' for example, returns errors from the last two function calls.
 #'
