@@ -23,9 +23,11 @@
     comp <- comp[lengths(comp) > 0]
 
     type <- "local"
+    built <- ors_built(paths$dir)
   } else {
     comp <- .construct_server(server)
     type <- if (is_local(server)) "local" else "remote"
+    built <- TRUE
   }
 
   structure(
@@ -33,7 +35,7 @@
     class = "ors_instance",
     alive = TRUE,
     type = type,
-    built = ors_built(paths$dir),
+    built = built,
     verbose = verbose
   )
 }
@@ -296,8 +298,10 @@ ors_instance <- function(instance = NULL,
       )
     ))
   }
+  
+  local <- attr(instance, "type") == "local"
 
-  if (is.null(server)) {
+  if (is.null(server) && local) {
     if (!dir.exists(dir)) {
       cli::cli_abort(
         "{.path {dir}} does not exist and cannot be used as a directory."
@@ -330,14 +334,16 @@ ors_instance <- function(instance = NULL,
       dir <- get_ors_release(dir, version, overwrite, verbose)
       instance <- list()
     }
-  } else {
+  } else if (!is.null(server) && local) {
     instance <- list()
-    if (server == "api") server <- "https://api.openrouteservice.org/"
+    if (identical(server, "api")) server <- "https://api.openrouteservice.org/"
     if (!is_url(server)) {
       cli::cli_abort(
         "{.path {server}} is not a valid URL to an OpenRouteService server"
       )
     }
+  } else {
+    server <- instance$url
   }
 
   instance <- .instance(instance, dir = dir, server = server, verbose = verbose)
