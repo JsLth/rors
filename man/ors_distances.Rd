@@ -75,38 +75,76 @@ refer to the
 and
 \href{https://giscience.github.io/openrouteservice/documentation/routing-options/Routing-Options.html}{documentation}
 \describe{
-\item{\strong{geometry_simplify}}{Logical length-1 vector specifying
-whether geometry should be simplified.}
-\item{\strong{continue_straight}}{Logical length-1 vector. If \code{FALSE},
-avoids u-turns and forces the route to
-keep going straight.}
-\item{\strong{avoid_borders}}{Length-1 character vector specifying whether
-to avoid, all borders, only controlled ones
-or none. Only available for \code{driving-*}.}
+\item{\strong{geometry_simplify}}{Whether geometry should be simplified.
+Defaults to \code{FALSE}.}
+\item{\strong{continue_straight}}{Whether to avoid u-turns and continue
+straight if possible. If \code{FALSE},
+allows the route to take u-turns.
+Defaults to \code{FALSE}.}
+\item{\strong{avoid_borders}}{Character vector specifying whether
+to avoid, \code{all} borders, only
+\code{controlled} ones or \code{none}. Only
+available for \code{driving-*}.}
 \item{\strong{avoid_countries}}{Numeric vector listing countries to avoid.
 Each country is assigned a numeric value.
-Refer to the ORS documentation. Only
-available for \code{driving-*}.}
+Refer to the \href{https://giscience.github.io/openrouteservice/documentation/routing-options/Country-List}{ORS country list}.
+Only available for \code{driving-*}.}
 \item{\strong{avoid_features}}{Character vector containing traffic features
-to avoid (e.g. highways or tunnels).}
+to avoid. One or several of \code{highways},
+\code{tollways}, \code{ferries}, \code{fords},
+and \code{steps}.}
 \item{\strong{avoid_polygons}}{\code{sf} or \code{sfc} object describing
 areas to avoid.}
-\item{\strong{profile_params}}{Nested list containing restrictions and
-weightings for \code{driving-hgv},
-\code{cycling-*}, \code{walking},
-\code{hiking} and \code{wheelchair}.}
-\item{\strong{vehicle_type}}{Length-1 character vector specifying the type
-of heavy goods vehicle. Needed to set
-restrictions for \code{driving-hgv}.}
-\item{\strong{preference}}{Length-1 character vector describing the routing
-preference. Either "recommended", "fastest" or
-"shortest".}
+\item{\strong{restrictions}}{Restrictions to be applied for routing.
+Routes that do not conform to these restrictions
+are not considered. Can either be specifications
+for heavy-goods vehicles (\code{axleload},
+\code{hazmat}, \code{height}, \code{length},
+\code{weight}, \code{width}), indicators
+of wheelchair accessibility
+(\code{maximum_incline},
+\code{maximum_sloped_kerb}, \code{minimum_width},
+\code{smoothness_type}, \code{surface_type},
+\code{track_type}), or the maximum allowed
+route steepness (\code{gradient}). Not
+applicable for any other profile. Refer to the
+\href{https://giscience.github.io/openrouteservice/documentation/routing-options/Routing-Options.html}{documentation}
+for details on each parameter.}
+\item{\strong{weightings}}{Weightings for route selection. Can be
+preference multiplicators for walking profiles
+(\code{green}, \code{quiet}) or
+\code{steepness_difficulty} for cycling profiles.
+Not applicable for any other profile.
+Refer to the
+\href{https://giscience.github.io/openrouteservice/documentation/routing-options/Routing-Options.html}{documentation}
+for details on each parameter.}
+\item{\strong{allow_unsuitable}}{Whether possibly unsuitable surfaces
+should be included for wheelchair routing.
+If \code{TRUE}, includes routes, even
+if their surface quality might not be
+suitable for wheelchair driving. Defaults
+to \code{FALSE}.}
+\item{\strong{surface_quality_known}}{Whether to enforce that the surface
+quality of routes is considered.
+If \code{FALSE}, routes of all surface
+qualities are taken into account.
+Defaults to \code{FALSE}}
+\item{\strong{vehicle_type}}{The type of heavy-goods vehicle that is to be
+assumed for profile \code{driving-hgv}. One of
+\code{hgv}, \code{agricultural},
+\code{delivery}, \code{forestry}, and
+\code{goods}. Needed to set restrictions for
+\code{driving-hgv}. Defaults to \code{hgv}.}
+\item{\strong{preference}}{Specifies the route preference mode. One of
+\code{recommended}, \code{fastest} or
+\code{shortest}. Defaults to \code{recommended}.}
 \item{\strong{radiuses}}{Maximum distance (in m) that road segments can be
 snapped to. \code{radiuses = -1} represents an
-unlimited radius. This option can also be adjusted
-in the ORS service configurations.}
-\item{\strong{maximum_speed}}{Numeric length-1 vector specifying the
-maximum speed.}
+unlimited radius. Defaults to the
+\code{maximum_snapping_radius} in the configuration
+file (350m if not changed).}
+\item{\strong{maximum_speed}}{Maximum speed that routing vehicles are
+allowed to drive. Not applied by default.}
 }}
 
 \item{group}{\code{[character/numeric]}
@@ -132,11 +170,6 @@ shortest routing distance to the respective place of the source dataset.
 Depending on the \code{geometry} argument, these outputs can either be
 simple dataframes or objects of class \code{sf} containing the linestring
 geometries of the respective routes.
-
-\code{ors_shortest_distances} returns a dataframe containing
-distances, travel durations and the index number of the point of interest
-with the shortest routing distance to the respective place of the source
-dataset.
 }
 \description{
 \code{ors_distances} calculates the routing distance between two
@@ -173,8 +206,8 @@ set.seed(222)
 dest_sf <- ors_sample(10, as_sf = TRUE)
 dest_df <- ors_sample(10)
 
-car = "driving-car"
-bike = "cycling-regular"
+car <- "driving-car"
+bike <- "cycling-regular"
 
 # Running with sf objects
 route_lengths_sf <- ors_distances(source_sf, dest_sf, profile = car)
@@ -208,7 +241,7 @@ route_lengths_opts <- ors_distances(
   continue_straight = TRUE,
   preference = "fastest"
 )
-                                    
+
 # Finding shortest routes from each point in sample_a to sample_b
 shortest_routes <- ors_shortest_distances(source_df, dest_df, units = "km")
 shortest_routes
@@ -224,5 +257,6 @@ nearest_hospitals <- ors_shortest_distances(
 nearest_hospitals
 }
 \dontrun{
+
 }
 }

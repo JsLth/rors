@@ -104,7 +104,7 @@ modified and complemented using the following functions:
 dir <- dir.create("~/test_ors")
 
 # Download and furnish an ORS instance
-ors <- ors_instance(dir = dir, version = 6.7.0, auto_deletion = FALSE)
+ors <- ors_instance(dir = dir, version = "6.7.0", auto_deletion = FALSE)
 ors
 
 # Update an ORS instance

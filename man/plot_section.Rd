@@ -74,7 +74,7 @@ additional feature.
 \examples{
 \dontrun{
 sample <- ors_sample(2)
-route <- ors_inspect(sample[1,], sample[2,], extra_info = TRUE)
+route <- ors_inspect(sample[1, ], sample[2, ], extra_info = TRUE)
 
 plot_section(route, feat = "waytype")
 
