@@ -179,11 +179,11 @@ ors_inspect <- function(source,
   ascent <- res$features$properties$segments[[1L]]$ascent
   descent <- res$features$properties$segments[[1L]]$descent
 
-  extra_info <- vapply(
+  extra_info <- lapply(
     options$extra_info,
-    function(x) format_extra_info(res, x),
-    data.frame(1L)
+    function(x) format_extra_info(res, x)
   )
+  extra_info <- do.call(cbind.data.frame, extra_info)
 
   elements <- list(
     names,

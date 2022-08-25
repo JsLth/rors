@@ -332,7 +332,9 @@ format_extra_info <- function(res, info_type) {
   } else {
     values_df <- data.frame(rep(NA, last_waypoint + 1L))
   }
-  colnames(values_df) <- substitute(info_type)
+
+  colnames(values_df) <- info_type
+  
   values_df
 }
 

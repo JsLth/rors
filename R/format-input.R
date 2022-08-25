@@ -16,247 +16,288 @@ format_input_data <- function(.data, to_coords = FALSE) {
 
 
 
-format_ors_options <- function(options, profile) {
-  if (is.null(options)) return(NULL)
+format_ors_options <- function(opts, profile) {
+  if (is.null(opts)) return(NULL)
 
-  options_check <- NULL
-
-  if (!is.null(options$attributes) && length(options$attributes)) {
-    attributes <- c("avgspeed", "detourfactor")
-
-    if (isTRUE(options$attributes)) {
-      options$attributes <- attributes
-    }
-
-    attributes_i <- match(options$attributes, attributes)
-    attributes_i <- attributes_i[!is.na(attributes_i)]
-
-    if (length(attributes_i)) {
-      options$attributes <- attributes[attributes_i]
-      options_check["attributes"] <- TRUE
-    }
+  if (!is.null(opts$attributes)) {
+    matches <- c("avgspeed", "detourfactor")
+    opts$attributes <- format_ors_list(opts$attributes, matches = matches)
   }
 
-  if (!is.null(options$elevation)) {
-    if (is.logical(options$elevation)) {
-      options$elevation <- TRUE
-      options_check["elevation"] <- TRUE
-    }
+  if (!is.null(opts$elevation)) {
+    opts$elevation <- format_ors_vector(opts$elevation)
   }
 
-  if (!is.null(options$extra_info) && length(options$extra_info)) {
-    extra_info <- c(
+  if (!is.null(opts$extra_info)) {
+    matches <- c(
       "steepness", "suitability", "surface", "waycategory",
       "waytype", "tollways", "traildifficulty", "osmid",
       "roadaccessrestrictions", "countryinfo", "green", "noise"
     )
-
-    if (isTRUE(options$extra_info)) {
-      options$extra_info <- extra_info
-    }
-
-    extra_info_i <- match(options$extra_info, extra_info)
-    extra_info_i <- extra_info_i[!is.na(extra_info_i)]
-
-    if (length(extra_info_i)) {
-      options$extra_info <- extra_info[extra_info_i]
-      options_check["extra_info"] <- TRUE
-    } else {
-      options_check["extra_info"] <- FALSE
-      options$extra_info <- NULL
-    }
+    opts$extra_info <- format_ors_list(opts$extra_info, matches = matches)
   }
 
-  if (!is.null(options$continue_straight)) {
-    if (is.logical(options$continue_straight)) {
-      options_check["continue_straight"] <- TRUE
-    } else {
-      options_check["continue_straight"] <- FALSE
-      options$continue_straight <- NULL
-    }
+  if (!is.null(opts$continue_straight)) {
+    opts$continue_straight <- format_ors_vector(opts$continue_straight)
   }
 
-  if (!is.null(options$geometry_simplify)) {
-    if (isTRUE(options$geometry_simplify) || isFALSE(options$geometry_simplify)) {
-      options_check["geometry_simplify"] <- TRUE
-    } else {
-      options_check["geometry_simplify"] <- FALSE
-      options$geometry_simplify <- NULL
-    }
+  if (!is.null(opts$geometry_simplify)) {
+    opts$geometry_simplify <- format_ors_vector(opts$geometry_simplify)
   }
 
-  if (!is.null(options$avoid_borders)) {
-    if (is.character(options$avoid_borders) &&
-      length(options$avoid_borders) == 1L &&
-      is.element(options$avoid_borders, c("all", "controlled", "none")) &&
-      identical(base_profile(profile), "driving")) {
-      options_check["avoid_borders"] <- TRUE
-    } else {
-      options_check["avoid_borders"] <- FALSE
-      options$avoid_borders <- NULL
-    }
+  if (!is.null(opts$avoid_borders)) {
+    format_ors_list(
+      opts$avoid_borders,
+      matches = c("all", "controlled", "none"),
+      profile = c(driving = base_profile(profile)),
+      single = TRUE
+    )
   }
 
-  if (!is.null(options$avoid_countries)) {
-    if (is.numeric(options$avoid_countries) && identical(base_profile(profile), "driving")) {
-      options$avoid_countries <- list(options$avoid_countries)
-      options_check["avoid_countries"] <- TRUE
-    } else {
-      options_check["avoid_countries"] <- FALSE
-      options$avoid_countries <- NULL
-    }
+  if (!is.null(opts$avoid_countries)) {
+    opts$avoid_countries <- format_ors_vector(
+      opts$avoid_countries,
+      type = "numeric",
+      profile = c("driving-car" = profile),
+      box = TRUE
+    )
   }
 
-  if (!is.null(options$avoid_features)) {
-    if (is.character(options$avoid_features)) {
-      options$avoid_features <- list(options$avoid_features)
-      options_check["avoid_features"] <- TRUE
-    } else {
-      options_check["avoid_features"] <- FALSE
-      options$avoid_features <- NULL
-    }
+  if (!is.null(opts$avoid_features)) {
+    opts$avoid_features <- format_ors_vector(
+      opts$avoid_features,
+      type = "character",
+      box = TRUE
+    )
   }
 
-  if (!is.null(options$avoid_polygons)) {
-    if (is_sf(options$avoid_polygons) &&
-      sf::st_is(options$avoid_polygons, c("POLYGON", "MULTIPOLYGON"))) {
-      geom_type <- as.character(sf::st_geometry_type(options$avoid_polygons))
-      options$avoid_polygons <- list(
-        type = capitalize_char(geom_type),
-        coordinates = list(sf::st_coordinates(options$avoid_polygons))
-      )
-      options_check["avoid_polygons"] <- TRUE
-    } else {
-      options_check["avoid_polygons"] <- FALSE
-      options$avoid_polygons <- NULL
-    }
+  if (!is.null(opts$avoid_polygons)) {
+    opts$avoid_polygons <- format_ors_poly(opts$avoid_polygons)
   }
 
-  if (!is.null(options$profile_params)) {
-    if (is.list(options$profile_params) &&
-      !identical(profile, "driving-car")) {
-      base_profile <- base_profile(profile)
-      allowed_opts <- switch(base_profile,
+  if (!is.null(opts$vehicle_type)) {
+    opts$vehicle_type <- format_ors_vector(
+      opts$vehicle_type,
+      type = "character",
+      profile = c("driving-hgv" = profile),
+      box = TRUE
+    )
+  }
+
+  if (!is.null(opts$preference)) {
+    opts$preference <- format_ors_list(
+      opts$preference,
+      matches = c("fastest", "shortest", "recommended"),
+      single = TRUE
+    )
+  }
+
+  if (!is.null(opts$radiuses)) {
+    opts$radiuses <- format_ors_vector(opts$radiuses, type = "numeric")
+  }
+
+  if (!is.null(opts$maximum_speed)) {
+    format_ors_vector(
+      opts$maximum_speed,
+      type = "numeric",
+      single = TRUE
+    )
+  }
+  
+  if (!is.null(opts$allow_unsuitable)) {
+    format_ors_vector(
+      opts$allow_unsuitable,
+      profile = c("wheelchair" = profile)
+    )
+  }
+  
+  if (!is.null(opts$surface_quality_known)) {
+    format_ors_vector(
+      opts$surface_quality_known,
+      profile = c("wheelchair" = profile)
+    )
+  }
+  
+  if (!is.null(opts$restrictions)) {
+    opts$restrictions <- format_ors_profile_params(
+      opts$restrictions,
+      which = "restrictions",
+      profile = profile
+    )
+  }
+  
+  if (!is.null(opts$weightings)) {
+    opts$weightings <- format_ors_profile_params(
+      opts$weightings,
+      which = "weightings",
+      profile = profile
+    )
+  }
+  
+  opts_check <- is_bad_option(opts)
+  opts <- construct_options(opts)
+
+  if (!all(opts_check)) {
+    option_names <- as.list(names(opts_check)[!opts_check])
+    names(option_names) <- "*"
+    cli::cli_warn(do.call(c, c(
+      paste(
+        "The following {length(option_names)} option{?s} ",
+        "{?is/are} formatted incorrectly and will be",
+        "omitted:"
+      ),
+      option_names
+    )))
+  }
+
+  opts
+}
+
+
+format_ors_list <- function(features, matches, profile = NULL, single = FALSE) {
+  if (isTRUE(features)) {
+    features <- matches
+  }
+
+  if (!length(features)) {
+    features <- NULL
+  }
+  
+  features <- match.arg(features, matches, several.ok = !single)
+  
+  if (!is.null(profile)) {
+    opts_check <- names(profile) == profile
+  } else opts_check <- TRUE
+  
+  structure(features, opts_check = opts_check)
+}
+
+
+format_ors_vector <- function(val,
+                              type = "tf",
+                              profile = NULL,
+                              box = FALSE,
+                              single = FALSE) {
+  opts_check <- FALSE
+  
+  if (type == "tf") {
+    fun_check <- \(x) isTRUE(x) || isFALSE(x)
+  } else {
+    fun_check <- match.fun(paste0("is.", type))
+  }
+  
+  if (box) {
+    val <- list(val)
+  }
+  
+  profile_check <- if (!is.null(profile)) {
+    names(profile) == profile
+  } else TRUE
+  
+  length_check <- if (single) {
+    length(val)
+  } else TRUE
+  
+  opts_check <- profile_check && length_check && fun_check(val)
+  
+  structure(val, opts_check = opts_check)
+}
+
+
+format_ors_poly <- function(poly) {
+  if (is_sf(poly) && sf::st_is(poly, c("POLYGON", "MULTIPOLYGON"))) {
+    geom_type <- as.character(sf::st_geometry_type(opts$avoid_polygons))
+    poly <- list(
+      type = capitalize_char(geom_type),
+      coordinates = list(sf::st_coordinates(opts$avoid_polygons))
+    )
+    opts_check <- TRUE
+  } else {
+    opts_check <- FALSE
+  }
+  
+  structure(poly, opts_check = opts_check)
+}
+
+
+format_ors_profile_params <- function(params, which, profile = NULL) {
+  if (is.vector(params) && !identical(profile, "driving-car")) {
+    base_profile <- base_profile(profile)
+    
+    defined <- list(
+      restrictions = list(
         wheelchair = c(
-          "maximum_incline",
-          "maximum_sloped_kerb",
-          "minimum_width",
-          "smoothness_type",
-          "surface_type",
-          "track_type"
+          "maximum_incline", "maximum_sloped_kerb", "minimum_width",
+          "smoothness_type", "surface_type", "track_type"),
+        driving = c(
+          "axleload", "hazmat", "height", "length", "weight", "width"
         ),
-        hgv = c(
-          "axleload",
-          "hazmat",
-          "height",
-          "length",
-          "weight",
-          "width"
-        ),
+        cycling = "gradient"
+      ),
+      weightings = list(
         cycling = "steepness_difficulty",
         walking = c("green", "quiet")
       )
-      opt_admitted <- lapply(
-        options$profile_params,
-        function(x) is.element(names(x), allowed_opts)
-      )
-      options_check["profile_param"] <- all(unlist(opt_admitted))
+    )
 
-      if (any(opt_admitted$weightings)) {
-        options$
-          profile_params$
-          weightings <- options$profile_params$weightings[opt_admitted$weightings]
-      } else {
-        options$profile_params$weightings <- NULL
-      }
-
-      if (any(opt_admitted$restrictions)) {
-        options$
-          profile_params$
-          restrictions <- options$profile_params$restrictions[opt_admitted$restrictions]
-      } else {
-        options$profile_params$restrictions <- NULL
-      }
-    } else {
-      options_check["profile_param"] <- FALSE
-      options$profile_params <- NULL
-    }
+    defined <- defined[[which]][[base_profile]]
+    admitted <- defined[match(names(params), defined)]
+    if (is.null(admitted)) admitted <- list()
+    opts_check <- all(names(params) %in% admitted)
+  } else {
+    admitted <- list()
+    opts_check <- FALSE
   }
 
-  if (!is.null(options$vehicle_type)) {
-    if (is.character(options$vehicle_type) &&
-      identical(profile, "driving-hgv")) {
-      options$vehicle_type <- list(options$vehicle_type)
-      options_check["vehicle_type"] <- TRUE
-    } else {
-      options_check["vehicle_type"] <- FALSE
-      options$vehicle_type <- NULL
-    }
-  }
+  structure(admitted, opts_check = opts_check)
+}
 
-  if (!is.null(options$preference)) {
-    if (is.character(options$preference) &&
-      length(options$preference) == 1L &&
-      is.element(options$preference, c("fastest", "shortest", "recommended"))) {
-      options_check["preference"] <- TRUE
-    } else {
-      options_check["preference"] <- FALSE
-      options$preference <- NULL
-    }
-  }
 
-  if (!is.null(options$radiuses)) {
-    if (is.numeric(options$radiuses) && length(options$radiuses) == 1L) {
-      options_check["radiuses"] <- TRUE
-    } else {
-      options_check["radiuses"] <- FALSE
-      options$radiuses <- NULL
-    }
-  }
+ready_to_sent <- function(opts) {
+  lengths(opts) > 0L & is_bad_option(opts)
+}
 
-  if (!is.null(options$maximum_speed)) {
-    if (is.numeric(options$maximum_speed) && length(options$maximum_speed) == 1L) {
-      options_check["maximum_speed"] <- TRUE
-    } else {
-      options_check["maximum_speed"] <- FALSE
-      options$maximum_speed <- NULL
-    }
-  }
 
-  adv_options_list <- list(
-    avoid_borders = options$avoid_borders,
-    avoid_countries = options$avoid_countries,
-    avoid_features = options$avoid_features,
-    avoid_polygons = options$avoid_polygons,
-    profile_params = options$profile_params,
-    vehicle_type = options$vehicle_type
+is_bad_option <- function(opts) {
+  vapply(opts, function(x) {
+    if (!is.null(x)) attr(x, "opts_check") else TRUE
+  }, FUN.VALUE = logical(1))
+}
+
+
+construct_options <- function(opts) {
+  profile_params <- list(
+    allow_unsuitable      = opts$allow_unsuitable,
+    surface_quality_known = opts$surface_quality_known,
+    restrictions          = opts$restrictions,
+    weightings            = opts$weightings
   )
-
-  adv_options_list <- adv_options_list[lengths(adv_options_list) > 0L]
-
-  options_list <- list(
-    attributes        = options$attributes,
-    continue_straight = options$continue_straight,
-    elevation         = options$elevation,
-    extra_info        = options$extra_info,
-    geometry_simplify = options$geometry_simplify,
-    options           = adv_options_list,
-    preference        = options$preference,
-    radiuses          = options$radiuses,
-    maximum_speed     = options$maximum_speed
+  profile_params <- profile_params[ready_to_sent(profile_params)]
+  attr(profile_params, "opts_check") <- TRUE
+  
+  adv_opts <- list(
+    avoid_borders   = opts$avoid_borders,
+    avoid_countries = opts$avoid_countries,
+    avoid_features  = opts$avoid_features,
+    avoid_polygons  = opts$avoid_polygons,
+    profile_params  = profile_params,
+    vehicle_type    = opts$vehicle_type
   )
+  adv_opts <- adv_opts[ready_to_sent(adv_opts)]
+  attr(adv_opts, "opts_check") <- TRUE
 
-  options_list <- options_list[lengths(options_list) > 0L]
-
-  if (!all(options_check)) {
-    option_names <- names(options_check)[!options_check]
-    cli::cli_warn(paste(
-      "The following {length(option_names)} option{?s} ",
-      "{?is/are} formatted incorrectly and will be",
-      "skipped:"
-    ))
-    cli::cli_ul(items = option_names)
-  }
-
-  options_list
+  opts_list <- list(
+    attributes        = opts$attributes,
+    continue_straight = opts$continue_straight,
+    elevation         = opts$elevation,
+    extra_info        = opts$extra_info,
+    geometry_simplify = opts$geometry_simplify,
+    opts              = adv_opts,
+    preference        = opts$preference,
+    radiuses          = opts$radiuses,
+    maximum_speed     = opts$maximum_speed
+  )
+  opts_list <- opts_list[ready_to_sent(opts_list)]
+  
+  opts_list
 }
