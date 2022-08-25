@@ -40,13 +40,26 @@ assert <- function(x,
 
 
 assert_class <- function(x, class, abort = TRUE) {
-  if (!inherits(x, class)) {
+  afuns <- lapply(class, function(c) {
+    get0(paste0("is.", c), ifnotfound = \(obj) inherits(obj, c))
+  })
+
+  has_class <- any(vapply(afuns, do.call, list(x), FUN.VALUE = logical(1)))
+
+  if (!has_class) {
     if (!abort) {
       return(FALSE)
     }
+
     var <- deparse(substitute(x, env = parent.frame()))
+
+    cli::cli_div(theme = list(span.cls2 = list(
+      before = "<", after = ">", color = "blue",
+      vec_sep = ", ", vec_last = " or "
+    )))
+
     cli::cli_abort(c(
-      "x" = "{.var {var}} is expected to be of class {.cls {class}}.",
+      "x" = "{.var {var}} is expected to be of class {.cls2 {class}}.",
       "i" = "Got {.cls {class(x)}} instead."
     ))
   } else {
