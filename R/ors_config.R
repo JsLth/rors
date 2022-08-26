@@ -41,6 +41,8 @@ ors_config <- function(instance,
                        config = NULL,
                        interactive = FALSE) {
   verbose <- attr(instance, "verbose")
+  
+  assert(profiles, c("list", "character"), len = c(1, 9), null = TRUE)
 
   if (!interactive) {
     if (is.null(config)) {

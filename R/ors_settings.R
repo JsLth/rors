@@ -47,6 +47,11 @@ ors_settings <- function(instance,
                          graph_building = NULL) {
   verbose <- attr(instance, "verbose")
   compose <- instance$compose$parsed
+  assert(name, class = "character", len = 1L, null = TRUE)
+  assert(ports, class = c("numeric", "character"), len = 1L, null = TRUE)
+  assert(memory, class = "numeric", len = c(1, 2), null = TRUE)
+  assert(auto_deletion, class = "logical", len = 1L)
+  assert(graph_building, class = "logical", null = TRUE)
 
   if (!is.null(instance$paths$extract_path) && is.null(graph_building)) {
     graphs_dir <- file.path(instance$paths$dir, "docker/graphs")

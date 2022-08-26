@@ -286,27 +286,20 @@ ors_instance <- function(instance = NULL,
                          version = "master",
                          overwrite = FALSE,
                          verbose = TRUE) {
-  if (is.character(instance)) {
-    cli::cli_abort(c(
-      paste(
-        "Argument {.var instance} is expected to be of class",
-        "{.cls ors_instance}, not {.cls character}."
-      ),
-      "i" = paste(
-        "Did you accidentally pass a directory",
-        "without specifying the argument name?"
-      )
-    ))
-  }
-  
-  local <- attr(instance, "type") == "local"
+  assert_class(instance, "ors_instance", null = TRUE, "i" = paste(
+    "Did you accidentally pass a directory",
+    "without specifying the argument name?"
+  ))
 
-  if (is.null(server) && local) {
-    if (!dir.exists(dir)) {
-      cli::cli_abort(
-        "{.path {dir}} does not exist and cannot be used as a directory."
-      )
-    }
+  if (!is.null(instance)) {
+    local <- attr(instance, "type") == "local"
+  } else local <- is.null(server)
+
+  if (local && is.null(instance)) {
+    assert_path(dir, file = FALSE, "i" = paste(
+      "The {.var dir} argument is expected to be a valid path to store",
+      "the OpenRouteService source code in."
+    ))
 
     if (!docker_installed()) {
       cli::cli_abort("No docker installation could be detected.")
@@ -323,16 +316,14 @@ ors_instance <- function(instance = NULL,
     start_docker(verbose = verbose)
 
     if (!is.null(instance)) {
-      dir <- instance$paths$dir
-      if (!dir.exists(dir)) {
-        cli::cli_abort("OpenRouteService directory does not exist.")
-      }
+      assert_path(instance$paths$dir, file = FALSE)
+      dir <- instance$paths$di
       instance[c("compose", "config", "status")] <- NULL
     } else {
       dir <- get_ors_release(dir, version, overwrite, verbose)
       instance <- list()
     }
-  } else if (!is.null(server) && local) {
+  } else if (!local && is.null(instance)) {
     instance <- list()
     if (identical(server, "api")) server <- "https://api.openrouteservice.org/"
     if (!is_url(server)) {

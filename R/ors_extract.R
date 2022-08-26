@@ -21,11 +21,13 @@
 ors_extract <- function(instance, place = NULL, provider = "geofabrik", file = NULL, ...) {
   verbose <- attr(instance, "verbose")
 
-  if (!is.null(file) && file.exists(file)) {
+  if (!is.null(file)) {
+    assert(file, file = TRUE, len = 1L)
     extract_path <- file
   }
 
   if (!is.null(place)) {
+    assert(place, class = "character", len = 1L)
     extract_path <- get_extract(
       place = place,
       provider = provider,

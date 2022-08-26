@@ -1,5 +1,5 @@
 format_input_data <- function(.data, to_coords = FALSE) {
-  assert_class(.data, c("sf", "sfc"))
+  assert_class(.data, c("sf", "sfc"), .env = list(x = substitute(.data)))
 
   if (all(sf::st_is(.data, c("POINT", "MULTIPOINT")))) {
     .data <- sf::st_transform(.data, 4326L)
@@ -103,21 +103,21 @@ format_ors_options <- function(opts, profile) {
       single = TRUE
     )
   }
-  
+
   if (!is.null(opts$allow_unsuitable)) {
     format_ors_vector(
       opts$allow_unsuitable,
       profile = c("wheelchair" = profile)
     )
   }
-  
+
   if (!is.null(opts$surface_quality_known)) {
     format_ors_vector(
       opts$surface_quality_known,
       profile = c("wheelchair" = profile)
     )
   }
-  
+
   if (!is.null(opts$restrictions)) {
     opts$restrictions <- format_ors_profile_params(
       opts$restrictions,
@@ -125,7 +125,7 @@ format_ors_options <- function(opts, profile) {
       profile = profile
     )
   }
-  
+
   if (!is.null(opts$weightings)) {
     opts$weightings <- format_ors_profile_params(
       opts$weightings,
@@ -133,9 +133,13 @@ format_ors_options <- function(opts, profile) {
       profile = profile
     )
   }
-  
+
+  construct_options(opts)
+}
+
+
+check_options <- function(opts) {
   opts_check <- is_bad_option(opts)
-  opts <- construct_options(opts)
 
   if (!all(opts_check)) {
     option_names <- as.list(names(opts_check)[!opts_check])
@@ -149,8 +153,6 @@ format_ors_options <- function(opts, profile) {
       option_names
     )))
   }
-
-  opts
 }
 
 
@@ -162,13 +164,15 @@ format_ors_list <- function(features, matches, profile = NULL, single = FALSE) {
   if (!length(features)) {
     features <- NULL
   }
-  
+
   features <- match.arg(features, matches, several.ok = !single)
-  
+
   if (!is.null(profile)) {
     opts_check <- names(profile) == profile
-  } else opts_check <- TRUE
-  
+  } else {
+    opts_check <- TRUE
+  }
+
   structure(features, opts_check = opts_check)
 }
 
@@ -179,27 +183,31 @@ format_ors_vector <- function(val,
                               box = FALSE,
                               single = FALSE) {
   opts_check <- FALSE
-  
+
   if (type == "tf") {
     fun_check <- \(x) isTRUE(x) || isFALSE(x)
   } else {
     fun_check <- match.fun(paste0("is.", type))
   }
-  
+
   if (box) {
     val <- list(val)
   }
-  
+
   profile_check <- if (!is.null(profile)) {
     names(profile) == profile
-  } else TRUE
-  
+  } else {
+    TRUE
+  }
+
   length_check <- if (single) {
     length(val)
-  } else TRUE
-  
+  } else {
+    TRUE
+  }
+
   opts_check <- profile_check && length_check && fun_check(val)
-  
+
   structure(val, opts_check = opts_check)
 }
 
@@ -215,7 +223,7 @@ format_ors_poly <- function(poly) {
   } else {
     opts_check <- FALSE
   }
-  
+
   structure(poly, opts_check = opts_check)
 }
 
@@ -223,7 +231,7 @@ format_ors_poly <- function(poly) {
 format_ors_profile_params <- function(params, which, profile = NULL) {
   if (is.vector(params) && !identical(profile, "driving-car")) {
     base_profile <- base_profile(profile)
-    
+
     defined <- list(
       restrictions = list(
         wheelchair = c(
@@ -274,7 +282,7 @@ construct_options <- function(opts) {
   )
   profile_params <- profile_params[ready_to_sent(profile_params)]
   attr(profile_params, "opts_check") <- TRUE
-  
+
   adv_opts <- list(
     avoid_borders   = opts$avoid_borders,
     avoid_countries = opts$avoid_countries,
@@ -298,6 +306,6 @@ construct_options <- function(opts) {
     maximum_speed     = opts$maximum_speed
   )
   opts_list <- opts_list[ready_to_sent(opts_list)]
-  
+
   opts_list
 }
