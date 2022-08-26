@@ -327,9 +327,7 @@ ors_instance <- function(instance = NULL,
       if (!dir.exists(dir)) {
         cli::cli_abort("OpenRouteService directory does not exist.")
       }
-      instance[["compose"]] <- NULL
-      instance[["config"]] <- NULL
-      instance[["status"]] <- NULL
+      instance[c("compose", "config", "status")] <- NULL
     } else {
       dir <- get_ors_release(dir, version, overwrite, verbose)
       instance <- list()

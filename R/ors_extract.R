@@ -40,14 +40,16 @@ ors_extract <- function(instance, place = NULL, provider = "geofabrik", file = N
   }
 
   if (!is.null(extract_path)) {
-    graphs_dir <- file.path(instance$paths$dir, "docker/graphs")
-    relative_extract_path <- relative_path(extract_path, file.path(instance$paths$dir, "docker"))
+    dir <- instance$paths$dir
+    graphs_dir <- file.path(dir, "docker/graphs")
+    relative <- relative_path(extract_path, file.path(dir, "docker"))
+    compose <- instance$compose$parsed
     if (length(dir(graphs_dir))) {
-      compose <- set_graphbuilding("change", instance$compose$parsed, relative_extract_path)
+      compose <- set_graphbuilding("change", compose, relative)
     } else {
-      compose <- set_graphbuilding("build", instance$compose$parsed, relative_extract_path)
+      compose <- set_graphbuilding("build", compose, relative)
     }
-    write_dockercompose(compose, instance$paths$dir)
+    write_dockercompose(compose, dir)
     instance[["compose"]] <- NULL
   }
 
