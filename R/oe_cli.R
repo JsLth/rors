@@ -12,13 +12,13 @@ ors_cli <- function(info = NULL,
                     ...) {
   args <- as.list(environment())
   verbose <- get0("verbose", envir = parent.frame(), ifnotfound = FALSE)
-
-  if (sum(!vapply(args, is.null, logical(1))) > 1) {
-    cli::cli_abort("Can only handle one cli element at a time.")
-  }
-
+  
   if (!verbose) {
     return(invisible(NULL))
+  }
+  
+  if (sum(!vapply(args, is.null, logical(1))) > 1) {
+    cli::cli_abort("Can only handle one cli element at a time.")
   }
 
   if (!is.null(info)) {
