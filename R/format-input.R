@@ -15,129 +15,30 @@ format_input_data <- function(.data, to_coords = FALSE) {
 }
 
 
-
+#' Formats ORS options, checks if they're valid and constructs a list that
+#' can be used to create an http query
 format_ors_options <- function(opts, profile) {
   if (is.null(opts)) return(NULL)
 
-  if (!is.null(opts$attributes)) {
-    matches <- c("avgspeed", "detourfactor")
-    opts$attributes <- format_ors_list(opts$attributes, matches = matches)
+  for (opt in names(opts)) {
+    params <- as.list(known_opts[known_opts$name == opt, ])
+    params$profile <- evalq(params$profile)
+    opt_fun <- match.fun(paste0("format_ors_", params$fun))
+    opts[[opt]] <- do.call(opt_fun, c(
+      list(x = opts[[opt]]),
+      list(which = opt),
+      params
+    ))
   }
 
-  if (!is.null(opts$elevation)) {
-    opts$elevation <- format_ors_vector(opts$elevation)
-  }
-
-  if (!is.null(opts$extra_info)) {
-    matches <- c(
-      "steepness", "suitability", "surface", "waycategory",
-      "waytype", "tollways", "traildifficulty", "osmid",
-      "roadaccessrestrictions", "countryinfo", "green", "noise"
-    )
-    opts$extra_info <- format_ors_list(opts$extra_info, matches = matches)
-  }
-
-  if (!is.null(opts$continue_straight)) {
-    opts$continue_straight <- format_ors_vector(opts$continue_straight)
-  }
-
-  if (!is.null(opts$geometry_simplify)) {
-    opts$geometry_simplify <- format_ors_vector(opts$geometry_simplify)
-  }
-
-  if (!is.null(opts$avoid_borders)) {
-    format_ors_list(
-      opts$avoid_borders,
-      matches = c("all", "controlled", "none"),
-      profile = c(driving = base_profile(profile)),
-      single = TRUE
-    )
-  }
-
-  if (!is.null(opts$avoid_countries)) {
-    opts$avoid_countries <- format_ors_vector(
-      opts$avoid_countries,
-      type = "numeric",
-      profile = c("driving-car" = profile),
-      box = TRUE
-    )
-  }
-
-  if (!is.null(opts$avoid_features)) {
-    opts$avoid_features <- format_ors_vector(
-      opts$avoid_features,
-      type = "character",
-      box = TRUE
-    )
-  }
-
-  if (!is.null(opts$avoid_polygons)) {
-    opts$avoid_polygons <- format_ors_poly(opts$avoid_polygons)
-  }
-
-  if (!is.null(opts$vehicle_type)) {
-    opts$vehicle_type <- format_ors_vector(
-      opts$vehicle_type,
-      type = "character",
-      profile = c("driving-hgv" = profile),
-      box = TRUE
-    )
-  }
-
-  if (!is.null(opts$preference)) {
-    opts$preference <- format_ors_list(
-      opts$preference,
-      matches = c("fastest", "shortest", "recommended"),
-      single = TRUE
-    )
-  }
-
-  if (!is.null(opts$radiuses)) {
-    opts$radiuses <- format_ors_vector(opts$radiuses, type = "numeric")
-  }
-
-  if (!is.null(opts$maximum_speed)) {
-    format_ors_vector(
-      opts$maximum_speed,
-      type = "numeric",
-      single = TRUE
-    )
-  }
-
-  if (!is.null(opts$allow_unsuitable)) {
-    format_ors_vector(
-      opts$allow_unsuitable,
-      profile = c("wheelchair" = profile)
-    )
-  }
-
-  if (!is.null(opts$surface_quality_known)) {
-    format_ors_vector(
-      opts$surface_quality_known,
-      profile = c("wheelchair" = profile)
-    )
-  }
-
-  if (!is.null(opts$restrictions)) {
-    opts$restrictions <- format_ors_profile_params(
-      opts$restrictions,
-      which = "restrictions",
-      profile = profile
-    )
-  }
-
-  if (!is.null(opts$weightings)) {
-    opts$weightings <- format_ors_profile_params(
-      opts$weightings,
-      which = "weightings",
-      profile = profile
-    )
-  }
-
+  check_options(opts)
   construct_options(opts)
 }
 
 
+#' Takes an ORS options list that contains attributes on whether the respective
+#' option is formatted correctly and throws a warning if not.
+#' @noRd
 check_options <- function(opts) {
   opts_check <- is_bad_option(opts)
 
@@ -156,16 +57,16 @@ check_options <- function(opts) {
 }
 
 
-format_ors_list <- function(features, matches, profile = NULL, single = FALSE) {
-  if (isTRUE(features)) {
-    features <- matches
+format_ors_list <- function(x, matches, profile, single, ...) {
+  if (isTRUE(x)) {
+    x <- matches
   }
 
-  if (!length(features)) {
-    features <- NULL
+  if (!length(x)) {
+    x <- NULL
   }
 
-  features <- match.arg(features, matches, several.ok = !single)
+  x <- match.arg(x, matches, several.ok = !single)
 
   if (!is.null(profile)) {
     opts_check <- names(profile) == profile
@@ -173,51 +74,47 @@ format_ors_list <- function(features, matches, profile = NULL, single = FALSE) {
     opts_check <- TRUE
   }
 
-  structure(features, opts_check = opts_check)
+  structure(x, opts_check = opts_check)
 }
 
 
-format_ors_vector <- function(val,
-                              type = "tf",
-                              profile = NULL,
-                              box = FALSE,
-                              single = FALSE) {
+format_ors_vector <- function(x, type, profile, box, single, ...) {
   opts_check <- FALSE
 
-  if (type == "tf") {
+  if (type == "logical") {
     fun_check <- \(x) isTRUE(x) || isFALSE(x)
   } else {
     fun_check <- match.fun(paste0("is.", type))
   }
 
   if (box) {
-    val <- list(val)
+    x <- list(x)
   }
 
-  profile_check <- if (!is.null(profile)) {
+  profile_check <- if (!is.na(profile)) {
     names(profile) == profile
   } else {
     TRUE
   }
 
   length_check <- if (single) {
-    length(val)
+    length(x) == 1
   } else {
     TRUE
   }
 
-  opts_check <- profile_check && length_check && fun_check(val)
+  opts_check <- profile_check && length_check && fun_check(x)
 
-  structure(val, opts_check = opts_check)
+  structure(x, opts_check = opts_check)
 }
 
 
-format_ors_poly <- function(poly) {
+format_ors_poly <- function(x, ...) {
   if (is_sf(poly) && sf::st_is(poly, c("POLYGON", "MULTIPOLYGON"))) {
-    geom_type <- as.character(sf::st_geometry_type(opts$avoid_polygons))
+    geom_type <- as.character(sf::st_geometry_type(x))
     poly <- list(
       type = capitalize_char(geom_type),
-      coordinates = list(sf::st_coordinates(opts$avoid_polygons))
+      coordinates = list(sf::st_coordinates(x))
     )
     opts_check <- TRUE
   } else {
@@ -228,8 +125,10 @@ format_ors_poly <- function(poly) {
 }
 
 
-format_ors_profile_params <- function(params, which, profile = NULL) {
-  if (is.vector(params) && !identical(profile, "driving-car")) {
+format_ors_profile_params <- function(x, which, profile, ...) {
+  x <- as.list(x)
+  
+  if (is.vector(x) && !identical(profile, "driving-car")) {
     base_profile <- base_profile(profile)
 
     defined <- list(
@@ -249,9 +148,10 @@ format_ors_profile_params <- function(params, which, profile = NULL) {
     )
 
     defined <- defined[[which]][[base_profile]]
-    admitted <- defined[match(names(params), defined)]
+    admitted <- defined[match(names(x), defined)]
+    x <- x[admitted]
     if (is.null(admitted)) admitted <- list()
-    opts_check <- all(names(params) %in% admitted)
+    opts_check <- all(names(x) %in% admitted)
   } else {
     admitted <- list()
     opts_check <- FALSE
@@ -309,3 +209,57 @@ construct_options <- function(opts) {
 
   opts_list
 }
+
+
+#' A tibble that specifies the way each ORS option is to be formatted.
+#' `fun` holds the formatting function that each option is passed on to.
+#' `matches` holds a list of defined values for respective options
+#' `single` specifies whether an option must be length 1.
+#' `type` specifies the data type of an option
+#' `profile` holds an unevaluated named character that specifies both required
+#' profile name and provided profile name (after evaluation)
+#' `box` specifies whether to box an option for json conversion
+#' 
+#' A value of NA means that the formatting parameter is not relevant for a
+#' given option.
+#' @noRd
+known_opts <- tibble::tibble(
+  name = c(
+    "geometry_simplify", "continue_straight", "avoid_borders",
+    "avoid_countries", "avoid_features", "avoid_polygons", "restrictions",
+    "weightings", "allow_unsuitable", "surface_quality_known", "vehicle_type",
+    "preference", "radiuses", "maximum_speed", "attributes", "extra_info",
+    "elevation"
+  ),
+  fun = c(
+    "vector", "vector", "list", "vector", "vector", "poly", "profile_params",
+    "profile_params", "vector", "vector", "vector", "list", "vector",
+    "vector", "list", "list", "vector"
+  ),
+  matches = list(
+    NULL, NULL, c("all", "controlled", "none"), NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, c("fastest", "shortest", "recommended"), NULL,
+    NULL, c("avgspeed", "detourfactor"), c("steepness", "suitability",
+    "surface", "waycategory", "waytype", "tollways", "traildifficulty",
+    "osmid", "roadaccessrestrictions", "countryinfo", "green", "noise"), NULL
+  ),
+  single = c(
+    TRUE, TRUE, TRUE, FALSE, FALSE, NA, NA, NA, TRUE, TRUE, TRUE, TRUE, TRUE,
+    TRUE, FALSE, FALSE, TRUE
+  ),
+  type = c(
+    "logical", "logical", NA, "numeric", "character", NA, NA, NA,
+    "logical", "logical", "character", NA, "numeric", "numeric", NA,
+    NA, "logical"
+  ),
+  profile = c(
+    NA, NA, 'c(driving = base_profile("profile"))',
+    'c(driving = base_profile(profile))', NA, NA, 'profile', 'profile',
+    'c("wheelchair" = profile)', 'c("wheelchair" = profile)',
+    'c("driving-hgv" = profile)', NA, NA, NA, NA, NA, NA
+  ),
+  box = c(
+    FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,
+    FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
+  )
+)
