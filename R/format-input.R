@@ -17,6 +17,7 @@ format_input_data <- function(.data, to_coords = FALSE) {
 
 #' Formats ORS options, checks if they're valid and constructs a list that
 #' can be used to create an http query
+#' @noRd
 format_ors_options <- function(opts, profile) {
   if (is.null(opts)) return(NULL)
 
@@ -57,6 +58,8 @@ check_options <- function(opts) {
 }
 
 
+#' Format and check ORS list parameters
+#' @noRd
 format_ors_list <- function(x, matches, profile, single, ...) {
   if (isTRUE(x)) {
     x <- matches
@@ -78,6 +81,8 @@ format_ors_list <- function(x, matches, profile, single, ...) {
 }
 
 
+#' Format and check ORS scalar parameters
+#' @noRd
 format_ors_vector <- function(x, type, profile, box, single, ...) {
   opts_check <- FALSE
 
@@ -109,6 +114,8 @@ format_ors_vector <- function(x, type, profile, box, single, ...) {
 }
 
 
+#' Format and check ORS geojson
+#' @noRd
 format_ors_poly <- function(x, ...) {
   if (is_sf(poly) && sf::st_is(poly, c("POLYGON", "MULTIPOLYGON"))) {
     geom_type <- as.character(sf::st_geometry_type(x))
@@ -125,6 +132,8 @@ format_ors_poly <- function(x, ...) {
 }
 
 
+#' Format and check ORS profile parameters
+#' @noRd
 format_ors_profile_params <- function(x, which, profile, ...) {
   x <- as.list(x)
   
@@ -161,11 +170,16 @@ format_ors_profile_params <- function(x, which, profile, ...) {
 }
 
 
+#' Checks if an option is ready to be sent in an http request, i.e. is an
+#' option not empty and not formatted wrongly?
+#' @noRd
 ready_to_sent <- function(opts) {
   lengths(opts) > 0L & is_bad_option(opts)
 }
 
 
+#' Checks if an option does not have a FALSE opts_check attribute
+#' @noRd
 is_bad_option <- function(opts) {
   vapply(opts, function(x) {
     if (!is.null(x)) attr(x, "opts_check") else TRUE
@@ -173,38 +187,28 @@ is_bad_option <- function(opts) {
 }
 
 
+#' Constructs an ORS options list that is ready to be sent in a http request
+#' @noRd
 construct_options <- function(opts) {
-  profile_params <- list(
-    allow_unsuitable      = opts$allow_unsuitable,
-    surface_quality_known = opts$surface_quality_known,
-    restrictions          = opts$restrictions,
-    weightings            = opts$weightings
-  )
+  profile_params <- opts[c(
+    "allow_unsuitable", "surface_quality_known", "restrictions", "weightings"
+  )]
   profile_params <- profile_params[ready_to_sent(profile_params)]
   attr(profile_params, "opts_check") <- TRUE
 
-  adv_opts <- list(
-    avoid_borders   = opts$avoid_borders,
-    avoid_countries = opts$avoid_countries,
-    avoid_features  = opts$avoid_features,
-    avoid_polygons  = opts$avoid_polygons,
-    profile_params  = profile_params,
-    vehicle_type    = opts$vehicle_type
-  )
+  adv_opts <- opts[c(
+    "avoid_borders", "avoid_countries", "avoid_features",
+    "avoid_polygons", "vehicle_type"
+  )]
+  adv_opts[["profile_params"]] <- profile_params
   adv_opts <- adv_opts[ready_to_sent(adv_opts)]
   attr(adv_opts, "opts_check") <- TRUE
 
-  opts_list <- list(
-    attributes        = opts$attributes,
-    continue_straight = opts$continue_straight,
-    elevation         = opts$elevation,
-    extra_info        = opts$extra_info,
-    geometry_simplify = opts$geometry_simplify,
-    opts              = adv_opts,
-    preference        = opts$preference,
-    radiuses          = opts$radiuses,
-    maximum_speed     = opts$maximum_speed
-  )
+  opts_list <- opts[c(
+    "attributes", "continue_straight", "elevation", "extra_info",
+    "geometry_simplify", "preference", "radiuses", "maximum_speed"
+  )]
+  opts_list[["options"]] <- adv_opts
   opts_list <- opts_list[ready_to_sent(opts_list)]
 
   opts_list
