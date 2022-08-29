@@ -2,18 +2,26 @@
 #' @param index Row index of input dataset
 #' @param env Environment containing all parameters necessary to query ORS
 #' @noRd
-extract_summary <- function(index, env) {
-  call_index <- env$call_index
+iterate_directions <- function(index,
+                               locations,
+                               profile,
+                               units,
+                               geometry,
+                               options,
+                               url,
+                               instance,
+                               call_index) {
+  call_index <- call_index
 
-  res <- query_ors_directions(
-    source = env$locations[index, "source"],
-    destination = env$locations[index, "dest"],
-    profile = env$profile,
-    units = env$units,
-    geometry = env$geometry,
-    options = env$options,
-    url = env$url,
-    token = env$instance$token
+  res <- call_ors_directions(
+    source = locations[index, "source"],
+    destination = locations[index, "dest"],
+    profile = profile,
+    units = units,
+    geometry = geometry,
+    options = options,
+    url = url,
+    token = instance$token
   )
 
   cond <- handle_ors_conditions(res)
@@ -21,7 +29,7 @@ extract_summary <- function(index, env) {
   if (isTRUE(attr(cond, "error"))) {
     ors_cache$routing_conditions[[call_index]][index] <- cond
 
-    if (!env$geometry) {
+    if (!geometry) {
       return(data.frame(distance = NA, duration = NA))
     } else {
       empty_line <- sf::st_sfc(sf::st_linestring(), crs = 4326L)
@@ -33,7 +41,7 @@ extract_summary <- function(index, env) {
     ors_cache$routing_conditions[[call_index]][index] <- NA
   }
 
-  if (!env$geometry) {
+  if (!geometry) {
     distance <- res$routes$summary$distance
     duration <- res$routes$summary$duration
     if (is.null(distance)) distance <- 0
@@ -57,119 +65,119 @@ extract_summary <- function(index, env) {
 }
 
 
+handle_missing_directions <- function(.data, call_index) {
+  route_missing <- is.na(.data)
+  conds <- ors_cache$routing_conditions[[call_index]]
+  warn_indices <- which(grepl("Warning", conds))
+  tip <- cli::col_grey(
+    "For a list of conditions, call {.fn last_ors_conditions}."
+  )
+  if (all(route_missing)) {
+    cli::cli_warn(c(
+      "No routes could be calculated. Is the service correctly configured?",
+      tip
+    ))
+  } else if (any(route_missing)) {
+    cond_indices <- cli::cli_vec(
+      which(grepl("Error", conds)),
+      style = list(vec_sep = ", ", vec_last = ", ")
+    )
+    cli::cli_warn(c(
+      paste(
+        "{length(cond_indices)} route{?s} could not be",
+        "calculated and {?was/were} skipped: {cond_indices}"
+      ),
+      tip
+    ))
+  } else if (length(warn_indices)) {
+    warn_indices <- cli::cli_vec(
+      warn_indices,
+      style = list(vec_sep = ", ", vec_last = ", ")
+    )
+    cli::cli_warn(c(
+      paste(
+        "ORS returned a warning for {length(warn_indices)}",
+        "route{?s}: {warn_indices}"
+      ),
+      tip
+    ))
+  }
+}
 
-#' Dispenser function to replace response values with more informative ones
+
+
+#' Replace response values with more informative ones
 #' @param values Object from the response list
 #' @param info_type Type of information to be replaced
 #' @noRd
-fill_extra_info <- function(values, info_type, ...) {
-  fill_fun_name <- paste("fill", info_type, sep = "_")
-  if (exists(fill_fun_name)) {
-    fill_fun <- match.fun(fill_fun_name)
-    values <- fill_fun(values, ...)
-  }
-  values
-}
+fill_extra_info <- function(codes, info_type, profile) {
+  tab <- fill_table[fill_table$name %in% info_type, ]
+  
+  if (nrow(tab)) {
+    profile <- evalq(tab$profile)
+    fct_fun <- ifelse(tab$ordinal, ordered, factor)
+    
+    if (tab$base2) {
+      cats <- vapply(codes, function(code) {
+        decodes <- decode_base2(code)
+        cats <- lapply(decodes, function(d) {
+          tab[tab$levels %in% d, "labels"]
+        })
+        paste(rev(cats), collapse = "/")
+      }, character(1))
+    }
 
-
-fill_steepness <- function(codes, ...) {
-  levels <- seq(-5, 5)
-  labels <- c(
-    ">16% decline", "12-15% decline", "7-11% decline", "4-6% decline",
-    "1-3% decline", "0% incline", "1-3% incline", "4-6% incline",
-    "7-11% incline", "12-15% incline", ">16% incline"
-  )
-
-  ordered(codes, levels = levels, labels = labels)
-}
-
-
-fill_surface <- function(codes, ...) {
-  levels <- seq(0, 18)
-  labels <- c(
-    "Unknown", "Paved", "Unpaved", "Asphalt", "Concrete", "Cobblestone",
-    "Metal", "Wood", "Compacted Gravel", "Fine Gravel", "Gravel", "Dirt",
-    "Ground", "Ice", "Paving Stones", "Sand", "Woodchips", "Grass", "Grass Paver"
-  )
-
-  factor(codes, levels, labels = labels)
-}
-
-
-fill_waycategory <- function(codes, ...) {
-  cats <- vapply(codes, function(code) {
-    code <- decode_base2(code)
-    cats <- lapply(code, function(c) {
-      switch(as.character(c),
-        `0`   = "No category",
-        `1`   = "Highway",
-        `2`   = "Steps",
-        `4`   = "Unpaved Road",
-        `8`   = "Ferry",
-        `16`  = "Track",
-        `32`  = "Tunnel",
-        `64`  = "Paved road",
-        `128` = "Ford"
-      )
-    })
-    paste(rev(cats), collapse = "/")
-  }, character(1))
-
-  as.factor(cats)
-}
-
-
-fill_waytypes <- function(codes, ...) {
-  levels <- seq(0, 10)
-  labels <- c(
-    "Unknown", "State Road", "Road", "Street", "Path", "Track", "Cycleway",
-    "Footway", "Steps", "Ferry", "Construction"
-  )
-
-  factor(codes, levels = levels, labels = labels)
-}
-
-
-fill_traildifficulty <- function(codes, profile) {
-  if (base_profile(profile) == "cycling") {
-    codes <- codes * -1L
-    levels <- seq(-7, 0)
-    labels <- c(
-      "mtb:scale=6", "mtb:scale=5", "mtb:scale=4", "mtb:scale=3", "mtb:scale=2",
-      "mtb:scale=1", "mtb:scale=0", "No Tag"
-    )
+    fct_fun(codes, labels = unlist(tab$labels), levels = unlist(tab$levels))
   } else {
-    levels <- seq(0, 6)
-    labels <- c(
-      "No Tag", "sac_scale=hiking", "sac_scale=mountain_hiking",
-      "sac_scale=demanding_mountain_hiking", "sac_scale=alpine_hiking",
-      "sac_scale=demanding_alpine_hiking", "sac_scale=difficult_alpine_hiking"
-    )
+    codes
   }
-
-  ordered(codes, levels = levels, labels = labels)
 }
 
 
-fill_roadaccessrestrictions <- function(codes, ...) {
-  cats <- vapply(codes, function(code) {
-    code <- decode_base2(code)
-    cat <- lapply(code, function(c) {
-      switch(as.character(c),
-        `0`  = "None",
-        `1`  = "No",
-        `2`  = "Customers",
-        `4`  = "Destination",
-        `8`  = "Delivery",
-        `16` = "Private",
-        `32` = "Permissive"
-      )
-    })
-    paste(rev(cat), collapse = "/")
-  }, character(1))
-
-  as.factor(cats)
-}
+fill_table <- tibble::tibble(
+  name = c(
+    "steepness", "surface", "waycategory", "waytypes",
+    "traildifficulty", "roadaccessrestrictions"
+  ),
+  levels = list(
+    seq(-5, 5), seq(0, 18), c(0, 1, 2, 4, 8, 16, 32, 64, 128),
+    seq(0, 10), seq(-7, 6), c(0, 1, 2, 4, 8, 16, 32)
+  ),
+  labels = list(
+    c(
+      ">16% decline", "12-15% decline", "7-11% decline", "4-6% decline",
+      "1-3% decline", "0% incline", "1-3% incline", "4-6% incline",
+      "7-11% incline", "12-15% incline", ">16% incline"
+    ),
+    c(
+      "Unknown", "Paved", "Unpaved", "Asphalt", "Concrete", "Cobblestone",
+      "Metal", "Wood", "Compacted Gravel", "Fine Gravel", "Gravel", "Dirt",
+      "Ground", "Ice", "Paving Stones", "Sand", "Woodchips", "Grass", "Grass Paver"
+    ),
+    c(
+      "No category", "Highway", "Steps", "Unpaved Road", "Ferry", "Track",
+      "Tunnel", "Paved Road", "Ford"
+    ),
+    c(
+      "Unknown", "State Road", "Road", "Street", "Path", "Track", "Cycleway",
+      "Footway", "Steps", "Ferry", "Construction"
+    ),
+    c(
+      "mtb:scale=6", "mtb:scale=5", "mtb:scale=4", "mtb:scale=3", "mtb:scale=2",
+      "mtb:scale=1", "mtb:scale=0", "No Tag", "sac_scale=hiking",
+      "sac_scale=mountain_hiking", "sac_scale=demanding_mountain_hiking",
+      "sac_scale=alpine_hiking", "sac_scale=demanding_alpine_hiking",
+      "sac_scale=difficult_alpine_hiking"
+    ),
+    c(
+      "None", "No", "Customers", "Destination",
+      "Delivery", "Private", "Permissive"
+    )
+  ),
+  profile = c(NA, NA, NA, NA, "profile", "NA"),
+  ordinal = c(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE),
+  base2 = c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE)
+)
 
 
 #' Replaces empty error message strings based on their error code
@@ -201,7 +209,7 @@ fill_empty_error_message <- function(code) {
 
 
 #' Accepts a result list and handles error and warning codes
-#' @param res Response list from `query_ors_directions`
+#' @param res Response list from `call_ors_directions`
 #' @param abort_on_error Whether to abort when an error code is returned
 #' @param warn_on_warning Whether to warn when a warning code is returned
 #' @noRd
