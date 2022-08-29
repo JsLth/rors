@@ -172,11 +172,7 @@
 
 
 .construct_status <- function(obj, compose, paths) {
-  if (is.null(obj[["status"]])) {
-    status <- get_ors_status(compose, paths)
-  } else {
-    status <- obj$status
-  }
+  status <- get_ors_status(compose, paths)
 
   structure(
     status,
