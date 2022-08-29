@@ -18,59 +18,67 @@ get_extract_boundaries <- function(instance = NULL, force = FALSE, verbose = TRU
       instance <- get_instance()
     }
 
-    if (!is.null(instance$url)) {
-      cli::cli_abort(c(
-        "Cannot get extract from a server URL.",
-        "i" = paste(
-          "{.code get_extract_boundaries} is only usable for self-built servers,",
-          "otherwise the extract file cannot easily be determined."
-        )
-      ))
-    }
-
-    extract_path <- identify_extract(instance)
-    if (is.null(extract_path)) {
-      cli::cli_abort("Cannot identify current extract file. Pass it explicitly.")
-    }
-
-    ors_cli(
-      progress = "bar",
-      msg = "Reading and processing extract file...",
-      msg_done = "Extract file successfully read in!",
-      msg_failed = "Extract file could either not be read or not converted.",
-      spinner = TRUE,
-      verbose = verbose
-    )
-
-    proc <- callr::r_bg(
-      function(extract_path) {
-        extract_data <- suppressWarnings(
-          osmextract::oe_read(
-            extract_path,
-            layer = "multipolygons",
-            query = paste(
-              "SELECT geometry FROM \"multipolygons\"",
-              "WHERE boundary = \"administrative\"",
-              "AND admin_level IS NOT NULL"
-            ),
-            quiet = TRUE
+    if (is.null(instance$url)) {
+      extract_path <- identify_extract(instance)
+      if (is.null(extract_path)) {
+        cli::cli_abort("Cannot identify current extract file. Pass it explicitly.")
+      }
+      
+      ors_cli(
+        progress = "step",
+        msg = "Reading and processing extract file...",
+        msg_done = "Extract file successfully read in!",
+        msg_failed = "Extract file could either not be read or not converted.",
+        spinner = TRUE
+      )
+      
+      proc <- callr::r_bg(
+        function(extract_path) {
+          extract_data <- suppressWarnings(
+            osmextract::oe_read(
+              extract_path,
+              layer = "multipolygons",
+              query = paste(
+                "SELECT geometry FROM \"multipolygons\"",
+                "WHERE boundary = \"administrative\"",
+                "AND admin_level IS NOT NULL"
+              ),
+              quiet = TRUE
+            )
           )
-        )
-        sf::st_union(sf::st_geometry(extract_data))
-      },
-      args = list(extract_path)
-    )
-
-    while (proc$is_alive()) {
-      ors_cli(progress = "update", verbose = verbose)
+          sf::st_union(sf::st_geometry(extract_data))
+        },
+        args = list(extract_path)
+      )
+      
+      while (proc$is_alive()) {
+        ors_cli(progress = "update")
+      }
+      
+      ors_cli(progress = "done")
+      
+      poly <- proc$get_result()
+    } else {
+      if (is_ors_api(instance$url)) {
+        poly <- sf::st_as_sfc(sf::st_bbox(c(
+          xmin = -180,
+          ymin = -90,
+          xmax = 180,
+          ymax = 90
+        ), crs = 4326))
+      } else {
+        cli::cli_abort(c(
+          "Cannot get extract from a server URL.",
+          "i" = paste(
+            "{.code get_extract_boundaries} is not usable for unkown remote",
+            "servers as the extract boundaries cannot easily be determined."
+          )
+        ))
+      }
     }
 
-    ors_cli(progress = "done", verbose = verbose)
-
-    extract_geom <- proc$get_result()
-
-    assign("extract_boundaries", extract_geom, envir = ors_cache)
-    extract_geom
+    assign("extract_boundaries", poly, envir = ors_cache)
+    poly
   } else {
     ors_cache$extract_boundaries
   }
