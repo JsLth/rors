@@ -268,43 +268,21 @@ ors_distances <- function(source,
   call_index <- format(Sys.time(), format = "%H:%M:%OS6")
 
   # Apply a directions query to each row
-  env <- environment()
-  route_df <- lapply(seq_len(nrow(locations)), extract_summary, env)
+  route_df <- lapply(
+    seq_len(nrow(locations)),
+    iterate_directions,
+    locations = locations,
+    profile = profile,
+    units = units,
+    geometry = geometry,
+    options = options,
+    url = url,
+    instance = instance,
+    call_index = call_index
+  )
   route_df <- do.call(rbind, route_df)
 
-  route_missing <- sapply(unlist(route_df), is.na)
-  conds <- ors_cache$routing_conditions[[call_index]]
-  warn_indices <- which(grepl("Warning", conds))
-  tip <- cli::col_grey("For a list of conditions, call {.fn last_ors_conditions}.")
-  if (all(route_missing)) {
-    cli::cli_warn(c(
-      "No routes could be calculated. Check your service config.",
-      tip
-    ))
-  } else if (any(route_missing)) {
-    cond_indices <- cli::cli_vec(
-      which(grepl("Error", conds)),
-      style = list(vec_sep = ", ", vec_last = ", ")
-    )
-    cli::cli_warn(c(
-      paste(
-        "{length(cond_indices)} route{?s} could not be",
-        "calculated and {?was/were} skipped: {cond_indices}"
-      ),
-      tip
-    ))
-  } else if (length(warn_indices)) {
-    warn_indices <- cli::cli_vec(warn_indices,
-      style = list(vec_sep = ", ", vec_last = ", ")
-    )
-    cli::cli_warn(c(
-      paste(
-        "ORS returned a warning for {length(warn_indices)}",
-        "route{?s}: {warn_indices}"
-      ),
-      tip
-    ))
-  }
+  handle_missing_directions(route_df, call_index)
 
   if (requireNamespace("units")) {
     units(route_df$distance) <- units
@@ -503,7 +481,7 @@ ors_matrix <- function(source,
 
   url <- get_ors_url(id = iid)
 
-  res <- query_ors_matrix(
+  res <- call_ors_matrix(
     source = source,
     destination = destination,
     profile = profile,
