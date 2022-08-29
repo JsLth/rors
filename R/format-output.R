@@ -215,12 +215,21 @@ fill_empty_error_message <- function(code) {
 #' @noRd
 handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning = FALSE) {
   if (!is.null(res$error)) {
-    message <- res$error$message
-    code <- res$error$code
-    if (is.null(res$error$message)) {
-      message <- fill_empty_error_message(res$error$code)
+    msg <- res$error
+    code <- NULL
+    
+    if (!is.character(res$error)) {
+      msg <- msg$message
+      code <- res$error$code
     }
-    error <- paste0("Error code ", code, ": ", message)
+    
+    if (is.null(msg) && !is.null(code)) {
+      message <- fill_empty_error_message(code)
+    }
+    
+    error <- paste0(
+      ifelse(!is.null(code), "Error code ", ""), code, ": ", msg
+    )
     if (abort_on_error) {
       cli::cli_abort(c("ORS encountered the following exception:", error))
     } else {
