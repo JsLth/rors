@@ -137,7 +137,7 @@ ors_inspect <- function(source,
   )
   options <- format_ors_options(c(features, list(...)), profile)
 
-  res <- query_ors_directions(
+  res <- call_ors_directions(
     source = source,
     destination = destination,
     profile = profile,
@@ -442,7 +442,7 @@ ors_summary <- function(source, destination, profile = get_profiles(), instance 
   features <- list(attributes = TRUE, elevation = TRUE, extra_info = TRUE)
   options <- format_ors_options(append(features, list(...)), profile)
 
-  res <- query_ors_directions(
+  res <- call_ors_directions(
     source = source,
     destination = destination,
     profile = profile,

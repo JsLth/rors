@@ -161,7 +161,7 @@ ors_accessibility <- function(source,
 
   url <- get_ors_url(id = iid)
 
-  res <- query_isochrone(
+  res <- call_ors_isochrones(
     source = source,
     profile = profile,
     range = range,

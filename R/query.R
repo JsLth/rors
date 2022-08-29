@@ -1,4 +1,4 @@
-perform_query <- function(req) {
+perform_call <- function(req) {
   req <- httr2::req_method(req, "POST")
   req <- httr2::req_error(req, is_error = \(e) FALSE)
 
@@ -10,7 +10,7 @@ perform_query <- function(req) {
   httr2::resp_body_json(res, simplifyVector = TRUE)
 }
 
-query_ors_directions <- function(source,
+call_ors_directions <- function(source,
                                  destination,
                                  profile,
                                  units,
@@ -62,12 +62,12 @@ query_ors_directions <- function(source,
   body <- body[lengths(body) > 0L]
   req <- httr2::req_body_json(req, body, digits = NA)
 
-  perform_query(req)
+  perform_call(req)
 }
 
 
 
-query_ors_matrix <- function(source,
+call_ors_matrix <- function(source,
                              destination,
                              profile,
                              metrics,
@@ -115,12 +115,12 @@ query_ors_matrix <- function(source,
   )
   req <- httr2::req_body_json(req, body_list, digits = NA, null = "list")
 
-  perform_query(req)
+  perform_call(req)
 }
 
 
 
-query_isochrone <- function(source,
+call_ors_isochrones <- function(source,
                             profile,
                             range,
                             attributes,
@@ -162,5 +162,5 @@ query_isochrone <- function(source,
   )
   req <- httr2::req_body_json(req, body_list, digits = NA)
 
-  perform_query(req)
+  perform_call(req)
 }
