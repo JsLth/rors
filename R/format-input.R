@@ -1,3 +1,7 @@
+#' Checks and changes the format of input data to all routing functions
+#' @param to_coords Whether to convert input sf dataframes to normal dataframes
+#' holding coordinates
+#' @noRd
 format_input_data <- function(.data, to_coords = FALSE) {
   assert_class(.data, c("sf", "sfc"), .env = list(x = substitute(.data)))
 
@@ -289,6 +293,3 @@ known_opts <- tibble::tibble(
     FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
   )
 )
-
-
-
