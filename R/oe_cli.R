@@ -35,7 +35,7 @@ ors_cli <- function(info = NULL,
       paste0("cli_progress_", progress),
       envir = asNamespace("cli")
     )
-    pfun(...)
+    pfun(..., .envir = parent.frame(2L))
   }
   
   if (!is.null(rule)) {
