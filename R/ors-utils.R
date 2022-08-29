@@ -148,10 +148,10 @@ ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
         },
         error = function(e) {
           if (error) {
-            cli::cli_abort(
+            cli::cli_abort(c(
               "x" = "Cannot reach the OpenRouteService server.",
               "i" = "Did you start your local instance?"
-            )
+            ))
           } else {
             ready <<- FALSE
           }
