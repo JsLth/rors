@@ -1,23 +1,25 @@
 perform_call <- function(req) {
   req <- httr2::req_method(req, "POST")
-  req <- httr2::req_error(req, is_error = \(e) FALSE)
+  req <- httr2::req_error(req, is_error = \(r) FALSE)
 
   if (is_ors_api(req$url)) {
     req <- httr2::req_throttle(req, rate = 40 / 60)
   }
 
   res <- httr2::req_perform(req, verbosity = 0L)
-  httr2::resp_body_json(res, simplifyVector = TRUE)
+  res <- try(httr2::resp_body_json(res, simplifyVector = TRUE))
+  if (inherits(res, "try-error")) {browser();res}
+  res
 }
 
 call_ors_directions <- function(source,
-                                 destination,
-                                 profile,
-                                 units,
-                                 geometry,
-                                 options,
-                                 url,
-                                 token) {
+                                destination,
+                                profile,
+                                units,
+                                geometry,
+                                options,
+                                url,
+                                token) {
   # Get coordinates in shape
   locations <- list(
     c(as.numeric(source[1L]), as.numeric(source[2L])),
@@ -68,12 +70,12 @@ call_ors_directions <- function(source,
 
 
 call_ors_matrix <- function(source,
-                             destination,
-                             profile,
-                             metrics,
-                             units,
-                             url,
-                             token) {
+                            destination,
+                            profile,
+                            metrics,
+                            units,
+                            url,
+                            token) {
   # Format source and destination
   source_list <- unname(split(source, seq_len(nrow(source))))
   source_list <- lapply(source_list, as.numeric)
@@ -96,7 +98,12 @@ call_ors_matrix <- function(source,
   }
 
   req <- httr2::request(url)
-  req <- httr2::req_url_path(req, "ors/v2/matrix", profile)
+  req <- httr2::req_url_path(
+    req,
+    ifelse(!is_ors_api(url), "ors", ""),
+    "v2/matrix",
+    profile
+  )
 
   req <- httr2::req_headers(
     req,
@@ -113,7 +120,7 @@ call_ors_matrix <- function(source,
     metrics = box(metrics),
     units = units
   )
-  req <- httr2::req_body_json(req, body_list, digits = NA, null = "list")
+  req <- httr2::req_body_json(req, body_list, digits = NA)
 
   perform_call(req)
 }
@@ -138,7 +145,13 @@ call_ors_isochrones <- function(source,
   locations <- lapply(locations, as.numeric)
 
   req <- httr2::request(url)
-  req <- httr2::req_url_path(req, "ors/v2/isochrones", profile, "geojson")
+  req <- httr2::req_url_path(
+    req,
+    ifelse(!is_ors_api(url), "ors", ""),
+    "v2/isochrones",
+    profile,
+    "geojson"
+  )
 
   req <- httr2::req_headers(
     req,
