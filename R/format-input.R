@@ -23,7 +23,7 @@ format_ors_options <- function(opts, profile) {
 
   for (opt in names(opts)) {
     params <- as.list(known_opts[known_opts$name == opt, ])
-    params$profile <- evalq(params$profile)
+    params$profile <- eval(str2lang(as.character(params$profile)))
     opt_fun <- match.fun(paste0("format_ors_", params$fun))
     opts[[opt]] <- do.call(opt_fun, c(
       list(x = opts[[opt]]),
@@ -60,21 +60,29 @@ check_options <- function(opts) {
 
 #' Format and check ORS list parameters
 #' @noRd
-format_ors_list <- function(x, matches, profile, single, ...) {
+format_ors_list <- function(x, matches, which, profile, single, ...) {
+  matches <- unlist(matches)
+
   if (isTRUE(x)) {
-    x <- matches
+    allowed <- extra_info_profiles$profiles %in% base_profile(profile) |
+      is.na(extra_info_profiles$profiles)
+    x <- matches[allowed]
   }
 
   if (!length(x)) {
     x <- NULL
   }
 
-  x <- match.arg(x, matches, several.ok = !single)
+  x <- matches[match(x, unlist(matches), nomatch = 0L)]
 
-  if (!is.null(profile)) {
+  if (!is.na(profile) && !is.null(names(profile))) {
     opts_check <- names(profile) == profile
   } else {
     opts_check <- TRUE
+  }
+  
+  if (length(x) > 1 && single) {
+    opts_check <- FALSE
   }
 
   structure(x, opts_check = opts_check)
@@ -243,9 +251,7 @@ known_opts <- tibble::tibble(
   matches = list(
     NULL, NULL, c("all", "controlled", "none"), NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, c("fastest", "shortest", "recommended"), NULL,
-    NULL, c("avgspeed", "detourfactor"), c("steepness", "suitability",
-    "surface", "waycategory", "waytype", "tollways", "traildifficulty",
-    "osmid", "roadaccessrestrictions", "countryinfo", "green", "noise"), NULL
+    NULL, c("avgspeed", "detourfactor"), extra_info_profiles$name, NULL
   ),
   single = c(
     TRUE, TRUE, TRUE, FALSE, FALSE, NA, NA, NA, TRUE, TRUE, TRUE, TRUE, TRUE,
@@ -260,10 +266,23 @@ known_opts <- tibble::tibble(
     NA, NA, 'c(driving = base_profile("profile"))',
     'c(driving = base_profile(profile))', NA, NA, 'profile', 'profile',
     'c("wheelchair" = profile)', 'c("wheelchair" = profile)',
-    'c("driving-hgv" = profile)', NA, NA, NA, NA, NA, NA
+    'c("driving-hgv" = profile)', NA, NA, NA, NA, 'profile', NA
   ),
   box = c(
     FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,
     FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
+  )
+)
+
+
+extra_info_profiles <- tibble::tibble(
+  name = c(
+    "steepness", "suitability", "surface", "waycategory", "waytype", "tollways",
+    "traildifficulty", "osmid", "roadaccessrestrictions", "countryinfo",
+    "green", "noise"
+  ),
+  profiles = c(
+    NA, NA, NA, NA, NA, "driving", NA, "wheelchair", "driving",
+    "driving", "foot", "foot"
   )
 )
