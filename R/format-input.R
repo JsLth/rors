@@ -223,6 +223,22 @@ construct_options <- function(opts) {
 }
 
 
+#' A tibble that specifies which extra info is defined for which profile.
+#' `NA` means allowed for all profiles.
+#' @noRd
+extra_info_profiles <- tibble::tibble(
+  name = c(
+    "steepness", "suitability", "surface", "waycategory", "waytype", "tollways",
+    "traildifficulty", "osmid", "roadaccessrestrictions", "countryinfo",
+    "green", "noise"
+  ),
+  profiles = c(
+    NA, NA, NA, NA, NA, "driving", NA, "wheelchair", "driving",
+    "driving", "foot", "foot"
+  )
+)
+
+
 #' A tibble that specifies the way each ORS option is to be formatted.
 #' `fun` holds the formatting function that each option is passed on to.
 #' `matches` holds a list of defined values for respective options
@@ -275,14 +291,4 @@ known_opts <- tibble::tibble(
 )
 
 
-extra_info_profiles <- tibble::tibble(
-  name = c(
-    "steepness", "suitability", "surface", "waycategory", "waytype", "tollways",
-    "traildifficulty", "osmid", "roadaccessrestrictions", "countryinfo",
-    "green", "noise"
-  ),
-  profiles = c(
-    NA, NA, NA, NA, NA, "driving", NA, "wheelchair", "driving",
-    "driving", "foot", "foot"
-  )
-)
+
