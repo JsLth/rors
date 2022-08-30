@@ -289,7 +289,7 @@ plot_section <- function(x,
                          caption = NULL,
                          ...) {
   if (!requireNamespace("ggplot2")) {
-    cli::cli_abort("the {.pkg ggplo2} package is necessary to create cross-sections.")
+    cli::cli_abort("the {.pkg ggplot2} package is necessary to create cross-sections.")
   }
 
   distance <- if (dist %in% names(x)) {
