@@ -65,43 +65,44 @@ iterate_directions <- function(index,
 }
 
 
-handle_missing_directions <- function(.data, call_index) {
-  route_missing <- is.na(.data)
-  conds <- ors_cache$routing_conditions[[call_index]]
-  warn_indices <- which(grepl("Warning", conds))
-  tip <- cli::col_grey(
-    "For a list of conditions, call {.fn last_ors_conditions}."
+
+iterate_shortest_routes <- function(index,
+                                    source,
+                                    destination,
+                                    iter,
+                                    units,
+                                    geometry,
+                                    instance,
+                                    type,
+                                    ...) {
+  routes <- suppressWarnings(
+    ors_distances(
+      source = source[iter[index, "point_number"], ],
+      destination = if (is.data.frame(destination)) {
+        destination
+      } else if (is.list(destination)) {
+        destination[[iter[index, "point_number"]]]
+      },
+      profile = iter[index, "profile"],
+      units = units,
+      geometry = geometry,
+      instance = instance,
+      ...
+    )
   )
-  if (all(route_missing)) {
-    cli::cli_warn(c(
-      "No routes could be calculated. Is the service correctly configured?",
-      tip
-    ))
-  } else if (any(route_missing)) {
-    cond_indices <- cli::cli_vec(
-      which(grepl("Error", conds)),
-      style = list(vec_sep = ", ", vec_last = ", ")
+  
+  best_index <- suppressWarnings(
+    match(
+      min(routes[[type]], na.rm = TRUE),
+      routes[[type]]
     )
-    cli::cli_warn(c(
-      paste(
-        "{length(cond_indices)} route{?s} could not be",
-        "calculated and {?was/were} skipped: {cond_indices}"
-      ),
-      tip
-    ))
-  } else if (length(warn_indices)) {
-    warn_indices <- cli::cli_vec(
-      warn_indices,
-      style = list(vec_sep = ", ", vec_last = ", ")
-    )
-    cli::cli_warn(c(
-      paste(
-        "ORS returned a warning for {length(warn_indices)}",
-        "route{?s}: {warn_indices}"
-      ),
-      tip
-    ))
-  }
+  )
+  
+  cbind(
+    dest = best_index,
+    routes[best_index, ],
+    has_error = anyNA(routes)
+  )
 }
 
 
