@@ -57,6 +57,6 @@ cond_tip <- function(last = NULL) {
     sprintf("last_ors_conditions(last = %s)", last)
   )
   cli::col_grey(sprintf(
-    "For a list of conditions, call {.code %s}.", callstr)
-  )
+    "For a list of conditions, call {.code %s}.", callstr
+  ))
 }

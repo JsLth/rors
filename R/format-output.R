@@ -91,12 +91,7 @@ iterate_shortest_routes <- function(index,
     )
   )
   
-  best_index <- suppressWarnings(
-    match(
-      min(routes[[type]], na.rm = TRUE),
-      routes[[type]]
-    )
-  )
+  best_index <- which.min(routes[[type]])
   
   cbind(
     dest = best_index,
