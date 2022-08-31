@@ -9,16 +9,12 @@ ors_cli <- function(info = NULL,
                     progress = NULL,
                     rule = NULL,
                     line = NULL,
-                    ...) {
-  args <- as.list(environment())
+                    ...,
+                    .envir = parent.frame(2)) {
   verbose <- get0("verbose", envir = parent.frame(), ifnotfound = FALSE)
   
   if (!verbose) {
     return(invisible(NULL))
-  }
-  
-  if (sum(!vapply(args, is.null, logical(1))) > 1) {
-    cli::cli_abort("Can only handle one cli element at a time.")
   }
 
   if (!is.null(info)) {
@@ -35,7 +31,7 @@ ors_cli <- function(info = NULL,
       paste0("cli_progress_", progress),
       envir = asNamespace("cli")
     )
-    pfun(..., .envir = parent.frame(2L))
+    pfun(..., .envir = .envir)
   }
   
   if (!is.null(rule)) {
