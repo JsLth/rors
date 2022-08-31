@@ -41,6 +41,7 @@ handle_missing_directions_batch <- function(has_cond) {
       which(has_cond),
       style = list(vec_sep = ", ", vec_last = ", ")
     )
+
     cli::cli_warn(c(paste(
       "For the following input rows, one or multiple routes",
       "could not be taken into account: {cond_indices}"
@@ -51,9 +52,11 @@ handle_missing_directions_batch <- function(has_cond) {
 
 cond_tip <- function(last = NULL) {
   callstr <- ifelse(
-    is.null(last),
-    sprintf("last_ors_conditions(last = %s)", last),
-    "last_ors_conditions()"
+    is.null(last) || last == 1,
+    "last_ors_conditions()",
+    sprintf("last_ors_conditions(last = %s)", last)
   )
-  cli::col_grey(sprintf("For a list of conditions, call %s.", callstr))
+  cli::col_grey(sprintf(
+    "For a list of conditions, call {.code %s}.", callstr)
+  )
 }
