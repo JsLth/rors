@@ -7,9 +7,9 @@ perform_call <- function(req) {
   }
 
   res <- httr2::req_perform(req, verbosity = 0L)
-  res <- try(httr2::resp_body_json(res, simplifyVector = TRUE))
-  if (inherits(res, "try-error")) {browser();res}
-  res
+  res2 <- try(httr2::resp_body_json(res, simplifyVector = TRUE))
+  if (inherits(res, "try-error")) {browser();res2}
+  res2
 }
 
 call_ors_directions <- function(source,

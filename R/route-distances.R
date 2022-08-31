@@ -213,11 +213,9 @@ ors_distances <- function(source,
                           instance = NULL,
                           ...) {
   assert(geometry, class = "logical", len = rep(1, 2))
-  assert(profile, class = "character", len = c(1, 9))
-
-  if (is.null(instance)) {
-    instance <- get_instance()
-  }
+  profile <- match.arg(profile)
+  units <- match.arg(units)
+  instance <- check_instance(instance)
   iid <- get_id(instance = instance)
 
   # Check if ORS is ready to use
@@ -258,8 +256,7 @@ ors_distances <- function(source,
     ))
   }
 
-  profile <- match.arg(profile)
-  units <- match.arg(units)
+
 
   url <- get_ors_url(id = iid)
 
@@ -340,62 +337,16 @@ ors_shortest_distances <- function(source,
                                    ...,
                                    proximity_type = c("duration", "distance"),
                                    progress = TRUE) {
-  if (is.null(instance)) {
-    instance <- get_instance()
-  }
-
   verbose <- progress
+  instance <- check_instance(instance)
   proximity_type <- match.arg(proximity_type)
+  profile <- match.arg(profile, several.ok = TRUE)
+  
   source <- format_input_data(source)
   destination <- format_input_data(destination)
 
   if (!is.null(group)) {
     destination <- split(destination, f = destination$.group)
-  }
-
-  calculate_shortest_routes <- function(i) {
-    routes <- suppressWarnings(
-      ors_distances(
-        source = source[nested_iterator[i, "point_number"], ],
-        destination = if (is.data.frame(destination)) {
-          destination
-        } else if (is.list(destination)) {
-          destination[[nested_iterator[i, "point_number"]]]
-        },
-        profile = nested_iterator[i, "profile"],
-        units = units,
-        geometry = geometry,
-        instance = instance,
-        ...
-      )
-    )
-
-    if (identical(tolower(proximity_type), "distance")) {
-      best_index <- suppressWarnings(
-        match(
-          min(routes[["distance"]], na.rm = TRUE),
-          routes[["distance"]]
-        )
-      )
-    } else if (identical(tolower(proximity_type), "duration")) {
-      best_index <- suppressWarnings(
-        match(
-          min(routes[["duration"]], na.rm = TRUE),
-          routes[["duration"]]
-        )
-      )
-    } else {
-      cli::cli_abort(paste(
-        "Expected a proximity type",
-        "({.val duration} or {.val distance}),",
-        "got {.val {proximity_type}}"
-      ))
-    }
-
-    best_route <- cbind(best_index, routes[best_index, ])
-
-    ors_cli(progress = "update", .envir = parent.frame(2L))
-    best_route
   }
 
   # Create a nested iterator that iterates through every point number for each
@@ -411,41 +362,31 @@ ors_shortest_distances <- function(source,
     total = nrow(source) * length(profile),
   )
 
+  args <- as.list(environment())
+  
   # Find shortest route for each coordinate pair
-  route_df <- lapply(seq_len(nrow(nested_iterator)), calculate_shortest_routes)
+  route_df <- lapply(seq_len(nrow(nested_iterator)), function(i) {
+    ors_cli(progress = "update", .envir = parent.frame(3L))
+    iterate_shortest_routes(
+      index = i, source = source, destination = destination,
+      iter = nested_iterator, units = units, geometry = geometry,
+      instance = instance, type = proximity_type, ...
+    )
+  })
+  
   route_df <- cbind(
-    nested_iterator[["point_number"]],
-    nested_iterator[["profile"]],
+    profile = nested_iterator[["profile"]],
+    source = nested_iterator[["point_number"]],
     do.call(rbind, route_df)
   )
-
-  output_cols <- c(
-    "point_number", "route_type", "poi_number",
-    "distance", "duration", if (geometry) "geometry"
-  )
-
-  colnames(route_df) <- output_cols
+  route_df <- tibble::as_tibble(route_df)
+  
   rownames(route_df) <- NULL
 
-  if (geometry) {
-    route_df <- sf::st_as_sf(route_df)
-  }
+  if (geometry) route_df <- sf::st_as_sf(route_df)
 
-  has_cond <- sapply(
-    utils::tail(ors_cache$routing_conditions, nrow(source)),
-    is.character
-  )
-  if (any(has_cond)) {
-    tip <- cli::col_grey("For a list of conditions, call {.code last_ors_conditions(last = {nrow(source)})}.")
-    cond_indices <- cli::cli_vec(
-      which(has_cond),
-      style = list(vec_sep = ", ", vec_last = ", ")
-    )
-    cli::cli_warn(c(paste(
-      "For the following input rows, one or multiple routes",
-      "could not be taken into account: {cond_indices}"
-    ), tip))
-  }
+  handle_missing_directions_batch(route_df$has_error)
+  route_df$has_error <- NULL
 
   structure(
     route_df,
