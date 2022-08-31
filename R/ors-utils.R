@@ -22,6 +22,38 @@ get_instance <- function() {
 }
 
 
+check_instance <- function(instance = NULL) {
+  if (is.null(instance)) {
+    instance <- get_instance()
+  } else {
+    assert_class(instance, "ors_instance")
+  }
+  
+  instance
+}
+
+
+#' Returns the name of an ORS instance
+#' @noRd
+get_id <- function(id = NULL, instance = NULL) {
+  if (is.null(id)) {
+    if (is.null(instance)) {
+      instance <- get_instance()
+    }
+
+    if (attr(instance, "type") == "local") {
+      id <- instance$compose$name
+    } else if (attr(instance, "type") == "remote") {
+      id <- instance$url
+    } else {
+      corrupt_instance(instance)
+    }
+  } else {
+    id
+  }
+}
+
+
 #' Returns the output of `docker inspect` as parsed json
 #' @noRd
 inspect_container <- function(id = NULL) {
@@ -208,27 +240,6 @@ identify_extract <- function(instance) {
   }
 
   extract_path
-}
-
-
-#' Returns the name of an ORS instance
-#' @noRd
-get_id <- function(id = NULL, instance = NULL) {
-  if (is.null(id)) {
-    if (is.null(instance)) {
-      instance <- get_instance()
-    }
-
-    if (attr(instance, "type") == "local") {
-      id <- instance$compose$name
-    } else if (attr(instance, "type") == "remote") {
-      id <- instance$url
-    } else {
-      corrupt_instance(instance)
-    }
-  } else {
-    id
-  }
 }
 
 
