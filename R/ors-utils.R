@@ -276,15 +276,6 @@ any_mounted <- function() {
 }
 
 
-corrupt_instance <- function(instance) {
-  nam <- substitute(instance, env = parent.frame(3))
-  cli::cli_abort(c(
-    "OpenRouteService instance {.var {nam}} might be corrupt.",
-    "i" = "You can re-initialize the instance using {.code ors_instance}."
-  ))
-}
-
-
 #' Return ORS conditions
 #' @description Return the error and warning messages that ORS returned in the
 #' last \code{\link{ors_distances}} function call. Also works for
@@ -299,8 +290,7 @@ last_ors_conditions <- function(last = 1L) {
   conditions <- ors_cache$routing_conditions
 
   if (length(conditions)) {
-    assert_class(last, "numeric")
-    assert_value(last, min = 1L)
+    assert(last, class = "numeric", len = c(1, NULL))
     last <- min(last, length(conditions))
 
     time <- names(conditions)
