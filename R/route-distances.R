@@ -222,8 +222,8 @@ ors_distances <- function(source,
   ors_ready(force = FALSE, error = TRUE, id = iid)
 
   # Bring input data into shape
-  source <- format_input_data(source, to_coords = TRUE)
-  destination <- format_input_data(destination, to_coords = TRUE)
+  source <- format_input_data(source)
+  destination <- format_input_data(destination)
 
   # If input suggests one-to-many, replicate the one-element dataframe `nrow` times
   if (nrow(source) == 1) {
@@ -267,7 +267,7 @@ ors_distances <- function(source,
   # Apply a directions query to each row
   route_df <- lapply(
     seq_len(nrow(locations)),
-    iterate_directions,
+    FUN = apply_directions,
     locations = locations,
     profile = profile,
     units = units,
@@ -337,13 +337,12 @@ ors_shortest_distances <- function(source,
                                    ...,
                                    proximity_type = c("duration", "distance"),
                                    progress = TRUE) {
-  verbose <- progress
   instance <- check_instance(instance)
   proximity_type <- match.arg(proximity_type)
   profile <- match.arg(profile, several.ok = TRUE)
   
-  source <- format_input_data(source)
-  destination <- format_input_data(destination)
+  source <- format_input_data(source, to_coords = FALSE)
+  destination <- format_input_data(destination, to_coords = FALSE)
 
   if (!is.null(group)) {
     destination <- split(destination, f = destination$.group)
@@ -355,19 +354,11 @@ ors_shortest_distances <- function(source,
     list(profile = profile, point_number = seq_len(nrow(source))),
     stringsAsFactors = FALSE
   )
-
-  ors_cli(
-    progress = "bar",
-    name = "Calculating shortest routes...",
-    total = nrow(source) * length(profile),
-  )
-
-  args <- as.list(environment())
   
   # Find shortest route for each coordinate pair
   route_df <- lapply(seq_len(nrow(nested_iterator)), function(i) {
     ors_cli(progress = "update", .envir = parent.frame(3L))
-    iterate_shortest_routes(
+    apply_shortest_routes(
       index = i, source = source, destination = destination,
       iter = nested_iterator, units = units, geometry = geometry,
       instance = instance, type = proximity_type, ...

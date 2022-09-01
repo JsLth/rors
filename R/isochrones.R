@@ -155,7 +155,7 @@ ors_accessibility <- function(source,
   area_units <- match.arg(area_units)
   units <- match.arg(units)
 
-  source <- format_input_data(source, to_coords = TRUE)
+  source <- format_input_data(source)
 
   options <- format_ors_options(list(...), profile)
 

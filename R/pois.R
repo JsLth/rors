@@ -172,8 +172,8 @@ get_closest_pois <- function(source,
                              pois,
                              n = NULL,
                              radius = NULL) {
-  source <- format_input_data(source)
-  pois <- format_input_data(pois)
+  source <- format_input_data(source, to_coords = FALSE)
+  pois <- format_input_data(pois, to_coords = FALSE)
 
   if (!is.null(n) && n > nrow(pois)) {
     cli::cli_warn(c(
