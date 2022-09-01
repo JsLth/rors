@@ -24,8 +24,8 @@ ors_matrix <- function(source,
   proximity_type <- match.arg(proximity_type)
   units <- match.arg(units)
   
-  source <- format_input_data(source)
-  destination <- format_input_data(destination)
+  source <- format_input_data(source, len = nrow(destination))
+  destination <- format_input_data(destination, len = nrow(source))
   
   url <- get_ors_url(id = iid)
   

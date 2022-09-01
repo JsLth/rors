@@ -2,20 +2,52 @@
 #' @param to_coords Whether to convert input sf dataframes to normal dataframes
 #' holding coordinates
 #' @noRd
-format_input_data <- function(.data, to_coords = TRUE) {
-  assert_class(.data, c("sf", "sfc"), .env = list(x = substitute(.data)))
-
-  if (all(sf::st_is(.data, c("POINT", "MULTIPOINT")))) {
-    .data <- sf::st_transform(.data, 4326L)
-    if (to_coords) {
-      st_coordinates2(.data)[, c("X", "Y")]
-    } else {
-      sf::st_as_sf(tibble::as_tibble(.data))
-    }
-  } else {
+format_input_data <- function(.data, to_coords = TRUE, len = NULL) {
+  .data_name <- substitute(.data)
+  assert_class(.data, c("sf", "sfc"), .env = list(x = .data_name))
+  
+  has_points <- all(sf::st_is(.data, c("POINT", "MULTIPOINT")))
+  if (!has_points) {
     geom_type <- unique(sf::st_geometry_type(.data))
     cli::cli_abort("Input data must contain points, not {.val geom_type}.")
   }
+
+  .data <- sf::st_transform(.data, 4326L)
+  if (to_coords) {
+    .data <- st_coordinates2(.data)[, c("X", "Y")]
+  } else {
+    .data <- sf::st_as_sf(tibble::as_tibble(.data))
+  }
+  
+  if (!is.null(len)) {
+    if (isFALSE(len) && nrow(.data) > 1) {
+      cli::cli_abort(c(
+        "x" = "Datasets contain too many rows.",
+        "!" = "Each of the input datasets are allowed to have only one row.",
+        "i" = "{.var {.data_name}} has {.val {nrow(.data)}} rows instead."
+      ))
+    }
+    
+    if (nrow(.data) == 1) {
+      .data <- do.call(
+        rbind,
+        replicate(len, source, simplify = FALSE)
+      )
+    }
+    
+    if (!nrow(.data) == len) {
+      cli::cli_abort(c(
+        "x" = "Datasets have non-matching number of rows.",
+        "!" = paste(
+          "{.var source} and {.var destination} must have either one row",
+          "or the number of rows of the other dataset."
+        ),
+        "i" = "Got datasets with {.val {nrow(.data)}} and {.val {len}} rows."
+      ))
+    }
+  }
+  
+  .data
 }
 
 

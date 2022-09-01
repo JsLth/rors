@@ -222,46 +222,12 @@ ors_distances <- function(source,
   ors_ready(force = FALSE, error = TRUE, id = iid)
 
   # Bring input data into shape
-  source <- format_input_data(source)
-  destination <- format_input_data(destination)
+  source <- format_input_data(source, len = nrow(destination))
+  destination <- format_input_data(destination, len = nrow(source))
 
-  # If input suggests one-to-many, replicate the one-element dataframe `nrow` times
-  if (nrow(source) == 1) {
-    source <- do.call(
-      rbind,
-      replicate(nrow(destination), source, simplify = FALSE)
-    )
-  } else if (nrow(destination) == 1L) {
-    destination <- do.call(
-      rbind,
-      replicate(nrow(source), destination, simplify = FALSE)
-    )
-  }
-
-  if (identical(row(source), row(destination))) {
-    # If both datasets have the same shape, prepare a nested iterator.
-    locations <- df_nest(source = source, dest = destination)
-  } else {
-    source_shape <- cli::cli_vec(nrow(source), style = list(vec_last = ":"))
-    dest_shape <- cli::cli_vec(nrow(destination), style = list(vec_last = ":"))
-
-    cli::cli_abort(c(
-      paste(
-        "Datasets have non-matching number of rows.",
-        "Can only handle one-to-many, many-to-many,",
-        "or many-to-one calls."
-      ),
-      "Source dataset rows: {source_shape}",
-      "Destination dataset rows: {dest_shape}"
-    ))
-  }
-
-
-
+  locations <- df_nest(source = source, dest = destination)
   url <- get_ors_url(id = iid)
-
   options <- format_ors_options(list(...), profile)
-
   call_index <- format(Sys.time(), format = "%H:%M:%OS6")
 
   # Apply a directions query to each row

@@ -123,8 +123,8 @@ ors_inspect <- function(source,
   ors_ready(force = TRUE, error = TRUE, id = iid)
 
   # Bring input data into shape
-  source <- format_input_data(source)
-  destination <- format_input_data(destination)
+  source <- format_input_data(source, len = FALSE)
+  destination <- format_input_data(destination, len = FALSE)
 
   profile <- match.arg(profile)
 
@@ -432,8 +432,8 @@ ors_summary <- function(source, destination, profile = get_profiles(), instance 
   ors_ready(force = TRUE, error = TRUE, id = iid)
 
   # Bring input data into shape
-  source <- format_input_data(source)
-  destination <- format_input_data(destination)
+  source <- format_input_data(source, len = FALSE)
+  destination <- format_input_data(destination, len = FALSE)
 
   profile <- match.arg(profile)
 
