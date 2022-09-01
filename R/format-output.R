@@ -2,15 +2,15 @@
 #' @param index Row index of input dataset
 #' @param env Environment containing all parameters necessary to query ORS
 #' @noRd
-iterate_directions <- function(index,
-                               locations,
-                               profile,
-                               units,
-                               geometry,
-                               options,
-                               url,
-                               instance,
-                               call_index) {
+apply_directions <- function(index,
+                             locations,
+                             profile,
+                             units,
+                             geometry,
+                             options,
+                             url,
+                             instance,
+                             call_index) {
   call_index <- call_index
 
   res <- call_ors_directions(
@@ -66,15 +66,15 @@ iterate_directions <- function(index,
 
 
 
-iterate_shortest_routes <- function(index,
-                                    source,
-                                    destination,
-                                    iter,
-                                    units,
-                                    geometry,
-                                    instance,
-                                    type,
-                                    ...) {
+apply_shortest_routes <- function(index,
+                                  source,
+                                  destination,
+                                  iter,
+                                  units,
+                                  geometry,
+                                  instance,
+                                  type,
+                                  ...) {
   routes <- suppressWarnings(
     ors_distances(
       source = source[iter[index, "point_number"], ],
@@ -91,8 +91,10 @@ iterate_shortest_routes <- function(index,
     )
   )
   
-  best_index <- which.min(routes[[type]])
-  
+  best_index <- suppressWarnings(
+    match(min(routes[[type]], na.rm = TRUE), routes[[type]])
+  )
+
   cbind(
     dest = best_index,
     routes[best_index, ],
