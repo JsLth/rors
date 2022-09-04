@@ -11,8 +11,6 @@ apply_directions <- function(index,
                              url,
                              instance,
                              call_index) {
-  call_index <- call_index
-
   res <- call_ors_directions(
     source = locations[index, "source"],
     destination = locations[index, "dest"],
@@ -25,43 +23,8 @@ apply_directions <- function(index,
   )
 
   cond <- handle_ors_conditions(res)
-
-  if (isTRUE(attr(cond, "error"))) {
-    ors_cache$routing_conditions[[call_index]][index] <- cond
-
-    if (!geometry) {
-      return(data.frame(distance = NA, duration = NA))
-    } else {
-      empty_line <- sf::st_sfc(sf::st_linestring(), crs = 4326L)
-      return(sf::st_sf(distance = NA, duration = NA, geometry = empty_line))
-    }
-  } else if (isFALSE(attr(cond, "error"))) {
-    ors_cache$routing_conditions[[call_index]][index] <- unlist(cond)
-  } else {
-    ors_cache$routing_conditions[[call_index]][index] <- NA
-  }
-
-  if (!geometry) {
-    distance <- res$routes$summary$distance
-    duration <- res$routes$summary$duration
-    if (is.null(distance)) distance <- 0
-    if (is.null(duration)) duration <- 0
-    data.frame(
-      distance = distance,
-      duration = duration
-    )
-  } else {
-    distance <- res$features$properties$summary$distance
-    duration <- res$features$properties$summary$duration
-    if (is.null(distance)) distance <- 0
-    if (is.null(duration)) duration <- 0
-    linestring <- sf::st_linestring(res$features$geometry$coordinates[[1L]])
-    sf::st_sf(
-      distance = distance,
-      duration = duration,
-      geometry = sf::st_sfc(linestring, crs = 4326L)
-    )
-  }
+  store_condition(cond, call_index, index)
+  get_ors_summary(res, geometry = geometry)
 }
 
 
@@ -212,7 +175,7 @@ fill_empty_error_message <- function(code) {
 #' @param warn_on_warning Whether to warn when a warning code is returned
 #' @noRd
 handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning = FALSE) {
-  if (!is.null(res$error)) {
+  if (!is_ors_error(res)) {
     msg <- res$error
     code <- NULL
     
@@ -234,18 +197,9 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
       structure(error, error = TRUE)
     }
   } else {
-    format <- res$metadata$query$format
-    warnings_geojson <- res$features$properties$warnings[[1L]]
-    warnings_json <- res$routes$warnings[[1L]]
-    message <- NULL
-    code <- NULL
-    if (!is.null(warnings_geojson)) {
-      message <- warnings_geojson$message
-      code <- warnings_geojson$code
-    } else if (!is.null(warnings_json)) {
-      message <- warnings_json$message
-      code <- warnings_json$code
-    }
+    warnings <- get_ors_warnings(res)
+    message <- warnings$message
+    code <- warnings$code
 
     if (length(code) && length(message)) {
       warnings <- lapply(seq_along(code), function(w) {
@@ -265,6 +219,22 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
   }
 }
 
+
+store_condition <- function(what, when, which) {
+  has_error <- attr(what, "error")
+  
+  if (is.null(has_error)) {
+    what <- NA
+  }
+  
+  if (isFALSE(has_error)) {
+    what <- unlist(what)
+  }
+  
+  ors_cache$routing_conditions[[when]][which] <- what
+}
+
+
 calculate_distances <- function(geometry) {
   distances <- sf::st_length(sf::st_zm(geometry))
   data.frame(distance = round(distances, 2L))
@@ -279,11 +249,12 @@ calculate_avgspeed <- function(distance, duration) {
 
 
 calculate_durations <- function(res, distances) {
-  waypoints <- res$features$properties$segments[[1L]]$steps[[1L]]$way_points
-  wp_distances <- res$features$properties$segments[[1L]]$steps[[1L]]$distance
-  expanded_wp_distances <- expand_by_waypoint(wp_distances, waypoints)
+  steps <- get_ors_steps(res)
+  waypoints <- steps$way_points
+  wp_distances <- steps$distance
+  wp_durations <- steps$duration
+  exp_distances <- expand_by_waypoint(wp_distances, waypoints)
   percentages <- units::drop_units(distances / expanded_wp_distances)
-  wp_durations <- res$features$properties$segments[[1L]]$steps[[1L]]$duration
   durations <- expand_by_waypoint(wp_durations, waypoints) * percentages
   units(durations) <- "s"
   data.frame(duration = round(durations, 2L))
@@ -312,9 +283,9 @@ get_waypoint_index <- function(from, to, waypoints, by_waypoint) {
 
 format_extra_info <- function(res, info_type) {
   if (identical(info_type, "waytype")) info_type <- "waytypes"
-  last_waypoint <- res$features$properties$way_points[[1L]][2L]
-  matrix <- res$features$properties$extras[[info_type]]$values[[1L]]
-
+  last_waypoint <- get_ors_waypoints_range(res)[[2L]]
+  matrix <- get_ors_extras(res, which = info_type)
+  browser()
   if (length(matrix)) {
     start <- matrix[, 1L]
     end <- matrix[, 2L]
@@ -351,14 +322,6 @@ format_extra_info <- function(res, info_type) {
   colnames(values_df) <- info_type
   
   values_df
-}
-
-
-extract_ors_attribute <- function(res, attribute) {
-  attrib <- res$features$properties$segments[[1L]][[attribute]]
-  if (!is.null(attrib)) {
-    attrib
-  }
 }
 
 

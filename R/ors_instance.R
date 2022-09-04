@@ -290,17 +290,15 @@ ors_instance <- function(instance = NULL,
   if (!is.null(instance)) {
     local <- attr(instance, "type") == "local"
   } else local <- is.null(server)
+  
+  is_local <- identical(attr(instance, "type"), "local") || is.null(server)
+  instance_given <- !is.null(instance)
 
-  if (local && is.null(instance)) {
-    assert_path(dir, file = FALSE, "i" = paste(
-      "The {.var dir} argument is expected to be a valid path to store",
-      "the OpenRouteService source code in."
-    ))
-
+  if (is_local) {
     if (!docker_installed()) {
       cli::cli_abort("No docker installation could be detected.")
     }
-
+    
     if (is_linux() && !grant_docker_privileges(run = FALSE)) {
       cli::cli_abort(paste(
         "To use {.cls ORSInstance}, Docker needs to be",
@@ -308,27 +306,34 @@ ors_instance <- function(instance = NULL,
         "function {.fn grant_docker_privileges}"
       ))
     }
-
+    
     start_docker(verbose = verbose)
-
-    if (!is.null(instance)) {
+    
+    if (instance_given) {
       assert_path(instance$paths$dir, file = FALSE)
-      dir <- instance$paths$di
+      dir <- instance$paths$dir
       instance[c("compose", "config", "status")] <- NULL
     } else {
+      assert_path(dir, file = FALSE, "i" = paste(
+        "The {.var dir} argument is expected to be a valid path to store",
+        "the OpenRouteService source code in."
+      ))
+      
       dir <- get_ors_release(dir, version, overwrite, verbose)
       instance <- list()
     }
-  } else if (!local && is.null(instance)) {
-    instance <- list()
-    if (identical(server, "api")) server <- "https://api.openrouteservice.org/"
-    if (!is_url(server)) {
-      cli::cli_abort(
-        "{.path {server}} is not a valid URL to an OpenRouteService server"
-      )
-    }
   } else {
-    server <- instance$url
+    if (!instance_given) {
+      instance <- list()
+      if (server == "api") server <- "https://api.openrouteservice.org/"
+      if (!is_url(server)) {
+        cli::cli_abort(
+          "{.path {server}} is not a valid URL to an OpenRouteService server"
+        )
+      }
+    } else {
+      server <- instance$url
+    }
   }
 
   instance <- .instance(instance, dir = dir, server = server, verbose = verbose)
@@ -470,29 +475,6 @@ start_docker <- function(verbose = TRUE) {
       stdout = NULL,
       stderr = NULL
     )
-  }
-}
-
-
-disable_auto_deletion <- function(dir) {
-  # Don't delete any profiles. Set up every profile at first start.
-  dockerfile_path <- file.path(dir, "Dockerfile")
-
-  dockerfile <- readLines(dockerfile_path, warn = FALSE)
-  delete_line <- grep("Delete all profiles but car", dockerfile)
-
-  if (length(delete_line) > 0L) {
-    lines_to_be_deleted <- c(delete_line, delete_line + 1L, delete_line + 2L)
-
-    pr_line_end <- gsub(
-      pattern = " && \\\\",
-      replacement = "",
-      x = dockerfile[seq(delete_line - 2L, delete_line - 1)]
-    )
-
-    dockerfile[seq(delete_line - 2L, delete_line - 1L)] <- pr_line_end
-    dockerfile <- paste(dockerfile[-lines_to_be_deleted], collapse = "\n")
-    cat(dockerfile, file = dockerfile_path)
   }
 }
 

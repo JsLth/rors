@@ -153,31 +153,23 @@ ors_inspect <- function(source,
   geometry <- ors_multiple_linestrings(res, elev_as_z)
   elevation <- data.frame(elevation = attr(geometry, "elevation"))
 
-  waypoints <- res$features$properties$segments[[1L]]$steps[[1L]]$way_points
+  steps <- get_ors_steps(res)
+  waypoints <- steps$way_points
+  names_wp <- steps$name
 
   distances <- calculate_distances(geometry)
   durations <- calculate_durations(res, distances$distance)
   speeds <- calculate_avgspeed(distances$distance, durations$duration)
 
-  if (is.element("avgspeed", options$attributes)) {
-    avgspeed <- res$features$properties$segments[[1L]]$avgspeed
-  } else {
-    avgspeed <- NULL
-  }
+  options$attributes <- c(
+    ifelse(elevation, c("ascent", "descent"), NULL),
+    options$attributes
+  )
+  attrib <- get_ors_attributes(res, which = options$attributes)
 
-  if (is.element("detourfactor", options$attributes)) {
-    detourfactor <- res$features$properties$segments[[1L]]$detourfactor
-  } else {
-    detourfactor <- NULL
-  }
-
-  names_wp <- res$features$properties$segments[[1L]]$steps[[1L]]$name
   expanded_names <- expand_by_waypoint(names_wp, waypoints)
-  names <- gsub(pattern = "-", replacement = NA, expanded_names)
+  names <- gsub(pattern = "^-$", replacement = NA, expanded_names)
   names <- data.frame(names = names)
-
-  ascent <- res$features$properties$segments[[1L]]$ascent
-  descent <- res$features$properties$segments[[1L]]$descent
 
   extra_info <- lapply(
     options$extra_info,
@@ -201,10 +193,10 @@ ors_inspect <- function(source,
 
   route_sf <- structure(
     sf::st_as_sf(tibble::as_tibble(route)),
-    avgspeed = avgspeed,
-    detourfactor = detourfactor,
-    ascent = ascent,
-    descent = descent
+    avgspeed = attrib$avgspeed,
+    detourfactor = attrib$detourfactor,
+    ascent = attrib$ascent,
+    descent = attrib$descent
   )
   route_sf
 }

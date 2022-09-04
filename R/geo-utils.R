@@ -10,7 +10,7 @@ st_centroid2 <- function(polygons) {
 #' Extracts the smallest linestring increment from ORS directions response
 #' @noRd
 ors_multiple_linestrings <- function(res, elev_as_z = FALSE) {
-  coordinates <- res$features$geometry$coordinates[[1]]
+  coordinates <- get_ors_geometry(res, as_coords = TRUE)
   cols <- seq(1L, 2L + isTRUE(elev_as_z))
 
   split_ls <- function(wp) {
@@ -37,7 +37,8 @@ ors_multiple_linestrings <- function(res, elev_as_z = FALSE) {
 #' Extracts ordered polygon from ORS isochrones response
 #' @noRd
 ors_polygon <- function(res) {
-  poly <- lapply(res$features$geometry$coordinates, function(c) {
+  coords <- get_ors_geometry(res, as_coords = TRUE)
+  poly <- lapply(coords, function(c) {
     ls <- sf::st_linestring(matrix(c, ncol = 2))
     sf::st_sf(geometry = sf::st_sfc(sf::st_cast(ls, "POLYGON")))
   })
