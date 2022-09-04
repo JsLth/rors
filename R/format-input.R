@@ -20,30 +20,33 @@ format_input_data <- function(.data, to_coords = TRUE, len = NULL) {
   }
   
   if (!is.null(len)) {
-    if (isFALSE(len) && nrow(.data) > 1) {
-      cli::cli_abort(c(
-        "x" = "Datasets contain too many rows.",
-        "!" = "Each of the input datasets are allowed to have only one row.",
-        "i" = "{.var {.data_name}} has {.val {nrow(.data)}} rows instead."
-      ))
-    }
-    
-    if (nrow(.data) == 1) {
-      .data <- do.call(
-        rbind,
-        replicate(len, source, simplify = FALSE)
-      )
-    }
-    
-    if (!nrow(.data) == len) {
-      cli::cli_abort(c(
-        "x" = "Datasets have non-matching number of rows.",
-        "!" = paste(
-          "{.var source} and {.var destination} must have either one row",
-          "or the number of rows of the other dataset."
-        ),
-        "i" = "Got datasets with {.val {nrow(.data)}} and {.val {len}} rows."
-      ))
+    if (isFALSE(len)) {
+      if (nrow(.data) > 1) {
+        cli::cli_abort(c(
+          "x" = "Datasets contain too many rows.",
+          "!" = "Each of the input datasets are allowed to have only one row.",
+          "i" = "{.var {.data_name}} has {.val {nrow(.data)}} rows instead."
+        ))
+      }
+    } else {
+      if (nrow(.data) == 1) {
+        browser()
+        .data <- do.call(
+          rbind,
+          replicate(len, source, simplify = FALSE)
+        )
+      }
+      
+      if (!nrow(.data) == len) {
+        cli::cli_abort(c(
+          "x" = "Datasets have non-matching number of rows.",
+          "!" = paste(
+            "{.var source} and {.var destination} must have either one row",
+            "or the number of rows of the other dataset."
+          ),
+          "i" = "Got datasets with {.val {nrow(.data)}} and {.val {len}} rows."
+        ))
+      }
     }
   }
   
