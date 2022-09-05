@@ -318,7 +318,7 @@ grant_docker_privileges <- function(run = TRUE) {
       return(FALSE)
     }
 
-    if (!works) {
+    if (!docker_running()) {
       cli::cli_alert_warning(paste(
         "You might have to restart your system to",
         "re-evaluate group membership"

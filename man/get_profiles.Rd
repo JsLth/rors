@@ -7,7 +7,8 @@
 get_profiles(id = NULL, force = TRUE)
 }
 \arguments{
-\item{id}{\link{character}
+\item{id}{\code{[character]}
+
 ID or name of a container or URL of a server that is to be checked. If
 \code{NULL}, retrieves the ID from the current instance set by
 \code{\link{ors_instance}}}

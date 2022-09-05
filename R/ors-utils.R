@@ -45,8 +45,6 @@ get_id <- function(id = NULL, instance = NULL) {
       id <- instance$compose$name
     } else if (attr(instance, "type") == "remote") {
       id <- instance$url
-    } else {
-      corrupt_instance(instance)
     }
   } else {
     id
@@ -153,14 +151,17 @@ get_profiles <- function(id = NULL, force = TRUE) {
 
 #' Is ORS usable?
 #' @description States whether the ORS service is set up and ready to use.
-#' @param id [character]
+#' @param id \code{[character]}
+#' 
 #' ID or name of a container or URL of a server that is to be checked. If
 #' \code{NULL}, retrieves the ID from the current instance set by
 #' \code{\link{ors_instance}}
-#' @param force [logical]
+#' @param force \code{[logical]}
+#' 
 #' If \code{TRUE}, function must query server. If \code{FALSE}, the status will
 #' be read from the cache if possible.
-#' @param error [logical]
+#' @param error \code{[logical]}
+#' 
 #' If \code{TRUE}, gives out an error if the service is not ready.
 #'
 #' @export
