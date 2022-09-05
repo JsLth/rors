@@ -243,11 +243,21 @@ ors_change <- function(instance, ..., wait = TRUE) {
   sargs <- dots[names(dots) %in% names(formals(ors_settings))]
   needs_rebuild <- any(dots %in% "profiles") || length(eargs)
 
-  if (needs_rebuild) ors_down(instance) else ors_stop(instance)
+  if (needs_rebuild) {
+    instance <- ors_down(instance) 
+  } else {
+    instance <- ors_stop(instance)
+  }
+  
   instance <- do.call(ors_extract, c(list(instance), eargs))
   instance <- do.call(ors_config, c(list(instance), sargs))
   instance <- do.call(ors_settings, c(list(instance), sargs))
-  if (needs_rebuild) ors_up(instance, wait) else ors_start(instance, wait)
+  
+  if (needs_rebuild) {
+    instance <- ors_up(instance, wait)
+  } else {
+    instance <- ors_start(instance, wait)
+  }
 
   assign("instance", instance, envir = ors_cache)
   invisible(instance)
