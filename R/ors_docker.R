@@ -15,13 +15,14 @@
 #' Flags to be attached to the \code{docker compose up} command.
 #' Notable mentions include \code{--force-recreate} and \code{--no-recreate}.
 #' @inheritParams ors_extract
+#' @inheritParams ors_image
 #'
 #' @returns Nested list of class \code{ors_instance}.
 #'
 #' @family ORS setup functions
 #'
 #' @export
-ors_up <- function(instance, wait = TRUE, ...) {
+ors_up <- function(instance, wait = TRUE, tag = "latest", ...) {
   verbose <- attr(instance, "verbose")
 
   if (!instance$status[1]) {
@@ -31,7 +32,7 @@ ors_up <- function(instance, wait = TRUE, ...) {
   name <- instance$compose$parsed$services$`ors-app`$container_name
 
   ors_cli(rule = "Pulling image")
-  pull_ors(instance)
+  pull_ors(instance, tag)
 
   cmd <- c(
     "compose", # tool to use
@@ -259,7 +260,7 @@ ors_change <- function(instance, ..., wait = TRUE) {
 #'
 #' @param tag \code{[character]}
 #'
-#' Docker reference tag. Defaults to \code{"latest"}.
+#' Docker reference tag of the image to pull. Defaults to \code{"latest"}.
 #' @param remove \code{[logical]}
 #'
 #' Whether to pull or remove an image. Cannot pull an image that already exists
@@ -280,7 +281,7 @@ ors_image <- function(instance, tag = "latest", remove = FALSE, force = FALSE) {
   if (remove) {
     rm_image(instance, force = force)
   } else {
-    pull_ors(instance)
+    pull_ors(instance, tag)
   }
 }
 

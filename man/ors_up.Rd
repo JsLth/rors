@@ -5,7 +5,7 @@
 \alias{ors_down}
 \title{Build or take down an ORS container}
 \usage{
-ors_up(instance, wait = TRUE, ...)
+ors_up(instance, wait = TRUE, tag = "latest", ...)
 
 ors_down(instance)
 }
@@ -20,6 +20,10 @@ If \code{TRUE}, the function will not stop running after the container is
 being started and will give out a notification as soon as the service is
 ready. If \code{FALSE}, the function will start the container and then stop.
 To check the server status, you can then call \code{\link{ors_ready}}.}
+
+\item{tag}{\code{[character]}
+
+Docker reference tag of the image to pull. Defaults to \code{"latest"}.}
 
 \item{...}{\code{[character]}
 

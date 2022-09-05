@@ -24,7 +24,8 @@ ors_shortest_distances(
   geometry = FALSE,
   instance = NULL,
   ...,
-  proximity_type = c("duration", "distance")
+  proximity_type = c("duration", "distance"),
+  progress = TRUE
 )
 }
 \arguments{
@@ -160,6 +161,11 @@ datasets.}
 Type of proximity that the calculations should be
 based on. If \code{distance}, the shortest physical distance will be calculated
 and if \code{duration}, the shortest temporal distance will be calculated.}
+
+\item{progress}{\code{[logical]}
+
+If \code{TRUE}, displays a progress bar if the process is taking a bit
+longer.}
 }
 \value{
 \code{ors_distances} returns a dataframe with distances and

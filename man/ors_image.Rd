@@ -7,13 +7,9 @@
 ors_image(instance, tag = "latest", remove = FALSE, force = FALSE)
 }
 \arguments{
-\item{instance}{\code{[ors_instance]}
-
-Object created by \code{\link{ors_instance}}.}
-
 \item{tag}{\code{[character]}
 
-Docker reference tag. Defaults to \code{"latest"}.}
+Docker reference tag of the image to pull. Defaults to \code{"latest"}.}
 
 \item{remove}{\code{[logical]}
 
