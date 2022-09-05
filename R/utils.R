@@ -275,6 +275,13 @@ docker_installed <- function() {
 }
 
 
+#' Checks if Docker is reachable and running
+#' @noRd
+docker_running <- function() {
+  callr::run("docker", "ps", stdout = FALSE, stderr = FALSE) == 0L
+}
+
+
 #' Enable non-root docker access on Linux
 #' @description Creates a docker group and adds the current user to it in order
 #' to enable docker commands from within R. Doing this, either manually or by
@@ -311,7 +318,6 @@ grant_docker_privileges <- function(run = TRUE) {
       return(FALSE)
     }
 
-    works <- callr::run("docker", "ps", stdout = FALSE, stderr = FALSE) == 0L
     if (!works) {
       cli::cli_alert_warning(paste(
         "You might have to restart your system to",
