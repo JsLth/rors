@@ -335,14 +335,20 @@ ors_remove <- function(instance, ignore_image = TRUE) {
     unlink(instance$paths$dir, recursive = TRUE)
   }
 
-  ors_cli(
-    progress = "step",
-    msg = "Terminating instance object...",
-    msg_done = "Terminated R6 class.",
-    msg_failed = "Cannot remove R6 class object."
-  )
+  if (any_mounted()) {
+    is_mounted <- get_id(instance = instance) == get_id()
+    if (is_mounted) {
+      ors_cli(
+        progress = "step",
+        msg = "Terminating instance object...",
+        msg_done = "Terminated R6 class.",
+        msg_failed = "Cannot remove R6 class object."
+      )
+      
+      rm(instance, envir = ors_cache)
+    }
+  }
 
-  rm(instance, envir = ors_cache)
   structure(list(), class = "ors_instance", alive = FALSE)
 }
 
@@ -356,6 +362,7 @@ pull_ors <- function(instance, tag = "latest") {
   if (!instance$status[2]) {
     cmd <- c("pull", paste0("openrouteservice/openrouteservice:", tag))
 
+    Sys.setenv(ORS_VERBOSE = verbose)
     proc <- callr::run(
       command = "docker",
       args = cmd,
@@ -364,8 +371,9 @@ pull_ors <- function(instance, tag = "latest") {
       error_on_status = FALSE,
       spinner = verbose && interactive(),
       encoding = "UTF-8",
-      stdout_line_callback = if (verbose) pull_callback
+      stdout_line_callback = if (verbose) pull_callback,
     )
+    Sys.unsetenv("ORS_VERBOSE")
 
     status <- proc$status
 
@@ -582,6 +590,7 @@ ls_ors <- function() {
 
 
 pull_callback <- function(newout, proc) {
+  verbose <- as.logical(Sys.getenv("ORS_VERBOSE"))
   exc_list <- c(
     "Download complete", "Downloading", "Extracting", "Waiting",
     "Pulling fs layer", "Verifying Checksum"

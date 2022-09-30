@@ -271,6 +271,7 @@ set_graphbuilding <- function(mode, compose, extract_path) {
 
   # Then, turn things on selectively
   if (identical(mode, "build") && !missing(extract_path)) {
+    compose <- force_graphbuilding(TRUE, compose)
     build_branch <- list(
       build = list(
         context = "../",

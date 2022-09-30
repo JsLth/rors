@@ -374,7 +374,7 @@ get_ors_release <- function(dir, version, overwrite, verbose) {
     proc <- callr::r_bg(function(url, zip) {
       utils::download.file(url, destfile = zip, quiet = TRUE)
     }, args = list(download_url, zip_file))
-    while (proc$is_alive()) cli::cli_progress_update()
+    while (proc$is_alive()) ors_cli(progress = "update")
     if (nchar(proc$read_error())) {
       cli::cli_abort("Cannot download release version {.val {version}}.")
     }
@@ -448,13 +448,11 @@ start_docker <- function(verbose = TRUE) {
       # Check if Docker is usable by running a Docker command
       proc <- callr::r_bg(
         function() {
-          while (callr::run("docker", "ps",
-            stdout = NULL, stderr = NULL,
-            error_on_status = FALSE
-          )$status != 0L) {
+          while (!docker_running()) {
             Sys.sleep(1L)
           }
-        }
+        },
+        package = TRUE
       )
 
       while (proc$is_alive()) {

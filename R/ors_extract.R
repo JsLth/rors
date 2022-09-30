@@ -204,7 +204,7 @@ get_current_extract <- function(obj, compose, dir) {
 
   current_extract <- identify_extract(obj)
 
-  if (!file.exists(current_extract)) {
+  if (!is.null(current_extract) && !file.exists(current_extract)) {
     pretty_path <- relative_path(current_extract, obj$paths$dir, pretty = TRUE)
     cli::cli_warn(c(
       "The current extract {.path {pretty_path}} could not be found.",
