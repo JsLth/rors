@@ -7,6 +7,13 @@ st_centroid2 <- function(polygons) {
 }
 
 
+#' st_coordinates but returns a data.frame instead of a matrix
+#' @noRd
+st_coordinates2 <- function(x) {
+  tibble::as_tibble(sf::st_coordinates(x))[, c("X", "Y")]
+}
+
+
 #' Extracts the smallest linestring increment from ORS directions response
 #' @noRd
 ors_multiple_linestrings <- function(res, elev_as_z = FALSE) {
@@ -86,11 +93,4 @@ rasterize_isochrones <- function(isochrones, resolution) {
 #' @noRd
 is_sf <- function(x) {
   inherits(x, c("sf", "sfc"))
-}
-
-
-#' st_coordinates but returns a data.frame instead of a matrix
-#' @noRd
-st_coordinates2 <- function(x) {
-  tibble::as_tibble(sf::st_coordinates(x))[, c("X", "Y")]
 }

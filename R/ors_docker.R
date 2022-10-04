@@ -115,7 +115,7 @@ ors_down <- function(instance) {
       ors_cli(progress = "done", result = "failed")
     } else ors_cli(progress = "done", result = "done")
   } else {
-    cli_ors(info = c("i" = "Container is already down."))
+    ors_cli(info = c("i" = "Container is already down."))
   }
 
   instance <- .instance(instance, verbose = verbose)
@@ -409,7 +409,7 @@ rm_image <- function(instance, force = FALSE) {
     )
 
     if (nchar(image_ids$stdout)) {
-      cli_ors(
+      ors_cli(
         progress = "step",
         msg = "Removing {length(image_ids)} image{?s}...",
         msg_done = "Removed {length(image_ids)} image{?s}.",
@@ -435,7 +435,7 @@ rm_image <- function(instance, force = FALSE) {
         }
       }
     } else {
-      cli_ors(info = c("i" = "No images to remove."))
+      ors_cli(info = c("i" = "No images to remove."))
     }
   } else {
     cli::cli_abort("Remove the container before removing the image")

@@ -26,7 +26,7 @@ check_instance <- function(instance = NULL) {
   if (is.null(instance)) {
     instance <- get_instance()
   } else {
-    assert_class(instance, "ors_instance")
+    assert_that(inherits(instance, "ors_instance"))
   }
   
   instance
@@ -184,7 +184,7 @@ ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
             cli::cli_abort(c(
               "x" = "Cannot reach the OpenRouteService server.",
               "i" = "Did you start your local instance?"
-            ))
+            ), call = parent.frame(4))
           } else {
             ready <<- FALSE
           }
@@ -215,15 +215,16 @@ identify_extract <- function(instance) {
   if (is.null(extract_path)) {
     volume <- compose$services$`ors-app`$volumes[6L]
     extract_path <- gsub("\\./", "", strsplit(volume, ":")[[1L]][1L])
+    if (is.na(extract_path)) extract_path <- NULL
 
     # If not, check if change volume is set
-    if (is.null(extract_path) || is.na(extract_path)) {
+    if (is.null(extract_path)) {
       data_dir <- file.path(mdir, "docker/data")
       osm_file_occurences <- grepl("\\.pbf$|\\.osm.gz$|\\.osm\\.zip$|\\.osm$", dir(data_dir))
 
       # As a last resort, check if we can just pick it up from the data folder
       if (sum(osm_file_occurences) == 1L) {
-        extract_path <- dir(data_dir)[osm_file_occurences]
+        extract_path <- dir(data_dir, full.names = TRUE)[osm_file_occurences]
       }
     }
   }
@@ -291,7 +292,7 @@ last_ors_conditions <- function(last = 1L) {
   conditions <- ors_cache$routing_conditions
 
   if (length(conditions)) {
-    assert(last, class = "numeric", len = c(1, NULL))
+    assert_that(is.numeric(last), last > 1)
     last <- min(last, length(conditions))
 
     time <- names(conditions)

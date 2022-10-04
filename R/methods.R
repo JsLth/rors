@@ -190,7 +190,7 @@ print.ors_instance_paths <- function(x, ...) {
   config <- if (!is.null(x$config_path)) basename(x$config_path) else NULL
   extract <- if (!is.null(x$extract_path)) basename(x$extract_path) else NULL
 
-  config_dir <- ifelse(grepl("conf", config), "conf", "data")
+  config_dir <- ifelse(grepl("\\/conf\\/", x$config_path), "conf", "data")
   docker_path <- file.path(x$dir, "docker")
   subdocker_paths <- file.path(docker_path, dir(docker_path))
   subdocker_paths_files <- lapply(seq_along(subdocker_paths), function(i) {

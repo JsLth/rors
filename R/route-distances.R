@@ -212,7 +212,14 @@ ors_distances <- function(source,
                           geometry = FALSE,
                           instance = NULL,
                           ...) {
-  assert(geometry, class = "logical", len = rep(1, 2))
+  # Validate arguments
+  assert_that(
+    is_sf(source),
+    is_sf(destination),
+    is_geometry_type(source, "POINT"),
+    is_geometry_type(destination, "POINT"),
+    is_true_or_false(geometry)
+  )
   profile <- match.arg(profile)
   units <- match.arg(units)
   instance <- check_instance(instance)
@@ -301,8 +308,15 @@ ors_shortest_distances <- function(source,
                                    geometry = FALSE,
                                    instance = NULL,
                                    ...,
-                                   proximity_type = c("duration", "distance"),
+                                   proximity_type = c
+                                   ("duration", "distance"),
                                    progress = TRUE) {
+  # Validate arguments
+  assert_that(
+    is_sf(source),
+    is_sf(destination),
+    is_true_or_false(geometry)
+  )
   instance <- check_instance(instance)
   proximity_type <- match.arg(proximity_type)
   profile <- match.arg(profile, several.ok = TRUE)

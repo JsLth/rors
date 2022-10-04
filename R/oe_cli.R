@@ -10,7 +10,11 @@ ors_cli <- function(info = NULL,
                     rule = NULL,
                     line = NULL,
                     ...,
-                    .envir = parent.frame(2)) {
+                    .envir = NULL) {
+  if (is.null(.envir)) {
+    .envir <- parent.frame()
+  }
+  
   verbose <- get0("verbose", envir = parent.frame(), ifnotfound = FALSE)
   
   if (!verbose) {
@@ -18,11 +22,11 @@ ors_cli <- function(info = NULL,
   }
 
   if (!is.null(info)) {
-    cli::cli_inform(info, ...)
+    cli::cli_inform(info, ..., .envir = .envir)
   }
 
   if (!is.null(warn)) {
-    cli::cli_warn(warn, ...)
+    cli::cli_warn(warn, ..., .envir = parent.frame())
   }
 
   if (!is.null(progress)) {
@@ -35,7 +39,7 @@ ors_cli <- function(info = NULL,
   }
   
   if (!is.null(rule)) {
-    cli::rule(rule, ...)
+    cli::cli_rule(rule, ..., .envir = parent.frame())
   }
   
   if (!is.null(line)) {

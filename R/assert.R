@@ -1,3 +1,60 @@
+assert_that <- function(..., env = parent.frame(), msg = NULL, add = NULL) {
+  tryCatch(
+    expr = assertthat::assert_that(..., env = env, msg = msg),
+    error = function(e) cli::cli_abort(c("x" = e$message, add), call = e$call)
+  )
+}
+
+
+is_sf <- function(x, sfc = TRUE) {
+  inherits(x, c("sf", if (sfc) "sfc"))
+}
+
+is_true_or_false <- function(x) {
+  is.logical(x) && length(x) == 1L && !is.na(x)
+}
+
+is_geometry_type <- function(x, type) {
+  all(vapply(type, function(gt) all(sf::st_is(x, gt)), logical(1)))
+}
+
+assertthat::on_failure(is_sf) <- function(call, env) {
+  x <- sprintf("{.var %s}", deparse(call$x))
+  if (call$sfc) {
+    paste(x, "is not an {.cls sf} or {.cls sfc} object.")
+  } else {
+    paste(x, "is not an {.cls sf} dataframe.")
+  }
+}
+
+assertthat::on_failure(is_true_or_false) <- function(call, env) {
+  x <- sprintf("{.var %s}", deparse(call$x))
+  if (is.logical(eval(call$x))) {
+    paste(x, "is not {.var TRUE} or {.var FALSE}.")
+  } else {
+    paste(x, "is not a logical.")
+  }
+}
+
+assertthat::on_failure(is_geometry_type) <- function(call, env) {
+  x <- sprintf("{.var %s}", deparse(call$x))
+  types <- eval(call$type)
+  types <- paste0(types, "s")
+  call$type <- paste(
+    paste(utils::head(types, -1), collapse = ", "),
+    utils::tail(types, 1),
+    sep = " or "
+  )
+  paste0(x, " does not consist of only ", call$type)
+}
+
+assertthat::on_failure(inherits) <- function(call, env) {
+  class <- sprintf("{.cls %s}", eval(call$what, env))
+  x <- sprintf("{.var %s}", call$x)
+  paste0(x, " does not inherit from class ", class)
+}
+
+
 #' Assert that a condition is TRUE else return an error
 #' @param class,len,val,nrow,obj,set,file Conditions to assert
 #' @param ... Further informational messages to include in the error
@@ -309,6 +366,7 @@ assert_path <- function(x,
                         file = FALSE,
                         abort = TRUE,
                         null = FALSE,
+                        .env = NULL,
                         ...) {
   if (is.null(x) && null) return(TRUE)
 

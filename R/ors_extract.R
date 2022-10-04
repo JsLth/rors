@@ -22,12 +22,13 @@ ors_extract <- function(instance, place = NULL, provider = "geofabrik", file = N
   verbose <- attr(instance, "verbose")
 
   if (!is.null(file)) {
+    assert_that(assertthat::is.readable(file))
     assert(file, file = TRUE, len = 1L)
     extract_path <- file
   }
 
   if (!is.null(place)) {
-    assert(place, class = "character", len = 1L)
+    assert_that(assertthat::is.string(place))
     extract_path <- get_extract(
       place = place,
       provider = provider,

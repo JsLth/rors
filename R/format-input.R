@@ -4,7 +4,6 @@
 #' @noRd
 format_input_data <- function(.data, to_coords = TRUE, len = NULL) {
   .data_name <- substitute(.data)
-  assert_class(.data, c("sf", "sfc"), .env = list(x = .data_name))
   
   has_points <- all(sf::st_is(.data, c("POINT", "MULTIPOINT")))
   if (!has_points) {

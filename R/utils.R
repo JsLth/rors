@@ -278,7 +278,13 @@ docker_installed <- function() {
 #' Checks if Docker is reachable and running
 #' @noRd
 docker_running <- function() {
-  callr::run("docker", "ps", stdout = FALSE, stderr = FALSE) == 0L
+  callr::run(
+    "docker",
+    "ps",
+    stdout = NULL,
+    stderr = NULL,
+    error_on_status = FALSE
+  )$status == 0L
 }
 
 
@@ -351,7 +357,7 @@ slow_edit <- function(file, ...) {
 
   cli::cli_process_start(
     "Editing file...",
-    msg_done = "Manually edited file.",
+    msg_done = "Manual editing complete.",
     msg_failed = "Cannot edit file."
   )
 

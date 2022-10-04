@@ -42,7 +42,15 @@ ors_config <- function(instance,
                        interactive = FALSE) {
   verbose <- attr(instance, "verbose")
   
-  assert(profiles, c("list", "character"), len = c(1, 9), null = TRUE)
+  assert_that(
+    is.character(profiles),
+    length(profiles) > 1,
+    assertthat::is.count(matrix.maximum_routes),
+    assertthat::is.count(matrix.maximum_search_radius),
+    assertthat::is.count(isochrones.maximum_intervals),
+    assertthat::is.count(isochrones.maximum_locations),
+    is_true_or_false(interactive)
+  )
 
   if (!interactive) {
     if (is.null(config)) {

@@ -282,10 +282,12 @@ ors_instance <- function(instance = NULL,
                          version = "master",
                          overwrite = FALSE,
                          verbose = TRUE) {
-  assert_class(instance, "ors_instance", null = TRUE, "i" = paste(
-    "Did you accidentally pass a directory",
-    "without specifying the argument name?"
-  ))
+  if (is.character(instance)) {
+    cli::cli_abort(c(
+      "{.var instance} must be of class {.cls ors_instance}",
+      "Did you accidentally pass a directory without specifying the argument name?"
+    ))
+  }
 
   if (!is.null(instance)) {
     local <- attr(instance, "type") == "local"
@@ -310,11 +312,11 @@ ors_instance <- function(instance = NULL,
     start_docker(verbose = verbose)
     
     if (instance_given) {
-      assert_path(instance$paths$dir, file = FALSE)
+      assert_that(assertthat::is.dir(instance$paths$dir))
       dir <- instance$paths$dir
       instance[c("compose", "config", "status")] <- NULL
     } else {
-      assert_path(dir, file = FALSE, "i" = paste(
+      assert_that(assertthat::is.dir(dir), add = paste(
         "The {.var dir} argument is expected to be a valid path to store",
         "the OpenRouteService source code in."
       ))

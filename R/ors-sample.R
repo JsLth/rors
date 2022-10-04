@@ -114,6 +114,14 @@ ors_sample <- function(size,
                        instance = NULL,
                        poly = NULL,
                        verbose = TRUE) {
+  assert_that(
+    assertthat::is.count(size),
+    is_true_or_false(force_new_extract),
+    is_sf(poly),
+    is_geometry_type(poly, c("POLYGON", "MULTIPOLYGON")),
+    is_true_or_false(verbose)
+  )
+  
   if (is.null(poly)) {
     poly <- get_extract_boundaries(instance, force_new_extract, verbose)
   }

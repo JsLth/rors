@@ -114,9 +114,12 @@ ors_inspect <- function(source,
                         instance = NULL,
                         ...,
                         elev_as_z = FALSE) {
-  if (is.null(instance)) {
-    instance <- get_instance()
-  }
+  assert_that(
+    is_sf(source),
+    is_sf(destination),
+    is_true_or_false(elev_as_z)
+  )
+  instance <- check_instance(instance)
   iid <- get_id(instance = instance)
 
   # Check if ORS is ready to use
@@ -414,10 +417,13 @@ plot_section <- function(x,
 
 #' @rdname ors_inspect
 #' @export
-ors_summary <- function(source, destination, profile = get_profiles(), instance = NULL, ...) {
-  if (is.null(instance)) {
-    instance <- get_instance()
-  }
+ors_summary <- function(source,
+                        destination,
+                        profile = get_profiles(),
+                        instance = NULL,
+                        ...) {
+  assert_that(is_sf(source), is_sf(destination))
+  instance <- check_instance(instance)
   iid <- get_id(instance = instance)
 
   # Check if ORS is ready to use
