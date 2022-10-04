@@ -11,3 +11,6 @@
 ^openrouteservice-master$
 ^public$
 ^ci$
+^codecov\.yml$
+^\.github$
+^README\.Rmd$

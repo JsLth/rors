@@ -20,6 +20,7 @@ Depends:
 Imports:
     utils,
     stats,
+    assertthat,
     httr2 (>= 0.2.0),
     jsonlite,
     yaml,
@@ -33,10 +34,11 @@ Suggests:
     rmarkdown (>= 2.7),
     knitr (>= 1.31),
     testthat (>= 3.0.0),
+    covr,
     osmdata,
     units,
     terra,
-    ggplot2
+    ggplot2,
 SystemRequirements: Docker Engine on Linux systems, Docker Desktop on Windows (>= 20.10.6)
 RoxygenNote: 7.2.1
 Roxygen: list(markdown = TRUE)
