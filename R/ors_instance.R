@@ -293,8 +293,12 @@ ors_instance <- function(instance = NULL,
     local <- attr(instance, "type") == "local"
   } else local <- is.null(server)
   
-  is_local <- identical(attr(instance, "type"), "local") || is.null(server)
   instance_given <- !is.null(instance)
+  is_local <- ifelse(
+    instance_given,
+    identical(attr(instance, "type"), "local"),
+    is.null(server)
+  )
 
   if (is_local) {
     if (!docker_installed()) {
@@ -377,7 +381,7 @@ get_ors_release <- function(dir, version, overwrite, verbose) {
       utils::download.file(url, destfile = zip, quiet = TRUE)
     }, args = list(download_url, zip_file))
     while (proc$is_alive()) ors_cli(progress = "update")
-    if (nchar(proc$read_error())) {
+    if (proc$get_exit_status() != 0L) {
       cli::cli_abort("Cannot download release version {.val {version}}.")
     }
 
