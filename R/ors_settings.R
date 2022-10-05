@@ -47,12 +47,6 @@ ors_settings <- function(instance,
                          graph_building = NULL) {
   verbose <- attr(instance, "verbose")
   compose <- instance$compose$parsed
-  assert_that(
-    assertthat::is.string(name),
-    assertthat::is.scalar(ports),
-    length(memory) >= 2,
-    is_true_or_false(auto_deletion)
-  )
 
   if (!is.null(instance$paths$extract_path) && is.null(graph_building)) {
     graphs_dir <- file.path(instance$paths$dir, "docker/graphs")
@@ -78,7 +72,7 @@ ors_settings <- function(instance,
   }
 
   if (!is.null(graph_building)) {
-    relative_path <- relative_path(instance$paths$extract_path, file.path(instance$paths$dir, "dir"))
+    relative_path <- relative_path(instance$paths$extract_path, instance$paths$dir)
     compose <- set_graphbuilding(graph_building, compose, relative_path)
   }
 
