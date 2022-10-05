@@ -7,9 +7,16 @@ perform_call <- function(req) {
   }
 
   res <- httr2::req_perform(req, verbosity = 0L)
-  res2 <- try(httr2::resp_body_json(res, simplifyVector = TRUE))
-  if (inherits(res, "try-error")) {browser();res2}
-  res2
+
+  if (req$parse) {
+    res <- try(httr2::resp_body_json(res, simplifyVector = TRUE))
+    # sometimes weird errors occur. if that happens, stop and inspect.
+    if (inherits(res, "try-error")) {browser();res}
+  } else {
+    res <- httr2::resp_body_string(res)
+  }
+
+  res
 }
 
 call_ors_directions <- function(source,
@@ -19,12 +26,14 @@ call_ors_directions <- function(source,
                                 geometry,
                                 options,
                                 url,
-                                token) {
+                                token,
+                                parse = TRUE) {
   # Get coordinates in shape
-  locations <- list(
-    c(as.numeric(source[1L]), as.numeric(source[2L])),
-    c(as.numeric(destination[1L]), as.numeric(destination[2L]))
-  )
+  if (!missing(destination)) {
+    locations <- list(as.numeric(source), as.numeric(destination))
+  } else {
+    locations <- mapply(c, source[[1]], source[[2]], SIMPLIFY = FALSE)
+  }
 
   # Prepare the url
   req <- httr2::request(url)
@@ -33,9 +42,9 @@ call_ors_directions <- function(source,
     ifelse(!is_ors_api(url), "ors", ""),
     "v2/directions",
     profile,
-    ifelse(geometry, "/geojson", "")
+    ifelse(geometry, "geojson", "")
   )
-
+  
   req <- httr2::req_headers(
     req,
     Accept = sprintf(
@@ -63,7 +72,7 @@ call_ors_directions <- function(source,
   )
   body <- body[lengths(body) > 0L]
   req <- httr2::req_body_json(req, body, digits = NA)
-
+  req$parse <- parse
   perform_call(req)
 }
 
