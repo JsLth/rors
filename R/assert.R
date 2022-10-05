@@ -38,14 +38,17 @@ assertthat::on_failure(is_true_or_false) <- function(call, env) {
 
 assertthat::on_failure(is_geometry_type) <- function(call, env) {
   x <- sprintf("{.var %s}", deparse(call$x))
+  given <- sf::st_geometry_type(eval(call$x, env))
+  given <- paste0(unique(given), "s")
+  given <- paste(given, collapse = "/")
   types <- eval(call$type)
   types <- paste0(types, "s")
-  call$type <- paste(
+  types <- paste(
     paste(utils::head(types, -1), collapse = ", "),
     utils::tail(types, 1),
     sep = " or "
   )
-  paste0(x, " does not consist of only ", call$type)
+  paste0(x, " must consist of only ", types, ", not ", given)
 }
 
 assertthat::on_failure(inherits) <- function(call, env) {
