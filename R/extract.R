@@ -66,14 +66,23 @@ get_ors_waypoints_range <- function(res) {
 }
 
 
-get_ors_steps <- function(res) {
+get_ors_steps <- function(res, bind = TRUE) {
   if (is_ors_geojson(res)) {
-    res$features$properties$segments[[1L]]$steps[[1L]]
+    steps <- res$features$properties$segments[[1L]]$steps
+    if (bind) {
+      steps <- lapply(seq_along(steps), \(i) cbind(segment = i, steps[[i]]))
+      rbind_list(steps)
+    }
+    steps
   }
 }
 
 
 get_ors_warnings <- function(res) {
+  if (is_ors_error(res)) {
+    return(NULL)
+  }
+  
   if (is_ors_geojson(res)) {
     res$features$properties$warnings[[1L]]
   } else {
@@ -93,7 +102,7 @@ is_ors_error <- function(res) {
 
 
 get_ors_features <- function(res) {
-  if (is_geojson(res)) {
+  if (is_ors_geojson(res)) {
     res$features
   } else {
     res$routes
