@@ -157,7 +157,7 @@ ors_accessibility <- function(source,
 
   source <- format_input_data(source)
 
-  options <- format_ors_options(list(...), profile)
+  options <- format_ors_params(list(...), profile)
 
   url <- get_ors_url(id = iid)
 
@@ -169,7 +169,7 @@ ors_accessibility <- function(source,
     intersections = intersections,
     interval = interval,
     location_type = location_type,
-    options = options,
+    params = options,
     range_type = range_type,
     smoothing = smoothing,
     area_units = area_units,

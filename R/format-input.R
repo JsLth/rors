@@ -4,12 +4,6 @@
 #' @noRd
 format_input_data <- function(.data, to_coords = TRUE, len = NULL) {
   .data_name <- substitute(.data)
-  
-  has_points <- all(sf::st_is(.data, c("POINT", "MULTIPOINT")))
-  if (!has_points) {
-    geom_type <- unique(sf::st_geometry_type(.data))
-    cli::cli_abort("Input data must contain points, not {.val geom_type}.")
-  }
 
   .data <- sf::st_transform(.data, 4326L)
   if (to_coords) {
@@ -19,33 +13,22 @@ format_input_data <- function(.data, to_coords = TRUE, len = NULL) {
   }
   
   if (!is.null(len)) {
-    if (isFALSE(len)) {
-      if (nrow(.data) > 1) {
-        cli::cli_abort(c(
-          "x" = "Datasets contain too many rows.",
-          "!" = "Each of the input datasets are allowed to have only one row.",
-          "i" = "{.var {.data_name}} has {.val {nrow(.data)}} rows instead."
-        ))
-      }
-    } else {
-      if (nrow(.data) == 1) {
-        browser()
-        .data <- do.call(
-          rbind,
-          replicate(len, source, simplify = FALSE)
-        )
-      }
-      
-      if (!nrow(.data) == len) {
-        cli::cli_abort(c(
-          "x" = "Datasets have non-matching number of rows.",
-          "!" = paste(
-            "{.var source} and {.var destination} must have either one row",
-            "or the number of rows of the other dataset."
-          ),
-          "i" = "Got datasets with {.val {nrow(.data)}} and {.val {len}} rows."
-        ))
-      }
+    if (nrow(.data) == 1) {
+      .data <- do.call(
+        rbind,
+        replicate(len, .data, simplify = FALSE)
+      )
+    }
+    
+    if (!nrow(.data) == len) {
+      cli::cli_abort(c(
+        "x" = "Datasets have non-matching number of rows.",
+        "!" = paste(
+          "{.var source} and {.var destination} must have either one row",
+          "or the number of rows of the other dataset."
+        ),
+        "i" = "Got datasets with {.val {nrow(.data)}} and {.val {len}} rows."
+      ))
     }
   }
   
@@ -56,11 +39,13 @@ format_input_data <- function(.data, to_coords = TRUE, len = NULL) {
 #' Formats ORS options, checks if they're valid and constructs a list that
 #' can be used to create an http query
 #' @noRd
-format_ors_options <- function(opts, profile) {
+format_ors_params <- function(opts, profile) {
   if (is.null(opts)) return(NULL)
+  
+  validate_ors_dots(opts)
 
   for (opt in names(opts)) {
-    params <- as.list(known_opts[known_opts$name == opt, ])
+    params <- as.list(known_params[known_params$name == opt, ])
     params$profile <- eval(str2lang(as.character(params$profile)))
     opt_fun <- match.fun(paste0("format_ors_", params$fun))
     opts[[opt]] <- do.call(opt_fun, c(
@@ -98,12 +83,17 @@ check_options <- function(opts) {
 
 #' Format and check ORS list parameters
 #' @noRd
-format_ors_list <- function(x, matches, which, profile, single, ...) {
+format_ors_list <- function(x, matches, which, profile, scalar, ...) {
   matches <- unlist(matches)
 
   if (isTRUE(x)) {
-    allowed <- extra_info_profiles$profiles %in% base_profile(profile) |
-      is.na(extra_info_profiles$profiles)
+    if (which == "extra_info") {
+      allowed <- extra_info_profiles$profiles %in% base_profile(profile) |
+        is.na(extra_info_profiles$profiles)
+    } else {
+      allowed <- seq_along(matches)
+    }
+
     x <- matches[allowed]
   }
 
@@ -119,7 +109,7 @@ format_ors_list <- function(x, matches, which, profile, single, ...) {
     opts_check <- TRUE
   }
   
-  if (length(x) > 1 && single) {
+  if (length(x) > 1 && scalar) {
     opts_check <- FALSE
   }
 
@@ -129,7 +119,7 @@ format_ors_list <- function(x, matches, which, profile, single, ...) {
 
 #' Format and check ORS scalar parameters
 #' @noRd
-format_ors_vector <- function(x, type, profile, box, single, ...) {
+format_ors_vector <- function(x, type, profile, box, scalar, ...) {
   opts_check <- FALSE
 
   if (type == "logical") {
@@ -148,7 +138,7 @@ format_ors_vector <- function(x, type, profile, box, single, ...) {
     TRUE
   }
 
-  length_check <- if (single) {
+  length_check <- if (scalar) {
     length(x) == 1
   } else {
     TRUE
@@ -180,39 +170,37 @@ format_ors_poly <- function(x, ...) {
 
 #' Format and check ORS profile parameters
 #' @noRd
-format_ors_profile_params <- function(x, which, profile, ...) {
+format_ors_nlist <- function(x, which, profile, ...) {
   x <- as.list(x)
-  
-  if (is.vector(x) && !identical(profile, "driving-car")) {
-    base_profile <- base_profile(profile)
 
-    defined <- list(
-      restrictions = list(
-        wheelchair = c(
-          "maximum_incline", "maximum_sloped_kerb", "minimum_width",
-          "smoothness_type", "surface_type", "track_type"),
-        driving = c(
-          "axleload", "hazmat", "height", "length", "weight", "width"
-        ),
-        cycling = "gradient"
-      ),
-      weightings = list(
-        cycling = "steepness_difficulty",
-        walking = c("green", "quiet")
-      )
-    )
-
-    defined <- defined[[which]][[base_profile]]
+  if (is.recursive(x) && (!identical(profile, "driving-car")) || is.na(profile)) {
+    defined <- nlist_params[[which]]
+    if (!is.na(profile)) defined <- defined[[base_profile(profile)]]
     admitted <- defined[match(names(x), defined)]
     x <- x[admitted]
-    if (is.null(admitted)) admitted <- list()
-    opts_check <- all(names(x) %in% admitted)
+    opts_check <- length(x) > 0
   } else {
-    admitted <- list()
+    x <- list()
     opts_check <- FALSE
   }
 
-  structure(admitted, opts_check = opts_check)
+  structure(x, opts_check = opts_check)
+}
+
+validate_ors_dots <- function(opts) {
+  opts_ok <- names(opts) %in% known_params$name
+  if (!all(opts_ok)) {
+    cli::cli_abort(c(
+      "x" = "Unknown ORS option{?s} {.var {names(opts[!opts_ok])}}."
+    ))
+  }
+  
+  opts_dup <- duplicated(names(opts))
+  if (any(opts_dup)) {
+    cli::cli_abort(c(
+      "x" = "Duplicated ORS option{?s} {.var {names(opts[opts_dup])}}"
+    ))
+  }
 }
 
 
@@ -244,15 +232,15 @@ construct_options <- function(opts) {
 
   adv_opts <- opts[c(
     "avoid_borders", "avoid_countries", "avoid_features",
-    "avoid_polygons", "vehicle_type"
+    "avoid_polygons", "vehicle_type", "round_trip"
   )]
   adv_opts[["profile_params"]] <- profile_params
   adv_opts <- adv_opts[ready_to_sent(adv_opts)]
   attr(adv_opts, "opts_check") <- TRUE
 
   opts_list <- opts[c(
-    "attributes", "continue_straight", "elevation", "extra_info",
-    "geometry_simplify", "preference", "radiuses", "maximum_speed"
+    "alternative_routes", "attributes", "continue_straight", "elevation",
+    "extra_info", "geometry_simplify", "preference", "radiuses", "maximum_speed"
   )]
   opts_list[["options"]] <- adv_opts
   opts_list <- opts_list[ready_to_sent(opts_list)]
@@ -280,50 +268,68 @@ extra_info_profiles <- tibble::tibble(
 #' A tibble that specifies the way each ORS option is to be formatted.
 #' `fun` holds the formatting function that each option is passed on to.
 #' `matches` holds a list of defined values for respective options
-#' `single` specifies whether an option must be length 1.
+#' `scalar` specifies whether an option must be length 1.
 #' `type` specifies the data type of an option
 #' `profile` holds an unevaluated named character that specifies both required
 #' profile name and provided profile name (after evaluation)
 #' `box` specifies whether to box an option for json conversion
 #' 
-#' A value of NA means that the formatting parameter is not relevant for a
-#' given option.
+#' NA means that the formatting parameter is not relevant for a given option.
 #' @noRd
-known_opts <- tibble::tibble(
+known_params <- tibble::tibble(
   name = c(
-    "geometry_simplify", "continue_straight", "avoid_borders",
-    "avoid_countries", "avoid_features", "avoid_polygons", "restrictions",
-    "weightings", "allow_unsuitable", "surface_quality_known", "vehicle_type",
-    "preference", "radiuses", "maximum_speed", "attributes", "extra_info",
-    "elevation"
+    "alternative_routes", "geometry_simplify", "continue_straight",
+    "avoid_borders", "avoid_countries", "avoid_features", "avoid_polygons",
+    "round_trip", "restrictions", "weightings", "allow_unsuitable",
+    "surface_quality_known", "vehicle_type", "preference", "radiuses",
+    "maximum_speed", "attributes", "extra_info", "elevation"
   ),
   fun = c(
-    "vector", "vector", "list", "vector", "vector", "poly", "profile_params",
-    "profile_params", "vector", "vector", "vector", "list", "vector",
-    "vector", "list", "list", "vector"
+    "nlist", "vector", "vector", "list", "vector", "vector", "poly", "nlist",
+    "nlist", "nlist", "vector", "vector", "vector", "list", "vector", "vector",
+    "list", "list", "vector"
   ),
   matches = list(
-    NULL, NULL, c("all", "controlled", "none"), NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, c("fastest", "shortest", "recommended"), NULL,
-    NULL, c("avgspeed", "detourfactor"), extra_info_profiles$name, NULL
+    NULL, NULL, NULL, c("all", "controlled", "none"), NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, c("fastest", "shortest", "recommended"), NULL,
+    NULL, c("avgspeed", "detourfactor", "percentage"), extra_info_profiles$name, NULL
   ),
-  single = c(
-    TRUE, TRUE, TRUE, FALSE, FALSE, NA, NA, NA, TRUE, TRUE, TRUE, TRUE, TRUE,
+  scalar = c(
+    NA, TRUE, TRUE, TRUE, FALSE, FALSE, NA, NA, NA, NA, TRUE, TRUE, TRUE, TRUE, TRUE,
     TRUE, FALSE, FALSE, TRUE
   ),
   type = c(
-    "logical", "logical", NA, "numeric", "character", NA, NA, NA,
+    NA, "logical", "logical", NA, "numeric", "character", NA, NA, NA, NA,
     "logical", "logical", "character", NA, "numeric", "numeric", NA,
     NA, "logical"
   ),
   profile = c(
-    NA, NA, 'c(driving = base_profile("profile"))',
-    'c(driving = base_profile(profile))', NA, NA, 'profile', 'profile',
+    NA, NA, NA, 'c(driving = base_profile("profile"))',
+    'c(driving = base_profile(profile))', NA, NA, NA, 'profile', 'profile',
     'c("wheelchair" = profile)', 'c("wheelchair" = profile)',
     'c("driving-hgv" = profile)', NA, NA, NA, NA, 'profile', NA
   ),
   box = c(
-    FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,
-    FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
+    FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,
+    FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
   )
+)
+
+
+nlist_params <- list(
+  restrictions = list(
+    wheelchair = c(
+      "maximum_incline", "maximum_sloped_kerb", "minimum_width",
+      "smoothness_type", "surface_type", "track_type"),
+    driving = c(
+      "axleload", "hazmat", "height", "length", "weight", "width"
+    ),
+    cycling = "gradient"
+  ),
+  weightings = list(
+    cycling = "steepness_difficulty",
+    foot = c("green", "quiet")
+  ),
+  alternative_routes = c("share_factor", "target_count", "weight_factor"),
+  round_trip = c("length", "points", "seed")
 )

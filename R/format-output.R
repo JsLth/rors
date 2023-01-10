@@ -7,7 +7,7 @@ apply_directions <- function(index,
                              profile,
                              units,
                              geometry,
-                             options,
+                             params,
                              url,
                              instance,
                              call_index) {
@@ -17,7 +17,7 @@ apply_directions <- function(index,
     profile = profile,
     units = units,
     geometry = geometry,
-    options = options,
+    params = params,
     url = url,
     token = instance$token
   )
@@ -67,6 +67,135 @@ apply_shortest_routes <- function(index,
 
 
 
+route_to_df <- function(res,
+                        level = "waypoint",
+                        elevation = TRUE,
+                        navigation = FALSE,
+                        elev_as_z = FALSE,
+                        params = list()) {
+  alt <- get_ors_alternatives(res)
+  
+  rlist <- lapply(seq_len(alt), function(i) {
+    # get waypoints from steps for each segment
+    route <- get_ors_waypoints(res, i)
+    
+    if (level == "segment") {
+      route[c("type", "instruction", "exit_number")] <- NULL
+    }
+    
+    # combine waypoints with geometry
+    route <- sf::st_sf(
+      route,
+      geometry = ors_multiple_linestrings(res, alt = i)
+    )
+    
+    # extract z variable
+    if (elevation && !elev_as_z) {
+      coords <- sf::st_coordinates(route)
+      route$elevation <- coords[!duplicated(coords[, "L1"]), "Z"]
+      units(route$elevation) <- "m"
+      route <- sf::st_zm(route)
+    }
+    
+    # derive waypoint metrics from geometry
+    if (level == "waypoint") {
+      # get distances by measuring geometry length
+      distances <- calculate_distances(route)
+      # then derive durations by computing percentage of measured distances from
+      # aggregated distances
+      durations <- calculate_durations(route, distances)
+      route[c("distance", "duration")] <- data.frame(distances, durations)
+    }
+    route$avgspeed <- calculate_avgspeed(route$distance, route$duration)
+    
+    # extract attributes
+    params$attributes <- c(
+      if (elevation) c("ascent", "descent"),
+      if (level == "segment") c("distance", "duration"),
+      params$attributes
+    )
+    attrib <- get_ors_attributes(res, which = params$attributes, alt = i)
+    
+    # extract and format extra info
+    extra_info <- lapply(
+      params$extra_info,
+      function(x) format_extra_info(res, x, i)
+    )
+    extra_info <- do.call(cbind.data.frame, extra_info)
+    names(extra_info) <- params$extra_info
+    if (ncol(extra_info)) {
+      route <- cbind(route, extra_info)
+    }
+    
+    # aggregate in case level is not "waypoint"
+    if (level != "waypoint") {
+      if (level == "segment") {
+        route[names(attrib)] <- NA
+      }
+      
+      route <- by(
+        route[3L:ncol(route)],
+        INDICES = route[[level]],
+        FUN = aggregate_route,
+        level = level,
+        attrib = attrib
+      )
+      route <- do.call(rbind.data.frame, route)
+    }
+    
+    # reorder columns
+    route <- reorder_route_columns(
+      route,
+      elevation && !elev_as_z,
+      navigation && level != "segment",
+      params$extra_info,
+      if (level == "segment") params$attributes
+    )
+    
+    # make sure units are set properly
+    units(route$distance) <- res$metadata$query$units
+    units(route$duration) <- "s"
+    units(route$avgspeed) <- "km/h"
+    
+    sf::st_as_sf(tibble::as_tibble(route))
+  })
+
+  if (length(rlist) > 1) {
+    names(rlist) <- c(
+      "recommended",
+      paste("alternative", seq_len(alt - 1L), sep = "_")
+    )
+  } else {
+    rlist <- rlist[[1]]
+  }
+  
+  rlist
+}
+
+
+aggregate_route <- function(route_section, level, attrib) {
+  vals <- lapply(names(route_section), function(x) {
+    if (inherits(route_section[[x]], "sfc")) {
+      return(sf::st_combine(route_section[x]))
+    }
+    if (x %in% c("elevation")) {
+      return(mean(route_section[[x]]))
+    }
+    if (level == "segment" && x %in% names(attrib)) {
+      i <- get("i", envir = parent.frame(4))
+      return(as.numeric(attrib[[x]][i]))
+    }
+    o <- unique(route_section[[x]])
+    if (length(o) > 1) {
+      return(count(route_section[[x]])[1, 1])
+    }
+    o
+  })
+  stats::setNames(do.call(cbind.data.frame, vals), names(route_section))
+}
+
+
+
 #' Replace response values with more informative ones
 #' @param values Object from the response list
 #' @param info_type Type of information to be replaced
@@ -74,8 +203,14 @@ apply_shortest_routes <- function(index,
 fill_extra_info <- function(codes, info_type, profile) {
   tab <- fill_table[fill_table$name %in% info_type, ]
   
+  # convert 0/1 to logical
+  if (info_type %in% "tollways") {
+    codes <- as.logical(codes)
+  }
+  
+  # convert characters to (un)ordered factors
   if (nrow(tab)) {
-    profile <- evalq(tab$profile)
+    profile <- eval(str2lang(tab$profile))
     fct_fun <- ifelse(tab$ordinal, ordered, factor)
     
     if (tab$base2) {
@@ -95,14 +230,68 @@ fill_extra_info <- function(codes, info_type, profile) {
 }
 
 
+country_info <- c(
+  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla",
+  "Antigua and Barbuda",  "Argentina", "Armenia", "Australia", "Austria",
+  "Azerbaijan",  "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium",
+  "Belize",  "Benin", "Bermuda", "Bhutan", "Bolivia",
+  "Bosnia and Herzegovina",  "Botswana", "Brazil",
+  "British Indian Ocean Territory", "British Sovereign Base Areas", 
+  "British Virgin Islands", "Brunei", "Bulgaria", "Burkina Faso",  "Burundi",
+  "Cambodia", "Cameroon", "Canada", "Cape Verde", "Cayman Islands",
+  "Central African Republic", "Chad", "Chile", "China", "Colombia",
+  "Comoros", "Congo-Brazzaville", "Congo-Kinshasa", "Cook Islands",
+  "Costa Rica", "Côte d’Ivoire", "Croatia", "Cuba", "Cyprus",
+  "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
+  "East Timor", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea",
+  "Eritrea", "Estonia", "Ethiopia", "Falkland Islands", "Faroe Islands",
+  "Federated States of Micronesia", "Fiji", "Finland", "France", "Gabon",
+  "Gambia", "Georgia", "Germany", "Germany - Belgium", 
+  "Ghana", "Gibraltar", "Greece", "Greenland", "Grenada", "Guatemala", 
+  "Guernsey", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", 
+  "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", 
+  "Isle of Man", "Israel", "Italy", "Jamaica", "Jangy-ayyl", "Japan", 
+  "Jersey", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", 
+  "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", 
+  "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", 
+  "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", 
+  "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", 
+  "Mexico", "Moldova", "Monaco", "Mongolia", "Montenegro", "Montserrat", 
+  "Morocco", "Mozambique", "Myanmar", "name:en", "Namibia", "Nauru", 
+  "Nepal", "Netherlands - Belgium", "New Zealand", "Nicaragua", 
+  "Niger", "Nigeria", "Niue", "North Korea", "Norway", "Oman", 
+  "Pakistan", "Palau", "Palestinian Territories", "Panama", "Papua New Guinea", 
+  "Paraguay", "Peru", "Philippines", "Pitcairn Islands", "Poland", 
+  "Portugal", "Qatar", "Romania", "Russian Federation", "Rwanda", 
+  "Sahrawi Arab Democratic Republic",
+  "Saint Helena - Ascension and Tristan da Cunha", "Saint Kitts and Nevis",
+  "Saint Lucia", "Saint Vincent and the Grenadines",  "Samoa", "San Marino",
+  "São Tomé and Príncipe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles",
+  "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands",
+  "Somalia", "South Africa", "South Georgia and the South Sandwich Islands",
+  "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname",
+  "Swaziland", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan",
+  "Tanzania", "Thailand", "The Bahamas", "The Netherlands", "Togo", "Tokelau", 
+  "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", 
+  "Turks and Caicos Islands", "Tuvalu", "Uganda", "Ukraine",
+  "United Arab Emirates",  "United Kingdom", "United States of America",
+  "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam",
+  "Yemen", "Zambia", "Zimbabwe", "Border India - Bangladesh", "Île Verte",
+  "Border Azerbaijan - Armenia (Enclave AZE)", "Freezland Rock",
+  "Border SI-HR", "Willis Island", "Chong-Kara", "Ελλάδα - Παγγαίο",
+  "Bristol Island", "Dist. Judges Court", "Border Kyrgyzstan - Uzbekistan",
+  "Border Malawi - Mozambique	", "中華民國"
+)
+
+
 fill_table <- tibble::tibble(
   name = c(
     "steepness", "surface", "waycategory", "waytypes",
-    "traildifficulty", "roadaccessrestrictions"
+    "traildifficulty", "roadaccessrestrictions", "countryinfo"
   ),
   levels = list(
     seq(-5, 5), seq(0, 18), c(0, 1, 2, 4, 8, 16, 32, 64, 128),
-    seq(0, 10), seq(-7, 6), c(0, 1, 2, 4, 8, 16, 32)
+    seq(0, 10), seq(-7, 6), c(0, 1, 2, 4, 8, 16, 32), seq(1, 236)
   ),
   labels = list(
     c(
@@ -133,142 +322,36 @@ fill_table <- tibble::tibble(
     c(
       "None", "No", "Customers", "Destination",
       "Delivery", "Private", "Permissive"
-    )
+    ),
+    country_info
   ),
-  profile = c(NA, NA, NA, NA, "profile", "NA"),
-  ordinal = c(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE),
-  base2 = c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE)
+  profile = c(NA, NA, NA, NA, "profile", NA, NA),
+  ordinal = c(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE),
+  base2 = c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE)
 )
 
 
-#' Replaces empty error message strings based on their error code
-#' @noRd
-fill_empty_error_message <- function(code) {
-  switch(as.character(code),
-    `2000` = "Unable to parse JSON request.",
-    `2001` = "Required parameter is missing.",
-    `2002` = "Invalid parameter format.",
-    `2003` = "Invalid parameter value.",
-    `2004` = "Parameter value exceeds the maximum allowed limit.",
-    `2006` = "Unable to parse the request to the export handler.",
-    `2007` = "Unsupported export format.",
-    `2008` = "Empty Element.",
-    `2009` = "Route could not be found between locations.",
-    `2099` = "Unknown internal error.",
-    `6000` = "Unable to parse JSON request.",
-    `6001` = "Required parameter is missing.",
-    `6002` = "Invalid parameter format.",
-    `6003` = "Invalid parameter value.",
-    `6004` = "Parameter value exceeds the maximum allowed limit.",
-    `6006` = "Unable to parse the request to the export handler.",
-    `6007` = "Unsupported export format.",
-    `6008` = "Empty Element.",
-    `6099` = "Unknown internal error."
-  )
+calculate_distances <- function(waypoints) {
+  round(sf::st_length(waypoints), 2)
 }
 
 
-
-#' Accepts a result list and handles error and warning codes
-#' @param res Response list from `call_ors_directions`
-#' @param abort_on_error Whether to abort when an error code is returned
-#' @param warn_on_warning Whether to warn when a warning code is returned
-#' @noRd
-handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning = FALSE) {
-  if (!is_ors_error(res)) {
-    msg <- res$error
-    code <- NULL
-    
-    if (!is.character(res$error)) {
-      msg <- msg$message
-      code <- res$error$code
-    }
-    
-    if (is.null(msg) && !is.null(code)) {
-      message <- fill_empty_error_message(code)
-    }
-    
-    error <- paste0(
-      ifelse(!is.null(code), "Error code ", ""), code, ": ", msg
-    )
-    if (abort_on_error) {
-      cli::cli_abort(c("ORS encountered the following exception:", error))
-    } else {
-      structure(error, error = TRUE)
-    }
-  } else {
-    warnings <- get_ors_warnings(res)
-    message <- warnings$message
-    code <- warnings$code
-
-    if (length(code) && length(message)) {
-      warnings <- lapply(seq_along(code), function(w) {
-        paste0("Warning code ", code[w], ": ", message[w])
-      })
-
-      if (warn_on_warning) {
-        w_vec <- cli::cli_vec(
-          warnings,
-          style = list(vec_sep = "\f", vec_last = "\f")
-        )
-        cli::cli_warn(c("ORS returned {length(w_vec)} warning{?s}:", w_vec))
-      } else {
-        structure(warnings, error = FALSE)
-      }
-    }
-  }
+calculate_avgspeed <- function(distances, durations) {
+  speeds <- distances / durations
+  units(speeds) <- "m/s"
+  round(units::set_units(speeds, "km/h"), 2L)
 }
 
 
-store_condition <- function(what, when, which) {
-  has_error <- attr(what, "error")
-  
-  if (is.null(has_error)) {
-    what <- NA
-  }
-  
-  if (isFALSE(has_error)) {
-    what <- unlist(what)
-  }
-  
-  ors_cache$routing_conditions[[when]][which] <- what
-}
-
-
-calculate_distances <- function(geometry) {
-  distances <- sf::st_length(sf::st_zm(geometry))
-  data.frame(distance = round(distances, 2L))
-}
-
-
-calculate_avgspeed <- function(distance, duration) {
-  speeds <- distance / duration
-  units(speeds) <- "km/h"
-  data.frame(avgspeed = round(speeds, 2L))
-}
-
-
-calculate_durations <- function(res, distances) {
-  steps <- get_ors_steps(res)
-  waypoints <- steps$way_points
-  wp_distances <- steps$distance
-  wp_durations <- steps$duration
-  exp_distances <- expand_by_waypoint(wp_distances, waypoints)
-  percentages <- units::drop_units(distances / expanded_wp_distances)
-  durations <- expand_by_waypoint(wp_durations, waypoints) * percentages
+calculate_durations <- function(waypoints, distances) {
+  distances <- units::drop_units(distances)
+  wp_distances <- waypoints$distance
+  wp_durations <- waypoints$duration
+  wp <- as.numeric(row.names(waypoints))
+  percentages <- distances / wp_distances
+  durations <- wp_durations * percentages
   units(durations) <- "s"
-  data.frame(duration = round(durations, 2L))
-}
-
-
-expand_by_waypoint <- function(vector, waypoints) {
-  expand_vctr <- function(i) {
-    multiplier <- waypoints[[i]][2L] - waypoints[[i]][1L]
-    rep(vector[i], multiplier)
-  }
-  expanded_data <- unlist(lapply(seq_len(length(vector)), expand_vctr))
-  expanded_data[length(expanded_data) + 1L] <- vector[length(vector)]
-  expanded_data
+  round(durations, 2L)
 }
 
 
@@ -281,11 +364,11 @@ get_waypoint_index <- function(from, to, waypoints, by_waypoint) {
 }
 
 
-format_extra_info <- function(res, info_type) {
+format_extra_info <- function(res, info_type, alt = 1L) {
   if (identical(info_type, "waytype")) info_type <- "waytypes"
-  last_waypoint <- get_ors_waypoints_range(res)[[2L]]
-  matrix <- get_ors_extras(res, which = info_type)
-  browser()
+  last_waypoint <- utils::tail(get_ors_waypoints_range(res), 1L)
+  matrix <- get_ors_extras(res, which = info_type, alt = alt)
+
   if (length(matrix)) {
     start <- matrix[, 1L]
     end <- matrix[, 2L]
@@ -299,10 +382,9 @@ format_extra_info <- function(res, info_type) {
       FUN = get_waypoint_index,
       start,
       end,
-      MoreArgs = list(waypoints = iterator, by_waypoint = FALSE)
+      MoreArgs = list(waypoints = iterator, by_waypoint = FALSE),
+      SIMPLIFY = FALSE
     )
-
-    if (is.matrix(indices)) indices <- list(c(indices))
 
     values <- lapply(
       seq(1, length(indices)),
@@ -311,17 +393,26 @@ format_extra_info <- function(res, info_type) {
     values <- unlist(values)
 
     profile <- res$metadata$query$profile
-    values <- fill_extra_info(values, info_type, profile)
-
-    values[length(values) + 1L] <- NA
-    values_df <- data.frame(values)
+    fill_extra_info(values, info_type, profile)
   } else {
-    values_df <- data.frame(rep(NA, last_waypoint + 1L))
+    rep(NA, last_waypoint)
   }
+}
 
-  colnames(values_df) <- info_type
-  
-  values_df
+
+reorder_route_columns <- function(waypoints,
+                                  elevation,
+                                  navigation,
+                                  extra_info,
+                                  attributes) {
+  order_columns <- c(
+    "name", "distance", "duration", "avgspeed", "elevation", "type",
+    "instruction", "exit_number", "steepness", "suitability", "surface",
+    "waycategory",  "waytype", "traildifficulty", "green", "noise",
+    "detourfactor", "percentage", "geometry"
+  )
+  order_columns <- intersect(names(waypoints), unique(order_columns))
+  waypoints[order_columns]
 }
 
 

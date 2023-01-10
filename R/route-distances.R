@@ -234,7 +234,7 @@ ors_distances <- function(source,
 
   locations <- df_nest(source = source, dest = destination)
   url <- get_ors_url(id = iid)
-  options <- format_ors_options(list(...), profile)
+  params <- format_ors_params(list(...), profile)
   call_index <- format(Sys.time(), format = "%H:%M:%OS6")
 
   # Apply a directions query to each row
@@ -245,7 +245,7 @@ ors_distances <- function(source,
     profile = profile,
     units = units,
     geometry = geometry,
-    options = options,
+    params = params,
     url = url,
     instance = instance,
     call_index = call_index
@@ -325,7 +325,7 @@ ors_shortest_distances <- function(source,
   destination <- format_input_data(destination, to_coords = FALSE)
 
   if (!is.null(group)) {
-    destination <- split(destination, f = destination$.group)
+    destination <- split(destination, f = destination[[group]])
   }
 
   # Create a nested iterator that iterates through every point number for each
@@ -352,7 +352,7 @@ ors_shortest_distances <- function(source,
   )
   route_df <- tibble::as_tibble(route_df)
   
-  rownames(route_df) <- NULL
+  row.names(route_df) <- NULL
 
   if (geometry) route_df <- sf::st_as_sf(route_df)
 

@@ -103,7 +103,9 @@ capitalize_char <- function(string) {
 #' driving-car -> driving
 #' @noRd
 base_profile <- function(profile) {
-  strsplit(profile, "-")[[1L]][1L]
+  if (!is.na(profile)) {
+    strsplit(profile, "-")[[1L]][1L]
+  }
 }
 
 
@@ -111,6 +113,13 @@ base_profile <- function(profile) {
 #' @noRd
 regex_match <- function(text, pattern, ...) {
   regmatches(text, regexec(pattern, text, ...))
+}
+
+
+count <- function(x) {
+  df <- aggregate(x, list(x), length)
+  names(df) <- c("level", "count")
+  df[order(df$count, decreasing = TRUE), ]
 }
 
 
@@ -135,7 +144,7 @@ rbind_list <- function(args) {
     }
   }
   out <- do.call(rbind, args)
-  rownames(out) <- NULL
+  row.names(out) <- NULL
   out
 }
 

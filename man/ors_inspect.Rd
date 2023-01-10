@@ -2,38 +2,33 @@
 % Please edit documentation in R/route-inspection.R
 \name{ors_inspect}
 \alias{ors_inspect}
-\alias{ors_summary}
+\alias{summary.ors_route}
 \title{Route inspection}
 \usage{
 ors_inspect(
   source,
-  destination,
   profile = get_profiles(),
-  attributes = list(),
+  level = c("waypoint", "step", "segment"),
+  attributes = NULL,
+  extra_info = NULL,
   elevation = TRUE,
-  extra_info = list(),
-  instance = NULL,
-  ...,
-  elev_as_z = FALSE
-)
-
-ors_summary(
-  source,
-  destination,
-  profile = get_profiles(),
+  navigation = FALSE,
+  alternative_routes = NULL,
+  round_trip = NULL,
+  as = c("tidy", "list", "string"),
+  elev_as_z = FALSE,
   instance = NULL,
   ...
 )
+
+\method{summary}{ors_route}(x, ...)
 }
 \arguments{
 \item{source}{\code{[sf]}
 
-Source dataset containing a single point geometry that shall be routed from.}
-
-\item{destination}{\code{[sf]}
-
-Destination dataset containing a single point geometry that shall be routed
-to.}
+Source dataset containing at least two point geometries for which routes are
+to be computed. If \code{round_trip} is specified, \code{source} must contain
+a single coordinate pair from which a round trip is generated.}
 
 \item{profile}{\code{[character]}
 
@@ -42,37 +37,68 @@ list of active profiles, call \code{\link{get_profiles}}. For details on all
 profiles, refer to the
 \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
+\item{level}{\code{[character]}
+
+Level of route aggregation. Must be one of \code{waypoint}, \code{step} or
+\code{segment}. See details.}
+
 \item{attributes}{\code{[list]}
 
 List of attributes that summarize route characteristics.
-This includes two values: \code{avgspeed} states the average vehicle speed
+This includes three values: \code{avgspeed} states the average vehicle speed
 along the route, \code{detourfactor} indicates how much the route deviates
-from a straight line. If \code{TRUE}, both values are included.}
+from a straight line. \code{percentage} shows the share of a segment compared
+to the entire route. If \code{TRUE}, all values are included.}
+
+\item{extra_info}{List of keywords that add extra information regarding each
+linestring segment of the output. If \code{TRUE}, all values are included.
+See details for more information.}
 
 \item{elevation}{\code{[logical]}
 
 If \code{TRUE}, elevation data is included in the output.}
 
-\item{extra_info}{List of keywords that add extra information regarding each
-linestring segment of the output. Possible values include:
-\itemize{
-\item steepness
-\item suitability
-\item surface
-\item waycategory
-\item waytype
-\item tollways (only for \code{driving-*})
-\item traildifficulty
-\item osmid (only for \code{wheelchair})
-\item roadaccessrestrictions (only for \code{driving-*})
-\item countryinfo (only for \code{driving-*})
-\item green (only for \code{walking}/\code{hiking})
-\item noise (only for \code{walking}/\code{hiking})
-}
-If \code{TRUE}, all values are included. Refer to the
-\href{https://giscience.github.io/openrouteservice/documentation/extra-info/Extra-Info.html}{routing response documentation}
-and the \href{https://openrouteservice.org/dev/#/ap-docs/v2/directions/{profile}/post}{API playground}
-for more information on extra information.}
+\item{navigation}{\code{[logical]}
+
+If \code{TRUE}, navigation information is included in the output, i.e.,
+instructions and road exits. If \code{level == "segment"}, navigation data
+is dropped from the output.}
+
+\item{alternative_routes}{\code{[list]}
+
+Named list that specifies options for alternative routes and accepts up to
+three parameters. \code{target_count} is the maximum number of routes to
+compute (including the recommended route). Must be an integer between 1 and 3
+and defaults to 1. The output can contain less routes than specified if no
+other alternatives can be computed from the \code{source} coordinates.
+\code{share_factor} denotes the maximum share of identical paths between
+routes. \code{weight_factor} is the maximum factor that a route can deviate
+(i.e. be longer) from the original route. If specified, and
+\code{target_count} is larger than 1, the output is wrapped in a list of up
+to three dataframes. If \code{NULL}, no alternative routes are computed.}
+
+\item{round_trip}{\code{[list]}
+
+Named list that specifies options for round trips and accepts up to three
+parameters. \code{length} is the approximate length of the round trip.
+\code{points} denotes the number of route points from which to derive a
+round trip (the higher the rounder). \code{seed} controls the randomisation
+of the route direction. If specified, \code{source} must contain a single
+coordinate pair from which a round trip is to be generated. If \code{NULL},
+no round trip is computed.}
+
+\item{as}{\code{[character]}
+
+How to format the output. If \code{"string"}, returns the entire JSON
+response string. If \code{"list"}, returns a parsed JSON list. If
+\code{"tidy"}, performs lots of data preparation to shape the response into a
+tibble.}
+
+\item{elev_as_z}{\code{[logical]}
+
+If \code{TRUE}, elevation data is stored as z-values in the
+geometry of the output \code{sf} dataframe. If \code{FALSE}, elevation is
+stored as a distinct dataframe column. Ignored if \code{elevation = FALSE}.}
 
 \item{instance}{\code{[ors_instance]}
 
@@ -159,14 +185,14 @@ file (350m if not changed).}
 \item{\strong{maximum_speed}}{Maximum speed that routing vehicles are
 allowed to drive. Not applied by default.}
 }}
-
-\item{elev_as_z}{\code{[logical]}
-
-If \code{TRUE}, elevation data is stored as z-values in the
-geometry of the output \code{sf} dataframe. If \code{FALSE}, elevation is
-stored as a distinct dataframe column. Ignored if \code{elevation = FALSE}.}
 }
 \value{
+Returns an sf dataframe containing detailed sections of all routes
+between the coordinates specified in \code{source}, aggregated according to
+the level of aggregation stated in \code{level}. If \code{alternative_routes}
+is specified, returns a list of sf dataframes instead with each element
+containing a route alternative.
+
 \code{ors_inspect} returns an sf data.frame containing the smallest
 possible linestrings for a route along with additional information on each
 segment. \code{ors_summary} returns an object of type \code{route_summary}
@@ -175,11 +201,53 @@ factors as well as all available extra information for the requested route.
 }
 \description{
 Calls the directions service once to get a closer look at route
-characteristics and attributes. \code{ors_summary} generates a range of
-summary tables and values that provide an overview of a route.
+characteristics and attributes. Produces a dataframe containing an elaborate
+perspective on route sections and their contextual properties.
+\code{ors_inspect} can also be used as a relatively low-level interface to
+the directions service with the ability to return responses as parsed or
+unparsed JSONs.
+}
+\details{
+OpenRouteService distinguishes between three
+types of route aggregation: Segments, steps and waypoints. A segment is a
+single route between \code{source[i, ]} and \code{source[i + 1, ]}. A step
+is a route section as relevant for a navigation system. A waypoint is a
+straight connection between two geographical points on a route.
 
-\code{ors_inspect} returns all line segments of a route along with a set
-of additional attributes
+Depending on the chosen level of aggregation, the output has to be adjusted
+through interpolation and aggregation. For all levels below \code{"segment"},
+ORS attributes are stored as R attributes and are not included in the
+dataframe. For \code{"waypoint"}, distances and durations are derived from the
+geometry lengths and do not take into account elevation (due to restrictions
+in the s2 package). Extra information (using the \code{extra_info} argument)
+and street names do not perfectly overlap with steps and segments. In these
+cases, the value with the highest overlap is adopted causing some information
+loss. Navigation information is dropped on \code{"segment"} level.
+
+Extra information can be requested as additional context for each waypoint on
+a route. Possible values include:
+\describe{
+\item{steepness}{Ordered factor describing how steep a part of a route is.}
+\item{suitability}{Ordinal numeric describing how suitable a part of a
+route is (1 - unsuitable; 10 - suitable).}
+\item{surface}{Unordered factor describing the surface material covering a
+part of a route.}
+\item{waycategory}{Unordered factor describing special parts of a route.}
+\item{waytype}{Unordered factor containing different types of roads.}
+\item{tollways}{For \code{driving-*} profiles, specifies whether a part of a
+route is a tollway.}
+\item{traildifficulty}{For walking and driving profiles, specifies the OSM
+trail difficulty.}
+\item{osmid}{For the wheelchair profile, contains the OSM IDs of used ways.}
+\item{roadaccessrestrictions}{Unordered factor describing road access
+restriction.}
+\item{countryinfo}{Nominal numeric containing country codes of a part of a
+route.}
+\item{green}{For walking profiles, describes the amount of green on a route
+(1 - little; 10 - much).}
+\item{noise}{For walking profiles, describes the amount of noise on a route
+(1 - little; 10 - much).}
+}
 }
 \examples{
 \dontrun{

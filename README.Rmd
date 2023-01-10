@@ -1,5 +1,6 @@
 ---
 output: github_document
+always_allow_html: yes
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -61,8 +62,18 @@ sam <- ors_sample(20, poly = rut_bbox)
 `ors_distances` returns only distances, durations and geometries - but lots of them (i.e., row-wise):
 
 ```{r}
-ors_distances(sam[1:10, ], sam[11:20, ], geometry = TRUE, radiuses = -1)
+dis <- ors_distances(sam[1:10, ], sam[11:20, ], geometry = TRUE, radiuses = -1)
+dis
 ```
+
+```{r}
+library(leaflet)
+
+leaflet(dis) %>%
+  addTiles() %>%
+  addPolylines()
+```
+
 
 `ors_matrix` also returns lots of distances, but many-to-many, not row-wise:
 
@@ -73,19 +84,27 @@ ors_matrix(sam[1:10, ], sam[11:20, ], proximity_type = "duration")
 `ors_shortest_distances` returns routes with the shortest distances from each point in a dataset to all points in another dataset:
 
 ```{r}
-ors_shortest_distances(
+short <- ors_shortest_distances(
   sam[1:2, ],
   sam[3:20, ],
   profile = "cycling-regular",
+  geometry = TRUE,
   radiuses = -1,
   progress = FALSE
 )
 ```
 
+```{r}
+leaflet(short) %>%
+  addTiles() %>%
+  addPolylines()
+```
+
+
 `ors_inspect` returns all requested information on a single route, i.e. just one route but lots of data:
 
 ```{r}
-insp <- ors_inspect(sam[1, ], sam[2, ], radiuses = -1)
+insp <- ors_inspect(sam[1:2, ], radiuses = -1)
 insp
 ```
 
@@ -99,7 +118,7 @@ plot_section(insp)
 ```{r}
 library(terra)
 
-isochr <- ors_accessibility(sam[1, ], range = seq(100, 1000, 100), location_type = "destination", rasterize = TRUE)
+isochr <- ors_accessibility(sam[1:5, ], range = seq(100, 1000, 100), location_type = "destination", rasterize = TRUE)
 
 terra::plot(isochr)
 ```

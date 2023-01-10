@@ -24,7 +24,7 @@ call_ors_directions <- function(source,
                                 profile,
                                 units,
                                 geometry,
-                                options,
+                                params,
                                 url,
                                 token,
                                 parse = TRUE) {
@@ -57,18 +57,19 @@ call_ors_directions <- function(source,
 
   # Create http body of the request
   body <- list(
-    coordinates       = locations,
-    attributes        = box(options$attributes),
-    continue_straight = options$continue_straight,
-    elevation         = options$elevation,
-    extra_info        = box(options$extra_info),
-    geometry_simplify = options$geometry_simplify,
-    options           = options$options,
-    preference        = options$preference,
-    radiuses          = options$radiuses,
-    units             = units,
-    geometry          = geometry,
-    maximum_speed     = options$maximum_speed
+    coordinates        = locations,
+    alternative_routes = params$alternative_routes,
+    attributes         = box(params$attributes),
+    continue_straight  = params$continue_straight,
+    elevation          = params$elevation,
+    extra_info         = box(params$extra_info),
+    geometry_simplify  = params$geometry_simplify,
+    options            = params$options,
+    preference         = params$preference,
+    radiuses           = params$radiuses,
+    units              = units,
+    geometry           = geometry,
+    maximum_speed      = params$maximum_speed
   )
   body <- body[lengths(body) > 0L]
   req <- httr2::req_body_json(req, body, digits = NA)
@@ -130,7 +131,8 @@ call_ors_matrix <- function(source,
     units = units
   )
   req <- httr2::req_body_json(req, body_list, digits = NA)
-
+  req$parse <- TRUE
+  
   perform_call(req)
 }
 
@@ -143,7 +145,7 @@ call_ors_isochrones <- function(source,
                             intersections,
                             interval,
                             location_type,
-                            options,
+                            params,
                             range_type,
                             smoothing,
                             area_units,
@@ -176,13 +178,14 @@ call_ors_isochrones <- function(source,
     intersections = intersections,
     interval = interval,
     location_type = location_type,
-    options = options,
+    options = params,
     range_type = range_type,
     smoothing = smoothing,
     area_units = area_units,
     units = units
   )
   req <- httr2::req_body_json(req, body_list, digits = NA)
+  req$parse <- TRUE
 
   perform_call(req)
 }

@@ -16,35 +16,26 @@ st_coordinates2 <- function(x) {
 
 #' Extracts the smallest linestring increment from ORS directions response
 #' @noRd
-ors_multiple_linestrings <- function(res, elev_as_z = FALSE) {
-  coordinates <- get_ors_geometry(res, as_coords = TRUE)
-  cols <- seq(1L, 2L + isTRUE(elev_as_z))
+ors_multiple_linestrings <- function(res, alt = 1L) {
+  coordinates <- get_ors_geometry(res, alt, as_coords = TRUE)
 
-  split_ls <- function(wp) {
-    rows <- seq(wp, wp + 1L)
-    segment <- coordinates[rows, cols]
-    sf::st_linestring(segment)
-  }
-
-  if (ncol(coordinates) == 3L && isFALSE(elev_as_z)) {
-    elevation <- coordinates[, 3L]
-    units(elevation) <- "m"
-  } else {
-    elevation <- NULL
-  }
-
+  # construct linestrings by splitting and applying sf::st_linestring
   iterator <- seq_len(nrow(coordinates) - 1L)
-  linestrings <- lapply(iterator, split_ls)
-  last_point <- sf::st_point(coordinates[nrow(coordinates), cols])
-  geometry <- append(linestrings, list(last_point))
-  structure(sf::st_sfc(geometry, crs = 4326L), elevation = elevation)
+  linestrings <- lapply(iterator, function(wp) {
+    rows <- seq(wp, wp + 1L)
+    segment <- coordinates[rows, ]
+    sf::st_linestring(segment)
+  })
+  geometry <- sf::st_sfc(linestrings, crs = 4326L)
+  
+  geometry
 }
 
 
 #' Extracts ordered polygon from ORS isochrones response
 #' @noRd
 ors_polygon <- function(res) {
-  coords <- get_ors_geometry(res, as_coords = TRUE)
+  coords <- get_ors_geometry(res, alt = NA, as_coords = TRUE)
   poly <- lapply(coords, function(c) {
     ls <- sf::st_linestring(matrix(c, ncol = 2))
     sf::st_sf(geometry = sf::st_sfc(sf::st_cast(ls, "POLYGON")))

@@ -276,37 +276,3 @@ get_ors_url <- function(id = NULL) {
 any_mounted <- function() {
   "instance" %in% names(ors_cache)
 }
-
-
-#' Return ORS conditions
-#' @description Return the error and warning messages that ORS returned in the
-#' last \code{\link{ors_distances}} function call. Also works for
-#' \code{\link{ors_shortest_distances}}.
-#' @param last \code{[integer]}
-#'
-#' Number of error lists that should be returned. \code{last = 2L},
-#' for example, returns errors from the last two function calls.
-#'
-#' @export
-last_ors_conditions <- function(last = 1L) {
-  conditions <- ors_cache$routing_conditions
-
-  if (length(conditions)) {
-    assert_that(is.numeric(last), last > 1)
-    last <- min(last, length(conditions))
-
-    time <- names(conditions)
-
-    cond_df <- lapply(conditions, function(x) {
-      stats::na.omit(data.frame(conditions = unlist(x)))
-    })
-    names(cond_df) <- time
-
-    end <- length(names(cond_df))
-    start <- length(names(cond_df)) + 1L - last
-    selected_conditions <- cond_df[seq(start, end)]
-
-    class(selected_conditions) <- "ors_condition"
-    selected_conditions
-  }
-}

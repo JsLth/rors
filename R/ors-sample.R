@@ -118,7 +118,7 @@ ors_sample <- function(size,
     assertthat::is.count(size),
     is_true_or_false(force_new_extract),
     is_sf(poly),
-    is_geometry_type(poly, c("POLYGON", "MULTIPOLYGON")),
+    is_geometry_type(poly, c("POLYGON", "MULTIPOLYGON"), exclusive = FALSE),
     is_true_or_false(verbose)
   )
   

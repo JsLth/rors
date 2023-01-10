@@ -1,57 +1,123 @@
 #' Route inspection
 #' @description Calls the directions service once to get a closer look at route
-#' characteristics and attributes. \code{ors_summary} generates a range of
-#' summary tables and values that provide an overview of a route.
-#'
-#' \code{ors_inspect} returns all line segments of a route along with a set
-#' of additional attributes
+#' characteristics and attributes. Produces a dataframe containing an elaborate
+#' perspective on route sections and their contextual properties.
+#' \code{ors_inspect} can also be used as a relatively low-level interface to
+#' the directions service with the ability to return responses as parsed or
+#' unparsed JSONs.
 #' @param source \code{[sf]}
 #'
-#' Source dataset containing a single point geometry that shall be routed from.
-#' @param destination \code{[sf]}
-#'
-#' Destination dataset containing a single point geometry that shall be routed
-#' to.
+#' Source dataset containing at least two point geometries for which routes are
+#' to be computed. If \code{round_trip} is specified, \code{source} must contain
+#' a single coordinate pair from which a round trip is generated.
+#' @param level \code{[character]}
+#' 
+#' Level of route aggregation. Must be one of \code{waypoint}, \code{step} or
+#' \code{segment}. See details.
 #' @param attributes \code{[list]}
 #'
 #' List of attributes that summarize route characteristics.
-#' This includes two values: \code{avgspeed} states the average vehicle speed
+#' This includes three values: \code{avgspeed} states the average vehicle speed
 #' along the route, \code{detourfactor} indicates how much the route deviates
-#' from a straight line. If \code{TRUE}, both values are included.
+#' from a straight line. \code{percentage} shows the share of a segment compared
+#' to the entire route. If \code{TRUE}, all values are included.
 #' @param elevation \code{[logical]}
 #'
 #' If \code{TRUE}, elevation data is included in the output.
+#' @param navigation \code{[logical]}
+#' 
+#' If \code{TRUE}, navigation information is included in the output, i.e.,
+#' instructions and road exits. If \code{level == "segment"}, navigation data
+#' is dropped from the output.
+#' 
+#' @param alternative_routes \code{[list]}
+#' 
+#' Named list that specifies options for alternative routes and accepts up to
+#' three parameters. \code{target_count} is the maximum number of routes to
+#' compute (including the recommended route). Must be an integer between 1 and 3
+#' and defaults to 1. The output can contain less routes than specified if no
+#' other alternatives can be computed from the \code{source} coordinates.
+#' \code{share_factor} denotes the maximum share of identical paths between
+#' routes. \code{weight_factor} is the maximum factor that a route can deviate
+#' (i.e. be longer) from the original route. If specified, and
+#' \code{target_count} is larger than 1, the output is wrapped in a list of up
+#' to three dataframes. If \code{NULL}, no alternative routes are computed.
+#' @param round_trip \code{[list]}
+#' 
+#' Named list that specifies options for round trips and accepts up to three
+#' parameters. \code{length} is the approximate length of the round trip.
+#' \code{points} denotes the number of route points from which to derive a
+#' round trip (the higher the rounder). \code{seed} controls the randomisation
+#' of the route direction. If specified, \code{source} must contain a single
+#' coordinate pair from which a round trip is to be generated. If \code{NULL},
+#' no round trip is computed.
 #' @param extra_info List of keywords that add extra information regarding each
-#' linestring segment of the output. Possible values include:
-#' \itemize{
-#'  \item steepness
-#'  \item suitability
-#'  \item surface
-#'  \item waycategory
-#'  \item waytype
-#'  \item tollways (only for \code{driving-*})
-#'  \item traildifficulty
-#'  \item osmid (only for \code{wheelchair})
-#'  \item roadaccessrestrictions (only for \code{driving-*})
-#'  \item countryinfo (only for \code{driving-*})
-#'  \item green (only for \code{walking}/\code{hiking})
-#'  \item noise (only for \code{walking}/\code{hiking})
-#' }
-#' If \code{TRUE}, all values are included. Refer to the
-#' \href{https://giscience.github.io/openrouteservice/documentation/extra-info/Extra-Info.html}{routing response documentation}
-#' and the \href{https://openrouteservice.org/dev/#/ap-docs/v2/directions/{profile}/post}{API playground}
-#' for more information on extra information.
+#' linestring segment of the output. If \code{TRUE}, all values are included.
+#' See details for more information.
+#' @param as \code{[character]}
+#' 
+#' How to format the output. If \code{"string"}, returns the entire JSON
+#' response string. If \code{"list"}, returns a parsed JSON list. If 
+#' \code{"tidy"}, performs lots of data preparation to shape the response into a
+#' tibble.
 #' @param elev_as_z \code{[logical]}
 #'
 #' If \code{TRUE}, elevation data is stored as z-values in the
 #' geometry of the output \code{sf} dataframe. If \code{FALSE}, elevation is
 #' stored as a distinct dataframe column. Ignored if \code{elevation = FALSE}.
 #' @inheritParams ors_distances
-#' @returns \code{ors_inspect} returns an sf data.frame containing the smallest
+#' @returns Returns an sf dataframe containing detailed sections of all routes
+#' between the coordinates specified in \code{source}, aggregated according to
+#' the level of aggregation stated in \code{level}. If \code{alternative_routes}
+#' is specified, returns a list of sf dataframes instead with each element
+#' containing a route alternative.
+#' 
+#' \code{ors_inspect} returns an sf data.frame containing the smallest
 #' possible linestrings for a route along with additional information on each
 #' segment. \code{ors_summary} returns an object of type \code{route_summary}
 #' that contains information on distances, durations, speed, elevation, detour
 #' factors as well as all available extra information for the requested route.
+#' @details OpenRouteService distinguishes between three
+#' types of route aggregation: Segments, steps and waypoints. A segment is a
+#' single route between \code{source[i, ]} and \code{source[i + 1, ]}. A step
+#' is a route section as relevant for a navigation system. A waypoint is a
+#' straight connection between two geographical points on a route.
+#' 
+#' Depending on the chosen level of aggregation, the output has to be adjusted
+#' through interpolation and aggregation. For all levels below \code{"segment"},
+#' ORS attributes are stored as R attributes and are not included in the
+#' dataframe. For \code{"waypoint"}, distances and durations are derived from the
+#' geometry lengths and do not take into account elevation (due to restrictions
+#' in the s2 package). Extra information (using the \code{extra_info} argument)
+#' and street names do not perfectly overlap with steps and segments. In these
+#' cases, the value with the highest overlap is adopted causing some information
+#' loss. Navigation information is dropped on \code{"segment"} level.
+#' 
+#' Extra information can be requested as additional context for each waypoint on
+#' a route. Possible values include:
+#' \describe{
+#'  \item{steepness}{Ordered factor describing how steep a part of a route is.}
+#'  \item{suitability}{Ordinal numeric describing how suitable a part of a
+#'                     route is (1 - unsuitable; 10 - suitable).}
+#'  \item{surface}{Unordered factor describing the surface material covering a
+#'                 part of a route.}
+#'  \item{waycategory}{Unordered factor describing special parts of a route.}
+#'  \item{waytype}{Unordered factor containing different types of roads.}
+#'  \item{tollways}{For \code{driving-*} profiles, specifies whether a part of a
+#'                  route is a tollway.}
+#'  \item{traildifficulty}{For walking and driving profiles, specifies the OSM
+#'                         trail difficulty.}
+#'  \item{osmid}{For the wheelchair profile, contains the OSM IDs of used ways.}
+#'  \item{roadaccessrestrictions}{Unordered factor describing road access
+#'                                restriction.}
+#'  \item{countryinfo}{Nominal numeric containing country codes of a part of a
+#'                     route.}
+#'  \item{green}{For walking profiles, describes the amount of green on a route
+#'               (1 - little; 10 - much).}
+#'  \item{noise}{For walking profiles, describes the amount of noise on a route
+#'               (1 - little; 10 - much).}
+#' }
+#' 
 #' @seealso \code{\link{ors_distances}},
 #' \code{\link{plot_section}}
 #'
@@ -106,19 +172,26 @@
 #' route_summary <- ors_summary(sample_source, sample_dest, profile)
 #' }
 ors_inspect <- function(source,
-                        destination,
                         profile = get_profiles(),
-                        attributes = list(),
+                        level = c("waypoint", "step", "segment"),
+                        attributes = NULL,
+                        extra_info = NULL,
                         elevation = TRUE,
-                        extra_info = list(),
+                        navigation = FALSE,
+                        alternative_routes = NULL,
+                        round_trip = NULL,
+                        as = c("tidy", "list", "string"),
+                        elev_as_z = FALSE,
                         instance = NULL,
-                        ...,
-                        elev_as_z = FALSE) {
+                        ...) {
   assert_that(
     is_sf(source),
-    is_sf(destination),
+    is_geometry_type(source, "POINT"),
     is_true_or_false(elev_as_z)
   )
+  profile <- match.arg(profile)
+  level <- match.arg(level)
+  as <- match.arg(as)
   instance <- check_instance(instance)
   iid <- get_id(instance = instance)
 
@@ -126,82 +199,46 @@ ors_inspect <- function(source,
   ors_ready(force = TRUE, error = TRUE, id = iid)
 
   # Bring input data into shape
-  source <- format_input_data(source, len = FALSE)
-  destination <- format_input_data(destination, len = FALSE)
-
-  profile <- match.arg(profile)
-
+  source <- format_input_data(source)
   url <- get_ors_url(id = iid)
 
   features <- list(
     attributes = attributes,
     elevation = elevation,
-    extra_info = extra_info
+    extra_info = extra_info,
+    alternative_routes = alternative_routes,
+    round_trip = round_trip
   )
-  options <- format_ors_options(c(features, list(...)), profile)
+  features <- features[lengths(features) > 0]
+  params <- format_ors_params(c(features, list(...)), profile)
 
   res <- call_ors_directions(
     source = source,
-    destination = destination,
     profile = profile,
     units = "m",
     geometry = TRUE,
-    options = options,
+    params = params,
     url = url,
-    token = instance$token
+    token = instance$token,
+    parse = as != "raw"
   )
 
-  handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
+  if (as %in% c("list", "tidy")) {
+    handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
+    
+    if (as == "tidy") {
+      res <- route_to_df(
+        res,
+        level = level,
+        elevation = elevation,
+        navigation = navigation,
+        elev_as_z = elev_as_z,
+        params = params
+      )
+    }
+  }
 
-  geometry <- ors_multiple_linestrings(res, elev_as_z)
-  elevation <- data.frame(elevation = attr(geometry, "elevation"))
-
-  steps <- get_ors_steps(res)
-  waypoints <- steps$way_points
-  names_wp <- steps$name
-
-  distances <- calculate_distances(geometry)
-  durations <- calculate_durations(res, distances$distance)
-  speeds <- calculate_avgspeed(distances$distance, durations$duration)
-
-  options$attributes <- c(
-    ifelse(elevation, c("ascent", "descent"), NULL),
-    options$attributes
-  )
-  attrib <- get_ors_attributes(res, which = options$attributes)
-
-  expanded_names <- expand_by_waypoint(names_wp, waypoints)
-  names <- gsub(pattern = "^-$", replacement = NA, expanded_names)
-  names <- data.frame(names = names)
-
-  extra_info <- lapply(
-    options$extra_info,
-    function(x) format_extra_info(res, x)
-  )
-  extra_info <- do.call(cbind.data.frame, extra_info)
-
-  elements <- list(
-    names,
-    distances,
-    durations,
-    speeds,
-    elevation,
-    extra_info,
-    geometry,
-    stringsAsFactors = TRUE
-  )
-
-  elements <- elements[lengths(elements) != 0L]
-  route <- do.call(data.frame, elements)
-
-  route_sf <- structure(
-    sf::st_as_sf(tibble::as_tibble(route)),
-    avgspeed = attrib$avgspeed,
-    detourfactor = attrib$detourfactor,
-    ascent = attrib$ascent,
-    descent = attrib$descent
-  )
-  route_sf
+  structure(res, class = c("ors_route", class(res)))
 }
 
 
@@ -415,14 +452,11 @@ plot_section <- function(x,
 }
 
 
-#' @rdname ors_inspect
-#' @export
 ors_summary <- function(source,
-                        destination,
                         profile = get_profiles(),
                         instance = NULL,
                         ...) {
-  assert_that(is_sf(source), is_sf(destination))
+  assert_that(is_sf(source))
   instance <- check_instance(instance)
   iid <- get_id(instance = instance)
 
@@ -430,19 +464,17 @@ ors_summary <- function(source,
   ors_ready(force = TRUE, error = TRUE, id = iid)
 
   # Bring input data into shape
-  source <- format_input_data(source, len = FALSE)
-  destination <- format_input_data(destination, len = FALSE)
+  source <- format_input_data(source)
 
   profile <- match.arg(profile)
 
   url <- get_ors_url(id = iid)
 
   features <- list(attributes = TRUE, elevation = TRUE, extra_info = TRUE)
-  options <- format_ors_options(append(features, list(...)), profile)
+  options <- format_ors_params(append(features, list(...)), profile)
 
   res <- call_ors_directions(
     source = source,
-    destination = destination,
     profile = profile,
     units = "m",
     geometry = TRUE,
@@ -513,4 +545,18 @@ ors_summary <- function(source,
 
   class(output) <- "route_summary"
   output
+}
+
+
+#' @rdname ors_inspect
+#' @export
+summary.ors_route <- function(x, ...) {
+  if (is.data.frame(x)) {
+    x <- list(x)
+  }
+  
+  lapply(seq_along(x), function(i) {
+    route <- x[[i]]
+    
+  })
 }

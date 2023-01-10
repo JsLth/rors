@@ -14,8 +14,42 @@ is_true_or_false <- function(x) {
   is.logical(x) && length(x) == 1L && !is.na(x)
 }
 
-is_geometry_type <- function(x, type) {
-  all(vapply(type, function(gt) all(sf::st_is(x, gt)), logical(1)))
+#' Checks whether an sf, sfc or sfg object is of a particular geometry type
+#' @param x sf, sfc or sfg object
+#' @param types geometry types
+#' @param exclusive specifies whether all geometry types in `types` must be
+#' present in `x` or if `x` must only contain at least one of these types.
+#' @param strict specifies whether all geometries must be of type `type` or if
+#' only some geometries need to be of this type.
+is_geometry_type <- function(x, types, exclusive = TRUE, strict = TRUE) {
+  is_type <- lapply(types, function(gt) sf::st_is(x, gt))
+  is_type <- do.call(cbind, is_type)
+
+  if (ncol(is_type) > 1) {
+    has_type <- as.logical(colSums(is_type))
+  } else {
+    has_type <- as.logical(sum(is_type))
+  }
+  
+  if (nrow(is_type) > 1) {
+    is_type <- as.logical(rowSums(is_type))
+  } else {
+    is_type <- as.logical(sum(is_type))
+  }
+  
+  if (exclusive) {
+    has_type <- all(has_type)
+  } else {
+    has_type <- any(has_type)
+  }
+  
+  if (strict) {
+    is_type <- all(is_type)
+  } else {
+    is_type <- any(is_type)
+  }
+  
+  is_type && has_type
 }
 
 assertthat::on_failure(is_sf) <- function(call, env) {

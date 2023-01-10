@@ -80,43 +80,39 @@ ors_up <- function(instance, wait = TRUE, tag = "latest", ...) {
 #' @export
 ors_down <- function(instance) {
   verbose <- attr(instance, "verbose")
-  if (instance$status[3]) {
-    ors_cli(
-      progress = "step",
-      msg = "Taking down container {instance$compose$name}...",
-      msg_failed = "Cannot take down container {instance$compose$name}.",
-      msg_done = "Successfully took down container {instance$compose$name}."
-    )
+  ors_cli(
+    progress = "step",
+    msg = "Taking down container {instance$compose$name}...",
+    msg_failed = "Cannot take down container {instance$compose$name}.",
+    msg_done = "Successfully took down container {instance$compose$name}."
+  )
 
-    name <- instance$compose$parsed$services$`ors-app`$container_name
+  name <- instance$compose$parsed$services$`ors-app`$container_name
 
-    cmd <- c(
-      "compose",
-      "-p", name,
-      "-f", file.path(instance$paths$dir, "docker/docker-compose.yml"),
-      "down"
-    )
+  cmd <- c(
+    "compose",
+    "-p", name,
+    "-f", file.path(instance$paths$dir, "docker/docker-compose.yml"),
+    "down"
+  )
 
-    proc <- callr::run(
-      command = "docker",
-      args = cmd,
-      stdout = "|",
-      stderr = "|",
-      error_on_status = FALSE
-    )
+  proc <- callr::run(
+    command = "docker",
+    args = cmd,
+    stdout = "|",
+    stderr = "|",
+    error_on_status = FALSE
+  )
 
-    if (!identical(proc$status, 0L)) {
-      cli::cli_abort(c(
-        "The docker command encountered an error",
-        "Error code {proc$status}: {proc$stderr}"
-      ))
-    } else if (grepl("Warning", proc$stderr)) {
-      cli::cli_warn(strsplit(proc$stderr, ": ")[[1]][2])
-      ors_cli(progress = "done", result = "failed")
-    } else ors_cli(progress = "done", result = "done")
-  } else {
-    ors_cli(info = c("i" = "Container is already down."))
-  }
+  if (!identical(proc$status, 0L)) {
+    cli::cli_abort(c(
+      "The docker command encountered an error",
+      "Error code {proc$status}: {proc$stderr}"
+    ))
+  } else if (grepl("Warning", proc$stderr)) {
+    cli::cli_warn(strsplit(proc$stderr, ": ")[[1]][2])
+    ors_cli(progress = "done", result = "failed")
+  } else ors_cli(progress = "done", result = "done")
 
   instance <- .instance(instance, verbose = verbose)
 
@@ -341,8 +337,8 @@ ors_remove <- function(instance, ignore_image = TRUE) {
       ors_cli(
         progress = "step",
         msg = "Terminating instance object...",
-        msg_done = "Terminated R6 class.",
-        msg_failed = "Cannot remove R6 class object."
+        msg_done = "Terminated instance object.",
+        msg_failed = "Cannot remove instance object."
       )
       
       rm(instance, envir = ors_cache)
