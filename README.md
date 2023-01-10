@@ -3,7 +3,7 @@
 
 # ORSRouting
 
-# <img src="inst/figures/orsr_sticker.png" width = "150" align="right" />
+# <img src="man/figures/orsr_sticker.png" width = "150" align="right" />
 
 <!-- badges: start -->
 
