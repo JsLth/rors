@@ -297,52 +297,58 @@ docker_running <- function() {
 }
 
 
-#' Enable non-root docker access on Linux
-#' @description Creates a docker group and adds the current user to it in order
-#' to enable docker commands from within R. Doing this, either manually or by
-#' using this function, is a requirement for using \code{\link{ors_instance}}
-#' on Linux as a non-root user.
-#' @param run If \code{FALSE}, the function will only return a logical vector
-#' and will not change group membership.
-#' @details For details on what this function does and what security
-#' implications it might have, refer to Docker's
-#' \href{https://docs.docker.com/engine/install/linux-postinstall/}{post-installation guide}
-#'
-#' @export
-grant_docker_privileges <- function(run = TRUE) {
-  if (is_linux()) {
-    is_granted <- function() {
-      grepl("docker", callr::run("id", args = "-nG", stdout = "|")$stdout)
-    }
-
-    if (!is_granted() && isTRUE(run)) {
-      system2(
-        command = "pkexec",
-        args = paste(
-          "env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c",
-          "'sudo addgroup docker;",
-          "sudo usermod -aG docker $USER'"
-        ),
-        stdout = "",
-        stderr = ""
+check_docker_installation <- function() {
+  if (!docker_installed()) {
+    link <- cli::style_hyperlink(
+      text = "Docker",
+      link = "https://docs.docker.com/get-docker/"
+    )
+    cli::cli_abort(c(
+      "!" = "No Docker installation could be detected.",
+      "i" = paste(
+        "A", link, "installation is needed before setting up a local ORS",
+        "instance"
       )
-      callr::run("newgrp", args = "docker", stdout = NULL, stderr = NULL)
-    }
+    ))
+  }
+}
 
-    if (!is_granted()) {
-      return(FALSE)
-    }
 
-    if (!docker_running()) {
-      cli::cli_alert_warning(paste(
-        "You might have to restart your system to",
-        "re-evaluate group membership"
-      ))
-    }
 
-    TRUE
-  } else {
-    TRUE
+#' Checks if current user can access docker, i.e. if user is included in
+#' the docker group
+#' @noRd
+has_docker_access <- function() {
+  if (is_linux()) {
+    grepl("docker", callr::run("id", args = "-nG", stdout = "|")$stdout)
+  }
+}
+
+
+#' Checks if current user is root
+#' @noRd
+is_root <- function() {
+  if (is_linux()) {
+    grepl("root", callr::run("whoami")$stdout)
+  }
+}
+
+
+#' Checks if Docker can be accessed and gives an informative error if not
+#' @noRd
+check_docker_access <- function() {
+  if (!is_root() && !has_docker_access() && !docker_running()) {
+    link <- cli::style_hyperlink(
+      text = "Linux post-installation guide",
+      url = "https://docs.docker.com/engine/install/linux-postinstall/"
+    )
+    cli::cli_abort(c(
+      "!" = "Cannot access Docker as a non-root user: permission denied.",
+      "i" = paste(
+        "You may want to run R as root or follow Docker's", link, "to set up",
+        "Docker access for non-root users."
+      )
+    ))
   }
 }
 
