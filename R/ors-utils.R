@@ -8,8 +8,39 @@
 ors_cache <- new.env(parent = emptyenv())
 
 
-#' Checks if an instance is stored in ors_cache and, if so, returns it
-#' @noRd
+#' Utility functions
+#' 
+#' Utility functions to aid the setup of local instances.
+#' \itemize{
+#'  \item \code{get_instance} checks for the existence of a mounted instance in
+#'  the current session and returns it.
+#'  \item \code{get_status} returns the status reported by the ORS server.
+#'  \item \code{ors_ready} checks if the mounted service is ready to use.
+#'  \item \code{get_profiles} is a wrapper around \code{get_status} that returns
+#'  the active profiles of the mounted service.
+#' }
+#' 
+#' @param id \code{[character]}
+#' 
+#' ID or name of a container or URL of a server that is to be checked. If
+#' \code{NULL}, retrieves the ID from the current instance set by
+#' \code{\link{ors_instance}}
+#' @param force \code{[logical]}
+#' 
+#' If \code{TRUE}, function must query server. If \code{FALSE}, the information
+#' will be read from the cache if possible.
+#' @param error \code{[logical]}
+#' 
+#' If \code{TRUE}, gives out an error if the service is not ready.
+#' 
+#' @returns \code{get_instance} returns an object of class \code{ors_instance}.
+#' \code{get_status} returns a list of information on the running service.
+#' \code{ors_ready} returns a length-1 logical vector specifying if the service
+#' is running. \code{get_profiles} returns a vector containing the active
+#' profiles.
+#' 
+#' @seealso \code{\link{ors_instance}}
+#' @export
 get_instance <- function() {
   if (any_mounted()) {
     get("instance", envir = ors_cache)
@@ -90,8 +121,8 @@ inspect_container <- function(id = NULL) {
 }
 
 
-#' Returns the content of /ors/status as parsed json
-#' @noRd
+#' @rdname get_instance
+#' @export
 get_status <- function(id = NULL) {
   id <- get_id(id)
   ors_ready(id = id, force = TRUE, error = TRUE)
@@ -122,15 +153,7 @@ get_status <- function(id = NULL) {
 }
 
 
-#' Get active ORS profiles
-#' @description Returns a list of active profiles from the cache or local host.
-#' Requires OpenRouteService to be running.
-#' @param force \code{[logical]}
-#'
-#' If \code{TRUE}, function must query the local host. If
-#' \code{FALSE}, profiles will be read from the cache if possible.
-#' @inheritParams ors_ready
-#'
+#' @rdname get_instance
 #' @export
 get_profiles <- function(id = NULL, force = TRUE) {
   if (is.null(ors_cache$profiles) || isTRUE(force)) {
@@ -149,21 +172,7 @@ get_profiles <- function(id = NULL, force = TRUE) {
 }
 
 
-#' Is ORS usable?
-#' @description States whether the ORS service is set up and ready to use.
-#' @param id \code{[character]}
-#' 
-#' ID or name of a container or URL of a server that is to be checked. If
-#' \code{NULL}, retrieves the ID from the current instance set by
-#' \code{\link{ors_instance}}
-#' @param force \code{[logical]}
-#' 
-#' If \code{TRUE}, function must query server. If \code{FALSE}, the status will
-#' be read from the cache if possible.
-#' @param error \code{[logical]}
-#' 
-#' If \code{TRUE}, gives out an error if the service is not ready.
-#'
+#' @rdname get_instance
 #' @export
 ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
   if (is.null(ors_cache$ors_ready) || isFALSE(ors_cache$ors_ready) || force) {
