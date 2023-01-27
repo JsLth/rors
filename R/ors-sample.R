@@ -117,13 +117,16 @@ ors_sample <- function(size,
   assert_that(
     assertthat::is.count(size),
     is_true_or_false(force_new_extract),
-    is_sf(poly),
-    is_geometry_type(poly, c("POLYGON", "MULTIPOLYGON"), exclusive = FALSE),
     is_true_or_false(verbose)
   )
   
   if (is.null(poly)) {
     poly <- get_extract_boundaries(instance, force_new_extract, verbose)
+  } else {
+    assert_that(
+      is_sf(poly),
+      is_geometry_type(poly, c("POLYGON", "MULTIPOLYGON"), exclusive = FALSE)
+    )
   }
 
   sample <- sf::st_sample(poly, size, ...)

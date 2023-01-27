@@ -4,7 +4,7 @@
 \alias{ors_remove}
 \title{Remove ORS instance}
 \usage{
-ors_remove(instance, ignore_image = TRUE)
+ors_remove(instance, ignore_image = TRUE, force = TRUE)
 }
 \arguments{
 \item{instance}{\code{[ors_instance]}
@@ -12,7 +12,8 @@ ors_remove(instance, ignore_image = TRUE)
 Object created by \code{\link{ors_instance}}.}
 
 \item{ignore_image}{If \code{TRUE}, does not remove the Docker image. This
-can be useful, if the image is to be used for other purposes.}
+can be useful, if the image is to be used for other purposes.
+\param force See \code{\link{unlink}}.}
 }
 \value{
 Empty list of class \code{ors_instance}.

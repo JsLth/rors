@@ -293,9 +293,12 @@ print.ors_instance_settings <- function(x, ...) {
     x$ports[2L, 2L]
   )
 
-  cli::cli_text("Mode\u00a0\u00a0: {x$graph_building}")
-  cli::cli_text("Name\u00a0\u00a0: {x$name}")
-  cli::cli_text("Ports\u00a0: {port_chr}")
+  prot <- ifelse(x$auto_deletion, "unprotected", "protected")
+  
+  cli::cli_text("Mode\u00a0\u00a0\u00a0: {x$graph_building}")
+  cli::cli_text("Name\u00a0\u00a0\u00a0: {x$name}")
+  cli::cli_text("Ports\u00a0\u00a0: {port_chr}")
+  cli::cli_text("Config\u00a0: {prot}")
   cli::cat_line()
   print(mem_df, right = FALSE, row.names = FALSE)
   invisible(x)

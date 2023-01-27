@@ -24,9 +24,22 @@
 #' Defaults to 2.
 #' @param config Parsed configuration file as contained in \code{ors_instance}
 #' objects or path to a configuration file.
+#' @param interactive If \code{TRUE}, opens an interactive window to edit
+#' the configuration file directly. The process stops when the window is
+#' switched or closed.
 #' @inheritParams ors_extract
 #'
 #' @returns Nested list of class \code{ors_instance}.
+#' 
+#' @details For a full documentation of all possible configuration values,
+#' refer to the
+#' \href{https://giscience.github.io/openrouteservice/installation/Configuration.html}{OpenRouteService documentation}.
+#' 
+#' Due to stricter permission management on Linux systems,
+#' the configuration file cannot be changed from within R once the Docker
+#' container has been built. To make changes to the service configuration
+#' without root privileges, do an initial OpenRouteService setup first, then
+#' change the configuration file manually and rebuild the container.
 #'
 #' @family ORS setup functions
 #'
@@ -41,6 +54,8 @@ ors_config <- function(instance,
                        config = NULL,
                        interactive = FALSE) {
   verbose <- attr(instance, "verbose")
+  
+  assert_that(inherits(instance, "ors_instance"))
 
   if (!interactive) {
     if (is.null(config)) {
@@ -85,8 +100,16 @@ ors_config <- function(instance,
     write_config(config, instance$paths$config_path)
   } else {
     slow_edit(instance$paths$config_path, editor = "internal")
+    config_file <- NULL
   }
 
+  # On Linux, the handling of config files doesn't seem to work seemlessly
+  # Hence, create a conf directory manually and paste the custom config file
+  conf_dir <- file.path(instance$paths$dir, "docker/conf")
+  if (is_linux() && !dir.exists(conf_dir)) {
+    dir.create(conf_dir)
+    file.copy(instance$paths$config_path, file.path(conf_dir, "ors-config.json"))
+  }
 
   instance[["config"]] <- NULL
 
@@ -126,10 +149,11 @@ detect_config <- function(dir, config_path = NULL) {
     # If everything fails, copy the sample config from the ORS backend
   } else {
     config_sample <- file.path(
-      dir, "openrouteservice", "src", "main", "resources", "ors-config-sample.json"
+      dir, "openrouteservice", "src", "main", "resources",
+      "ors-config-sample.json"
     )
 
-    copied <- file.rename(config_sample, file.path(data_dir, "ors-config.json"))
+    copied <- file.copy(config_sample, file.path(data_dir, "ors-config.json"))
     if (!copied) cli::cli_abort("Config sample could not be copied.")
 
     path <- file.path(data_dir, "ors-config.json")
@@ -166,9 +190,9 @@ apply_config_dots <- function(config, ...) {
     for (opt in opts) {
       val <- dots[[profile]][[opt]]
       if (profile == "default_params") {
-        config$ors$services$routing$profiles[[profile]][[opt]] <- opts[opt]
+        config$ors$services$routing$profiles[[profile]][[opt]] <- val
       } else {
-        config$ors$services$routing$profiles[[profile]]$parameters[[opt]] <- opts[opt]
+        config$ors$services$routing$profiles[[profile]]$parameters[[opt]] <- val
       }
     }
   }

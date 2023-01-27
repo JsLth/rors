@@ -7,7 +7,7 @@
 ors_settings(
   instance,
   name = NULL,
-  ports = NULL,
+  port = NULL,
   memory = NULL,
   auto_deletion = FALSE,
   graph_building = NULL
@@ -21,12 +21,6 @@ Object created by \code{\link{ors_instance}}.}
 \item{name}{\code{[character]}
 
 Name of the OpenRouteService container.}
-
-\item{ports}{\code{[numeric/character]}
-
-Host port that the container should be running on. Passing \code{NULL}
-is interpreted as "no change". Passing \code{NA} will assign a random port
-using the \code{\link{httpuv}} package.}
 
 \item{memory}{\code{[character]}
 
@@ -51,6 +45,12 @@ profile and are required to route with a given profile. Possible values
 include \code{"build"}, \code{"change"} and \code{NA}. \code{"build"} is used
 when no graphs are built yet. \code{"change"} needs to be set before mounting
 a new extract file to an existing setup. \code{NA} disables graph building.}
+
+\item{ports}{\code{[numeric/character]}
+
+Host port that the container should be running on. Passing \code{NULL}
+is interpreted as "no change". Passing \code{NA} will assign a random port
+using the \code{\link{httpuv}} package.}
 }
 \value{
 Nested list of class \code{ors_instance}.

@@ -24,6 +24,8 @@
 #' @export
 ors_up <- function(instance, wait = TRUE, tag = "latest", ...) {
   verbose <- attr(instance, "verbose")
+  
+  assert_that(inherits(instance, "ors_instance"))
 
   if (!instance$status[1]) {
     cli::cli_abort("Docker is not running.")
@@ -45,6 +47,7 @@ ors_up <- function(instance, wait = TRUE, tag = "latest", ...) {
 
   ors_cli(line = TRUE)
   ors_cli(rule = "Building container")
+  
   proc <- callr::run(
     command = "docker",
     args = cmd,
@@ -80,6 +83,9 @@ ors_up <- function(instance, wait = TRUE, tag = "latest", ...) {
 #' @export
 ors_down <- function(instance) {
   verbose <- attr(instance, "verbose")
+  
+  assert_that(inherits(instance, "ors_instance"))
+  
   ors_cli(
     progress = "step",
     msg = "Taking down container {instance$compose$name}...",
@@ -136,6 +142,9 @@ ors_down <- function(instance) {
 #' @export
 ors_start <- function(instance, wait = TRUE) {
   verbose <- attr(instance, "verbose")
+  
+  assert_that(inherits(instance, "ors_instance"))
+  
   if (isFALSE(instance$status[3])) {
     cli::cli_abort("Container called {.val {name}} does not exist.")
   }
@@ -179,6 +188,9 @@ ors_start <- function(instance, wait = TRUE) {
 #' @export
 ors_stop <- function(instance) {
   verbose <- attr(instance, "verbose")
+  
+  assert_that(inherits(instance, "ors_instance"))
+  
   name <- instance$compose$parsed$services$`ors-app`$container_name
 
   if (isTRUE(instance$status[4])) {
@@ -237,13 +249,8 @@ ors_change <- function(instance, ..., wait = TRUE) {
   eargs <- dots[names(dots) %in% names(formals(ors_extract))]
   cargs <- dots[names(dots) %in% names(formals(ors_config))]
   sargs <- dots[names(dots) %in% names(formals(ors_settings))]
-  needs_rebuild <- any(dots %in% "profiles") || length(eargs)
 
-  if (needs_rebuild) {
-    instance <- ors_down(instance) 
-  } else {
-    instance <- ors_stop(instance)
-  }
+  instance <- ors_down(instance) 
   
   instance <- do.call(ors_extract, c(list(instance), eargs))
   instance <- do.call(ors_config, c(list(instance), sargs))
@@ -284,6 +291,8 @@ ors_change <- function(instance, ..., wait = TRUE) {
 #'
 #' @export
 ors_image <- function(instance, tag = "latest", remove = FALSE, force = FALSE) {
+  assert_that(inherits(instance, "ors_instance"))
+  
   if (remove) {
     rm_image(instance, force = force)
   } else {
@@ -301,6 +310,7 @@ ors_image <- function(instance, tag = "latest", remove = FALSE, force = FALSE) {
 #'
 #' @param ignore_image If \code{TRUE}, does not remove the Docker image. This
 #' can be useful, if the image is to be used for other purposes.
+#' \param force See \code{\link{unlink}}.
 #' @inheritParams ors_up
 #'
 #' @returns Empty list of class \code{ors_instance}.
@@ -308,8 +318,11 @@ ors_image <- function(instance, tag = "latest", remove = FALSE, force = FALSE) {
 #' @family ORS setup functions
 #'
 #' @export
-ors_remove <- function(instance, ignore_image = TRUE) {
+ors_remove <- function(instance, ignore_image = TRUE, force = TRUE) {
   verbose <- attr(instance, "verbose")
+  
+  assert_that(inherits(instance, "ors_instance"))
+  
   if (isFALSE(attr(instance, "active"))) {
     cli::cli_warn("{.cls ORSInstance} is not active.")
     return(invisible(NULL))
@@ -325,10 +338,16 @@ ors_remove <- function(instance, ignore_image = TRUE) {
       progress = "step",
       msg = "Removing main directory...",
       msg_done = "Removed main directory.",
-      msg_failed = "Cannot remove main directory."
     )
     
-    unlink(instance$paths$dir, recursive = TRUE)
+    unlink(instance$paths$dir, recursive = TRUE, force = force)
+    
+    if (dir.exists(instance$paths$dir)) {
+      ors_cli(warn = paste(
+        "Main directory could not be removed. Check your permissions and",
+        "remove the remaining files manually."
+      ))
+    }
   }
 
   if (any_mounted()) {

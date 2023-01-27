@@ -23,11 +23,9 @@
     comp <- comp[lengths(comp) > 0]
 
     type <- "local"
-    built <- ors_built(paths$dir)
   } else {
     comp <- .construct_server(server)
     type <- if (is_local(server)) "local" else "remote"
-    built <- TRUE
   }
 
   structure(
@@ -35,7 +33,6 @@
     class = "ors_instance",
     alive = TRUE,
     type = type,
-    built = built,
     verbose = verbose
   )
 }
@@ -109,11 +106,11 @@
   }
 
   name <- compose$services$`ors-app`$container_name
-  ports <- read_ports(compose)$df
+  ports <- read_ports(compose, type = "df")
   memory <- read_memory(compose, num = TRUE)
   memory <- c(available_mem, memory)
-
   graph_building <- read_graphbuilding(compose)
+  auto_deletion <- !is_config_protected(compose$services$`ors-app`$volumes[5])
 
   structure(
     list(
@@ -121,6 +118,7 @@
       ports = ports,
       memory = memory,
       graph_building = graph_building,
+      auto_deletion = auto_deletion,
       parsed = structure(compose, class = c("ors_compose", "list"))
     ),
     class = "ors_instance_settings",
@@ -305,14 +303,8 @@ ors_instance <- function(instance = NULL,
       cli::cli_abort("No docker installation could be detected.")
     }
     
-    if (is_linux() && !grant_docker_privileges(run = FALSE)) {
-      cli::cli_abort(paste(
-        "To use {.cls ORSInstance}, Docker needs to be",
-        "accessible as a non-root user. Refer to the",
-        "function {.fn grant_docker_privileges}"
-      ))
-    }
-    
+    check_docker_installation()
+    check_docker_access()
     start_docker(verbose = verbose)
     
     if (instance_given) {
@@ -326,6 +318,7 @@ ors_instance <- function(instance = NULL,
       ))
       
       dir <- get_ors_release(dir, version, overwrite, verbose)
+      
       instance <- list()
     }
   } else {
@@ -366,7 +359,7 @@ get_ors_release <- function(dir, version, overwrite, verbose) {
   dir <- normalizePath(dir, winslash = "/")
   basedir <- file.path(dir, sprintf("openrouteservice-%s", version))
 
-  if (dir.exists(basedir) || !overwrite) {
+  if (!dir.exists(basedir) || overwrite) {
     zip_file <- file.path(dir, "openrouteservice.zip")
 
     ors_cli(

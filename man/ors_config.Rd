@@ -46,6 +46,10 @@ Defaults to 2.}
 
 \item{config}{Parsed configuration file as contained in \code{ors_instance}
 objects or path to a configuration file.}
+
+\item{interactive}{If \code{TRUE}, opens an interactive window to edit
+the configuration file directly. The process stops when the window is
+switched or closed.}
 }
 \value{
 Nested list of class \code{ors_instance}.
@@ -55,6 +59,17 @@ Activate profiles and make other changes to the OpenRouteService
 configuration file. You can either make changes by passing a parsed
 configuration file as contained in \code{ors_instance} objects or by
 using one of the convenience arguments.
+}
+\details{
+For a full documentation of all possible configuration values,
+refer to the
+\href{https://giscience.github.io/openrouteservice/installation/Configuration.html}{OpenRouteService documentation}.
+
+Due to stricter permission management on Linux systems,
+the configuration file cannot be changed from within R once the Docker
+container has been built. To make changes to the service configuration
+without root privileges, do an initial OpenRouteService setup first, then
+change the configuration file manually and rebuild the container.
 }
 \seealso{
 Other ORS setup functions: 

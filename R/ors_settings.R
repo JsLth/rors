@@ -41,12 +41,14 @@
 #' @export
 ors_settings <- function(instance,
                          name = NULL,
-                         ports = NULL,
+                         port = NULL,
                          memory = NULL,
                          auto_deletion = FALSE,
                          graph_building = NULL) {
   verbose <- attr(instance, "verbose")
   compose <- instance$compose$parsed
+  
+  assert_that(inherits(instance, "ors_instance"))
 
   if (!is.null(instance$paths$extract_path) && is.null(graph_building)) {
     graphs_dir <- file.path(instance$paths$dir, "docker/graphs")
@@ -59,15 +61,15 @@ ors_settings <- function(instance,
     compose$services$`ors-app`$container_name <- name
   }
 
-  if (!is.null(ports)) {
-    compose$services$`ors-app`$ports <- format_ports(compose, ports)
+  if (!is.null(port)) {
+    compose$services$`ors-app`$ports <- format_ports(compose, port)
   }
 
   if (length(memory)) {
     compose <- write_memory(compose, instance, memory)
   }
 
-  if (auto_deletion) {
+  if (!auto_deletion) {
     compose <- protect_config(compose)
   }
 
@@ -92,46 +94,42 @@ read_compose <- function(dir) {
 }
 
 
-read_ports <- function(compose) {
-  cur_ports <- strsplit(compose$services$`ors-app`$ports, ":")
-  cur_ports <- do.call(rbind.data.frame, cur_ports)
-  cur_ports_vec <- as.numeric(c(t(cur_ports)))
-  names(cur_ports) <- c("host", "docker")
-  list(df = cur_ports, vec = cur_ports_vec)
+read_ports <- function(compose, type = c("raw", "vec", "df")) {
+  ports <- compose$services$`ors-app`$ports
+
+  if (type == "df") {
+    ports <- strsplit(ports, ":")
+    ports <- do.call(rbind.data.frame, ports)
+    names(ports) <- c("host", "docker")
+  }
+  
+  if (type == "vec") {
+    ports <- as.numeric(c(t(ports)))
+  }
+  
+  ports
 }
 
 
-format_ports <- function(compose, ports) {
-  if (length(ports) == 1L || is.null(ports)) {
-    if (is.list(ports)) ports <- unlist(ports)
-    ports <- list(ports, NULL, NULL, NULL)
+format_ports <- function(compose, port) {
+  assert_that(length(port) == 1)
+  ports <- read_ports(compose, type = "raw")
+  cports <- read_ports(compose, type = "df")
+  cport1 <- cports[1, 1]
+  cport2 <- cports[1, 2]
+
+  if (is.null(port)) {
+    port <- cport1
+  } else if (is.na(port)) {
+    if (requireNamespace("httpuv")) {
+      httpuv::randomPort()
+    } else {
+      cli::cli_abort("To assign a random port, install the {.pkg httpuv} package.")
+    }
   }
 
-  cur_ports <- read_ports(compose)
-  cur_ports_df <- cur_ports$df
-  cur_ports_vec <- cur_ports$vec
-
-  ports <- lapply(seq(1L, length(ports)), function(pi) {
-    if (is.null(ports[[pi]])) {
-      cur_ports_vec[pi]
-    } else if (is.na(ports[[pi]])) {
-      if (requireNamespace("httpuv")) {
-        httpuv::randomPort()
-      } else {
-        cli::cli_abort("To assign a random port, install the {.pkg httpuv} package.")
-      }
-    } else {
-      ports[[pi]]
-    }
-  })
-
-  ports <- as.data.frame(matrix(ports, ncol = 2L, nrow = 2L, byrow = TRUE))
-  names(ports) <- c("host", "docker")
-
-  list(
-    sprintf("%s:%s", ports$host[1L], ports$docker[1L]),
-    sprintf("%s:%s", ports$host[2L], ports$docker[2L])
-  )
+  ports[1] <- sprintf("%s:%s", cport1, cport2)
+  ports
 }
 
 
@@ -168,7 +166,8 @@ write_memory <- function(compose, instance, memory) {
     init <- memory[[1]] * 1000
     max <- memory[[2]] * 1000
   } else if (length(memory) == 1) {
-    max <- memory[[1]] * 1000
+    init <- memory[[1]] * 1000
+    max <- init
   } else {
     if (!is.null(instance$extract$size) && !is.null(instance$config$profiles)) {
       size <- round(instance$extract$size * 0.000001, -2L)
@@ -230,9 +229,14 @@ format_memory <- function(compose, init, max) {
 }
 
 
+is_config_protected <- function(x) {
+  grepl(":ro", x, fixed = TRUE)
+}
+
+
 protect_config <- function(compose) {
   conf_volume <- compose$services$`ors-app`$volumes[5]
-  if (grepl(":ro", conf_volume, fixed = TRUE)) {
+  if (!is_config_protected(conf_volume) && !is_linux()) {
     compose$services$`ors-app`$volumes[5] <- paste0(conf_volume, ":ro")
   }
   compose

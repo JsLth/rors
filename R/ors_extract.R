@@ -20,6 +20,8 @@
 #' @export
 ors_extract <- function(instance, place = NULL, provider = "geofabrik", file = NULL, ...) {
   verbose <- attr(instance, "verbose")
+  
+  assert_that(inherits(instance, "ors_instance"))
 
   if (!is.null(file)) {
     assert_that(assertthat::is.readable(file))
@@ -142,7 +144,7 @@ get_extract <- function(place, provider, paths, verbose, ...) {
   if (sum(file_occurences) == 1L) {
     ors_cli(info = c(
       "i" = paste(
-        "The extract already exists in {.path ~/docker/data}.",
+        "The extract already exists in {.href [docker/data](file.path(paths$dir, 'docker/data'))}.",
         "Download will be skipped."
       )
     ))
@@ -151,19 +153,19 @@ get_extract <- function(place, provider, paths, verbose, ...) {
       dir(data_dir)[file_occurences],
       sep = "/"
     )
+    
+    rel_path <- relative_path(path, paths$dir)
 
-    ors_cli(info = c("i" = paste(
-      "Download path: {.file {relative_path(path, paths$dir, pretty = TRUE)}}"
-    )))
+    ors_cli(info = c("i" = paste("Download path: {.href [{rel_path}](file://{path})}")))
     # If no file exists, remove all download a new one
   } else {
     path <- file.path(data_dir, paste0(providers[i], "_", file_name))
 
-    rel_path <- relative_path(path, paths$dir, pretty = TRUE)
+    rel_path <- relative_path(path, paths$dir)
     ors_cli(
       progress = "step",
       msg = "Downloading OSM extract...",
-      msg_done = "The extract was successfully downloaded to the following path: {.file {rel_path}}",
+      msg_done = "The extract was successfully downloaded to the following path: {.href [{rel_path}](file://{path})}",
       msg_failed = "Extract could not be downloaded.",
       spinner = TRUE
     )
@@ -206,9 +208,9 @@ get_current_extract <- function(obj, compose, dir) {
   current_extract <- identify_extract(obj)
 
   if (!is.null(current_extract) && !file.exists(current_extract)) {
-    pretty_path <- relative_path(current_extract, obj$paths$dir, pretty = TRUE)
+    pretty_path <- relative_path(current_extract, obj$paths$dir)
     cli::cli_warn(c(
-      "The current extract {.path {pretty_path}} could not be found.",
+      "The current extract {.href [{pretty_path}]({current_extract})} could not be found.",
       "Consider mounting a different extract."
     ))
   }

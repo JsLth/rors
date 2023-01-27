@@ -14,6 +14,11 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r, include=FALSE}
+library(httptest2)
+start_vignette("README")
+```
+
 # ORSRouting
 
 # <img src="inst/figures/orsr_sticker.png" width = "150" align="right" />
@@ -36,14 +41,23 @@ devtools::install_github("JsLth/ORSRouting")
 
 ## Basic usage
 
-Some basic functionalities using a public API key from <https://openrouteservice.org>:
+Some basic functionalities using a running local OpenRouteService instance:
 
-```{r example}
+```{r, eval=FALSE}
 library(ORSRouting)
 
-# Store API token in an environment variable and set up an instance object
-# Sys.setenv(ORS_TOKEN = "<your ORS token>")
-ors <- ors_instance(server = "api")
+# Set up a local OpenRouteService server using Docker
+ors <- ors_instance(dir = "~/Documents") %>%
+  ors_extract("Rutland") %>%
+  ors_config(
+    profiles = c("car", "bike-regular", "walking"),
+    isochrones.maximum_locations = 20,
+    default = c(maximum_snapping_radius = -1, maximum_distance = 1e+07),
+    car = c(maximum_snapping_radius = -1, maximum_distance = 1e+07)
+  ) %>%
+  ors_settings(ports = NA, memory = 0.1, auto_deletion = FALSE) %>%
+  ors_up()
+```
 ```
 
 Generate random sample points:
@@ -127,11 +141,5 @@ terra::plot(isochr)
 
 While `ORSRouting` can work with public API requests, it is primarily designed to be used together with local instances. The `ors_instance` family can be used to manage, control and build local ORS instances. The following code would download the source code and an OSM extract of Rutland, change the setup files and finally start a local Docker-powered server:
 
-```{r, eval=FALSE}
-ors <- ors_instance(dir = "~") %>%
-  ors_extract("Rutland") %>%
-  ors_config(profiles = c("car", "bike-regular", "walking")) %>%
-  ors_settings(ports = NA, memory = 0.1, auto_deletion = FALSE) %>%
-  ors_up()
-```
+
 

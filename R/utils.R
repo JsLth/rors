@@ -237,7 +237,7 @@ notify <- function(msg) {
       }
     } else if (is_linux()) {
       cmd1 <- "/usr/share/sounds/freedesktop/stereo/complete.oga"
-      cmd2 <- "%s \"Message from R\""
+      cmd2 <- c("Message from R", msg)
       callr::run("paplay", cmd1, stdout = NULL, stderr = NULL, error_on_status = FALSE)
       callr::run("notify-send", cmd2, stdout = NULL, stderr = NULL, error_on_status = FALSE)
     } else if (is_macos()) {
