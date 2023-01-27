@@ -4,7 +4,7 @@ author: Jonas Lieth
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Installing and setting up the service}
+  %\VignetteIndexEntry{Installing and setting up OpenRouteService locally}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

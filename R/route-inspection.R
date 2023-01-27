@@ -478,7 +478,7 @@ ors_summary <- function(source,
     profile = profile,
     units = "m",
     geometry = TRUE,
-    options = options,
+    params = options,
     url = url,
     token = instance$token
   )
@@ -486,7 +486,7 @@ ors_summary <- function(source,
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = FALSE)
 
   # Custom summary tables
-  geometry <- ors_multiple_linestrings(res, elev_as_z = FALSE)
+  geometry <- ors_multiple_linestrings(res)
   elevation <- attr(geometry, "elevation")
 
   distances <- calculate_distances(geometry)
