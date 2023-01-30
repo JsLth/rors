@@ -158,25 +158,32 @@ print.ors_condition <- function(x, ...) {
 #' @export
 print.ors_instance <- function(x, ...) {
   if (any_mounted()) {
-    mounted <- get("instance", envir = ors_cache)
+    mounted <- get_instance()
     active <- if (!is.null(x$url)) {
       identical(x$url, mounted$url)
     } else {
-      "compose" %in% names(x) && x$paths$dir == mounted$paths$dir
+      "compose" %in% names(x) && identical(x$paths$dir, mounted$paths$dir)
     }
   } else {
     active <- FALSE
   }
 
   alive <- attr(x, "alive")
-  built <- x$status[3]
+  built <- ors_built(x$paths$dir)
   type <- attr(x, "type")
 
+  if (identical(type, "remote")) {
+    server <- x$url
+  } else {
+    server <- paste0("https://localhost:", x$compose$ports$host[1], "/")
+  }
+  
   cat(
     "<ors_instance>", "\n",
+    " server :", server, "\n",
     " active :", active, "\n",
     " alive  :", alive, "\n",
-    if (!is.null(built)) c(" built  :", built, "\n"),
+    if (identical(type, "local")) c(" built  :", built, "\n"),
     " type   :", type, "\n"
   )
   invisible(x)

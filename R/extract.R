@@ -1,6 +1,6 @@
 get_ors_geometry <- function(res, alt = 1L, as_coords = FALSE) {
   if (missing(res)) {
-    return(sf::st_sfc(sf::st_linestring()))
+    return(sf::st_sfc(sf::st_linestring(), crs = 4326))
   }
   
   if (!is_ors_geojson(res)) {
@@ -39,7 +39,7 @@ get_ors_summary <- function(res, geometry = TRUE) {
     if (geometry) {
       summ <- sf::st_sf(
         summ,
-        geometry = get_ors_geometry(res, as_coords = FALSE)
+        geometry = get_ors_geometry()
       )
     }
   } else {

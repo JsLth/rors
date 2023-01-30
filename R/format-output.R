@@ -88,7 +88,7 @@ route_to_df <- function(res,
       route,
       geometry = ors_multiple_linestrings(res, alt = i)
     )
-    
+
     # extract z variable
     if (elevation && !elev_as_z) {
       coords <- sf::st_coordinates(route)
@@ -144,13 +144,7 @@ route_to_df <- function(res,
     }
     
     # reorder columns
-    route <- reorder_route_columns(
-      route,
-      elevation && !elev_as_z,
-      navigation && level != "segment",
-      params$extra_info,
-      if (level == "segment") params$attributes
-    )
+    route <- reorder_route_columns(route)
     
     # make sure units are set properly
     units(route$distance) <- res$metadata$query$units
@@ -366,7 +360,7 @@ get_waypoint_index <- function(from, to, waypoints, by_waypoint) {
 
 format_extra_info <- function(res, info_type, alt = 1L) {
   if (identical(info_type, "waytype")) info_type <- "waytypes"
-  last_waypoint <- utils::tail(get_ors_waypoints_range(res), 1L)
+  last_waypoint <- utils::tail(get_ors_waypoints_range(res, alt = alt), 1L)
   matrix <- get_ors_extras(res, which = info_type, alt = alt)
 
   if (length(matrix)) {
@@ -400,11 +394,7 @@ format_extra_info <- function(res, info_type, alt = 1L) {
 }
 
 
-reorder_route_columns <- function(waypoints,
-                                  elevation,
-                                  navigation,
-                                  extra_info,
-                                  attributes) {
+reorder_route_columns <- function(waypoints) {
   order_columns <- c(
     "name", "distance", "duration", "avgspeed", "elevation", "type",
     "instruction", "exit_number", "steepness", "suitability", "surface",

@@ -335,9 +335,15 @@ ors_shortest_distances <- function(source,
     stringsAsFactors = FALSE
   )
   
+  if (progress) {
+    ors_cli(progress = "bar", total = nrow(nested_iterator))
+  }
+  
   # Find shortest route for each coordinate pair
   route_df <- lapply(seq_len(nrow(nested_iterator)), function(i) {
-    ors_cli(progress = "update", .envir = parent.frame(3L))
+    if (progress) {
+      ors_cli(progress = "update", .envir = parent.frame(2L))
+    }
     apply_shortest_routes(
       index = i, source = source, destination = destination,
       iter = nested_iterator, units = units, geometry = geometry,
