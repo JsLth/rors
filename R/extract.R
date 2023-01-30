@@ -1,164 +1,226 @@
-get_ors_geometry <- function(res, alt = 1L, as_coords = FALSE) {
-  if (missing(res)) {
-    return(sf::st_sfc(sf::st_linestring(), crs = 4326))
+#' Mount an extract to ORS
+#'
+#' @description Add an extract to an existing OpenRouteService instance.
+#'
+#' @param instance \code{[ors_instance]}
+#'
+#' Object created by \code{\link{ors_instance}}.
+#' @param place Place description of desired OpenStreetMap extract. This
+#' argument is passed to \code{\link[osmextract]{oe_match}} which will try to
+#' match it with an existing extract from a provider specified in \code{provider}.
+#' @param provider OpenStreetMap extract provider that is supported by
+#' \code{\link[osmextract]{oe_match}}
+#' @param file Path or URL to an extract to be mounted.
+#' @param ... Further arguments passed to \code{\link[osmextract]{oe_match}}.
+#'
+#' @returns Nested list of class \code{ors_instance}.
+#'
+#' @family ORS setup functions
+#'
+#' @export
+ors_extract <- function(instance, place = NULL, provider = "geofabrik", file = NULL, ...) {
+  verbose <- attr(instance, "verbose")
+  
+  assert_that(inherits(instance, "ors_instance"))
+
+  if (!is.null(file)) {
+    assert_that(assertthat::is.readable(file))
+    assert(file, file = TRUE, len = 1L)
+    extract_path <- file
   }
-  
-  if (!is_ors_geojson(res)) {
-    return(NULL)
+
+  if (!is.null(place)) {
+    assert_that(assertthat::is.string(place))
+    extract_path <- get_extract(
+      place = place,
+      provider = provider,
+      paths = instance$paths,
+      verbose = verbose,
+      ...
+    )
   }
-  
-  features <- get_ors_features(res, properties = FALSE)
-  
-  if (is.na(alt)) {
-    alt <- seq(1, length(features$geometry$coordinates))
+
+  if (is.null(file) && is.null(place)) {
+    extract_path <- NULL
   }
-  
-  geom <- features$geometry$coordinates[alt]
-  
-  if (length(geom) == 1) {
-    geom <- geom[[1]]
-  }
-  
-  if (!as_coords) {
-    if (nrow(geom) > 1) {
-      geom <- sf::st_linestring(geom)
+
+  if (!is.null(extract_path)) {
+    dir <- instance$paths$dir
+    graphs_dir <- file.path(dir, "docker/graphs")
+    relative <- relative_path(extract_path, file.path(dir, "docker"))
+    compose <- instance$compose$parsed
+    if (length(dir(graphs_dir))) {
+      compose <- set_graphbuilding("change", compose, relative)
     } else {
-      geom <- sf::st_point(geom)
+      compose <- set_graphbuilding("build", compose, relative)
     }
-    
-    geom <- sf::st_sfc(geom, crs = 4326)
+    write_dockercompose(compose, dir)
+    instance[["compose"]] <- NULL
   }
-  
-  geom
+
+  instance <- .instance(instance, extract_path = extract_path, verbose = verbose)
+
+  assign("instance", instance, envir = ors_cache)
+  invisible(instance)
 }
 
 
-get_ors_summary <- function(res, geometry = TRUE) {
-  if (is_ors_error(res)) {
-    summ <- data.frame(distance = NA, duration = NA)
-    if (geometry) {
-      summ <- sf::st_sf(
-        summ,
-        geometry = get_ors_geometry()
+get_extract <- function(place, provider, paths, verbose, ...) {
+  if (!requireNamespace("osmextract")) {
+    cli::cli_abort("{.pkg osmextract} required to match extracts by name.")
+  }
+  data_dir <- file.path(paths$dir, "docker/data")
+  ok <- TRUE
+  i <- 0L
+
+  if (is.null(provider)) {
+    providers <- osmextract::oe_providers(quiet = TRUE)$available_providers
+  } else {
+    providers <- provider
+  }
+
+  if (!interactive() && length(providers) > 1L) {
+    cli::cli_abort(paste(
+      "In batch mode, explicitly pass",
+      "a single provider name to {.fun ors_extract}."
+    ))
+  }
+
+  if (length(providers) > 1) {
+    ors_cli(info = c("i" = "Trying different extract providers..."))
+  }
+
+  # While there are providers left to try out, keep trying until
+  # an extract provider is chosen
+  while (ok && i < length(providers)) {
+    i <- i + 1L
+    place_match <- osmextract::oe_match(
+      place = place,
+      provider = providers[i],
+      quiet = TRUE,
+      ...
+    )
+
+    file_name <- basename(place_match$url)
+    file_size <- round(place_match$file_size / 1024L / 1024L)
+
+    ors_cli(info = "Provider : {cli::col_green(providers[i])}")
+    ors_cli(info = "Name \u00a0\u00a0\u00a0\u00a0: {cli::col_green(file_name)}")
+    ors_cli(info = "Size \u00a0\u00a0\u00a0\u00a0: {cli::col_green(file_size)} MB")
+
+    if (providers[i] == "bbbike") {
+      ors_cli(warn = paste(
+        "bbbike extracts are known to cause issues with",
+        "memory allocation. Use with caution."
+      ))
+    }
+
+    ors_cli(line = TRUE)
+
+    if (length(providers) > 1) {
+      input <- readline("Do you want to try another provider? (y/N/Cancel) ")
+    } else {
+      input <- "N"
+    }
+
+    # If neither yes or no is given as input, cancel the function
+    if (!input %in% c("y", "N")) {
+      ors_cli(info = c("x" = "Function cancelled."))
+      invokeRestart("abort")
+    }
+    ok <- input == "y"
+  }
+
+  # If the while loop exits and the last answer given is yes, exit
+  if (ok) {
+    ors_cli(info = c(
+      "!" = "All providers have been searched. Please download the extract manually."
+    ))
+    return(invisible())
+  }
+
+  # If a file with the same name already exists, skip the download
+  file_occurences <- grepl(file_name, dir(data_dir))
+  if (sum(file_occurences) == 1L) {
+    ors_cli(info = c(
+      "i" = paste(
+        "The extract already exists in {.href [docker/data](file.path(paths$dir, 'docker/data'))}.",
+        "Download will be skipped."
       )
-    }
+    ))
+
+    path <- paste(data_dir,
+      dir(data_dir)[file_occurences],
+      sep = "/"
+    )
+    
+    rel_path <- relative_path(path, paths$dir)
+
+    ors_cli(info = c("i" = paste("Download path: {.href [{rel_path}](file://{path})}")))
+    # If no file exists, remove all download a new one
   } else {
-    properties <- get_ors_features(res)
-    summ <- properties$summary
-    
-    if (is_ors_geojson(res)) {
-      summ <- sf::st_sf(summ, geometry = get_ors_geometry(res))
+    path <- file.path(data_dir, paste0(providers[i], "_", file_name))
+
+    rel_path <- relative_path(path, paths$dir)
+    ors_cli(
+      progress = "step",
+      msg = "Downloading OSM extract...",
+      msg_done = "The extract was successfully downloaded to the following path: {.href [{rel_path}](file://{path})}",
+      msg_failed = "Extract could not be downloaded.",
+      spinner = TRUE
+    )
+
+    proc <- callr::r_bg(
+      function(place_match, providers, data_dir) {
+        osmextract::oe_download(place_match$url,
+          provider = providers[i],
+          download_directory = data_dir,
+          quiet = TRUE
+        )
+      },
+      args = list(place_match, providers, data_dir),
+      package = TRUE
+    )
+
+    while (proc$is_alive()) {
+      ors_cli(progress = "update")
     }
-
-    if (!ncol(summ)) {
-      summ[c("distance", "duration")] <- 0
-    }
   }
 
-  summ
-}
-
-
-get_ors_extras <- function(res, which = NULL, alt = 1L) {
-  properties <- get_ors_features(res)
-  extras <- properties$extras
-  if (!is.null(which)) {
-    extras <- extras[[which]]$values[[alt]]
+  # If the size is over 6 GB in size, give out a warning
+  size <- file.info(path)$size / 1024L / 1024L
+  if (size >= 6000L) {
+    ors_cli(info = paste(c("i" =
+      "The OSM extract is very large. Make sure that you have enough",
+      "working memory available."
+    )))
   }
-  extras
+
+  invisible(path)
 }
 
 
-get_ors_attributes <- function(res, which, alt = 1L) {
-  properties <- get_ors_features(res)
-  segments <- properties$segments[[alt]]
-  elev_attrib <- c("ascent", "descent")
-  if (all(elev_attrib %in% names(properties))) {
-    segments <- c(segments, properties[elev_attrib])
+get_current_extract <- function(obj, compose, dir) {
+  if (!missing(compose) && !missing(dir)) {
+    obj <- list(compose = list(parsed = compose), paths = list(dir = dir))
   }
-  stats::setNames(lapply(which, \(x) segments[[x]]), which)
-}
 
+  current_extract <- identify_extract(obj)
 
-get_ors_waypoints_range <- function(res, alt = 1L) {
-  properties <- get_ors_features(res)
-  properties$way_points[[alt]]
-}
-
-
-get_ors_waypoints <- function(res, alt = 1L) {
-  if (is_ors_geojson(res)) {
-    properties <- get_ors_features(res)
-    
-    # extract from response
-    steps <- properties$segments[[alt]]$steps
-    
-    # construct a dataframe with segment indicator for each segment
-    steps <- lapply(seq_along(steps), \(i) cbind(segment = i, steps[[i]]))
-    
-    # bind segment dataframes
-    steps <- rbind_list(steps)
-    steps <- cbind(step = as.numeric(row.names(steps)), steps)
-
-    # find interval to expand steps to waypoints
-    # (this removes all 0 distance waypoints)
-    reps <- vapply(steps$way_points, \(x) x[2] - x[1], FUN.VALUE = numeric(1))
-    steps$way_points <- NULL
-    steps$distance <- as.numeric(steps$distance)
-    steps$duration <- as.numeric(steps$duration)
-    
-    # expand dataframe
-    steps <- steps[rep(1:nrow(steps), reps),]
-    
-    steps$name <- gsub(pattern = "^-$", replacement = NA, steps$name)
-    row.names(steps) <- NULL
-    tibble::as_tibble(steps)
+  if (!is.null(current_extract) && !file.exists(current_extract)) {
+    pretty_path <- relative_path(current_extract, obj$paths$dir)
+    cli::cli_warn(c(
+      "The current extract {.href [{pretty_path}]({current_extract})} could not be found.",
+      "Consider mounting a different extract."
+    ))
   }
+
+  current_extract
 }
 
 
-get_ors_warnings <- function(res) {
-  if (is_ors_error(res)) {
-    return(NULL)
+validate_extract <- function(extract_path) {
+  if (!is.null(extract_path) && file.exists(extract_path)) {
+    extract_path
   }
-  
-  if (is_ors_geojson(res)) {
-    warnings <- res$features$properties$warnings
-  } else {
-    res$routes$warnings[[1]]
-  }
-}
-
-
-is_ors_geojson <- function(res) {
-  if (!is.null(res$metadata$query$format)) {
-    identical(res$metadata$query$format, "geojson")
-  } else {
-    identical(res$type, "FeatureCollection")
-  }
-  
-}
-
-
-is_ors_error <- function(res) {
-  !is.null(res$error)
-}
-
-
-get_ors_features <- function(res, properties = TRUE) {
-  if (is_ors_geojson(res)) {
-    if (properties) {
-      res$features$properties
-    } else {
-      res$features
-    }
-  } else {
-    res$routes
-  }
-}
-
-
-get_ors_alternatives <- function(res) {
-  properties <- get_ors_features(res, properties = TRUE)
-  length(properties$segments)
 }
