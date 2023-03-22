@@ -33,7 +33,7 @@ Ignored if \code{server} is not \code{NULL}.}
 
 URL of a server that accepts OpenRouteService requests. This can be a URL
 to a local or a remote server. The official public API can be accessed using
-the shortcut \code{"api"}. Keep in mind that the public API is
+the shortcut \code{"public"}. Keep in mind that the public API is
 rate-restricted and requests are automatically throttled to 40 requests per
 minute. Routing functions \emph{will} be slow for larger datasets.}
 
