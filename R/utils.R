@@ -321,6 +321,8 @@ check_docker_installation <- function() {
 has_docker_access <- function() {
   if (is_linux()) {
     grepl("docker", callr::run("id", args = "-nG", stdout = "|")$stdout)
+  } else {
+    TRUE
   }
 }
 
@@ -330,6 +332,8 @@ has_docker_access <- function() {
 is_root <- function() {
   if (is_linux()) {
     grepl("root", callr::run("whoami")$stdout)
+  } else {
+    TRUE
   }
 }
 

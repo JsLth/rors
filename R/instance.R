@@ -230,7 +230,7 @@
 #'
 #' URL of a server that accepts OpenRouteService requests. This can be a URL
 #' to a local or a remote server. The official public API can be accessed using
-#' the shortcut \code{"api"}. Keep in mind that the public API is
+#' the shortcut \code{"public"}. Keep in mind that the public API is
 #' rate-restricted and requests are automatically throttled to 40 requests per
 #' minute. Routing functions \emph{will} be slow for larger datasets.
 #' @param version \code{[character]}
@@ -286,10 +286,6 @@ ors_instance <- function(instance = NULL,
       "Did you accidentally pass a directory without specifying the argument name?"
     ))
   }
-
-  if (!is.null(instance)) {
-    local <- attr(instance, "type") == "local"
-  } else local <- is.null(server)
   
   instance_given <- !is.null(instance)
   is_local <- ifelse(
@@ -299,13 +295,8 @@ ors_instance <- function(instance = NULL,
   )
 
   if (is_local) {
-    if (!docker_installed()) {
-      cli::cli_abort("No docker installation could be detected.")
-    }
-    
     check_docker_installation()
     check_docker_access()
-    start_docker(verbose = verbose)
     
     if (instance_given) {
       assert_that(assertthat::is.dir(instance$paths$dir))
@@ -317,6 +308,7 @@ ors_instance <- function(instance = NULL,
         "the OpenRouteService source code in."
       ))
       
+      start_docker(verbose = verbose)
       dir <- get_ors_release(dir, version, overwrite, verbose)
       
       instance <- list()
@@ -324,7 +316,7 @@ ors_instance <- function(instance = NULL,
   } else {
     if (!instance_given) {
       instance <- list()
-      if (server == "api") server <- "https://api.openrouteservice.org/"
+      if (server == "public") server <- "https://api.openrouteservice.org/"
       if (!is_url(server)) {
         cli::cli_abort(
           "{.path {server}} is not a valid URL to an OpenRouteService server"
