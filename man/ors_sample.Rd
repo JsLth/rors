@@ -2,7 +2,7 @@
 % Please edit documentation in R/sample.R
 \name{ors_sample}
 \alias{ors_sample}
-\title{ORS dependent sampling}
+\title{ORS-based sampling}
 \usage{
 ors_sample(
   size,
@@ -47,6 +47,10 @@ If \code{TRUE}, prints a loading spinner.}
 \description{
 Sample point geometries within the boundaries of the running
 ORS extract.
+
+If the mounted instance is not local, the running ORS extract cannot be
+identified. In this case, a random bounding box is generated. See
+\code{\link{get_extract_boundaries}} for details.
 }
 \details{
 The function vectortranslates the extract file to an \code{sf} object.

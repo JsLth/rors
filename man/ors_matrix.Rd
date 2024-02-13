@@ -5,8 +5,8 @@
 \title{Routing distance matrix}
 \usage{
 ors_matrix(
-  source,
-  destination,
+  src,
+  dst,
   profile = get_profiles(),
   units = c("m", "km", "mi"),
   proximity_type = c("distance", "duration"),
@@ -14,11 +14,11 @@ ors_matrix(
 )
 }
 \arguments{
-\item{source}{\code{[sf]}
+\item{src}{\code{[sf]}
 
 Source dataset containing point geometries that shall be routed from.}
 
-\item{destination}{\code{[sf]}
+\item{dst}{\code{[sf]}
 
 Destination dataset containing point geometries that shall be routed from.
 The destination dataset follows the same format requirements as the source
@@ -56,7 +56,7 @@ an instance globally is not feasible.}
 }
 \value{
 If \code{length(proximity_type) == 1}, returns a
-\code{nrow(source) * nrow(destination)} routing distance matrix. Otherwise,
+\code{nrow(src) * nrow(dst)} routing distance matrix. Otherwise,
 returns a list containing two matrices accordingly.
 }
 \description{

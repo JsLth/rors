@@ -1,6 +1,6 @@
 #' Return ORS conditions
 #' @description Return the error and warning messages that ORS returned in the
-#' last \code{\link{ors_distances}} function call. Also works for
+#' last \code{\link{ors_pairwise}} function call. Also works for
 #' \code{\link{ors_shortest_distances}}.
 #' @param last \code{[integer]}
 #'
@@ -10,22 +10,22 @@
 #' @export
 last_ors_conditions <- function(last = 1L) {
   conditions <- ors_cache$routing_conditions
-  
+
   if (length(conditions)) {
     assert_that(is.numeric(last), last >= 1)
     last <- min(last, length(conditions))
-    
+
     time <- names(conditions)
-    
+
     cond_df <- lapply(conditions, function(x) {
       stats::na.omit(data.frame(conditions = unlist(x)))
     })
     names(cond_df) <- time
-    
+
     end <- length(names(cond_df))
     start <- length(names(cond_df)) + 1L - last
     selected_conditions <- cond_df[seq(start, end)]
-    
+
     class(selected_conditions) <- "ors_condition"
     selected_conditions
   }
@@ -41,16 +41,16 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
   if (is_ors_error(res)) {
     msg <- res$error
     code <- NULL
-    
+
     if (!is.character(res$error)) {
       msg <- msg$message
       code <- res$error$code
     }
-    
+
     if (is.null(msg) && !is.null(code)) {
       message <- fill_empty_error_message(code)
     }
-    
+
     error <- paste0(
       ifelse(!is.null(code), "Error code ", ""), code, ": ", msg
     )
@@ -63,12 +63,12 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
     warnings <- get_ors_warnings(res)
     message <- warnings$message
     code <- warnings$code
-    
+
     if (length(code) && length(message)) {
       warnings <- lapply(seq_along(code), function(w) {
         paste0("Warning code ", code[w], ": ", message[w])
       })
-      
+
       if (warn_on_warning) {
         w_vec <- cli::cli_vec(
           warnings,
@@ -85,15 +85,15 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
 
 store_condition <- function(what, when, which) {
   has_error <- attr(what, "error")
-  
+
   if (is.null(has_error)) {
     what <- NA
   }
-  
+
   if (isFALSE(has_error)) {
     what <- unlist(what)
   }
-  
+
   ors_cache$routing_conditions[[when]][which] <- what
 }
 
@@ -153,9 +153,10 @@ handle_missing_directions_batch <- function(has_cond) {
 cond_tip <- function(last = NULL) {
   callstr <- ifelse(
     is.null(last) || last == 1,
-    "last_ors_conditions()",
-    sprintf("last_ors_conditions(last = %s)", last)
+    "ORSRouting::last_ors_conditions()",
+    sprintf("ORSRouting::last_ors_conditions(last = %s)", last)
   )
+  callstr <- cli::style_hyperlink(callstr, paste0("rstudio:run:", callstr))
   cli::col_grey(sprintf(
     "For a list of conditions, call {.code %s}.", callstr
   ))

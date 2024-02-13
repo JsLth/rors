@@ -1,14 +1,5 @@
-#' Opens a file
-#' @returns Exit status
-#' @noRd
-file.open <- function(file) {
-  file <- file
-  if (is_linux()) {
-    proc <- callr::process$new(command = "xdg-open", args = file)
-  } else if (is_windows()) {
-    proc <- callr::process$new(command = "open", args = file)
-  }
-  proc$get_exit_status()
+"%||%" <- function(x, y) {
+  if (is.null(x)) y else x
 }
 
 
@@ -16,7 +7,7 @@ file.open <- function(file) {
 #' @param times_back Number of times to up a folder
 #' @noRd
 file_path_up <- function(path, times_back = 1L) {
-  path <- normalizePath(path, winslash = "/")
+  path <- normalizePath(path, winslash = "/", mustWork = FALSE)
   new_path <- utils::head(unlist(strsplit(path, "/")), -times_back)
   do.call(file.path, as.list(new_path))
 }
@@ -32,38 +23,22 @@ is_local <- function(url) {
 #' Checks if a character string is a valid URL
 #' @noRd
 is_url <- function(url) {
-  grepl("^(https?:\\/\\/)?[[:alnum:]\\.]+\\.[[:lower:]]+\\/?", url, perl = TRUE)
+  grepl("^(https?:\\/\\/)?[[:alnum:]\\.]+(\\.[[:lower:]]+)|(:[[:digit:]])\\/?", url, perl = TRUE)
 }
 
 
 #' Checks if a URL leads to the public API of OpenRouteService (api.openrouteservice)
 #' @noRd
 is_ors_api <- function(url) {
-  grepl("api.openrouteservice.org", url, fixed = TRUE)
+  grepl(substr(public_api, 9, 32), url, fixed = TRUE)
 }
 
 
-#' For Windows and Linux, returns the total and available memory of the system
-#' @returns List containing total and available memory
+#' Checks if a string is a numeric version. It is if a call to numeric_version
+#' does not return NA
 #' @noRd
-get_memory_info <- function() {
-  if (is_windows()) {
-    cmd <- paste(
-      "(Get-WmiObject Win32_OperatingSystem)",
-      "| %{'{{\"total\": {0},\n\"free\": {1}}}'",
-      "-f $_.totalvisiblememorysize, $_.freephysicalmemory}"
-    )
-
-    mem_json <- callr::run("powershell", cmd, stdout = "|", stderr = NULL)
-    parsed_json <- jsonlite::fromJSON(mem_json$stdout)
-    lapply(parsed_json, function(x) as.numeric(x) / 1048576L)
-  } else if (is_linux()) {
-    mem_csv <- callr::run("free", args = "--kibi", stdout = "|", stderr = NULL)
-    mem_csv <- unlist(strsplit(mem_csv$stdout, "\n"))
-    mem_csv <- paste(gsub("\\s+", ",", mem_csv), "\n")
-    mem_df <- utils::read.csv(text = mem_csv)[1, c("total", "free")]
-    lapply(mem_df, function(x) x / 1048576L)
-  }
+is_numver <- function(x) {
+  !is.na(numeric_version(x, strict = FALSE))
 }
 
 
@@ -72,18 +47,15 @@ get_memory_info <- function() {
 #' @param basedir Path that contains `targetdir`
 #' @param pretty Whether to add a tilde and a slash in front
 #' @noRd
-relative_path <- function(targetdir, basedir = getwd(), pretty = FALSE) {
+relative_path <- function(targetdir, basedir) {
   relative_path <- gsub(
-    pattern = sprintf("%s|%s/", basedir, basedir),
+    pattern = sprintf("%s/?", basedir),
     replacement = "",
     x = targetdir
   )
-  if (relative_path == "") {
-    relative_path <- "."
-  }
 
-  if (pretty) {
-    relative_path <- paste0("~/", relative_path)
+  if (!nzchar(relative_path)) {
+    relative_path <- "."
   }
 
   relative_path
@@ -116,8 +88,10 @@ regex_match <- function(text, pattern, ...) {
 }
 
 
+#' Creates a count table of x
+#' @noRd
 count <- function(x) {
-  df <- aggregate(x, list(x), length)
+  df <- stats::aggregate(x, list(x), length)
   names(df) <- c("level", "count")
   df[order(df$count, decreasing = TRUE), ]
 }
@@ -134,18 +108,59 @@ rbind_list <- function(args) {
   len <- vapply(args, length, numeric(1))
   out <- vector("list", length(len))
   for (i in seq_along(len)) {
-    if (!nrow(args[[i]])) {
-      for (n in unam) `$<-`(args[[i]], n, character())
-    } else {
+    if (nrow(args[[i]])) {
       nam_diff <- setdiff(unam, nam[[i]])
       if (length(nam_diff)) {
-        args[[i]][setdiff(unam, nam[[i]])] <- NA
+        args[[i]][nam_diff] <- NA
       }
+    } else {
+      next
     }
   }
   out <- do.call(rbind, args)
-  row.names(out) <- NULL
+  rownames(out) <- NULL
   out
+}
+
+
+#' Modified version of utils::modifyList that can handle unnamed lists
+#' @returns x, modified according to y
+#' @noRd
+modify_list <- function(x, y) {
+  idx <- names(y) %||% rev(seq_along(y))
+
+  for (i in idx) {
+    x_i <- x[[i]]
+    y_i <- y[[i]]
+
+    if (is.list(x_i) && is.list(y_i)) {
+      x[[i]] <- modify_list(x_i, y_i)
+    } else {
+      x[[i]] <- y_i
+    }
+  }
+  x
+}
+
+
+#' Checks if list x is modifiable by list y, i.e. if modify_list would
+#' change something. NULL is ignored.
+#' @param x,y Named lists
+equivalent_list <- function(x, y) {
+  y <- y[!vapply(y, is.null, logical(1))]
+  idx <- names(y) %||% rev(seq_along(y))
+  eqv <- TRUE
+  for (i in idx) {
+    # check if y introduces new names
+    eqv <- eqv && all(names(y[[i]] %in% names(x[[i]])))
+    if (is.list(x[[i]]) && is.list(y[[i]])) {
+      eqv <- eqv && equivalent_list(x[[i]], y[[i]])
+    } else {
+      eqv <- eqv && isTRUE(all.equal(x[[i]], y[[i]]))
+    }
+
+  }
+  eqv
 }
 
 
@@ -188,11 +203,10 @@ decode_base2 <- function(code) {
 #' Turns a length-1 vector to a single-element list
 #' @noRd
 box <- function(x) {
-  if (length(x) == 1L) {
-    list(x)
-  } else {
-    x
+  if (length(x) == 1L && is.atomic(x)) {
+    x <- list(x)
   }
+  x
 }
 
 
@@ -214,191 +228,51 @@ df_nest <- function(...) {
 }
 
 
-#' Makes a subtle system sound and displays a notification window
-#' @param msg Message to be displayed.
-#' @noRd
-notify <- function(msg) {
-  if (interactive()) {
-    if (is_windows()) {
-      if (!identical(system2("powershell", stdout = FALSE), 127L)) {
-        cmd <- paste(
-          "[System.Reflection.Assembly]::LoadWithPartialName(\"System.Windows.Forms\");",
-          "$notify = New-Object System.Windows.Forms.Notifyicon;",
-          "$notify.Icon = [System.Drawing.SystemIcons]::Information;",
-          "$notify.BalloonTipIcon = \"Info\";",
-          sprintf("$notify.BalloonTipText = \"%s\";", msg),
-          "$notify.BalloonTipTitle = \"Message from R\";",
-          "$notify.Visible = $True;",
-          "$notify.ShowBalloonTip(10)"
-        )
-        callr::run("powershell", cmd, stdout = NULL, stderr = NULL, error_on_status = FALSE)
-      } else {
-        system("rundll32 user32.dll, MessageBeep -1")
-      }
-    } else if (is_linux()) {
-      cmd1 <- "/usr/share/sounds/freedesktop/stereo/complete.oga"
-      cmd2 <- c("Message from R", msg)
-      callr::run("paplay", cmd1, stdout = NULL, stderr = NULL, error_on_status = FALSE)
-      callr::run("notify-send", cmd2, stdout = NULL, stderr = NULL, error_on_status = FALSE)
-    } else if (is_macos()) {
-      cmd <- paste(
-        "-e 'display notification",
-        sprintf("\"%s\"", msg),
-        "with title",
-        "\"Message from R\""
-      )
-      callr::run("osascript", cmd, stdout = NULL, stderr = NULL, error_on_status = FALSE)
-    }
-    invisible()
-  }
-}
-
-
-#' Checks if Windows is the current OS
-#' @noRd
-is_windows <- function() {
-  .Platform$OS.type == "windows"
-}
-
-
-#' Checks if Linux is the current OS
-#' @noRd
-is_linux <- function() {
-  Sys.info()["sysname"] == "Linux"
-}
-
-
-#' Checks if Mac OS is the current OS
-#' @noRd
-is_macos <- function() {
-  Sys.info()["sysname"] == "Darwin"
-}
-
-
-#' Checks if Docker is installed on the system.
-#' @noRd
-docker_installed <- function() {
-  docker_path <- Sys.which("docker")
-  installed <- any(as.logical(nchar(docker_path)))
-  installed
-}
-
-
-#' Checks if Docker is reachable and running
-#' @noRd
-docker_running <- function() {
-  callr::run(
-    "docker",
-    "ps",
-    stdout = NULL,
-    stderr = NULL,
-    error_on_status = FALSE
-  )$status == 0L
-}
-
-
-check_docker_installation <- function() {
-  if (!docker_installed()) {
-    link <- cli::style_hyperlink(
-      text = "Docker",
-      link = "https://docs.docker.com/get-docker/"
-    )
-    cli::cli_abort(c(
-      "!" = "No Docker installation could be detected.",
-      "i" = paste(
-        "A", link, "installation is needed before setting up a local ORS",
-        "instance"
-      )
-    ))
-  }
-}
-
-
-
-#' Checks if current user can access docker, i.e. if user is included in
-#' the docker group
-#' @noRd
-has_docker_access <- function() {
-  if (is_linux()) {
-    grepl("docker", callr::run("id", args = "-nG", stdout = "|")$stdout)
-  }
-}
-
-
-#' Checks if current user is root
-#' @noRd
-is_root <- function() {
-  if (is_linux()) {
-    grepl("root", callr::run("whoami")$stdout)
-  }
-}
-
-
-#' Checks if Docker can be accessed and gives an informative error if not
-#' @noRd
-check_docker_access <- function() {
-  if (!is_root() && !has_docker_access() && !docker_running()) {
-    link <- cli::style_hyperlink(
-      text = "Linux post-installation guide",
-      url = "https://docs.docker.com/engine/install/linux-postinstall/"
-    )
-    cli::cli_abort(c(
-      "!" = "Cannot access Docker as a non-root user: permission denied.",
-      "i" = paste(
-        "You may want to run R as root or follow Docker's", link, "to set up",
-        "Docker access for non-root users."
-      )
-    ))
-  }
-}
-
-
-#' stopifnot but with the cli package
-#' @noRd
-cli_abortifnot <- function(expr) {
-  if (isFALSE(expr)) {
-    uneval_expr <- deparse(substitute(expr))
-    cli::cli_abort("{.code {uneval_expr}} is {.val {FALSE}}.",
-      call = sys.call(-1L)
-    )
-  }
-}
-
-
-slow_edit <- function(file, ...) {
-  if (!interactive()) {
-    cli::cli_warn("Cannot edit a file interactively in batch mode.")
-  }
-
-  cli::cli_process_start(
-    "Editing file...",
-    msg_done = "Manual editing complete.",
-    msg_failed = "Cannot edit file."
-  )
-
-  if (!is.null(get0("RStudio.Version"))) {
-    open_file <- get0(".rs.api.documentOpen")
-    get_context <- get0(".rs.api.getSourceEditorContext")
-    if (any(sapply(c(open_file, get_context), is.null))) {
-      cli::cli_abort("Cannot retrieve RStudio specific editor functions.")
-    }
-    open_file(file)
-    path <- .rs.api.getSourceEditorContext()$path
-    while (.rs.api.getSourceEditorContext()$path == path) {
-      Sys.sleep(0.3)
-    }
+as_data_frame <- function(...) {
+  if (requireNamespace("tibble", quietly = TRUE)) {
+    tibble::as_tibble(...)
   } else {
-    if (!is_windows()) {
-      cli::cli_abort("Interactive editing in RGUI is only supported for windows.")
-    }
-    r_handles <- getWindowsHandles()
-    file.edit(file, ...)
-    r_handles2 <- getWindowsHandles()
-    editor <- r_handles2[!r_handles2 %in% r_handles]
-    while (all(editor %in% getWindowsHandles(minimized = TRUE))) {
-      Sys.sleep(0.3)
-    }
+    as.data.frame(...)
+  }
+}
+
+
+data_frame <- function(...) {
+  if (requireNamespace("tibble", quietly = TRUE)) {
+    tibble::tibble(...)
+  } else {
+    data.frame(...)
+  }
+}
+
+
+#' Simple yes-no input that defines the output of yes/no answers.
+#'
+#' @param msg Message to show in the input field
+#' @param yes,no What to return in case yes/no is selected
+#' @param dflt What to return in case the session is not interactive
+#' @returns Arguments yes or no
+#' @noRd
+yes_no <- function(msg, yes = TRUE, no = FALSE, dflt = NULL) {
+  if (!interactive()) {
+    return(default)
   }
 
-  cli::cli_process_done()
+  input <- readline(paste0(msg, " (y/N/Cancel) "))
+
+  # If neither yes or no is given as input, cancel the function
+  if (!input %in% c("y", "N")) {
+    cancel("Selection")
+  }
+
+  switch(input, y = yes, N = no)
+}
+
+
+#' Safely cancel a function without invoking an error
+#' @param what What to cancel, e.g. a function or a selection
+#' @noRd
+cancel <- function(what = "Function") {
+  cli::cli_inform(c("x" = "{what} cancelled."))
+  invokeRestart("abort")
 }

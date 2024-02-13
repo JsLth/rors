@@ -14,6 +14,6 @@ for example, returns errors from the last two function calls.}
 }
 \description{
 Return the error and warning messages that ORS returned in the
-last \code{\link{ors_distances}} function call. Also works for
+last \code{\link{ors_pairwise}} function call. Also works for
 \code{\link{ors_shortest_distances}}.
 }

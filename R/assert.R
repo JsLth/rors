@@ -32,31 +32,31 @@ is_geometry_type <- function(x, types, exclusive = TRUE, strict = TRUE) {
   } else {
     has_type <- as.logical(sum(is_type))
   }
-  
+
   if (nrow(is_type) > 1) {
     is_type <- as.logical(rowSums(is_type))
   } else {
     is_type <- as.logical(sum(is_type))
   }
-  
+
   if (exclusive) {
     has_type <- all(has_type)
   } else {
     has_type <- any(has_type)
   }
-  
+
   if (strict) {
     is_type <- all(is_type)
   } else {
     is_type <- any(is_type)
   }
-  
+
   is_type && has_type
 }
 
 assertthat::on_failure(is_sf) <- function(call, env) {
   x <- sprintf("{.var %s}", deparse(call$x))
-  if (call$sfc) {
+  if (isTRUE(call$sfc)) {
     paste(x, "is not an {.cls sf} or {.cls sfc} object.")
   } else {
     paste(x, "is not an {.cls sf} dataframe.")
@@ -65,10 +65,10 @@ assertthat::on_failure(is_sf) <- function(call, env) {
 
 assertthat::on_failure(is_true_or_false) <- function(call, env) {
   x <- sprintf("{.var %s}", deparse(call$x))
-  if (is.logical(eval(call$x))) {
-    paste(x, "is not {.var TRUE} or {.var FALSE}.")
+  if (is.logical(eval(call$x, env))) {
+    paste(x, "is NA, expected {.var TRUE} or {.var FALSE}.")
   } else {
-    paste(x, "is not a logical.")
+    paste0(x, " is of type ", typeof(x), ", expected {.var TRUE} or {.var FALSE}.")
   }
 }
 
@@ -85,10 +85,4 @@ assertthat::on_failure(is_geometry_type) <- function(call, env) {
     sep = " or "
   )
   paste0(x, " must consist of only ", types, ", not ", given)
-}
-
-assertthat::on_failure(inherits) <- function(call, env) {
-  class <- sprintf("{.cls %s}", eval(call$what, env))
-  x <- sprintf("{.var %s}", call$x)
-  paste0(x, " does not inherit from class ", class)
 }

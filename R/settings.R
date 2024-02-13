@@ -1,135 +1,56 @@
-#' Change the ORS settings
-#'
-#' @description Allocate memory, manage graph building and set name and ports
-#' of an OpenRouteService instance by making changes to the docker-compose file.
-#'
-#' @param name \code{[character]}
-#'
-#' Name of the OpenRouteService container.
-#' @param ports \code{[numeric/character]}
-#'
-#' Host port that the container should be running on. Passing \code{NULL}
-#' is interpreted as "no change". Passing \code{NA} will assign a random port
-#' using the \code{\link{httpuv}} package.
-#' @param memory \code{[character]}
-#'
-#' List of initial and maximum memory values. Initial memory is
-#' the memory that is allocated to the Docker container from the start.
-#' Maximum memory refers to the memory threshold that a Docker container cannot
-#' exceed. If only a single value is passed, initial and maximum memory are
-#' assumed to be identical.
-#' @param auto_deletion \code{[logical]}
-#'
-#' By default, OpenRouteService prevents all profiles other than \code{"car"}
-#' from being built on first setup. If \code{FALSE}, disables this behavior.
-#' Otherwise, all profiles other than car have to be enabled after the first
-#' setup. Defaults to \code{TRUE}, because the OpenRouteService team recommends
-#' building graphs for only the car profile in the initial setup.
-#' @param graph_building \code{[character]}
-#'
-#' Mode of graph building to be applied. Graphs need to be built for each
-#' profile and are required to route with a given profile. Possible values
-#' include \code{"build"}, \code{"change"} and \code{NA}. \code{"build"} is used
-#' when no graphs are built yet. \code{"change"} needs to be set before mounting
-#' a new extract file to an existing setup. \code{NA} disables graph building.
-#' @inheritParams ors_extract
-#'
-#' @returns Nested list of class \code{ors_instance}.
-#'
-#' @family ORS setup functions
-#'
-#' @export
-ors_settings <- function(instance,
-                         name = NULL,
-                         port = NULL,
-                         memory = NULL,
-                         auto_deletion = FALSE,
-                         graph_building = NULL) {
-  verbose <- attr(instance, "verbose")
-  compose <- instance$compose$parsed
-  
-  assert_that(inherits(instance, "ors_instance"))
+write_dockercompose <- function(compose, file = NULL) {
+  java_opts <- compose$services$`ors-app`$environment[2L]
+  catalina_opts <- compose$services$`ors-app`$environment[3L]
+  user <- compose$services$`ors-app`$user
 
-  if (!is.null(instance$paths$extract_path) && is.null(graph_building)) {
-    graphs_dir <- file.path(instance$paths$dir, "docker/graphs")
-    if (!length(dir(graphs_dir))) {
-      graph_building <- "build"
-    }
+  # Put some but not all strings in double quotes
+  compose$services$`ors-app`$environment <- as.list(
+    compose$services$`ors-app`$environment
+  )
+  attr(compose$services$`ors-app`$ports, "quoted") <- TRUE
+  attr(compose$services$`ors-app`$environment[[2]], "quoted") <- TRUE
+  attr(compose$services$`ors-app`$environment[[3]], "quoted") <- TRUE
+  attr(compose$services$`ors-app`$user, "quoted") <- TRUE
+
+  # Build yaml with indented bullet points
+  yml <- yaml::as.yaml(compose, indent.mapping.sequence = TRUE)
+
+  # Remove line breaks of long strings
+  yml <- gsub("\\n\\s{7,}-", " -", yml)
+
+  # Write new yaml to old yaml file
+  if (!is.null(file)) {
+    cat(yml, file = file)
+  } else {
+    cat(yml)
   }
-
-  if (!is.null(name)) {
-    compose$services$`ors-app`$container_name <- name
-  }
-
-  if (!is.null(port)) {
-    compose$services$`ors-app`$ports <- format_ports(compose, port)
-  }
-
-  if (length(memory)) {
-    compose <- write_memory(compose, instance, memory)
-  }
-
-  if (!auto_deletion) {
-    compose <- protect_config(compose)
-  }
-
-  if (!is.null(graph_building)) {
-    relative_path <- relative_path(instance$paths$extract_path, instance$paths$dir)
-    compose <- set_graphbuilding(graph_building, compose, relative_path)
-  }
-
-  write_dockercompose(compose, instance$paths$dir)
-
-  instance[["compose"]] <- NULL
-
-  instance <- .instance(instance, verbose = verbose)
-
-  assign("instance", instance, envir = ors_cache)
-  invisible(instance)
 }
 
 
-read_compose <- function(dir) {
-  yaml::read_yaml(file.path(dir, "docker", "docker-compose.yml"))
+ports_to_df <- function(ports) {
+  ports <- strsplit(ports, ":")
+  ports <- do.call(rbind.data.frame, ports)
+  names(ports) <- c("host", "docker")
 }
 
 
-read_ports <- function(compose, type = c("raw", "vec", "df")) {
-  ports <- compose$services$`ors-app`$ports
-
-  if (type == "df") {
-    ports <- strsplit(ports, ":")
-    ports <- do.call(rbind.data.frame, ports)
-    names(ports) <- c("host", "docker")
-  }
-  
-  if (type == "vec") {
-    ports <- as.numeric(c(t(ports)))
-  }
-  
-  ports
-}
-
-
-format_ports <- function(compose, port) {
+format_ports <- function(self, port) {
   assert_that(length(port) == 1)
-  ports <- read_ports(compose, type = "raw")
-  cports <- read_ports(compose, type = "df")
-  cport1 <- cports[1, 1]
-  cport2 <- cports[1, 2]
-
-  if (is.null(port)) {
-    port <- cport1
-  } else if (is.na(port)) {
-    if (requireNamespace("httpuv")) {
-      httpuv::randomPort()
-    } else {
-      cli::cli_abort("To assign a random port, install the {.pkg httpuv} package.")
-    }
-  }
-
-  ports[1] <- sprintf("%s:%s", cport1, cport2)
+  compose <- self$compose$parsed
+  ports_chr <- compose$services$`ors-app`$ports
+  old_ports <- ports_to_df(ports_chr)
+  ports_chr[1] <- sprintf("%s:%s", port %||% old_ports[1, 1], old_ports[1, 2])
   ports
+}
+
+
+random_port <- function() {
+  if (requireNamespace("httpuv")) {
+
+    httpuv::randomPort()
+  } else {
+    cli::cli_abort("To assign a random port, install the {.pkg httpuv} package.")
+  }
 }
 
 
@@ -157,24 +78,24 @@ read_memory <- function(compose, num, gb = TRUE) {
 }
 
 
-write_memory <- function(compose, instance, memory) {
-  verbose <- attr(instance, "verbose")
-  init <- NULL
-  max <- NULL
+adjust_memory <- function(self, private, init, max) {
+  verbose <- private$.verbose
 
-  if (length(memory) >= 2) {
-    init <- memory[[1]] * 1000
-    max <- memory[[2]] * 1000
-  } else if (length(memory) == 1) {
-    init <- memory[[1]] * 1000
+  if (!is.null(init) && !is.null(max)) {
+    init <- init * 1000
+    max <- max * 1000
+  } else if (!is.null(init)) {
+    init <- init * 1000
     max <- init
+  } else if (!is.null(max)) {
+    max <- max * 1000
+    init <- max / 2
   } else {
-    if (!is.null(instance$extract$size) && !is.null(instance$config$profiles)) {
-      size <- round(instance$extract$size * 0.000001, -2L)
-      number_of_profiles <- length(instance$config$profiles) / 1000L
-
-      max <- size * 2.5 * number_of_profiles
-      init <- max / 2L
+    if (!is.null(self$extract$size) && !is.null(self$config$profiles)) {
+      size <- self$extract$size
+      no_prof <- length(self$config$profiles)
+      max <- ceiling(size * 2.5 * no_prof)
+      init <- ceiling(max / 2L)
     } else {
       ors_cli(
         warn = paste(
@@ -184,28 +105,35 @@ write_memory <- function(compose, instance, memory) {
           "configuration first"
         )
       )
-      return(compose)
+      return(NULL)
     }
   }
 
-  compose <- format_memory(compose, init, max)
-
-  gc(verbose = FALSE)
-
-  if (instance$compose$memory$free * 0.8 - max / 1024 <= 0L) {
-    ors_cli(
-      warn = paste(
-        "You are allocating more than your available memory.",
-        "Consider lowering the allocated RAM."
-      )
+  if (get_memory_info()$free * 0.8 - max / 1024 <= 0) {
+    msg <- paste(
+      "You are allocating more than your available memory.",
+      "Consider lowering the allocated RAM."
     )
+
+    if (max >= 1000) {
+      msg <- c(
+        "!" = msg,
+        "i" = "Did you accidentally pass megabytes instead of gigabytes?"
+      )
+    }
+
+    ors_cli(warn = msg)
   }
 
-  compose
+  c(as.integer(init), as.integer(max))
 }
 
 
-format_memory <- function(compose, init, max) {
+format_memory <- function(self, memory) {
+  compose <- self$compose$parsed
+  init <- memory[1]
+  max <- memory[2]
+
   java_options <- compose$services$`ors-app`$environment[2L]
   java_mem <- read_memory(compose, num = FALSE)
 
@@ -225,117 +153,65 @@ format_memory <- function(compose, init, max) {
   )
 
   compose$services$`ors-app`$environment[2] <- java_options
+  compose$services$`ors-app`$environment[2]
+}
+
+
+set_compose_image <- function(compose, image) {
+  compose$services$`ors-app`$image <-
+    gsub(":.+$", paste0(":", image), compose$services$`ors-app`$image)
   compose
 }
 
 
-is_config_protected <- function(x) {
-  grepl(":ro", x, fixed = TRUE)
+read_compose_image <- function(compose) {
+  regex_match(compose$services$`ors-app`$image, ":(.+)$")[[1]][2]
 }
 
 
-protect_config <- function(compose) {
-  conf_volume <- compose$services$`ors-app`$volumes[5]
-  if (!is_config_protected(conf_volume) && !is_linux()) {
-    compose$services$`ors-app`$volumes[5] <- paste0(conf_volume, ":ro")
-  }
-  compose
+set_ors_name <- function(self, name) {
+  compose <- self$compose$parsed
+  if (is.null(name))
+    name <- paste0("ors-app", sample(1:9999, size = 1))
+  name
 }
 
 
-read_graphbuilding <- function(compose) {
-  build <- is.element("build", names(compose$services$`ors-app`))
-  change <- !is.na(compose$services$`ors-app`$volumes[6L])
-  gb <- compose$services$`ors-app`$environment[1]
-  gb <- as.logical(unlist(strsplit(gb, "="))[2])
-
-  if (change) {
-    if (gb) "change" else NA
-  } else if (build) {
-    "build"
-  } else {
-    NA
-  }
+graphbuilding_enabled <- function(compose) {
+  gp <- compose$services$`ors-app`$environment[1L]
+  as.logical(strsplit(gp, "=")[[1]][2])
 }
 
 
-set_graphbuilding <- function(mode, compose, extract_path) {
-  # First, turn off everything
-  compose <- force_graphbuilding(FALSE, compose)
-  compose$services$`ors-app`$build <- NULL
-  compose$
-    services$
-    `ors-app`$
-    volumes <- compose$services$`ors-app`$volumes[-6L]
+set_gp <- function(self, mode) {
+  compose <- self$compose$parsed
 
-  # Then, turn things on selectively
-  if (identical(mode, "build") && !missing(extract_path)) {
-    compose <- force_graphbuilding(TRUE, compose)
-    build_branch <- list(
-      build = list(
-        context = "../",
-        args = list(
-          ORS_CONFIG = "./docker/data/ors-config.json",
-          OSM_FILE = sprintf("./%s", extract_path)
-        )
-      )
-    )
+  if (isTRUE(mode)) {
+    paths <- self$paths
 
-    compose$services$`ors-app` <- append(
-      compose$services$`ors-app`,
-      build_branch,
-      after = 3L
-    )
-  } else if (identical(mode, "change")) {
-    compose <- force_graphbuilding(TRUE, compose)
-    change_node <- sprintf("./%s:/ors-core/data/osm_file.pbf", extract_path)
+    # Enable graph building
+    compose <- force_gp(TRUE, compose)
 
+    # Set extract volume to change extract in a built container
+    extract_path <- relative_path(paths$extract, paths$top)
+    change_node <- sprintf("./%s:/home/ors/ors-core/data/osm_file.pbf", extract_path)
     compose$services$`ors-app`$volumes[6L] <- change_node
-  }
+  } else {
+    # Disable graph building
+    compose <- force_gp(FALSE, compose)
 
-  compose
+    # Remove extract volume
+    if (!is.na(compose$services$`ors-app`$volumes[6L])) {
+      compose$services$`ors-app`$volumes <- compose$services$`ors-app`$volumes[-6L]
+    }
+  }
+  compose$services$`ors-app`$environment[1L]
 }
 
 
-force_graphbuilding <- function(on, compose) {
-  on <- capitalize_char(on)
-  build_graphs_string <- sprintf("BUILD_GRAPHS=%s", on)
+force_gp <- function(mode, compose) {
+  mode <- capitalize_char(mode)
+  build_graphs_string <- sprintf("BUILD_GRAPHS=%s", mode)
   compose$services$`ors-app`$environment[1L] <- build_graphs_string
   compose
-}
-
-
-write_dockercompose <- function(compose, dir) {
-  java_opts <- compose$services$`ors-app`$environment[2L]
-  catalina_opts <- compose$services$`ors-app`$environment[3L]
-  user <- compose$services$`ors-app`$user
-
-  # Put string options in quadruple quotes
-  compose$
-    services$
-    `ors-app`$
-    environment[2L] <- shQuote(java_opts, type = "cmd")
-
-  compose$
-    services$
-    `ors-app`$
-    environment[3L] <- shQuote(catalina_opts, type = "cmd")
-
-  compose$
-    services$
-    `ors-app`$
-    user <- shQuote(user, type = "cmd")
-
-  # Build yaml with indented bullet points
-  yml_as_string <- yaml::as.yaml(compose, indent.mapping.sequence = TRUE)
-
-  # Remove single quotes that are somehow added by as.yaml when introducing
-  # double quotes.
-  corrected_yml_string <- gsub("'\"|\"'", "\"", yml_as_string)
-
-  # Remove line breaks of long strings
-  corrected_yml_string <- gsub("\\n\\s{8}-", " -", corrected_yml_string)
-
-  # Write new yaml to old yaml file
-  cat(corrected_yml_string, file = file.path(dir, "docker/docker-compose.yml"))
 }

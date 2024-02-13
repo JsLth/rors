@@ -122,11 +122,11 @@
 #' )
 #' }
 #'
-#' @inheritParams ors_distances
+#' @inheritParams ors_pairwise
 #'
 #' @export
 
-ors_accessibility <- function(source,
+ors_accessibility <- function(src,
                               profile = get_profiles(force = TRUE),
                               range = c(200L, 300L),
                               attributes = "area",
@@ -141,9 +141,7 @@ ors_accessibility <- function(source,
                               raster_resolution = c(100L, 100L),
                               instance = NULL,
                               ...) {
-  if (is.null(instance)) {
-    instance <- get_instance()
-  }
+  instance <- instance %||% get_instance()
   iid <- get_id(instance = instance)
 
   # Check if ORS is ready to use
@@ -155,14 +153,14 @@ ors_accessibility <- function(source,
   area_units <- match.arg(area_units)
   units <- match.arg(units)
 
-  source <- format_input_data(source)
+  src <- prepare_input(src)
 
   options <- format_ors_params(list(...), profile)
 
   url <- get_ors_url(id = iid)
 
   res <- call_ors_isochrones(
-    source = source,
+    src = src,
     profile = profile,
     range = range,
     attributes = attributes,

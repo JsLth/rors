@@ -5,7 +5,7 @@
 \title{ORS accessibility maps}
 \usage{
 ors_accessibility(
-  source,
+  src,
   profile = get_profiles(force = TRUE),
   range = c(200L, 300L),
   attributes = "area",
@@ -23,7 +23,7 @@ ors_accessibility(
 )
 }
 \arguments{
-\item{source}{\code{[sf]}
+\item{src}{\code{[sf]}
 
 Source dataset containing point geometries that shall be routed from.}
 

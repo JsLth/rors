@@ -58,7 +58,7 @@ set.seed(111)
 sam <- ors_sample(20, poly = rut_bbox)
 ```
 
-`ors_distances` returns only distances, durations and geometries - but
+`ors_pairwise` returns only distances, durations and geometries - but
 lots of them (i.e., row-wise):
 
 ``` r

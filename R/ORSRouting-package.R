@@ -13,6 +13,7 @@
 #'
 #' © openrouteservice.org by HeiGIT | Map data © OpenStreetMap contributors
 #' @encoding UTF-8
+#' @importFrom R6 R6Class
 "_PACKAGE"
 
 # The following block is used by usethis to automatically manage
@@ -22,9 +23,5 @@
 NULL
 
 utils::globalVariables(c(
-  "source_shape", "dest_shape", "cond_indices", "var", "obj_var", "set_var",
-  "geom_type", "format", "port_chr", "nam", "val", "cur_ports_df", "verbose",
-  "poly", "source_shape", "dest_shape", "url", "options", "cond_indices",
-  "uneval_expr"
-  
+
 ))

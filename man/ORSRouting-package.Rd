@@ -25,6 +25,14 @@ service, refer to \url{https://github.com/GIScience/openrouteservice}
 
 © openrouteservice.org by HeiGIT | Map data © OpenStreetMap contributors
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/JsLth/ORSRouting}
+  \item Report bugs at \url{https://github.com/JsLth/ORSRouting/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Lieth Jonas \email{jonas.lieth@gesis.org}
 

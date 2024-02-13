@@ -1,15 +1,8 @@
-# Title     : Functions to get infos from ORS
-# Objective : Get container or local server info such as ports, status or
-#             extract location
-# Created by: Jonas Lieth
-# Created on: 29.09.2021
-
-
 ors_cache <- new.env(parent = emptyenv())
 
 
 #' Utility functions
-#' 
+#'
 #' Utility functions to aid the setup of local instances.
 #' \itemize{
 #'  \item \code{get_instance} checks for the existence of a mounted instance in
@@ -19,26 +12,26 @@ ors_cache <- new.env(parent = emptyenv())
 #'  \item \code{get_profiles} is a wrapper around \code{get_status} that returns
 #'  the active profiles of the mounted service.
 #' }
-#' 
+#'
 #' @param id \code{[character]}
-#' 
+#'
 #' ID or name of a container or URL of a server that is to be checked. If
 #' \code{NULL}, retrieves the ID from the current instance set by
 #' \code{\link{ors_instance}}
 #' @param force \code{[logical]}
-#' 
+#'
 #' If \code{TRUE}, function must query server. If \code{FALSE}, the information
 #' will be read from the cache if possible.
 #' @param error \code{[logical]}
-#' 
+#'
 #' If \code{TRUE}, gives out an error if the service is not ready.
-#' 
+#'
 #' @returns \code{get_instance} returns an object of class \code{ors_instance}.
 #' \code{get_status} returns a list of information on the running service.
 #' \code{ors_ready} returns a length-1 logical vector specifying if the service
 #' is running. \code{get_profiles} returns a vector containing the active
 #' profiles.
-#' 
+#'
 #' @seealso \code{\link{ors_instance}}
 #' @export
 get_instance <- function() {
@@ -57,9 +50,9 @@ check_instance <- function(instance = NULL) {
   if (is.null(instance)) {
     instance <- get_instance()
   } else {
-    assert_that(inherits(instance, "ors_instance"))
+    assert_that(inherits(instance, "ORSLocal"))
   }
-  
+
   instance
 }
 
@@ -68,13 +61,11 @@ check_instance <- function(instance = NULL) {
 #' @noRd
 get_id <- function(id = NULL, instance = NULL) {
   if (is.null(id)) {
-    if (is.null(instance)) {
-      instance <- get_instance()
-    }
+    instance <- instance %||% get_instance()
 
-    if (attr(instance, "type") == "local") {
+    if (inherits(instance, "ORSLocal")) {
       id <- instance$compose$name
-    } else if (attr(instance, "type") == "remote") {
+    } else if (inherits(instance, "ORSRemote")) {
       id <- instance$url
     }
   } else {
@@ -126,7 +117,7 @@ inspect_container <- function(id = NULL) {
 get_status <- function(id = NULL) {
   id <- get_id(id)
   ors_ready(id = id, force = TRUE, error = TRUE)
-  url <- file.path(get_ors_url(id), "ors/v2/status", fsep = "/")
+  url <- paste0(get_ors_url(id), "ors/v2/status")
   if (!is_ors_api(url)) {
     url <- url
     req <- httr2::request(url)
@@ -136,19 +127,11 @@ get_status <- function(id = NULL) {
       is_error = \(res) if (res$status_code == 200L) FALSE else TRUE
     )
     res <- httr2::req_perform(req, verbosity = 0L)
-    httr2::resp_body_json(res, simplifyVector = TRUE, flatten = TRUE)
+    res <- httr2::resp_body_json(res, simplifyVector = TRUE, flatten = TRUE)
+    class(res$profiles) <- "stprof"
+    res
   } else {
-    list(profiles = list(
-      "profile 1" = list(profiles = "driving-car"),
-      "profile 2" = list(profiles = "driving-hgv"),
-      "profile 3" = list(profiles = "cycling-regular"),
-      "profile 4" = list(profiles = "cycling-mountain"),
-      "profile 5" = list(profiles = "cycling-electric"),
-      "profile 6" = list(profiles = "cycling-road"),
-      "profile 7" = list(profiles = "foot-walking"),
-      "profile 8" = list(profiles = "foot-hiking"),
-      "profile 9" = list(profiles = "wheelchair")
-    ))
+    unlist(base_profiles, use.names = FALSE)
   }
 }
 
@@ -158,12 +141,16 @@ get_status <- function(id = NULL) {
 get_profiles <- function(id = NULL, force = TRUE) {
   if (is.null(ors_cache$profiles) || isTRUE(force)) {
     id <- get_id(id)
-    ors_info <- get_status(id)
-    profiles <- lapply(
-      ors_info$profiles,
-      function(x) x$profiles
-    )
-    profiles <- unlist(profiles, use.names = FALSE)
+    profiles <- get_status(id)
+
+    if (is.list(profiles)) {
+      profiles <- lapply(
+        profiles$profiles,
+        function(x) x$profiles
+      )
+      profiles <- unlist(profiles, use.names = FALSE)
+    }
+
     assign("profiles", profiles, envir = ors_cache)
     profiles
   } else {
@@ -175,9 +162,10 @@ get_profiles <- function(id = NULL, force = TRUE) {
 #' @rdname get_instance
 #' @export
 ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
+  call_env <- parent.frame()
   if (is.null(ors_cache$ors_ready) || isFALSE(ors_cache$ors_ready) || force) {
     id <- get_id(id)
-    url <- file.path(get_ors_url(id), "ors/health", fsep = "/")
+    url <- paste0(get_ors_url(id), "ors/v2/health")
 
     if (!is_ors_api(url)) {
       req <- httr2::request(url)
@@ -193,7 +181,7 @@ ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
             cli::cli_abort(c(
               "x" = "Cannot reach the OpenRouteService server.",
               "i" = "Did you start your local instance?"
-            ), call = parent.frame(4))
+            ), call = call_env)
           } else {
             ready <<- FALSE
           }
@@ -212,42 +200,36 @@ ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
 
 
 #' Searches for a (mention of) an OSM extract inside the ORS directory.
-#' First checks the compose file, then looks in the data path.
+#' Looks in three places:
+#'  - Build argument in docker compose
+#'  - Data volume in docker compose
+#'  - Data directory
+#' If no extract file is found, NULL is returned
 #' @noRd
-identify_extract <- function(instance) {
+identify_extract <- function(compose, dir) {
   # Read extract file location from compose file
-  compose <- instance$compose$parsed
-  mdir <- instance$paths$dir
   extract_path <- compose$services$`ors-app`$build$args$OSM_FILE
+  extract_path <- gsub("\\./", "", extract_path)
+  extract_path <- file.path(dir, extract_path)
 
   # Check if build argument is set
-  if (is.null(extract_path)) {
-    volume <- compose$services$`ors-app`$volumes[6L]
+  if (!length(extract_path) || !is_pbf(extract_path)) {
+    volume <- utils::tail(compose$services$`ors-app`$volumes, 1)
     extract_path <- gsub("\\./", "", strsplit(volume, ":")[[1L]][1L])
-    if (is.na(extract_path)) extract_path <- NULL
+    extract_path <- file.path(dir, extract_path, fsep = "/")
+    if (is.na(extract_path) || !is_pbf(extract_path)) extract_path <- NULL
 
     # If not, check if change volume is set
     if (is.null(extract_path)) {
-      data_dir <- file.path(mdir, "docker/data")
-      osm_file_occurences <- grepl("\\.pbf$|\\.osm.gz$|\\.osm\\.zip$|\\.osm$", dir(data_dir))
+      data_dir <- file.path(dir, "docker/data")
+      data_files <- list.files(data_dir, full.names = TRUE)
+      is_pbf <- is_pbf(data_files)
 
       # As a last resort, check if we can just pick it up from the data folder
-      if (sum(osm_file_occurences) == 1L) {
-        extract_path <- dir(data_dir, full.names = TRUE)[osm_file_occurences]
+      if (sum(is_pbf) == 1L) {
+        extract_path <- data_files[is_pbf]
       }
     }
-  }
-
-  if (!is.null(extract_path)) {
-    # Convert relative to absolute path
-    extract_path <- normalizePath(
-      file.path(
-        instance$paths$dir,
-        "docker/data",
-        basename(extract_path)
-      ),
-      winslash = "/"
-    )
   }
 
   extract_path
@@ -257,7 +239,7 @@ identify_extract <- function(instance) {
 #' Returns the host port of an ORS instance
 #' @noRd
 get_ors_port <- function(force = FALSE, id = NULL) {
-  if (is.null(ors_cache$instance) || force == TRUE) {
+  if (!is.null(id) || is.null(ors_cache$instance) || force) {
     container_info <- inspect_container(id)
 
     port <- container_info$HostConfig$PortBindings[[1]][[1]]$HostPort
@@ -272,9 +254,13 @@ get_ors_port <- function(force = FALSE, id = NULL) {
 #' Returns the URL of an ORS instance
 #' @noRd
 get_ors_url <- function(id = NULL) {
+  id <- id %||% get_id()
   if (!is_url(id)) {
     sprintf("http://localhost:%s/", get_ors_port(id = id))
   } else {
+    if (!endsWith(id, "/")) {
+      paste0(id, "/")
+    }
     id
   }
 }

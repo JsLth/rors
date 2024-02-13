@@ -1,8 +1,7 @@
 Package: ORSRouting
 Type: Package
-Title: Batch routing distance computations using OpenRouteService
-Version: 0.9.0
-Date: 2022-08-23
+Title: Routing using OpenRouteService
+Version: 0.12.0
 Authors@R: person("Lieth", "Jonas", email = "jonas.lieth@gesis.org",
                   role = c("aut", "cre"))
 Maintainer: Jonas Lieth <jonas.lieth@gesis.org>
@@ -13,14 +12,17 @@ Description: Flexible interface to (custom) OpenRouteService instances.
     processing moderately large datasets and thus supports the setup and usage
     of custom OpenRouteService instances. However, it is also possible to use
     the public API given a valid key.
+URL: https://github.com/JsLth/ORSRouting
+BugReports: https://github.com/JsLth/ORSRouting/issues
 Encoding: UTF-8
 LazyData: true
 Depends: 
     R (>= 4.0.0)
-Imports: 
+Imports:
     utils,
     stats,
     assertthat,
+    R6,
     httr2 (>= 0.2.0),
     jsonlite,
     yaml,
@@ -28,20 +30,22 @@ Imports:
     osmextract (>= 0.2.0),
     cli (>= 3.0.0),
     callr (>= 3.5.0),
-    httpuv,
-    tibble
+    httpuv
 Suggests: 
     covr,
     ggplot2,
-    httptest2,
     knitr (>= 1.31),
-    osmdata,
+    maps,
     rmarkdown (>= 2.7),
     leaflet,
     terra,
     testthat (>= 3.0.0),
-    units
-SystemRequirements: Docker Engine on Linux systems, Docker Desktop on Windows (>= 20.10.6)
+    units,
+    tibble,
+    vcr,
+    waldo,
+    webfakes
+SystemRequirements: Docker (>= 20.10.6)
 RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr

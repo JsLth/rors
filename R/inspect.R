@@ -5,13 +5,16 @@
 #' \code{ors_inspect} can also be used as a relatively low-level interface to
 #' the directions service with the ability to return responses as parsed or
 #' unparsed JSONs.
-#' @param source \code{[sf]}
+#'
+#' The summary function computes summary statistics and interval tables for
+#' a given route.
+#' @param src \code{[sf]}
 #'
 #' Source dataset containing at least two point geometries for which routes are
 #' to be computed. If \code{round_trip} is specified, \code{source} must contain
 #' a single coordinate pair from which a round trip is generated.
 #' @param level \code{[character]}
-#' 
+#'
 #' Level of route aggregation. Must be one of \code{waypoint}, \code{step} or
 #' \code{segment}. See details.
 #' @param attributes \code{[list]}
@@ -25,39 +28,39 @@
 #'
 #' If \code{TRUE}, elevation data is included in the output.
 #' @param navigation \code{[logical]}
-#' 
+#'
 #' If \code{TRUE}, navigation information is included in the output, i.e.,
 #' instructions and road exits. If \code{level == "segment"}, navigation data
 #' is dropped from the output.
-#' 
+#'
 #' @param alternative_routes \code{[list]}
-#' 
+#'
 #' Named list that specifies options for alternative routes and accepts up to
 #' three parameters. \code{target_count} is the maximum number of routes to
 #' compute (including the recommended route). Must be an integer between 1 and 3
 #' and defaults to 1. The output can contain less routes than specified if no
-#' other alternatives can be computed from the \code{source} coordinates.
+#' other alternatives can be computed from the \code{src} coordinates.
 #' \code{share_factor} denotes the maximum share of identical paths between
 #' routes. \code{weight_factor} is the maximum factor that a route can deviate
 #' (i.e. be longer) from the original route. If specified, and
 #' \code{target_count} is larger than 1, the output is wrapped in a list of up
 #' to three dataframes. If \code{NULL}, no alternative routes are computed.
 #' @param round_trip \code{[list]}
-#' 
+#'
 #' Named list that specifies options for round trips and accepts up to three
 #' parameters. \code{length} is the approximate length of the round trip.
 #' \code{points} denotes the number of route points from which to derive a
 #' round trip (the higher the rounder). \code{seed} controls the randomisation
-#' of the route direction. If specified, \code{source} must contain a single
+#' of the route direction. If specified, \code{src} must contain a single
 #' coordinate pair from which a round trip is to be generated. If \code{NULL},
 #' no round trip is computed.
 #' @param extra_info List of keywords that add extra information regarding each
 #' linestring segment of the output. If \code{TRUE}, all values are included.
 #' See details for more information.
 #' @param as \code{[character]}
-#' 
+#'
 #' How to format the output. If \code{"string"}, returns the entire JSON
-#' response string. If \code{"list"}, returns a parsed JSON list. If 
+#' response string. If \code{"list"}, returns a parsed JSON list. If
 #' \code{"tidy"}, performs lots of data preparation to shape the response into a
 #' tibble.
 #' @param elev_as_z \code{[logical]}
@@ -65,13 +68,13 @@
 #' If \code{TRUE}, elevation data is stored as z-values in the
 #' geometry of the output \code{sf} dataframe. If \code{FALSE}, elevation is
 #' stored as a distinct dataframe column. Ignored if \code{elevation = FALSE}.
-#' @inheritParams ors_distances
+#' @inheritParams ors_pairwise
 #' @returns Returns an sf dataframe containing detailed sections of all routes
-#' between the coordinates specified in \code{source}, aggregated according to
+#' between the coordinates specified in \code{src}, aggregated according to
 #' the level of aggregation stated in \code{level}. If \code{alternative_routes}
 #' is specified, returns a list of sf dataframes instead with each element
 #' containing a route alternative.
-#' 
+#'
 #' \code{ors_inspect} returns an sf data.frame containing the smallest
 #' possible linestrings for a route along with additional information on each
 #' segment. \code{ors_summary} returns an object of type \code{route_summary}
@@ -79,10 +82,10 @@
 #' factors as well as all available extra information for the requested route.
 #' @details OpenRouteService distinguishes between three
 #' types of route aggregation: Segments, steps and waypoints. A segment is a
-#' single route between \code{source[i, ]} and \code{source[i + 1, ]}. A step
+#' single route between \code{src[i, ]} and \code{src[i + 1, ]}. A step
 #' is a route section as relevant for a navigation system. A waypoint is a
 #' straight connection between two geographical points on a route.
-#' 
+#'
 #' Depending on the chosen level of aggregation, the output has to be adjusted
 #' through interpolation and aggregation. For all levels below \code{"segment"},
 #' ORS attributes are stored as R attributes and are not included in the
@@ -92,7 +95,7 @@
 #' and street names do not perfectly overlap with steps and segments. In these
 #' cases, the value with the highest overlap is adopted causing some information
 #' loss. Navigation information is dropped on \code{"segment"} level.
-#' 
+#'
 #' Extra information can be requested as additional context for each waypoint on
 #' a route. Possible values include:
 #' \describe{
@@ -117,8 +120,8 @@
 #'  \item{noise}{For walking profiles, describes the amount of noise on a route
 #'               (1 - little; 10 - much).}
 #' }
-#' 
-#' @seealso \code{\link{ors_distances}},
+#'
+#' @seealso \code{\link{ors_pairwise}},
 #' \code{\link{plot_section}}
 #'
 #' @export
@@ -171,7 +174,7 @@
 #' # Summarizing route specifics
 #' route_summary <- ors_summary(sample_source, sample_dest, profile)
 #' }
-ors_inspect <- function(source,
+ors_inspect <- function(src,
                         profile = get_profiles(),
                         level = c("waypoint", "step", "segment"),
                         attributes = NULL,
@@ -185,8 +188,7 @@ ors_inspect <- function(source,
                         instance = NULL,
                         ...) {
   assert_that(
-    is_sf(source),
-    is_geometry_type(source, "POINT"),
+    is_sf(src),
     is_true_or_false(elev_as_z)
   )
   profile <- match.arg(profile)
@@ -199,7 +201,7 @@ ors_inspect <- function(source,
   ors_ready(force = TRUE, error = TRUE, id = iid)
 
   # Bring input data into shape
-  source <- format_input_data(source)
+  src <- prepare_input(src)
   url <- get_ors_url(id = iid)
 
   features <- list(
@@ -213,7 +215,7 @@ ors_inspect <- function(source,
   params <- format_ors_params(c(features, list(...)), profile)
 
   res <- call_ors_directions(
-    source = source,
+    src = src,
     profile = profile,
     units = "m",
     geometry = TRUE,
@@ -225,7 +227,7 @@ ors_inspect <- function(source,
 
   if (as %in% c("list", "tidy")) {
     handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
-    
+
     if (as == "tidy") {
       res <- route_to_df(
         res,
@@ -321,7 +323,7 @@ plot_section <- function(x,
                          caption = NULL,
                          ...) {
   if (!requireNamespace("ggplot2")) {
-    cli::cli_abort("the {.pkg ggplot2} package is necessary to create cross-sections.")
+    cli::cli_abort("The {.pkg ggplot2} package is necessary to create cross-sections.")
   }
 
   distance <- if (dist %in% names(x)) {
@@ -359,7 +361,7 @@ plot_section <- function(x,
     xstart = cumsum(c(0, distance[-(n - 1)])),
     xend = cumsum(distance),
     ystart = elevation,
-    yend = c(elevation[-1], elevation[length(elevation)])
+    yend = c(elevation[-1], utils::tail(elevation, 1))
   )
   y_range <- range(elevation) * c(0.9, 1.1)
   y_range[1] <- y_range[1] * scale_elevation
@@ -452,111 +454,113 @@ plot_section <- function(x,
 }
 
 
-ors_summary <- function(source,
-                        profile = get_profiles(),
-                        instance = NULL,
-                        ...) {
-  assert_that(is_sf(source))
-  instance <- check_instance(instance)
-  iid <- get_id(instance = instance)
-
-  # Check if ORS is ready to use
-  ors_ready(force = TRUE, error = TRUE, id = iid)
-
-  # Bring input data into shape
-  source <- format_input_data(source)
-
-  profile <- match.arg(profile)
-
-  url <- get_ors_url(id = iid)
-
-  features <- list(attributes = TRUE, elevation = TRUE, extra_info = TRUE)
-  options <- format_ors_params(append(features, list(...)), profile)
-
-  res <- call_ors_directions(
-    source = source,
-    profile = profile,
-    units = "m",
-    geometry = TRUE,
-    params = options,
-    url = url,
-    token = instance$token
-  )
-
-  handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = FALSE)
-
-  # Custom summary tables
-  geometry <- ors_multiple_linestrings(res)
-  elevation <- attr(geometry, "elevation")
-
-  distances <- calculate_distances(geometry)
-  durations <- calculate_durations(res, distances$distance)
-  speeds <- calculate_avgspeed(distances$distance, durations$duration)$avgspeed
-
-  speeds_summary <- make_summary_table(unlist(speeds), distances)
-  elevation_summary <- make_summary_table(elevation, distances)
-
-  # ORS summary tables
-  get_ors_summaries <- function(info_type) {
-    summary <- extras[[info_type]]$summary[[1L]]
-    summary$value <- fill_extra_info(summary$value, info_type, profile)
-    summary
-  }
-
-  extras <- res$features$properties$extras
-  summaries <- sapply(names(extras), get_ors_summaries, simplify = FALSE)
-
-  summaries <- sapply(summaries, function(summary) {
-    summary <- stats::aggregate(summary[, c(2L, 3L)],
-      by = summary["value"],
-      sum
-    )
-    row.names(summary) <- summary$value
-    summary$value <- NULL
-    summary
-  }, simplify = FALSE)
-
-  # Append summary tables and set units
-  elev_speeds <- list(elevation = elevation_summary, avgspeed = speeds_summary)
-  summaries <- append(summaries, elev_speeds, after = 0L)
-
-  if (requireNamespace("units")) {
-    summaries <- lapply(summaries, function(s) {
-      s["distance"] <- units::as_units(s$distance, "m")
-      s
-    })
-  }
-
-  output <- list(
-    distance = extract_ors_attribute(res, "distance"),
-    duration = extract_ors_attribute(res, "duration"),
-    detourfactor = extract_ors_attribute(res, "detourfactor"),
-    ascent = extract_ors_attribute(res, "ascent"),
-    descent = extract_ors_attribute(res, "descent"),
-    speed = summary(speeds),
-    elevation = summary(elevation),
-    tables = summaries
-  )
-
-  if (requireNamespace("units")) {
-    units(output$distance) <- "m"
-    units(output$duration) <- "s"
-  }
-
-  class(output) <- "route_summary"
-  output
-}
+# ors_summary <- function(src,
+#                         profile = get_profiles(),
+#                         instance = NULL,
+#                         ...) {
+#   assert_that(is_sf(src))
+#   instance <- check_instance(instance)
+#   iid <- get_id(instance = instance)
+#
+#   # Check if ORS is ready to use
+#   ors_ready(force = TRUE, error = TRUE, id = iid)
+#
+#   # Bring input data into shape
+#   src <- prepare_input(src)
+#
+#   profile <- match.arg(profile)
+#
+#   url <- get_ors_url(id = iid)
+#
+#   features <- list(attributes = TRUE, elevation = TRUE, extra_info = TRUE)
+#   options <- format_ors_params(append(features, list(...)), profile)
+#
+#   res <- call_ors_directions(
+#     src = src,
+#     profile = profile,
+#     units = "m",
+#     geometry = TRUE,
+#     params = options,
+#     url = url,
+#     token = instance$token
+#   )
+#
+#   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = FALSE)
+#
+#   # Custom summary tables
+#   geometry <- ors_multiple_linestrings(res)
+#   elevation <- attr(geometry, "elevation")
+#
+#   distances <- calculate_distances(geometry)
+#   durations <- calculate_durations(res, distances$distance)
+#   speeds <- calculate_avgspeed(distances$distance, durations$duration)$avgspeed
+#
+#   speeds_summary <- make_summary_table(unlist(speeds), distances)
+#   elevation_summary <- make_summary_table(elevation, distances)
+#
+#   # ORS summary tables
+#   get_ors_summaries <- function(info_type) {
+#     summary <- extras[[info_type]]$summary[[1L]]
+#     summary$value <- fill_extra_info(summary$value, info_type, profile)
+#     summary
+#   }
+#
+#   extras <- res$features$properties$extras
+#   summaries <- sapply(names(extras), get_ors_summaries, simplify = FALSE)
+#
+#   summaries <- sapply(summaries, function(summary) {
+#     summary <- stats::aggregate(summary[, c(2L, 3L)],
+#       by = summary["value"],
+#       sum
+#     )
+#     row.names(summary) <- summary$value
+#     summary$value <- NULL
+#     summary
+#   }, simplify = FALSE)
+#
+#   # Append summary tables and set units
+#   elev_speeds <- list(elevation = elevation_summary, avgspeed = speeds_summary)
+#   summaries <- append(summaries, elev_speeds, after = 0L)
+#
+#   if (requireNamespace("units")) {
+#     summaries <- lapply(summaries, function(s) {
+#       s["distance"] <- units::as_units(s$distance, "m")
+#       s
+#     })
+#   }
+#
+#   output <- list(
+#     distance = extract_ors_attribute(res, "distance"),
+#     duration = extract_ors_attribute(res, "duration"),
+#     detourfactor = extract_ors_attribute(res, "detourfactor"),
+#     ascent = extract_ors_attribute(res, "ascent"),
+#     descent = extract_ors_attribute(res, "descent"),
+#     speed = summary(speeds),
+#     elevation = summary(elevation),
+#     tables = summaries
+#   )
+#
+#   if (requireNamespace("units")) {
+#     units(output$distance) <- "m"
+#     units(output$duration) <- "s"
+#   }
+#
+#   class(output) <- "route_summary"
+#   output
+# }
 
 
 #' @rdname ors_inspect
 #' @export
-summary.ors_route <- function(x, ...) {
+#'
+#' @param object A route object of class \code{ors_inspect}.
+summary.ors_route <- function(object, ...) {
   if (is.data.frame(x)) {
     x <- list(x)
   }
-  
+
   lapply(seq_along(x), function(i) {
     route <- x[[i]]
-    
+
   })
 }

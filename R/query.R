@@ -19,8 +19,8 @@ perform_call <- function(req) {
   res
 }
 
-call_ors_directions <- function(source,
-                                destination,
+call_ors_directions <- function(src,
+                                dst,
                                 profile,
                                 units,
                                 geometry,
@@ -29,10 +29,10 @@ call_ors_directions <- function(source,
                                 token,
                                 parse = TRUE) {
   # Get coordinates in shape
-  if (!missing(destination)) {
-    locations <- list(as.numeric(source), as.numeric(destination))
+  if (!missing(dst)) {
+    locations <- list(as.numeric(src), as.numeric(dst))
   } else {
-    locations <- mapply(c, source[[1]], source[[2]], SIMPLIFY = FALSE)
+    locations <- mapply(c, src[, 1], src[, 2], SIMPLIFY = FALSE)
   }
 
   # Prepare the url
@@ -44,15 +44,15 @@ call_ors_directions <- function(source,
     profile,
     ifelse(geometry, "geojson", "")
   )
-  
+
   req <- httr2::req_headers(
     req,
-    Accept = sprintf(
-      "application/%s; charset=utf-8",
-      ifelse(geometry, "geo+json", "json")
+    Accept = paste(
+      "application/json, application/geo+json,",
+      "application/gpx+xml, img/png; charset=utf-8"
     ),
-    Authorization = token,
-    `Content-Type` = "application/json, application/geo+json, charset=utf-8"
+    Authorization = if (isTRUE(token)) Sys.getenv("ORS_TOKEN"),
+    `Content-Type` = "application/json; charset=utf-8"
   )
 
   # Create http body of the request
@@ -79,30 +79,30 @@ call_ors_directions <- function(source,
 
 
 
-call_ors_matrix <- function(source,
-                            destination,
+call_ors_matrix <- function(src,
+                            dst,
                             profile,
                             metrics,
                             units,
                             url,
                             token) {
-  # Format source and destination
-  source_list <- unname(split(source, seq_len(nrow(source))))
-  source_list <- lapply(source_list, as.numeric)
-  destinations_list <- unname(split(destination, seq_len(nrow(destination))))
-  destinations_list <- lapply(destinations_list, as.numeric)
+  # Format src and dst
+  src_list <- unname(split(src, seq_len(nrow(src))))
+  src_list <- lapply(src_list, as.numeric)
+  dsts_list <- unname(split(dst, seq_len(nrow(dst))))
+  dsts_list <- lapply(dsts_list, as.numeric)
 
-  # Coerce destinations and source
-  locations <- append(destinations_list, source_list, after = 0L)
+  # Coerce dsts and src
+  locations <- append(dsts_list, src_list, after = 0L)
 
-  dest_index <- if (nrow(destination) > 1L) {
-    seq(nrow(source), length(locations) - 1L)
+  dest_index <- if (nrow(dst) > 1L) {
+    seq(nrow(src), length(locations) - 1L)
   } else {
-    list(nrow(source))
+    list(nrow(src))
   }
 
-  source_index <- if (nrow(source) > 1L) {
-    seq(0L, nrow(source) - 1L)
+  src_index <- if (nrow(src) > 1L) {
+    seq(0L, nrow(src) - 1L)
   } else {
     list(0L)
   }
@@ -126,33 +126,33 @@ call_ors_matrix <- function(source,
   body_list <- list(
     locations = locations,
     destinations = dest_index,
-    sources = source_index,
+    sources = src_index,
     metrics = box(metrics),
     units = units
   )
   req <- httr2::req_body_json(req, body_list, digits = NA)
   req$parse <- TRUE
-  
+
   perform_call(req)
 }
 
 
 
-call_ors_isochrones <- function(source,
-                            profile,
-                            range,
-                            attributes,
-                            intersections,
-                            interval,
-                            location_type,
-                            params,
-                            range_type,
-                            smoothing,
-                            area_units,
-                            units,
-                            url,
-                            token) {
-  locations <- unname(split(source, seq_len(nrow(source))))
+call_ors_isochrones <- function(src,
+                                profile,
+                                range,
+                                attributes,
+                                intersections,
+                                interval,
+                                location_type,
+                                params,
+                                range_type,
+                                smoothing,
+                                area_units,
+                                units,
+                                url,
+                                token) {
+  locations <- unname(split(src, seq_len(nrow(src))))
   locations <- lapply(locations, as.numeric)
 
   req <- httr2::request(url)

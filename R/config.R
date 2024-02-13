@@ -1,183 +1,157 @@
-#' Change the ORS configuration
-#'
-#' @description Activate profiles and make other changes to the OpenRouteService
-#' configuration file. You can either make changes by passing a parsed
-#' configuration file as contained in \code{ors_instance} objects or by
-#' using one of the convenience arguments.
-#'
-#' @param profiles List of characters specifying the active profiles of an
-#' instance. By default, can be one of the following: \code{car}, \code{hgv},
-#' \code{bike-regular}, \code{bike-mountain}, \code{bike-road},
-#' \code{bike-electric}, \code{walking}, \code{hiking}, \code{wheelchair}.
-#' @param ... Key-value pairs containing profile-specific routing options.
-#' The argument name is interpreted as the profile whose configuration should be
-#' changed. Pass \code{"default"} to change the default parameters. The argument
-#' value needs to be a list of options to be changed.
-#' Example: \code{car = c(maximum_distance = 100000000)}
-#' @param matrix.maximum_routes Maximum number of routes that can be computed
-#' at once. Defaults to 100.
-#' @param matrix.maximum_search_radius Maximum allowed distance between a
-#' coordinate and the nearest road. Defaults to 5000 m.
-#' @param isochrones.maximum_intervals Maximum number of intervals for each
-#' location. Defaults to 10.
-#' @param isochrones.maximum_locations Maximum number of locations per request.
-#' Defaults to 2.
-#' @param config Parsed configuration file as contained in \code{ors_instance}
-#' objects or path to a configuration file.
-#' @param interactive If \code{TRUE}, opens an interactive window to edit
-#' the configuration file directly. The process stops when the window is
-#' switched or closed.
-#' @inheritParams ors_extract
-#'
-#' @returns Nested list of class \code{ors_instance}.
-#' 
-#' @details For a full documentation of all possible configuration values,
-#' refer to the
-#' \href{https://giscience.github.io/openrouteservice/installation/Configuration.html}{OpenRouteService documentation}.
-#' 
-#' Due to stricter permission management on Linux systems,
-#' the configuration file cannot be changed from within R once the Docker
-#' container has been built. To make changes to the service configuration
-#' without root privileges, do an initial OpenRouteService setup first, then
-#' change the configuration file manually and rebuild the container.
-#'
-#' @family ORS setup functions
-#'
-#' @export
-ors_config <- function(instance,
-                       profiles = NULL,
-                       ...,
-                       matrix.maximum_routes = NULL,
-                       matrix.maximum_search_radius = NULL,
-                       isochrones.maximum_intervals = NULL,
-                       isochrones.maximum_locations = NULL,
-                       config = NULL,
-                       interactive = FALSE) {
-  verbose <- attr(instance, "verbose")
-  
-  assert_that(inherits(instance, "ors_instance"))
+detect_config <- function(dir) {
+  configs <- c(
+    conf_dir_json = file.path(dir, "docker", "conf", "ors-config.json"),
+    etc_dir = "/etc/openrouteservice/ors-config.yml",
+    home_dir = "~/.openrouteservice/ors-config.yml",
+    runtime_dir = file.path(dir, "docker", "ors-config.yml"),
+    conf_dir = file.path(dir, "docker", "conf", "ors-config.yml")
+  )
 
-  if (!interactive) {
-    if (is.null(config)) {
-      config <- instance$config$parsed
-      config_file <- NULL
+  config_found <- vapply(configs, file.exists, FUN.VALUE = logical(1))
+  configs <- configs[config_found]
+
+  config_path <- utils::tail(configs, 1)
+
+  if (identical(names(config_path), "conf_dir_json")) {
+    link <- cli::style_hyperlink(
+      text = "Running with Docker",
+      url = paste0(
+        "https://giscience.github.io/openrouteservice/installation/",
+        "Running-with-Docker#docker-configuration"
+      )
+    )
+    cli::cli_warn(c(
+      "!" = "A JSON-style configuration file was mounted.",
+      "i" = paste(
+        "JSON configs are deprecated and not supported by {.pkg ORSRouting}.",
+        "See {link} for details."
+      )
+    ))
+  }
+
+  if (length(config_path)) config_path
+}
+
+
+write_config <- function(config, file = NULL) {
+  handlers <- list(
+    logical = function(x) {
+      structure(ifelse(x, "true", "false"), class = "verbatim")
+    },
+    numeric = function(x) {
+      intx <- as.integer(x)
+      if (all.equal(x, intx))
+        x <- as.integer(x)
+      x
+    },
+    "NULL" = function(x) {
+      structure("", class = "verbatim")
+    }
+  )
+
+  config <- yaml::as.yaml(
+    config,
+    precision = 22,
+    handlers = handlers,
+    indent.mapping.sequence = TRUE
+  )
+
+  if (!is.null(file)) {
+    cat(config, file = file, sep = "")
+  } else {
+    config
+  }
+}
+
+
+compare_endpoints <- function(x, y) {
+  new_ep <- !names(y) %in% names(x)
+
+  if (!any(new_ep)) {
+    y <- y[!new_ep]
+    names(y)[!vapply(
+      seq_along(y),
+      function(i) equivalent_list(x[[i]], y[[i]]),
+      logical(1)
+    )]
+  } else {
+    character()
+  }
+}
+
+
+change_endpoints <- function(self, ...) {
+  config <- self$config$parsed
+  dots <- list(...)
+  dots <- dots[names(dots) %in% c("routing", "matrix", "isochrone", "snap")]
+  dots <- dots[lengths(dots) > 0]
+  if (is.null(config$ors$endpoints)) {
+    config$ors$endpoints <- list()
+  }
+
+  for (endpoint in names(dots)) {
+    if (is.null(config$ors$endpoints[[endpoint]])) {
+      config$ors$endpoints[[endpoint]] <- dots[[endpoint]]
     } else {
-      if (file.exists(config)) {
-        config_file <- config
+      config$ors$endpoints[[endpoint]] <- modify_list(
+        x = config$ors$endpoints[[endpoint]],
+        y = dots[[endpoint]]
+      )
+    }
+  }
+
+  config$ors$endpoints
+}
+
+
+insert_profiles <- function(self, ...) {
+  dots <- list(...)
+  engine <- self$config$parsed$ors$engine
+
+  for (i in seq_along(dots)) {
+    prof <- dots[[i]]
+
+    if (!inherits(prof, "ors_profile")) {
+      if (is.character(prof)) {
+        prof <- ors_profile(prof, template = TRUE)
+      } else {
+        cli::cli_warn(paste(
+          "Argument {i} cannot be coerced to class {.cls ors_profile}",
+          "and will be skipped."
+        ))
       }
     }
 
-    if (...length()) {
-      config <- apply_config_dots(config, ...)
-    }
+    name <- names(prof)
 
-    if (!is.null(profiles)) {
-      profiles <- as.list(profiles)
-      config$ors$services$routing$profiles$active <- profiles
-    }
-
-    if (!is.null(matrix.maximum_routes)) {
-      config$ors$services$matrix$maximum_routes <- matrix.maximum_routes
-    }
-
-    if (!is.null(matrix.maximum_search_radius)) {
-      config$ors$services$matrix$maximum_search_radius <- matrix.maximum_search_radius
-    }
-
-    if (!is.null(isochrones.maximum_intervals)) {
-      config$ors$services$isochrones$maximum_intervals <- isochrones.maximum_intervals
-    }
-
-    if (!is.null(isochrones.maximum_locations)) {
-      config$ors$services$isochrones$maximum_locations <- isochrones.maximum_locations
-    }
-
-    config$ors$services$routing$sources[[1]] <- "data/osm_file.pbf"
-    config$ors$services$routing$profiles$default_params$elevation_cache_path <- "data/elevation_cache"
-    config$ors$services$routing$profiles$default_params$graphs_root_path <- "data/graphs"
-    config$ors$services$routing$init_threads <- 1L
-
-    write_config(config, instance$paths$config_path)
-  } else {
-    slow_edit(instance$paths$config_path, editor = "internal")
-    config_file <- NULL
-  }
-
-  # On Linux, the handling of config files doesn't seem to work seemlessly
-  # Hence, create a conf directory manually and paste the custom config file
-  conf_dir <- file.path(instance$paths$dir, "docker/conf")
-  if (is_linux() && !dir.exists(conf_dir)) {
-    dir.create(conf_dir)
-    file.copy(instance$paths$config_path, file.path(conf_dir, "ors-config.json"))
-  }
-
-  instance[["config"]] <- NULL
-
-  instance <- .instance(instance, config_file = config_file, verbose = verbose)
-
-  assign("instance", instance, envir = ors_cache)
-  invisible(instance)
-}
-
-
-detect_config <- function(dir, config_path = NULL) {
-  conf_dir <- file.path(dir, "docker/conf")
-  data_dir <- file.path(dir, "docker/data")
-
-  in_conf <- file.exists(file.path(conf_dir, "ors-config.json"))
-  in_data <- file.exists(file.path(data_dir, "ors-config.json"))
-
-  if (!is.null(config_path)) {
-    if (in_conf) {
-      copied <- file.rename(config_path, file.path(conf_dir, "ors-config.json"))
+    if (identical(name, "profile_default")) {
+      engine[[name]] <- prof[[name]]
     } else {
-      copied <- file.rename(config_path, file.path(data_dir, "ors-config.json"))
+      engine$profiles[[name]] <- prof[[name]]
     }
 
-    if (!copied) cli::cli_abort("Config sample could not be copied.")
+    engine
   }
 
-  # If docker/conf exists, ORS uses it when the docker container
-  # is started -> Prefer the conf directory
-  if (in_conf) {
-    path <- file.path(conf_dir, "ors-config.json")
-
-    # If docker/conf does not exist, check if a config file is in docker/data.
-  } else if (in_data) {
-    path <- file.path(data_dir, "ors-config.json")
-
-    # If everything fails, copy the sample config from the ORS backend
-  } else {
-    config_sample <- file.path(
-      dir, "openrouteservice", "src", "main", "resources",
-      "ors-config-sample.json"
-    )
-
-    copied <- file.copy(config_sample, file.path(data_dir, "ors-config.json"))
-    if (!copied) cli::cli_abort("Config sample could not be copied.")
-
-    path <- file.path(data_dir, "ors-config.json")
-  }
-
-  path
+  engine
 }
 
 
-read_config <- function(config_path, ...) {
-  jsonlite::read_json(config_path, ...)
+remove_profiles <- function(self, ...) {
+  dots <- list(...)
+  profiles <- self$config$parsed$ors$engine$profiles
+  pnames <- vapply(profiles, "[[", "profile", FUN.VALUE = character(1))
+  del <- pnames %in% dots | names(pnames) %in% dots
+  profiles[del] <- NULL
+  profiles
 }
 
 
-write_config <- function(config, config_path) {
-  config_json <- jsonlite::toJSON(config, auto_unbox = TRUE, pretty = TRUE)
-  cat(config_json, file = config_path)
-}
-
-
-get_all_profiles <- function(config) {
-  profile_node <- names(config$ors$services$routing$profiles)
-  is_profile <- grepl("profile", profile_node)
-  gsub("profile-", "", profile_node[is_profile])
+get_all_profiles <- function() {
+  c(
+    "car", "hgv", "bike-regular", "bike-mountain", "bike-road", "bike-electric",
+    "walking", "hiking", "wheelchair", "public-transport"
+  )
 }
 
 
@@ -197,4 +171,316 @@ apply_config_dots <- function(config, ...) {
     }
   }
   config
+}
+
+
+base_profiles <- list(
+  "car" = "driving-car",
+  "hgv" = "driving-hgv",
+  "bike-regular" = "cycling-regular",
+  "bike-mountain" = "cycling-mountain",
+  "bike-electric" = "cycling-electric",
+  "bike-road" = "cycling-road",
+  "walking" = "foot-walking",
+  "hiking" = "foot-hiking",
+  "wheelchair" = "wheelchair",
+  "public-transport" = "public-transport"
+)
+
+
+is_base_profile <- function(profile) {
+  profile %in% base_profiles || profile %in% names(base_profiles)
+}
+
+
+#' ORS profile
+#'
+#' @description
+#' Construct the configuration for an ORS profile. The \code{ors_profile}
+#' object created by this function can be used as input to the
+#' \code{$add_profiles()} method of \code{\link[=ORSLocal]{ORS instances}}.
+#'
+#' @param name \code{[character]}
+#'
+#' Name of the ORS profile. If a length-2 vector is passed, the first
+#' value is taken as the actual name and the second value is taken as the
+#' title of the profile in the configuration file
+#' (e.g. \code{c("driving-car", "car")}).
+#'
+#' @param ...
+#'
+#' Configuration parameters for the ORS profile. Must be key-value pairs. For
+#' details, refer to the \href{https://giscience.github.io/openrouteservice/installation/Configuration#ors-services-routing-profiles}{configuration reference}.
+#'
+#' @param template \code{logical}
+#'
+#' Whether to use a template if \code{name} is one of the base profiles
+#' (see details).
+#'
+#' @returns An object of class \code{ors_profile} that can be used to add
+#' profiles to \code{\link{ors_instance}}
+#'
+#' @details
+#' ORS defines a number of base profiles including:
+#'
+#' \itemize{
+#'  \item{driving-car}
+#'  \item{driving-hgv}
+#'  \item{cycling-regular}
+#'  \item{cycling-road}
+#'  \item{cycling-electric}
+#'  \item{cycling-mountain}
+#'  \item{foot-walking}
+#'  \item{foot-hiking}
+#'  \item{wheelchair}
+#'  \item{public-transport}
+#' }
+#'
+#' All base profiles have a pre-defined template. Profiles other than
+#' the base profiles can also be constructed with \code{ors_profile}, but
+#' need some more sophisticated preparation (see e.g. Butzer 2017).
+#'
+#' @references Butzer, A.S. (2017). Erstellung eines Routing-Profils für
+#' Feuerwehrfahrzeuge auf Basis von OpenStreetMap-Daten. Bachelor Thesis.
+#' Ruprecht Karl University of Heidelberg.
+#'
+#'
+#' @examples
+#' # Create a car profile with pre-defined defaults
+#' ors_profile("driving-car")
+#'
+#' # Defaults can be modified
+#' ors_profile("driving-car", elevation = FALSE)
+#'
+#' # Create a walking profile with given encoder options
+#' ors_profile("bike-regular", template = FALSE, encoder_options = list(turn_costs = FALSE))
+#'
+#' @export
+ors_profile <- function(name = NULL, ..., template = TRUE) {
+  assert_that(length(name) <= 2)
+
+  if (is.null(name)) {
+    title <- "profile_default"
+    name <- NULL
+  } else if (length(name) == 2) {
+    name <- name[1]
+    title <- name[2]
+  } else if (is_base_profile(name)) {
+    if (name %in% base_profiles) {
+      title <- stats::setNames(names(base_profiles), base_profiles)[name]
+    } else {
+      title <- name
+      name <- base_profiles[[name]]
+    }
+  } else {
+    title <- name
+  }
+
+  if (isFALSE(template)) {
+    if (!...length()) {
+      cli::cli_abort(c(
+        "!" = "Routing profiles need at least one dot argument.",
+        "i" = "If you cannot think of any, try {.code template = TRUE}!"
+      ))
+    }
+
+    if (is.null(name)) {
+      profile <- list(list(...))
+    } else {
+      profile <- list(list(profile = name, ...))
+    }
+
+    names(profile) <- title
+    structure(profile, class = "ors_profile")
+  } else {
+    profile <- make_default_profile(name)
+    dots <- list(...)
+    for (opt in names(dots))
+      profile[[1]][[opt]] <- dots[[opt]]
+    profile
+  }
+}
+
+
+make_default_profile <- function(profile) {
+  default <- ors_profile(
+    template = FALSE,
+    elevation = TRUE,
+    elevation_smoothing = TRUE,
+    encoder_flags_size = 4
+  )
+
+  if (is.null(profile)) return(default)
+
+  switch(
+    profile,
+    "default" = default,
+    "driving-car" = ors_profile(
+      "driving-car",
+      template = FALSE,
+      encoder_options = list(
+        turn_costs = TRUE,
+        block_fords = FALSE,
+        use_acceleration = TRUE,
+        maximum_grade_level = 1,
+        conditional_access = TRUE,
+        conditional_speed = TRUE
+      ),
+      elevation = TRUE,
+      preparation = list(
+        min_network_size = 200,
+        min_one_way_network_size = 200,
+        methods = list(
+          ch = list(
+            enabled = TRUE,
+            threads = 1,
+            weightings = "fastest"
+          ),
+          lm = list(
+            enabled = FALSE,
+            threads = 1,
+            weightings = "fastest",
+            landmarks = 16
+          ),
+          core = list(
+            enabled = TRUE,
+            threads = 1,
+            weightings = "fastest,shortest",
+            landmarks = 64
+          )
+        )
+      ),
+      execution = list(
+        methods = list(
+          lm = list(active_landmarks = 8),
+          core = list(disabling_allowed = TRUE, active_landmarks = 6)
+        )
+      )
+    ),
+    "driving-hgv" = ors_profile(
+      "driving-hgv",
+      template = FALSE,
+      maximum_speed_lower_bound = 75L,
+      elevation = TRUE,
+      encoder_options = list(
+        turn_costs = TRUE,
+        block_fords = FALSE,
+        use_acceleration = TRUE),
+      preparation = list(
+        min_network_size = 200L,
+        min_one_way_network_size = 200L,
+        methods = list(
+          ch = list(
+            enabled = TRUE,
+            threads = 1L,
+            weightings = "recommended"
+          ),
+          lm = list(
+            enabled = TRUE,
+            threads = 1L,
+            weightings = "recommended",
+            landmarks = 16L
+          ),
+          core = list(
+            enabled = TRUE,
+            threads = 1L,
+            weightings = "recommended,shortest",
+            landmarks = 32L
+          ),
+          fastisochrones = list(
+            enabled = TRUE,
+            threads = 12L,
+            weightings = "recommended, shortest",
+            maxcellnodes = 5000L
+          )
+        )
+      ),
+      execution = list(
+        methods = list(
+          lm = list(active_landmarks = 8L),
+          core = list(disabling_allowed = TRUE, active_landmarks = 6L)
+        )
+      )
+    ),
+    "cycling-regular" = ors_profile(
+      "cycling-regular",
+      template = FALSE,
+      encoder_options = list(
+        consider_elevation = FALSE,
+        turn_costs = TRUE,
+        block_fords = FALSE
+      ),
+      preparation = list(
+        min_network_size = 200L,
+        min_one_way_network_size = 200L,
+        methods = list(
+          core = list(
+            enabled = TRUE,
+            threads = 1L,
+            weightings = "recommended,shortest",
+            landmarks = 32L
+          )
+        ),
+        elevation = TRUE
+      ),
+      execution = list(methods = list(core = list(
+        disabling_allowed = TRUE,
+        active_landmarks = 6L
+      )))
+    ),
+    "cycling-mountain" = ors_profile(
+      "cycling-mountain",
+      template = FALSE,
+      maximum_snapping_radius = 10L,
+      encoder_options = list(consider_elevation = FALSE, turn_costs = TRUE),
+      elevation = TRUE
+    ),
+    "cycling-road" = ors_profile(
+      "cycling-road",
+      template = FALSE,
+      encoder_options = list(
+        consider_elevation = FALSE,
+        turn_costs = FALSE,
+        block_fords = FALSE
+      ),
+      elevation = TRUE
+    ),
+    "cycling-electric" = ors_profile(
+      "cycling-electric",
+      template = FALSE,
+      encoder_options = list(
+        consider_elevation = FALSE,
+        turn_costs = TRUE,
+        block_fords = FALSE
+      ),
+      elevation = TRUE
+    ),
+    "foot-walking" = ors_profile(
+      "foot-walking",
+      template = FALSE,
+      interpolate_bridges_and_tunnels = FALSE,
+      elevation = TRUE,
+      encoder_options = list(block_fords = FALSE)
+    ),
+    "foot-hiking" = ors_profile(
+      "foot-hiking",
+      template = FALSE,
+      elevation = TRUE,
+      encoder_options = list(block_fords = FALSE)
+    ),
+    "wheelchair" = ors_profile(
+      "wheelchair",
+      template = FALSE,
+      maximum_snapping_radius = 50,
+      elevation = TRUE,
+      encoder_options = list(block_fords = FALSE)
+    ),
+    "public-transport" = ors_profile(
+      "public-transport",
+      template = FALSE,
+      maximum_visited_nodes = 1000000,
+      elevation = TRUE,
+      encoder_options = list(block_fords = FALSE)
+    )
+  )
 }

@@ -156,49 +156,63 @@ print.ors_condition <- function(x, ...) {
 
 
 #' @export
-print.ors_instance <- function(x, ...) {
+print.ORSInstance <- function(x, ...) {
+  # check if local or remote
+  type <- switch(
+    intersect(class(ors), c("ORSLocal", "ORSRemote")),
+    ORSLocal = "local",
+    ORSRemote = "remote",
+    ORSInstance = "N/A"
+  )
+
+  # check if instance is mounted to the session
   if (any_mounted()) {
     mounted <- get_instance()
-    active <- if (!is.null(x$url)) {
-      identical(x$url, mounted$url)
-    } else {
-      "compose" %in% names(x) && identical(x$paths$dir, mounted$paths$dir)
-    }
+    active <- switch(
+      type,
+      local = identical(x$paths$top, mounted$paths$top),
+      remote = identical(x$url, mounted$url)
+    )
   } else {
     active <- FALSE
   }
 
-  alive <- attr(x, "alive")
-  built <- ors_built(x$paths$dir)
-  type <- attr(x, "type")
-
-  if (identical(type, "remote")) {
-    server <- x$url
-  } else {
-    server <- paste0("https://localhost:", x$compose$ports$host[1], "/")
-  }
-  
-  cat(
-    "<ors_instance>", "\n",
-    " server :", server, "\n",
-    " active :", active, "\n",
-    " alive  :", alive, "\n",
-    if (identical(type, "local")) c(" built  :", built, "\n"),
-    " type   :", type, "\n"
+  # check if instance on initial run
+  init <- switch(
+    type,
+    local = dir.exists(file.path(x$paths$top, "docker", "graphs")),
+    remote = NULL
   )
+
+  # find server for requests
+  server <- switch(
+    type,
+    local = sprintf("https://localhost:%s/", x$compose$ports[1, 1]),
+    remote = get_ors_url(x$server)
+  )
+
+  cat(
+    "<ORSInstance>", "\n",
+    " server :", server, "\n",
+    " type   :", type, "\n",
+    " active :", active, "\n",
+    " init   :", init, "\n"
+
+  )
+
   invisible(x)
 }
 
 
 #' @export
-print.ors_instance_paths <- function(x, ...) {
-  basedir <- relative_path(x$dir, path.expand("~"))
-  compose <- if (!is.null(x$compose_path)) basename(x$compose_path) else NULL
-  config <- if (!is.null(x$config_path)) basename(x$config_path) else NULL
-  extract <- if (!is.null(x$extract_path)) basename(x$extract_path) else NULL
+print.ors_paths <- function(x, ...) {
+  basedir <- relative_path(x$top, path.expand("~"))
+  compose <- if (!is.null(x$compose)) basename(x$compose) else NULL
+  config <- if (!is.null(x$config)) basename(x$config) else NULL
+  extract <- if (!is.null(x$extract)) basename(x$extract) else NULL
 
-  config_dir <- ifelse(grepl("\\/conf\\/", x$config_path), "conf", "data")
-  docker_path <- file.path(x$dir, "docker")
+  config_dir <- ifelse(grepl("\\/conf\\/", x$config), "conf", "data")
+  docker_path <- file.path(x$top, "docker")
   subdocker_paths <- file.path(docker_path, dir(docker_path))
   subdocker_paths_files <- lapply(seq_along(subdocker_paths), function(i) {
     d <- dir(subdocker_paths[i])
@@ -209,33 +223,36 @@ print.ors_instance_paths <- function(x, ...) {
     d
   })
 
-  if (compose %in% basename(subdocker_paths)) {
-    compose_i <- which(compose == basename(subdocker_paths)) + 2
-  }
-  if (!is.null(config) && config %in% unlist(subdocker_paths_files)) {
-    config_i <- which(config == unlist(subdocker_paths_files)) + 2 + length(subdocker_paths)
-  } else {
-    config_i <- NULL
-  }
-  if (!is.null(extract) && config %in% unlist(subdocker_paths_files)) {
-    extract_i <- which(extract == unlist(subdocker_paths_files)) + 2 + length(subdocker_paths)
-  } else {
-    extract_i <- NULL
-  }
+  topdir_files <- list.files(x$top, full.names = TRUE)
+  docker_files <- list.files(docker_path, full.names = TRUE)
+  end_files <- subdocker_paths_files[lengths(subdocker_paths_files) > 0]
 
   top_dir <- c(
     basedir,
-    "docker",
+    basename(topdir_files),
     basename(file.path(docker_path, dir(docker_path))),
     unlist(subdocker_paths_files)
   )
 
   children <- c(
-    list("docker"),
-    list(basename(file.path(docker_path, dir(docker_path)))),
+    list(dir(x$top)),
+    lapply(topdir_files, \(x) list.files(x)),
     subdocker_paths_files,
-    lapply(seq(1, length(unlist(subdocker_paths_files))), function(i) character(0))
+    rep(list(character()), length(end_files))
   )
+
+  compose_i <- config_i <- extract_i <- NULL
+  if (!is.null(compose) && compose %in% top_dir) {
+    compose_i <- which(compose == top_dir)
+  }
+
+  if (!is.null(config) && config %in% top_dir) {
+    config_i <- which(config == top_dir)
+  }
+
+  if (!is.null(extract) && extract %in% top_dir) {
+    extract_i <- which(extract == top_dir)
+  }
 
   annot <- top_dir
   annot[compose_i] <- paste(annot[compose_i], "\033[33m<- compose file\033[39m")
@@ -249,12 +266,11 @@ print.ors_instance_paths <- function(x, ...) {
       children = I(children),
       annot = annot
     ),
+    trim = TRUE,
     ...
   )
 
-  tree <- gsub(" ", "\u00a0", tree)
-
-  for (node in tree) {
+  for (node in gsub(" ", "\u00a0", tree)) {
     cli::cli_text(node)
   }
 
@@ -263,21 +279,13 @@ print.ors_instance_paths <- function(x, ...) {
 
 
 #' @export
-print.ors_instance_extract <- function(x, ...) {
-  cat("Name :", x$name, "\n")
-  cat("Size :", x$size, "MB")
-  invisible(x)
-}
-
-
-#' @export
-print.ors_instance_config <- function(x, ...) {
-  allp <- get_all_profiles(x$parsed)
-  allp_in <- allp %in% x$profiles
-  allp_in <- lapply(allp_in, ifelse, cli::col_green(T), cli::col_red(F))
+print.ors_config <- function(x, ...) {
+  allp <- union(get_all_profiles(), names(x$profiles))
+  allp_in <- allp %in% x$profiles | allp %in% names(x$profiles)
+  allp_in <- lapply(allp_in, ifelse, cli::col_green(TRUE), cli::col_red(FALSE))
 
   allp <- sapply(allp, function(p) {
-    paste0(p, strrep("\u00a0", 14L - nchar(p)))
+    paste0(p, strrep("\u00a0", max(nchar(allp)) - nchar(p) + 1))
   })
 
   names(allp_in) <- allp
@@ -288,7 +296,7 @@ print.ors_instance_config <- function(x, ...) {
 
 
 #' @export
-print.ors_instance_settings <- function(x, ...) {
+print.ors_settings <- function(x, ...) {
   names(x$memory) <- c("Total memory", "Free memory", "Initial memory", "Max memory")
   mem_list <- lapply(x$memory, function(m) paste(round(m, 2), "GB"))
   mem_df <- as.data.frame(t(mem_list))
@@ -300,12 +308,10 @@ print.ors_instance_settings <- function(x, ...) {
     x$ports[2L, 2L]
   )
 
-  prot <- ifelse(x$auto_deletion, "unprotected", "protected")
-  
   cli::cli_text("Mode\u00a0\u00a0\u00a0: {x$graph_building}")
   cli::cli_text("Name\u00a0\u00a0\u00a0: {x$name}")
   cli::cli_text("Ports\u00a0\u00a0: {port_chr}")
-  cli::cli_text("Config\u00a0: {prot}")
+  cli::cli_text("Image\u00a0\u00a0: {x$image}")
   cli::cat_line()
   print(mem_df, right = FALSE, row.names = FALSE)
   invisible(x)
@@ -313,37 +319,26 @@ print.ors_instance_settings <- function(x, ...) {
 
 
 #' @export
-print.ors_instance_status <- function(x, ...) {
-  gln <- c(
-    "Docker running",
-    "Image exists",
-    "Container built",
-    "Container running",
-    "Service ready"
-  )
-
-  gl <- sapply(x, ifelse, cli::col_green(TRUE), cli::col_red(FALSE))
-
-  gln <- sapply(gln, function(n) {
-    paste0(n, strrep("\u00a0", 18L - nchar(n)))
-  })
-
-  names(gl) <- gln
-
-  cli::cli_dl(gl)
-  invisible(x)
-}
-
-
-#' @export
-print.ors_compose <- function(x, ...) {
+print.ors_compose_parsed <- function(x, ...) {
   cat(yaml::as.yaml(x, indent.mapping.sequence = TRUE), "\n")
   invisible(x)
 }
 
 
 #' @export
-print.ors_config <- function(x, ...) {
+print.ors_config_parsed <- function(x, ...) {
   utils::str(x, max.level = 3, give.attr = FALSE)
   invisible(x)
+}
+
+
+#' @export
+print.ors_profile <- function(x, ...) {
+  cat("<ors_profile>\n", write_config(x, ...))
+}
+
+
+#' @export
+print.stprof <- function(x, ...) {
+  cat(write_config(x, ...))
 }

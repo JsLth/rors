@@ -2,33 +2,33 @@ get_ors_geometry <- function(res, alt = 1L, as_coords = FALSE) {
   if (missing(res)) {
     return(sf::st_sfc(sf::st_linestring(), crs = 4326))
   }
-  
+
   if (!is_ors_geojson(res)) {
     return(NULL)
   }
-  
+
   features <- get_ors_features(res, properties = FALSE)
-  
+
   if (is.na(alt)) {
     alt <- seq(1, length(features$geometry$coordinates))
   }
-  
+
   geom <- features$geometry$coordinates[alt]
-  
+
   if (length(geom) == 1) {
     geom <- geom[[1]]
   }
-  
+
   if (!as_coords) {
     if (nrow(geom) > 1) {
       geom <- sf::st_linestring(geom)
     } else {
       geom <- sf::st_point(geom)
     }
-    
+
     geom <- sf::st_sfc(geom, crs = 4326)
   }
-  
+
   geom
 }
 
@@ -45,7 +45,7 @@ get_ors_summary <- function(res, geometry = TRUE) {
   } else {
     properties <- get_ors_features(res)
     summ <- properties$summary
-    
+
     if (is_ors_geojson(res)) {
       summ <- sf::st_sf(summ, geometry = get_ors_geometry(res))
     }
@@ -89,13 +89,13 @@ get_ors_waypoints_range <- function(res, alt = 1L) {
 get_ors_waypoints <- function(res, alt = 1L) {
   if (is_ors_geojson(res)) {
     properties <- get_ors_features(res)
-    
+
     # extract from response
     steps <- properties$segments[[alt]]$steps
-    
+
     # construct a dataframe with segment indicator for each segment
     steps <- lapply(seq_along(steps), \(i) cbind(segment = i, steps[[i]]))
-    
+
     # bind segment dataframes
     steps <- rbind_list(steps)
     steps <- cbind(step = as.numeric(row.names(steps)), steps)
@@ -106,13 +106,13 @@ get_ors_waypoints <- function(res, alt = 1L) {
     steps$way_points <- NULL
     steps$distance <- as.numeric(steps$distance)
     steps$duration <- as.numeric(steps$duration)
-    
+
     # expand dataframe
     steps <- steps[rep(1:nrow(steps), reps),]
-    
+
     steps$name <- gsub(pattern = "^-$", replacement = NA, steps$name)
     row.names(steps) <- NULL
-    tibble::as_tibble(steps)
+    as_data_frame(steps)
   }
 }
 
@@ -121,7 +121,7 @@ get_ors_warnings <- function(res) {
   if (is_ors_error(res)) {
     return(NULL)
   }
-  
+
   if (is_ors_geojson(res)) {
     warnings <- res$features$properties$warnings
   } else {
@@ -136,7 +136,7 @@ is_ors_geojson <- function(res) {
   } else {
     identical(res$type, "FeatureCollection")
   }
-  
+
 }
 
 

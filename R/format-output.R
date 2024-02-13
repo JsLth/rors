@@ -12,8 +12,8 @@ apply_directions <- function(index,
                              instance,
                              call_index) {
   res <- call_ors_directions(
-    source = locations[index, "source"],
-    destination = locations[index, "dest"],
+    src = locations[index, "src"],
+    dst = locations[index, "dest"],
     profile = profile,
     units = units,
     geometry = geometry,
@@ -30,8 +30,8 @@ apply_directions <- function(index,
 
 
 apply_shortest_routes <- function(index,
-                                  source,
-                                  destination,
+                                  src,
+                                  dst,
                                   iter,
                                   units,
                                   geometry,
@@ -39,12 +39,12 @@ apply_shortest_routes <- function(index,
                                   type,
                                   ...) {
   routes <- suppressWarnings(
-    ors_distances(
-      source = source[iter[index, "point_number"], ],
-      destination = if (is.data.frame(destination)) {
-        destination
-      } else if (is.list(destination)) {
-        destination[[iter[index, "point_number"]]]
+    ors_pairwise(
+      src = src[iter[index, "point_number"], ],
+      dst = if (is.data.frame(dst)) {
+        dst
+      } else if (is.list(dst)) {
+        dst[[iter[index, "point_number"]]]
       },
       profile = iter[index, "profile"],
       units = units,
@@ -53,7 +53,7 @@ apply_shortest_routes <- function(index,
       ...
     )
   )
-  
+
   best_index <- suppressWarnings(
     match(min(routes[[type]], na.rm = TRUE), routes[[type]])
   )
@@ -74,15 +74,15 @@ route_to_df <- function(res,
                         elev_as_z = FALSE,
                         params = list()) {
   alt <- get_ors_alternatives(res)
-  
+
   rlist <- lapply(seq_len(alt), function(i) {
     # get waypoints from steps for each segment
     route <- get_ors_waypoints(res, i)
-    
+
     if (level == "segment") {
       route[c("type", "instruction", "exit_number")] <- NULL
     }
-    
+
     # combine waypoints with geometry
     route <- sf::st_sf(
       route,
@@ -96,7 +96,7 @@ route_to_df <- function(res,
       units(route$elevation) <- "m"
       route <- sf::st_zm(route)
     }
-    
+
     # derive waypoint metrics from geometry
     if (level == "waypoint") {
       # get distances by measuring geometry length
@@ -107,7 +107,7 @@ route_to_df <- function(res,
       route[c("distance", "duration")] <- data.frame(distances, durations)
     }
     route$avgspeed <- calculate_avgspeed(route$distance, route$duration)
-    
+
     # extract attributes
     params$attributes <- c(
       if (elevation) c("ascent", "descent"),
@@ -115,7 +115,7 @@ route_to_df <- function(res,
       params$attributes
     )
     attrib <- get_ors_attributes(res, which = params$attributes, alt = i)
-    
+
     # extract and format extra info
     extra_info <- lapply(
       params$extra_info,
@@ -126,13 +126,13 @@ route_to_df <- function(res,
     if (ncol(extra_info)) {
       route <- cbind(route, extra_info)
     }
-    
+
     # aggregate in case level is not "waypoint"
     if (level != "waypoint") {
       if (level == "segment") {
         route[names(attrib)] <- NA
       }
-      
+
       route <- by(
         route[3L:ncol(route)],
         INDICES = route[[level]],
@@ -142,16 +142,16 @@ route_to_df <- function(res,
       )
       route <- do.call(rbind.data.frame, route)
     }
-    
+
     # reorder columns
     route <- reorder_route_columns(route)
-    
+
     # make sure units are set properly
     units(route$distance) <- res$metadata$query$units
     units(route$duration) <- "s"
     units(route$avgspeed) <- "km/h"
-    
-    sf::st_as_sf(tibble::as_tibble(route))
+
+    sf::st_as_sf(data_frame(route))
   })
 
   if (length(rlist) > 1) {
@@ -162,7 +162,7 @@ route_to_df <- function(res,
   } else {
     rlist <- rlist[[1]]
   }
-  
+
   rlist
 }
 
@@ -196,17 +196,17 @@ aggregate_route <- function(route_section, level, attrib) {
 #' @noRd
 fill_extra_info <- function(codes, info_type, profile) {
   tab <- fill_table[fill_table$name %in% info_type, ]
-  
+
   # convert 0/1 to logical
   if (info_type %in% "tollways") {
     codes <- as.logical(codes)
   }
-  
+
   # convert characters to (un)ordered factors
   if (nrow(tab)) {
     profile <- eval(str2lang(tab$profile))
     fct_fun <- ifelse(tab$ordinal, ordered, factor)
-    
+
     if (tab$base2) {
       cats <- vapply(codes, function(code) {
         decodes <- decode_base2(code)
@@ -226,102 +226,102 @@ fill_extra_info <- function(codes, info_type, profile) {
 
 country_info <- c(
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla",
-  "Antigua and Barbuda",  "Argentina", "Armenia", "Australia", "Austria",
-  "Azerbaijan",  "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium",
-  "Belize",  "Benin", "Bermuda", "Bhutan", "Bolivia",
-  "Bosnia and Herzegovina",  "Botswana", "Brazil",
-  "British Indian Ocean Territory", "British Sovereign Base Areas", 
-  "British Virgin Islands", "Brunei", "Bulgaria", "Burkina Faso",  "Burundi",
-  "Cambodia", "Cameroon", "Canada", "Cape Verde", "Cayman Islands",
-  "Central African Republic", "Chad", "Chile", "China", "Colombia",
-  "Comoros", "Congo-Brazzaville", "Congo-Kinshasa", "Cook Islands",
-  "Costa Rica", "Côte d’Ivoire", "Croatia", "Cuba", "Cyprus",
-  "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
-  "East Timor", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea",
-  "Eritrea", "Estonia", "Ethiopia", "Falkland Islands", "Faroe Islands",
-  "Federated States of Micronesia", "Fiji", "Finland", "France", "Gabon",
-  "Gambia", "Georgia", "Germany", "Germany - Belgium", 
-  "Ghana", "Gibraltar", "Greece", "Greenland", "Grenada", "Guatemala", 
-  "Guernsey", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", 
-  "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", 
-  "Isle of Man", "Israel", "Italy", "Jamaica", "Jangy-ayyl", "Japan", 
-  "Jersey", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", 
-  "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", 
-  "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", 
-  "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", 
-  "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", 
-  "Mexico", "Moldova", "Monaco", "Mongolia", "Montenegro", "Montserrat", 
-  "Morocco", "Mozambique", "Myanmar", "name:en", "Namibia", "Nauru", 
-  "Nepal", "Netherlands - Belgium", "New Zealand", "Nicaragua", 
-  "Niger", "Nigeria", "Niue", "North Korea", "Norway", "Oman", 
-  "Pakistan", "Palau", "Palestinian Territories", "Panama", "Papua New Guinea", 
-  "Paraguay", "Peru", "Philippines", "Pitcairn Islands", "Poland", 
-  "Portugal", "Qatar", "Romania", "Russian Federation", "Rwanda", 
-  "Sahrawi Arab Democratic Republic",
+  "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
+  "Azerbaijan", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium",
+  "Belize", "Benin", "Bermuda", "Bhutan", "Bolivia", "Bosnia and Herzegovina",
+  "Botswana", "Brazil", "British Indian Ocean Territory",
+  "British Sovereign Base Areas", "British Virgin Islands", "Brunei",
+  "Bulgaria", "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Canada",
+  "Cape Verde", "Cayman Islands", "Central African Republic", "Chad", "Chile",
+  "China", "Colombia", "Comoros", "Congo-Brazzaville", "Congo-Kinshasa",
+  "Cook Islands", "Costa Rica", r"[C\u00f4te d\u2019Ivoire]", "Croatia", "Cuba",
+  "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica",
+  "Dominican Republic", "East Timor", "Ecuador", "Egypt", "El Salvador",
+  "Equatorial Guinea", "Eritrea", "Estonia", "Ethiopia", "Falkland Islands",
+  "Faroe Islands", "Federated States of Micronesia", "Fiji", "Finland",
+  "France", "Gabon", "Gambia", "Georgia", "Germany", "Germany - Belgium",
+  "Ghana", "Gibraltar", "Greece", "Greenland", "Grenada", "Guatemala",
+  "Guernsey", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras",
+  "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland",
+  "Isle of Man", "Israel", "Italy", "Jamaica", "Jangy-ayyl", "Japan", "Jersey",
+  "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", "Kuwait", "Kyrgyzstan",
+  "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein",
+  "Lithuania", "Luxembourg", "Macedonia", "Madagascar", "Malawi", "Malaysia",
+  "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius",
+  "Mexico", "Moldova", "Monaco", "Mongolia", "Montenegro", "Montserrat",
+  "Morocco", "Mozambique", "Myanmar", "name:en", "Namibia", "Nauru", "Nepal",
+  "Netherlands - Belgium", "New Zealand", "Nicaragua", "Niger", "Nigeria",
+  "Niue", "North Korea", "Norway", "Oman", "Pakistan", "Palau",
+  "Palestinian Territories", "Panama", "Papua New Guinea", "Paraguay", "Peru",
+  "Philippines", "Pitcairn Islands", "Poland", "Portugal", "Qatar", "Romania",
+  "Russian Federation", "Rwanda", "Sahrawi Arab Democratic Republic",
   "Saint Helena - Ascension and Tristan da Cunha", "Saint Kitts and Nevis",
-  "Saint Lucia", "Saint Vincent and the Grenadines",  "Samoa", "San Marino",
-  "São Tomé and Príncipe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles",
-  "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands",
-  "Somalia", "South Africa", "South Georgia and the South Sandwich Islands",
-  "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname",
-  "Swaziland", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan",
-  "Tanzania", "Thailand", "The Bahamas", "The Netherlands", "Togo", "Tokelau", 
-  "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", 
+  "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino",
+  r"[S\u00e3o Tom\u00e9 and Pr\u00edncipe]", "Saudi Arabia", "Senegal",
+  "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia",
+  "Solomon Islands", "Somalia", "South Africa",
+  "South Georgia and the South Sandwich Islands", "South Korea", "South Sudan",
+  "Spain", "Sri Lanka", "Sudan", "Suriname", "Swaziland", "Sweden",
+  "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand",
+  "The Bahamas", "The Netherlands", "Togo", "Tokelau", "Tonga",
+  "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan",
   "Turks and Caicos Islands", "Tuvalu", "Uganda", "Ukraine",
-  "United Arab Emirates",  "United Kingdom", "United States of America",
+  "United Arab Emirates", "United Kingdom", "United States of America",
   "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam",
-  "Yemen", "Zambia", "Zimbabwe", "Border India - Bangladesh", "Île Verte",
-  "Border Azerbaijan - Armenia (Enclave AZE)", "Freezland Rock",
-  "Border SI-HR", "Willis Island", "Chong-Kara", "Ελλάδα - Παγγαίο",
+  "Yemen", "Zambia", "Zimbabwe", "Border India - Bangladesh",
+  r"[\u00cele Verte]", "Border Azerbaijan - Armenia (Enclave AZE)",
+  "Freezland Rock", "Border SI-HR", "Willis Island", "Chong-Kara",
+  r"[\u0395\u03bb\u03bb\u03ac\u03b4\u03b1 - \u03a0\u03b1\u03b3\u03b3\u03b1\u03af\u03bf]",
   "Bristol Island", "Dist. Judges Court", "Border Kyrgyzstan - Uzbekistan",
-  "Border Malawi - Mozambique	", "中華民國"
+  r"[Border Malawi - Mozambique\t]", r"[\u4e2d\u83ef\u6c11\u570b]"
 )
 
 
-fill_table <- tibble::tibble(
-  name = c(
-    "steepness", "surface", "waycategory", "waytypes",
-    "traildifficulty", "roadaccessrestrictions", "countryinfo"
+fill_table <- structure(
+  list(
+    name = c(
+      "steepness", "surface", "waycategory", "waytypes", "traildifficulty",
+      "roadaccessrestrictions", "countryinfo"
+    ),
+    levels = list(
+      -5:5, 0:18, c(0, 1, 2, 4, 8, 16, 32, 64, 128), 0:10, -7:6,
+      c(0, 1, 2, 4, 8, 16, 32), 1:236
+    ),
+    labels = list(
+      c(
+        ">16% decline", "12-15% decline", "7-11% decline", "4-6% decline",
+        "1-3% decline", "0% incline", "1-3% incline", "4-6% incline", "7-11% incline",
+        "12-15% incline", ">16% incline"
+      ),
+      c(
+        "Unknown", "Paved", "Unpaved", "Asphalt", "Concrete", "Cobblestone", "Metal",
+        "Wood", "Compacted Gravel", "Fine Gravel", "Gravel", "Dirt", "Ground", "Ice",
+        "Paving Stones", "Sand", "Woodchips", "Grass", "Grass Paver"
+      ),
+      c(
+        "No category", "Highway", "Steps", "Unpaved Road", "Ferry", "Track", "Tunnel",
+        "Paved Road", "Ford"
+      ),
+      c(
+        "Unknown", "State Road", "Road", "Street", "Path", "Track", "Cycleway",
+        "Footway", "Steps", "Ferry", "Construction"
+      ),
+      c(
+        "mtb:scale=6", "mtb:scale=5", "mtb:scale=4", "mtb:scale=3", "mtb:scale=2",
+        "mtb:scale=1", "mtb:scale=0", "No Tag", "sac_scale=hiking",
+        "sac_scale=mountain_hiking", "sac_scale=demanding_mountain_hiking",
+        "sac_scale=alpine_hiking", "sac_scale=demanding_alpine_hiking",
+        "sac_scale=difficult_alpine_hiking"
+      ),
+      c("None", "No", "Customers", "Destination", "Delivery", "Private", "Permissive"),
+      country_info
+    ),
+    profile = rep(c(NA, "profile", NA), c(4L, 1L, 2L)),
+    ordinal = c(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE),
+    base2 = c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE)
   ),
-  levels = list(
-    seq(-5, 5), seq(0, 18), c(0, 1, 2, 4, 8, 16, 32, 64, 128),
-    seq(0, 10), seq(-7, 6), c(0, 1, 2, 4, 8, 16, 32), seq(1, 236)
-  ),
-  labels = list(
-    c(
-      ">16% decline", "12-15% decline", "7-11% decline", "4-6% decline",
-      "1-3% decline", "0% incline", "1-3% incline", "4-6% incline",
-      "7-11% incline", "12-15% incline", ">16% incline"
-    ),
-    c(
-      "Unknown", "Paved", "Unpaved", "Asphalt", "Concrete", "Cobblestone",
-      "Metal", "Wood", "Compacted Gravel", "Fine Gravel", "Gravel", "Dirt",
-      "Ground", "Ice", "Paving Stones", "Sand", "Woodchips", "Grass", "Grass Paver"
-    ),
-    c(
-      "No category", "Highway", "Steps", "Unpaved Road", "Ferry", "Track",
-      "Tunnel", "Paved Road", "Ford"
-    ),
-    c(
-      "Unknown", "State Road", "Road", "Street", "Path", "Track", "Cycleway",
-      "Footway", "Steps", "Ferry", "Construction"
-    ),
-    c(
-      "mtb:scale=6", "mtb:scale=5", "mtb:scale=4", "mtb:scale=3", "mtb:scale=2",
-      "mtb:scale=1", "mtb:scale=0", "No Tag", "sac_scale=hiking",
-      "sac_scale=mountain_hiking", "sac_scale=demanding_mountain_hiking",
-      "sac_scale=alpine_hiking", "sac_scale=demanding_alpine_hiking",
-      "sac_scale=difficult_alpine_hiking"
-    ),
-    c(
-      "None", "No", "Customers", "Destination",
-      "Delivery", "Private", "Permissive"
-    ),
-    country_info
-  ),
-  profile = c(NA, NA, NA, NA, "profile", NA, NA),
-  ordinal = c(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE),
-  base2 = c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE)
+  class = "data.frame",
+  row.names = 1:7
 )
 
 
@@ -401,7 +401,7 @@ reorder_route_columns <- function(waypoints) {
     "waycategory",  "waytype", "traildifficulty", "green", "noise",
     "detourfactor", "percentage", "geometry"
   )
-  order_columns <- intersect(names(waypoints), unique(order_columns))
+  order_columns <- intersect(unique(order_columns), names(waypoints))
   waypoints[order_columns]
 }
 

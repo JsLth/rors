@@ -4,10 +4,10 @@
 \alias{get_closest_pois}
 \title{Group a POI dataset}
 \usage{
-get_closest_pois(source, pois, n = NULL, radius = NULL)
+get_closest_pois(src, pois, n = NULL, radius = NULL)
 }
 \arguments{
-\item{source}{\code{[sf]}
+\item{src}{\code{[sf]}
 
 Source dataset containing point geometries that shall be routed from.}
 
@@ -32,7 +32,7 @@ source points. If \code{NULL}, \code{n} must be provided.}
 }
 \value{
 Returns \code{pois} with an added \code{.groups} column that links
-each row to a row in the \code{source} dataset.
+each row to a row in the \code{src} dataset.
 }
 \description{
 Groups a dataset containing points of interest based on their

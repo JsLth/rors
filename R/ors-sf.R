@@ -7,13 +7,6 @@ st_centroid2 <- function(polygons) {
 }
 
 
-#' st_coordinates but returns a data.frame instead of a matrix
-#' @noRd
-st_coordinates2 <- function(x) {
-  tibble::as_tibble(sf::st_coordinates(x))[, c("X", "Y")]
-}
-
-
 #' Extracts the smallest linestring increment from ORS directions response
 #' @noRd
 ors_multiple_linestrings <- function(res, alt = 1L) {
@@ -27,7 +20,7 @@ ors_multiple_linestrings <- function(res, alt = 1L) {
     sf::st_linestring(segment)
   })
   geometry <- sf::st_sfc(linestrings, crs = 4326L)
-  
+
   geometry
 }
 
@@ -36,21 +29,22 @@ ors_multiple_linestrings <- function(res, alt = 1L) {
 #' @noRd
 ors_polygon <- function(res) {
   coords <- get_ors_geometry(res, alt = NA, as_coords = TRUE)
-  poly <- lapply(coords, function(c) {
-    ls <- sf::st_linestring(matrix(c, ncol = 2))
-    sf::st_sf(geometry = sf::st_sfc(sf::st_cast(ls, "POLYGON")))
-  })
 
-  poly <- do.call(rbind, poly)
-  poly <- cbind(poly, res$features$properties[-3])
-  poly <- sf::st_set_crs(poly, 4326)
+  # extract properties
+  props <- res$features$properties
+  props$center <- NULL
 
+  # convert coordinates to polygon geometry
+  if (!is.list(coords)) coords <- list(coords)
+  coords <- lapply(coords, function(x) sf::st_polygon(list(x[1, , ])))
+  poly <- do.call(sf::st_sfc, coords)
+  poly <- sf::st_sf(props, geometry = poly, crs = 4326)
+
+  # reverse order of isochrones within each group for proper plotting
   poly <- tapply(
     seq_len(nrow(poly)),
     INDEX = as.factor(poly$group_index),
-    FUN = function(i) {
-      poly[i, ][seq(dim(poly[i, ])[1], 1), ]
-    },
+    FUN = function(i) poly[i, ][dim(poly[i, ])[1]:1, ],
     simplify = FALSE
   )
   poly <- do.call(rbind.data.frame, poly)

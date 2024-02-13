@@ -11,12 +11,14 @@ ors_cli <- function(info = NULL,
                     line = NULL,
                     ...,
                     .envir = NULL) {
-  if (is.null(.envir)) {
-    .envir <- parent.frame()
-  }
-  
+  .envir <- .envir %||% parent.frame()
   verbose <- get0("verbose", envir = parent.frame(), ifnotfound = FALSE)
-  
+
+  if (!verbose) {
+    private <- get0("private", envir = parent.frame(), ifnotfound = list())
+    verbose <- private$.verbose %||% FALSE
+  }
+
   if (!verbose) {
     return(invisible(NULL))
   }
@@ -37,11 +39,11 @@ ors_cli <- function(info = NULL,
     )
     pfun(..., .envir = .envir)
   }
-  
+
   if (!is.null(rule)) {
     cli::cli_rule(rule, ..., .envir = parent.frame())
   }
-  
+
   if (!is.null(line)) {
     cli::cat_line()
   }

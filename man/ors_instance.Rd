@@ -5,23 +5,14 @@
 \title{OpenRouteService instance}
 \usage{
 ors_instance(
-  instance = NULL,
   dir = "~",
   server = NULL,
-  version = "master",
+  version = "latest",
   overwrite = FALSE,
   verbose = TRUE
 )
 }
 \arguments{
-\item{instance}{\code{[ors_instance]}
-
-If \code{NULL}, creates a new instance from a given directory. Otherwise, the
-existing instance object is validated, updated and stored. This should be
-done every time after loading the package. It also comes in handy when making
-any sort of manual changes to the directory or server, such as changing the
-configuration file.}
-
 \item{dir}{\code{[character]}
 
 Custom OpenRouteService directory. If not specified, the directory
@@ -33,14 +24,14 @@ Ignored if \code{server} is not \code{NULL}.}
 
 URL of a server that accepts OpenRouteService requests. This can be a URL
 to a local or a remote server. The official public API can be accessed using
-the shortcut \code{"api"}. Keep in mind that the public API is
+the shortcut \code{"public"}. Keep in mind that the public API is
 rate-restricted and requests are automatically throttled to 40 requests per
 minute. Routing functions \emph{will} be slow for larger datasets.}
 
 \item{version}{\code{[character]}
 
 The OpenRouteService version to use. Can either be a version number (e.g.
-6.7.0) or \code{"master"}. Ignored if \code{server} is not \code{NULL}.}
+7.2.0) or \code{"master"}. Ignored if \code{server} is not \code{NULL}.}
 
 \item{overwrite}{\code{[logical]}
 
@@ -52,26 +43,15 @@ if it exists.}
 If \code{TRUE}, prints informative messages and spinners.}
 }
 \value{
-Nested list of class \code{ors_instance}. The object contains all
-information relevant for a complete server setup, namely paths,
-configurations, settings, and status helpers. The object auto-prints
-additional attributes, that describe the setup state:
-\describe{
-\item{active}{Whether an ORS instance is currently used inside the package
-environment.}
-\item{alive}{Whether an ORS object refers to an existing instance or if the
-instance was removed using \code{\link{ors_remove}}.}
-\item{built}{Whether an initial setup of an ORS instance was done.}
-\item{type}{Whether an instance represents a remote server or a local
-server/directory}
-}
+R6 object of class \code{ors_instance} as created by
+\code{\link{ORSInstance}}
 }
 \description{
 Creates an OpenRouteService instance object. An instance
 represents either a local/remote server or a directory from which
 OpenRouteService can be set up. Running this function or any of the related
 functions listed below stores the instance in an internal environment object
-and enables functions like \code{\link{ors_distances}} to
+and enables functions like \code{\link{ors_pairwise}} to
 automatically detect the appropriate server information needed to make a
 successful request. Hence, this function should always be run after
 loading \code{ORSRouting} as a means of fixing an instance to the current
@@ -85,42 +65,23 @@ package functions on much larger datasets. For setting up a local server,
 it is required to build and start a Docker container.
 To do this, \code{ors_instance}
 starts Docker (if necessary), downloads and unpacks the OpenRouteService
-source code and returns an object of class \code{ors_instance} that can be
-modified and complemented using the following functions:
+source code and returns an object of class \code{ors_instance}.
 
-\itemize{
-\item Mount an extract with \code{\link{ors_extract}}
-\item Change the ORS configuration with \code{\link{ors_config}}
-\item Change container settings with \code{\link{ors_settings}}
-\item Build and start a container with \code{\link{ors_up}}
-\item Take a container down with \code{\link{ors_down}}
-\item Start an existing container with \code{\link{ors_start}}
-\item Stop a running container with \code{\link{ors_stop}}
-\item Remove OpenRouteService with \code{\link{ors_remove}}
-}
+For a full reference of the methods of an ORS instance, refer to
+\code{\link{ORSLocal}} and \code{\link{ORSRemote}}.
 }
 \examples{
 \dontrun{
 dir <- dir.create("~/test_ors")
 
 # Download and furnish an ORS instance
-ors <- ors_instance(dir = dir, version = "6.7.0", auto_deletion = FALSE)
-ors
+ors_instance(dir = dir, version = "7.2.0")
 
-# Update an ORS instance
-ors <- ors_instance(ors)
+# Connect to the public API
+ors_instance(server = "public")
+
+# Connect to a local server
+ors_instance(server = "https://127.0.0.1:8001/")
 }
 
 }
-\seealso{
-Other ORS setup functions: 
-\code{\link{ors_change}()},
-\code{\link{ors_config}()},
-\code{\link{ors_extract}()},
-\code{\link{ors_image}()},
-\code{\link{ors_remove}()},
-\code{\link{ors_settings}()},
-\code{\link{ors_start}()},
-\code{\link{ors_up}()}
-}
-\concept{ORS setup functions}

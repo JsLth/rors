@@ -4,7 +4,7 @@
 \alias{get_extract_boundaries}
 \title{Extract boundaries}
 \usage{
-get_extract_boundaries(instance = NULL, force = FALSE, verbose = TRUE)
+get_extract_boundaries(instance = NULL, force = FALSE, verbose = TRUE, ...)
 }
 \arguments{
 \item{instance}{\code{[ors_instance]}
@@ -16,12 +16,17 @@ an instance globally is not feasible.}
 
 \item{force}{\code{[logical]}
 
-If \code{TRUE}, function must query local host. If
-\code{FALSE}, the status will be read from the cache if possible.}
+If \code{TRUE}, extract must be identified and parsed. If
+\code{FALSE}, the geometries will be read from the cache if possible.}
 
 \item{verbose}{\code{[logical]}
 
 If \code{TRUE}, prints a loading spinner.}
+
+\item{...}{If \code{instance} is a local instance, this is ignored.
+Otherwise, specifies further arguments for generating a random bbox
+including: \code{dist}, the bbox radius in meters, and \code{seed}, a
+random seed as in \code{\link{set.seed}}.}
 }
 \value{
 An \code{sfc} object of the currently mounted extract boundaries.

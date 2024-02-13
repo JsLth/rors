@@ -2,36 +2,31 @@
 #' @param to_coords Whether to convert input sf dataframes to normal dataframes
 #' holding coordinates
 #' @noRd
-format_input_data <- function(.data, to_coords = TRUE, len = NULL) {
-  .data_name <- substitute(.data)
+prepare_input <- function(.data, to_coords = TRUE, len = NULL) {
+  .data <- sf::st_transform(sf::st_geometry(.data), 4326L)
 
-  .data <- sf::st_transform(.data, 4326L)
   if (to_coords) {
-    .data <- st_coordinates2(.data)[, c("X", "Y")]
-  } else {
-    .data <- sf::st_as_sf(tibble::as_tibble(.data))
+    .data <- sf::st_coordinates(.data)[, c("X", "Y"), drop = FALSE]
   }
-  
+
   if (!is.null(len)) {
     if (nrow(.data) == 1) {
-      .data <- do.call(
-        rbind,
-        replicate(len, .data, simplify = FALSE)
-      )
+      .data <- replicate(len, .data, simplify = FALSE)
+      .data <- do.call(rbind, .data)
     }
-    
+
     if (!nrow(.data) == len) {
       cli::cli_abort(c(
         "x" = "Datasets have non-matching number of rows.",
         "!" = paste(
-          "{.var source} and {.var destination} must have either one row",
+          "{.var src} and {.var src} must have either one row",
           "or the number of rows of the other dataset."
         ),
         "i" = "Got datasets with {.val {nrow(.data)}} and {.val {len}} rows."
       ))
     }
   }
-  
+
   .data
 }
 
@@ -41,7 +36,7 @@ format_input_data <- function(.data, to_coords = TRUE, len = NULL) {
 #' @noRd
 format_ors_params <- function(opts, profile) {
   if (is.null(opts)) return(NULL)
-  
+
   validate_ors_dots(opts)
 
   for (opt in names(opts)) {
@@ -108,7 +103,7 @@ format_ors_list <- function(x, matches, which, profile, scalar, ...) {
   } else {
     opts_check <- TRUE
   }
-  
+
   if (length(x) > 1 && scalar) {
     opts_check <- FALSE
   }
@@ -194,7 +189,7 @@ validate_ors_dots <- function(opts) {
       "x" = "Unknown ORS option{?s} {.var {names(opts[!opts_ok])}}."
     ))
   }
-  
+
   opts_dup <- duplicated(names(opts))
   if (any(opts_dup)) {
     cli::cli_abort(c(
@@ -252,7 +247,7 @@ construct_options <- function(opts) {
 #' A tibble that specifies which extra info is defined for which profile.
 #' `NA` means allowed for all profiles.
 #' @noRd
-extra_info_profiles <- tibble::tibble(
+extra_info_profiles <- data.frame(
   name = c(
     "steepness", "suitability", "surface", "waycategory", "waytype", "tollways",
     "traildifficulty", "osmid", "roadaccessrestrictions", "countryinfo",
@@ -273,46 +268,64 @@ extra_info_profiles <- tibble::tibble(
 #' `profile` holds an unevaluated named character that specifies both required
 #' profile name and provided profile name (after evaluation)
 #' `box` specifies whether to box an option for json conversion
-#' 
+#'
 #' NA means that the formatting parameter is not relevant for a given option.
 #' @noRd
-known_params <- tibble::tibble(
-  name = c(
-    "alternative_routes", "geometry_simplify", "continue_straight",
-    "avoid_borders", "avoid_countries", "avoid_features", "avoid_polygons",
-    "round_trip", "restrictions", "weightings", "allow_unsuitable",
-    "surface_quality_known", "vehicle_type", "preference", "radiuses",
-    "maximum_speed", "attributes", "extra_info", "elevation"
+known_params <- structure(
+  list(
+    name = c(
+      "alternative_routes", "geometry_simplify", "continue_straight",
+      "avoid_borders", "avoid_countries", "avoid_features", "avoid_polygons",
+      "round_trip", "restrictions", "weightings", "allow_unsuitable",
+      "surface_quality_known", "vehicle_type", "preference", "radiuses",
+      "maximum_speed", "attributes", "extra_info", "elevation"
+    ),
+    fun = c(
+      "nlist", "vector", "vector", "list", "vector", "vector", "poly", "nlist",
+      "nlist", "nlist", "vector", "vector", "vector", "list", "vector", "vector",
+      "list", "list", "vector"
+    ),
+    matches = list(
+      NULL,
+      NULL,
+      NULL,
+      c("all", "controlled", "none"),
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      c("fastest", "shortest", "recommended"),
+      NULL,
+      NULL,
+      c("avgspeed", "detourfactor", "percentage"),
+      c(
+        "steepness", "suitability", "surface", "waycategory", "waytype", "tollways",
+        "traildifficulty", "osmid", "roadaccessrestrictions", "countryinfo", "green",
+        "noise"
+      ),
+      NULL
+    ),
+    scalar = rep(c(NA, TRUE, FALSE, NA, TRUE, FALSE, TRUE), c(1L, 3L, 2L, 4L, 6L, 2L, 1L)),
+    type = c(
+      NA, "logical", "logical", NA, "numeric", "character", NA, NA, NA, NA,
+      "logical", "logical", "character", NA, "numeric", "numeric", NA, NA,
+      "logical"
+    ),
+    profile = c(
+      NA, NA, NA, "c(driving = base_profile(\"profile\"))",
+      "c(driving = base_profile(profile))", NA, NA, NA, "profile", "profile",
+      "c(\"wheelchair\" = profile)", "c(\"wheelchair\" = profile)",
+      "c(\"driving-hgv\" = profile)", NA, NA, NA, NA, "profile", NA
+    ),
+    box = rep(c(FALSE, TRUE, FALSE, TRUE, FALSE), c(4L, 2L, 6L, 1L, 6L))
   ),
-  fun = c(
-    "nlist", "vector", "vector", "list", "vector", "vector", "poly", "nlist",
-    "nlist", "nlist", "vector", "vector", "vector", "list", "vector", "vector",
-    "list", "list", "vector"
-  ),
-  matches = list(
-    NULL, NULL, NULL, c("all", "controlled", "none"), NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, c("fastest", "shortest", "recommended"), NULL,
-    NULL, c("avgspeed", "detourfactor", "percentage"), extra_info_profiles$name, NULL
-  ),
-  scalar = c(
-    NA, TRUE, TRUE, TRUE, FALSE, FALSE, NA, NA, NA, NA, TRUE, TRUE, TRUE, TRUE, TRUE,
-    TRUE, FALSE, FALSE, TRUE
-  ),
-  type = c(
-    NA, "logical", "logical", NA, "numeric", "character", NA, NA, NA, NA,
-    "logical", "logical", "character", NA, "numeric", "numeric", NA,
-    NA, "logical"
-  ),
-  profile = c(
-    NA, NA, NA, 'c(driving = base_profile("profile"))',
-    'c(driving = base_profile(profile))', NA, NA, NA, 'profile', 'profile',
-    'c("wheelchair" = profile)', 'c("wheelchair" = profile)',
-    'c("driving-hgv" = profile)', NA, NA, NA, NA, 'profile', NA
-  ),
-  box = c(
-    FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,
-    FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
-  )
+  class = "data.frame",
+  row.names = 1:19
 )
 
 

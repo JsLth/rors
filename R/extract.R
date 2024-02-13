@@ -1,75 +1,8 @@
-#' Mount an extract to ORS
-#'
-#' @description Add an extract to an existing OpenRouteService instance.
-#'
-#' @param instance \code{[ors_instance]}
-#'
-#' Object created by \code{\link{ors_instance}}.
-#' @param place Place description of desired OpenStreetMap extract. This
-#' argument is passed to \code{\link[osmextract]{oe_match}} which will try to
-#' match it with an existing extract from a provider specified in \code{provider}.
-#' @param provider OpenStreetMap extract provider that is supported by
-#' \code{\link[osmextract]{oe_match}}
-#' @param file Path or URL to an extract to be mounted.
-#' @param ... Further arguments passed to \code{\link[osmextract]{oe_match}}.
-#'
-#' @returns Nested list of class \code{ors_instance}.
-#'
-#' @family ORS setup functions
-#'
-#' @export
-ors_extract <- function(instance, place = NULL, provider = "geofabrik", file = NULL, ...) {
-  verbose <- attr(instance, "verbose")
-  
-  assert_that(inherits(instance, "ors_instance"))
-
-  if (!is.null(file)) {
-    assert_that(assertthat::is.readable(file))
-    assert(file, file = TRUE, len = 1L)
-    extract_path <- file
-  }
-
-  if (!is.null(place)) {
-    assert_that(assertthat::is.string(place))
-    extract_path <- get_extract(
-      place = place,
-      provider = provider,
-      paths = instance$paths,
-      verbose = verbose,
-      ...
-    )
-  }
-
-  if (is.null(file) && is.null(place)) {
-    extract_path <- NULL
-  }
-
-  if (!is.null(extract_path)) {
-    dir <- instance$paths$dir
-    graphs_dir <- file.path(dir, "docker/graphs")
-    relative <- relative_path(extract_path, file.path(dir, "docker"))
-    compose <- instance$compose$parsed
-    if (length(dir(graphs_dir))) {
-      compose <- set_graphbuilding("change", compose, relative)
-    } else {
-      compose <- set_graphbuilding("build", compose, relative)
-    }
-    write_dockercompose(compose, dir)
-    instance[["compose"]] <- NULL
-  }
-
-  instance <- .instance(instance, extract_path = extract_path, verbose = verbose)
-
-  assign("instance", instance, envir = ors_cache)
-  invisible(instance)
-}
-
-
 get_extract <- function(place, provider, paths, verbose, ...) {
   if (!requireNamespace("osmextract")) {
     cli::cli_abort("{.pkg osmextract} required to match extracts by name.")
   }
-  data_dir <- file.path(paths$dir, "docker/data")
+  data_dir <- file.path(paths$top, "docker/data")
   ok <- TRUE
   i <- 0L
 
@@ -118,17 +51,8 @@ get_extract <- function(place, provider, paths, verbose, ...) {
     ors_cli(line = TRUE)
 
     if (length(providers) > 1) {
-      input <- readline("Do you want to try another provider? (y/N/Cancel) ")
-    } else {
-      input <- "N"
+      ok <- yes_no("Do you want to try another provider?")
     }
-
-    # If neither yes or no is given as input, cancel the function
-    if (!input %in% c("y", "N")) {
-      ors_cli(info = c("x" = "Function cancelled."))
-      invokeRestart("abort")
-    }
-    ok <- input == "y"
   }
 
   # If the while loop exits and the last answer given is yes, exit
@@ -144,7 +68,7 @@ get_extract <- function(place, provider, paths, verbose, ...) {
   if (sum(file_occurences) == 1L) {
     ors_cli(info = c(
       "i" = paste(
-        "The extract already exists in {.href [docker/data](file.path(paths$dir, 'docker/data'))}.",
+        "The extract already exists in {.href [docker/data](data_dir)}.",
         "Download will be skipped."
       )
     ))
@@ -153,15 +77,14 @@ get_extract <- function(place, provider, paths, verbose, ...) {
       dir(data_dir)[file_occurences],
       sep = "/"
     )
-    
-    rel_path <- relative_path(path, paths$dir)
+
+    rel_path <- relative_path(path, paths$top)
 
     ors_cli(info = c("i" = paste("Download path: {.href [{rel_path}](file://{path})}")))
     # If no file exists, remove all download a new one
   } else {
     path <- file.path(data_dir, paste0(providers[i], "_", file_name))
-
-    rel_path <- relative_path(path, paths$dir)
+    rel_path <- relative_path(path, paths$top)
     ors_cli(
       progress = "step",
       msg = "Downloading OSM extract...",
@@ -200,15 +123,41 @@ get_extract <- function(place, provider, paths, verbose, ...) {
 }
 
 
-get_current_extract <- function(obj, compose, dir) {
-  if (!missing(compose) && !missing(dir)) {
-    obj <- list(compose = list(parsed = compose), paths = list(dir = dir))
-  }
+set_extract <- function(self, file) {
+  filename <- basename(file)
+  data_dir <- file.path(self$paths$top, "docker", "data")
+  if (!identical(filename, file) || file.exists(filename)) {
+    file <- normalizePath(file, "/")
 
-  current_extract <- identify_extract(obj)
+    if (!file.exists(file)) {
+      cli::cli_abort("Extract file does not exist.")
+    }
+
+    copied <- file.copy(file, file.path(data_dir, filename), overwrite = TRUE)
+
+    if (!copied) {
+      cli::cli_abort(c(
+        "!" = "Extract file was not set.",
+        "i" = "Is the ORS directory properly initialized?"
+      ))
+    }
+  } else {
+    if (!filename %in% list.files(data_dir)) {
+      cli::cli_abort(c(
+        "!" = "Extract file does not exist in the data directory.",
+        "i" = "Did you mean to pass an absolute file path?"
+      ))
+    }
+  }
+  file.path(data_dir, filename)
+}
+
+
+get_current_extract <- function(compose, dir) {
+  current_extract <- identify_extract(compose, dir)
 
   if (!is.null(current_extract) && !file.exists(current_extract)) {
-    pretty_path <- relative_path(current_extract, obj$paths$dir)
+    pretty_path <- relative_path(current_extract, dir)
     cli::cli_warn(c(
       "The current extract {.href [{pretty_path}]({current_extract})} could not be found.",
       "Consider mounting a different extract."
@@ -220,7 +169,15 @@ get_current_extract <- function(obj, compose, dir) {
 
 
 validate_extract <- function(extract_path) {
-  if (!is.null(extract_path) && file.exists(extract_path)) {
+  if (!is.null(extract_path) &&
+      file.exists(extract_path) &&
+      is_pbf(extract_path)) {
     extract_path
   }
+}
+
+
+is_pbf <- function(x) {
+  exts <- c(".pbf", ".osm.gz", ".osm.zip", ".osm")
+  vapply(x, \(x) any(endsWith(x, exts)), FUN.VALUE = logical(1))
 }

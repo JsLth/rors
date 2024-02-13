@@ -1,15 +1,15 @@
 #' Routing distance computations
 #' @description
-#' \code{ors_distances} calculates the routing distance between two
+#' \code{ors_pairwise} calculates the routing distance between two
 #' datasets using the Directions service from ORS. \code{ors_shortest_distances}
-#' is a wrapper around \code{ors_distances} that matches each point of the
+#' is a wrapper around \code{ors_pairwise} that matches each point of the
 #' source dataset to a dataset of points of interest from the destination dataset
 #' and then extracts the route with the shortest distance.
 #'
-#' @param source \code{[sf]}
+#' @param src \code{[sf]}
 #'
 #' Source dataset containing point geometries that shall be routed from.
-#' @param destination \code{[sf]}
+#' @param dst \code{[sf]}
 #'
 #' Destination dataset containing point geometries that shall be routed from.
 #' The destination dataset follows the same format requirements as the source
@@ -82,7 +82,7 @@
 #'                              applicable for any other profile. Refer to the
 #'                              \href{https://giscience.github.io/openrouteservice/documentation/routing-options/Routing-Options.html}{documentation}
 #'                              for details on each parameter.}
-#'  \item{\strong{weightings}}{Weightings for route selection. Can be 
+#'  \item{\strong{weightings}}{Weightings for route selection. Can be
 #'                             preference multiplicators for walking profiles
 #'                             (\code{green}, \code{quiet}) or
 #'                             \code{steepness_difficulty} for cycling profiles.
@@ -118,7 +118,7 @@
 #'  \item{\strong{maximum_speed}}{Maximum speed that routing vehicles are
 #'                                allowed to drive. Not applied by default.}
 #' }
-#' @returns \code{ors_distances} returns a dataframe with distances and
+#' @returns \code{ors_pairwise} returns a dataframe with distances and
 #' travel durations between source and destination.
 #' \code{ors_shortest_distances} returns a dataframe containing distances,
 #' travel durations and the index number of the point of interest with the
@@ -128,13 +128,13 @@
 #' geometries of the respective routes.
 #'
 #' @details
-#' For \code{ors_distances}, the profile argument supports only length-1
+#' For \code{ors_pairwise}, the profile argument supports only length-1
 #' vectors while \code{ors_shortest_distances} supports multiple profiles.
 #' \code{ors_shortest_distances} finds the shortest route for each source
 #' point and each profile, respectively.
 #'
 #' @section Error handling:
-#' Since \code{ors_distances} is supposed to conduct a lot of calculations
+#' Since \code{ors_pairwise} is supposed to conduct a lot of calculations
 #' in one go, errors might occur even in well-conceived service setups. In
 #' order to make debugging less painful, errors do not tear down the whole
 #' process. They are saved to an environment and issue a warning containing the
@@ -159,15 +159,15 @@
 #' bike <- "cycling-regular"
 #'
 #' # Running with sf objects
-#' route_lengths_sf <- ors_distances(source_sf, dest_sf, profile = car)
+#' route_lengths_sf <- ors_pairwise(source_sf, dest_sf, profile = car)
 #' route_lengths_sf
 #'
 #' # Running with coordinate pairs
-#' route_lengths_df <- ors_distances(source_df, dest_df, profile = bike)
+#' route_lengths_df <- ors_pairwise(source_df, dest_df, profile = bike)
 #' route_lengths_df
 #'
 #' # Returns route geometries
-#' route_lengths_geom <- ors_distances(
+#' route_lengths_geom <- ors_pairwise(
 #'   source_df,
 #'   dest_df,
 #'   profile = car,
@@ -175,7 +175,7 @@
 #' )
 #'
 #' # Returns routes in kilometers
-#' route_lengths_km <- ors_distances(
+#' route_lengths_km <- ors_pairwise(
 #'   source_df,
 #'   dest_df,
 #'   profile = bike,
@@ -183,7 +183,7 @@
 #' )
 #'
 #' # Running with additional arguments
-#' route_lengths_opts <- ors_distances(
+#' route_lengths_opts <- ors_pairwise(
 #'   source_df,
 #'   dest_df,
 #'   profile = car,
@@ -205,21 +205,15 @@
 #' )
 #' nearest_hospitals
 #' }
-ors_distances <- function(source,
-                          destination,
-                          profile = get_profiles(),
-                          units = c("m", "km", "mi"),
-                          geometry = FALSE,
-                          instance = NULL,
-                          ...) {
+ors_pairwise <- function(src,
+                         dst,
+                         profile = get_profiles(),
+                         units = c("m", "km", "mi"),
+                         geometry = FALSE,
+                         instance = NULL,
+                         ...) {
   # Validate arguments
-  assert_that(
-    is_sf(source),
-    is_sf(destination),
-    is_geometry_type(source, "POINT"),
-    is_geometry_type(destination, "POINT"),
-    is_true_or_false(geometry)
-  )
+  assert_that(is_sf(src), is_sf(dst), is_true_or_false(geometry))
   profile <- match.arg(profile)
   units <- match.arg(units)
   instance <- check_instance(instance)
@@ -229,10 +223,10 @@ ors_distances <- function(source,
   ors_ready(force = FALSE, error = TRUE, id = iid)
 
   # Bring input data into shape
-  source <- format_input_data(source, len = nrow(destination))
-  destination <- format_input_data(destination, len = nrow(source))
+  src <- prepare_input(src, len = nrow(dst))
+  dst <- prepare_input(dst, len = nrow(src))
 
-  locations <- df_nest(source = source, dest = destination)
+  locations <- df_nest(src = src, dest = dst)
   url <- get_ors_url(id = iid)
   params <- format_ors_params(list(...), profile)
   call_index <- format(Sys.time(), format = "%H:%M:%OS6")
@@ -260,9 +254,9 @@ ors_distances <- function(source,
   }
 
   if (is_sf(route_df)) {
-    route_df <- sf::st_as_sf(tibble::as_tibble(route_df))
+    route_df <- sf::st_as_sf(data_frame(route_df))
   } else {
-    route_df <- tibble::as_tibble(route_df)
+    route_df <- as_data_frame(route_df)
   }
 
   structure(
@@ -288,20 +282,20 @@ ors_distances <- function(source,
 #' based on. If `distance`, the shortest physical distance will be calculated
 #' and if `duration`, the shortest temporal distance will be calculated.
 #' @param progress \code{[logical]}
-#' 
+#'
 #' If \code{TRUE}, displays a progress bar if the process is taking a bit
 #' longer.
 #'
 #' @export
 #'
-#' @rdname ors_distances
+#' @rdname ors_pairwise
 #'
 #' @examples
 #' \dontrun{
 #'
 #' }
-ors_shortest_distances <- function(source,
-                                   destination,
+ors_shortest_distances <- function(src,
+                                   dst,
                                    group = NULL,
                                    profile = get_profiles(),
                                    units = c("m", "km", "mi"),
@@ -313,51 +307,51 @@ ors_shortest_distances <- function(source,
                                    progress = TRUE) {
   # Validate arguments
   assert_that(
-    is_sf(source),
-    is_sf(destination),
+    is_sf(src),
+    is_sf(dst),
     is_true_or_false(geometry)
   )
   instance <- check_instance(instance)
   proximity_type <- match.arg(proximity_type)
   profile <- match.arg(profile, several.ok = TRUE)
-  
-  source <- format_input_data(source, to_coords = FALSE)
-  destination <- format_input_data(destination, to_coords = FALSE)
+
+  src <- prepare_input(src, to_coords = FALSE)
+  dst <- prepare_input(dst, to_coords = FALSE)
 
   if (!is.null(group)) {
-    destination <- split(destination, f = destination[[group]])
+    dst <- split(dst, f = dst[[group]])
   }
 
   # Create a nested iterator that iterates through every point number for each
   # profile
   nested_iterator <- expand.grid(
-    list(profile = profile, point_number = seq_len(nrow(source))),
+    list(profile = profile, point_number = seq_len(nrow(src))),
     stringsAsFactors = FALSE
   )
-  
+
   if (progress) {
     ors_cli(progress = "bar", total = nrow(nested_iterator))
   }
-  
+
   # Find shortest route for each coordinate pair
   route_df <- lapply(seq_len(nrow(nested_iterator)), function(i) {
     if (progress) {
       ors_cli(progress = "update", .envir = parent.frame(2L))
     }
     apply_shortest_routes(
-      index = i, source = source, destination = destination,
+      index = i, src = src, dst = dst,
       iter = nested_iterator, units = units, geometry = geometry,
       instance = instance, type = proximity_type, ...
     )
   })
-  
+
   route_df <- cbind(
     profile = nested_iterator[["profile"]],
-    source = nested_iterator[["point_number"]],
+    src = nested_iterator[["point_number"]],
     do.call(rbind, route_df)
   )
-  route_df <- tibble::as_tibble(route_df)
-  
+  route_df <- as_data_frame(route_df)
+
   row.names(route_df) <- NULL
 
   if (geometry) route_df <- sf::st_as_sf(route_df)
@@ -368,8 +362,8 @@ ors_shortest_distances <- function(source,
   structure(
     route_df,
     call = match.call(),
-    source = source,
-    dest = destination,
+    src = src,
+    dest = dst,
     class = c("ors_sdist", class(route_df))
   )
 }
