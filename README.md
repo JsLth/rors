@@ -1,8 +1,3 @@
----
-output: github_document
-always_allow_html: yes
----
-
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 
@@ -11,10 +6,10 @@ always_allow_html: yes
 
 # ORSRouting
 
-# <img src="inst/figures/orsr_sticker.png" width = "150" align="right" />
+# <img src="man/figures/orsrouting_sticker.png" width = "150" align="right" />
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/JsLth/ORSRouting/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/JsLth/ORSRouting/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/JsLth/ORSRouting/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/JsLth/ORSRouting/actions/workflows/R-CMD-check.yaml)
 [![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
 [![](https://www.r-pkg.org/badges/version/ORSRouting)](https://cran.r-project.org/package=ORSRouting)
 
