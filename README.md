@@ -6,7 +6,7 @@
 
 # ORSRouting
 
-# <img src="man/figures/orsrouting_sticker.png" width = "150" align="right" />
+<img src="man/figures/orsrouting_sticker.png" width = "150" align="right" />
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/JsLth/ORSRouting/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/JsLth/ORSRouting/actions/workflows/R-CMD-check.yaml)
