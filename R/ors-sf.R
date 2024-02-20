@@ -79,3 +79,18 @@ rasterize_isochrones <- function(isochrones, resolution) {
 has_crs <- function(x) {
   !is.na(sf::st_crs(x))
 }
+
+
+world_data <- function() {
+  if (loadable("maps")) {
+    world <- maps::map(plot = FALSE, fill = TRUE)
+    world <- sf::st_make_valid(sf::st_transform(sf::st_as_sfc(world), 4326))
+  } else {
+    world <- sf::st_as_sfc(sf::st_bbox(c(
+      xmin = -180,
+      ymin = -90,
+      xmax = 180,
+      ymax = 90
+    ), crs = 4326))
+  }
+}

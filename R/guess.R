@@ -71,11 +71,7 @@ ors_guess <- function(poly = NULL,
                       instance = NULL,
                       ...) {
   if (is.null(poly)) {
-    if (loadable("rnaturalearthdata")) {
-      poly <- sf::st_as_sf(rnaturalearthdata::countries110)
-    } else {
-      poly <- c(xmin = -180, ymin = -90, xmax = 180, ymax = 90)
-    }
+    poly <- world_data()
   }
 
   if (!is_sf(poly)) {

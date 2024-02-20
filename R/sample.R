@@ -81,11 +81,13 @@ ors_sample <- function(size,
 #'
 #' If the public API is mounted, we know that the coverage is global.
 #' \code{get_boundaries} generates a random buffer polygon somewhere in the
-#' world. The size and position depend on the dot arguments \code{dist} and
-#' \code{seed}. If possible, it makes use of the global land mass boundaries of
-#' \code{\link[rnaturalearthdata]{coastline110}}. Otherwise, it assumes basic
-#' WGS84 boundaries. While this practice does not always represent the real
-#' boundaries, it can quite often enable working samples to be taken
+#' world. The size depends on the dot argument \code{dist}.
+#' The function checks whether the random polygon falls within some land
+#' mass and tries again \code{tries} times before aborting. If available,
+#' it uses the world map data defined by \code{\link[maps]{map}}. Otherwise,
+#' it falls back to global WGS84 boundaries. While this practice
+#' does not always represent the real boundaries, it can quite often
+#' enable working samples to be taken
 #' by \code{\link{ors_sample}}.
 #'
 #' @examples
@@ -100,7 +102,7 @@ ors_sample <- function(size,
 #'
 #' # For public API instances, limits the routing area to a random polygon
 #' ors <- ors_instance(server = "pub")
-#' bounds <- get_extract_boundaries(dist = 200000, seed = 123)
+#' bounds <- get_extract_boundaries(dist = 200000)
 #'
 #' plot(sf::st_as_sfc(rnaturalearthdata::countries110))
 #' plot(bounds, add = TRUE)
@@ -188,26 +190,17 @@ get_extract_boundaries <- function(instance = NULL,
 }
 
 
-random_bbox <- function(dist = 5000, seed = NULL) {
-  if (loadable("rnaturalearthdata")) {
-    poly <- sf::st_as_sfc(rnaturalearthdata::countries110)
-    poly <- sf::st_union(sf::st_make_valid(poly))
-  } else {
-    poly <- sf::st_as_sfc(sf::st_bbox(c(
-      xmin = -180,
-      ymin = -90,
-      xmax = 180,
-      ymax = 90
-    ), crs = 4326))
-  }
+random_bbox <- function(dist = 5000, tries = 5) {
+  poly <- world_data()
+  pts <- sf::st_sample(poly, tries)
 
-  on.exit(set.seed(NULL))
-
-  repeat {
-    set.seed(seed)
-    pt <- sf::st_sample(poly, 1)
+  for (pt in pts) {
     bbox <- sf::st_as_sfc(sf::st_bbox(sf::st_buffer(pt, dist)))
-    if (sf::st_within(bbox, poly, sparse = FALSE)) break
+    if (sf::st_within(bbox, poly, sparse = FALSE)) return(bbox)
   }
-  bbox
+
+  cli::cli_abort(c(
+    "Could not find a routeable boundary box within {.field {tries}} tries.",
+    "i" = "Maybe increase {.var tries} or set a different seed?"
+  ))
 }
