@@ -186,7 +186,7 @@ pull_ors <- function(self, private) {
   }
 
   if (!image_exists()) {
-    cmd <- c("pull", self$compose$image)
+    cmd <- c("pull", self$compose$parsed$services$`ors-app`$image)
 
     Sys.setenv(ORS_VERBOSE = verbose)
     proc <- callr::run(
