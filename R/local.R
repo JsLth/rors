@@ -150,18 +150,32 @@ ORSLocal <- R6::R6Class(
     #' 7.2.0) or \code{"master"}. Ignored if \code{server} is not \code{NULL}.
     #' @param overwrite \code{[logical]}
     #'
+    #' @param dry \code{[logical]}
+    #'
+    #' Whether to start a dry run, i.e. run an instance without jumpstarting.
+    #'
     #' Whether to overwrite the current OpenRouteService directory
     #' if it exists.
     #' @param verbose \code{[logical]}
+    #'
+    #' Level of verbosity. Must be an integer between 0 and 2. The verbosity
+    #' levels are deconstructed as follows:
+    #' \itemize{
+    #'  \item{0}{No messages, progress bars, sounds, and prompts. Only important
+    #'   warnings.}
+    #'  \item{1}{Informative messages, warnings and prompts, but no system
+    #'   notifications or progress bars.}
+    #'  \item{2}{Messages, warnings, prompts, progress bars, and system
+    #'   notifications.}
+    #' }
     #'
     #' If \code{TRUE}, prints informative messages and spinners.
     initialize = function(dir = NULL,
                           version = "7.2.0",
                           overwrite = FALSE,
-                          verbose = TRUE) {
-      private$.dry <- isTRUE(getOption("ors_docker_dry"))
-
-      if (!private$.dry) {
+                          dry = FALSE,
+                          verbose = 2L) {
+      if (!dry) {
         check_docker_installation()
         check_docker_access()
         start_docker(verbose = verbose)
@@ -176,11 +190,12 @@ ORSLocal <- R6::R6Class(
 
       private$.verbose <- verbose
       private$.overwrite <- overwrite
+      private$.dry <- dry
       self$version <- version
       self$paths$top <- dir
       private$.parse()
 
-      if (private$.initial && !private$.dry) {
+      if (private$.is_initial() && !dry) {
         private$.jumpstart()
       }
 
@@ -221,13 +236,19 @@ ORSLocal <- R6::R6Class(
     #' Whether to remove the docker image or keep it for other projects. The
     #' default is \code{FALSE} to prevent accidentally breaking other projects.
     purge = function(image = FALSE) {
-      cli::cli_inform(c("i" = paste(
+      ors_cli(info = c("i" = paste(
         "Purging the current instance removes the docker container,",
         "ORS directory and cleans up the R6 object."
       )))
-      yes_no("Do you want to proceed?", no = cancel())
-      self$down()
-      rm_image(self, private)
+
+      yes_no(
+        "Do you want to proceed?",
+        no = cancel(),
+        ask = private$.verbose > 1
+      )
+
+      if (self$is_built()) self$down()
+      if (image) rm_image(self, private)
       unlink(self$paths$top, recursive = TRUE, force = TRUE)
       self$extract <- NULL
       self$compose <- NULL
@@ -283,13 +304,14 @@ ORSLocal <- R6::R6Class(
       }
 
       if (do_use && !is.null(file)) {
-        cli::cli_inform(c("*" = "Using extract {.val {basename(file)}}"))
+        ors_cli(info = c("*" = "Using extract {.val {basename(file)}}"))
         self$paths$extract <- file
         self$extract <- list(
           name = basename(file),
           size = round(file.size(file) / 1024 / 1024, 2)
         )
         self$set_graphbuilding(TRUE)
+        self$compose$parsed <- change_extract(self$compose$parsed, file)
       }
 
       self$update()
@@ -304,10 +326,10 @@ ORSLocal <- R6::R6Class(
     #' a random name (\code{"ors-appXXXX"}).
     set_name = function(name = NULL) {
       old <- self$compose$parsed$services$`ors-app`$container_name
-      new <- set_ors_name(self, name)
+      new <- name %||% random_ors_name(private, name)
 
       if (!identical(old, new)) {
-        cli::cli_inform(c("*" = "Setting name to {.val {new}}"))
+        ors_cli(info = c("*" = "Setting name to {.val {new}}"))
         self$compose$parsed$services$`ors-app`$container_name <- new
         self$compose$name <- new
         self$update()
@@ -321,14 +343,17 @@ ORSLocal <- R6::R6Class(
     #' random port using
     #' \code{\link[httpuv:randomPort]{randomPort()}}.
     set_port = function(port = NULL) {
-      old <- self$compose$parsed$services$`ors-app`$ports[1, 1]
-      new <- port %||% random_port()
+      new <- as.character(port %||% random_port(2))
+      old <- self$compose$ports[1, seq(length(new))]
+
 
       if (!identical(old, new)) {
-        cli::cli_inform(c("*" = "Setting port to {.val {new}}"))
+        ors_cli(info = c(
+          "*" = "Setting {cli::qty(length(new))} port{?s} to {.val {new}}"
+        ))
         compose <- self$compose$parsed
         self$compose$parsed$services$`ors-app`$ports <- format_ports(self, new)
-        self$compose$ports[1, 1] <- new
+        self$compose$ports[1, seq(length(new))] <- new
         self$update()
       }
     },
@@ -349,12 +374,14 @@ ORSLocal <- R6::R6Class(
     set_ram = function(init = NULL, max = NULL) {
       old <- unlist(self$compose$memory[3:4], use.names = FALSE) * 1000
       new <- adjust_memory(self, private, init, max)
-      if (is.null(new)) return(invisible())
 
       if (!identical(old, new)) {
-        cli::cli_inform(c("*" = "Setting memory to:"))
-        cli::cli_bullets(stats::setNames(
-          paste0(cli::style_bold(c("init: ", "max: ")), new / 1000, " GB"),
+        ors_cli(info = c("*" = "Setting memory to:"))
+        ors_cli(bullets = stats::setNames(
+          paste0(cli::style_bold(sprintf(
+            c("- init: {.field {%s}} GB", "- max: {.field {%s}} GB"),
+            new / 1000
+          ))),
           c(" ", " ")
         ))
         self$compose$parsed$services$`ors-app`$environment[2] <- format_memory(self, new)
@@ -365,23 +392,45 @@ ORSLocal <- R6::R6Class(
     },
 
     #' @description
-    #' Specifies whether routing graphs should be (re-)built. Turning graph
-    #' building on enables new profiles to be built or the extract to be
-    #' changed but significantly increases setup time. Turn this off if you
-    #' are changing configuration options that do not alter routing graphs.
+    #' Graph building specifies whether routing graphs should be (re-)built.
+    #' Turning graph building on enables new profiles to be built or the
+    #' extract to be changed but significantly increases setup time. Turn
+    #' this off if you are changing configuration options that do not alter
+    #' routing graphs.
     #'
     #' @param mode \code{[logical]}
     #'
     #' Whether to turn graph building on or off.
     set_graphbuilding = function(mode) {
-      old <- ors$compose$graph_building
+      old <- self$compose$graph_building
       new <- mode
 
       if (!identical(old, new)) {
         verb <- ifelse(mode, "Enabling", "Disabling")
-        cli::cli_inform(c("*" = "{verb} graph building."))
+        ors_cli(info = c("*" = "{verb} graph building"))
         self$compose$parsed$services$`ors-app`$environment[1] <- set_gp(self, mode)
         self$compose$graph_building <- mode
+        self$update()
+      }
+    },
+
+    #' @description
+    #' Set version of the ORS Docker image. This should preferably be compatible
+    #' with the compose version.
+    #'
+    #' @param version \code{[character]}
+    #'
+    #' Version specification of the ORS image.
+    set_image = function(version = NULL) {
+      old <- self$compose$version
+      new <- check_version(version) %||% old
+
+      if (!identical(old, new)) {
+        ors_cli(info = c("*" = "Setting image version to {.field {new}}"))
+        self$compose$parsed$services$`ors-app`$image <- paste0(
+          "openrouteservice/openrouteservice:", new
+        )
+        self$compose$version <- new
         self$update()
       }
     },
@@ -394,25 +443,49 @@ ORSLocal <- R6::R6Class(
     #'
     #' @param ... Objects of class \code{\link{ors_profile}}.
     add_profiles = function(...) {
-      self$config$parsed$ors$engine$profiles <- insert_profiles(self, ...)
-      self$config$profiles <- vapply(
-        self$config$parsed$ors$engine$profiles,
-        "[[", "profile", FUN.VALUE = character(1)
-      )
-      self$update()
+      old <- self$config$parsed$ors$engine
+      new <- insert_profiles(self, private, ...)
+
+      if (!identical(old, new)) {
+        new_names <- get_profile_names(new$profiles)
+        old_names <- get_profile_names(old$profiles)
+        changed <- setdiff(new_names, old_names)
+        ors_cli(info = c(
+          "*" = "Adding {cli::qty(changed)} profile{?s}: {.field {changed}}"
+        ))
+        self$config$parsed$ors$engine <- new
+        self$config$profiles <- new_names
+        self$update()
+      }
     },
 
     #' @description
     #' Remove routing profiles from the ORS configuration.
     #'
-    #' @param ... Names of routing profiles to remove.
+    #' @param ... Names of routing profiles to remove. \code{"default"}
+    #' removes profile defaults.
     rm_profiles = function(...) {
-      self$config$parsed$ors$engine$profiles <- remove_profiles(self, ...)
-      self$config$profiles <- vapply(
-        self$config$parsed$ors$engine$profiles,
-        "[[", "profile", FUN.VALUE = character(1)
-      )
-      self$update()
+      old <- self$config$profiles
+      new <- c(...)
+      changed <- setdiff(new, "default") %in% c(old, names(old))
+      changed_dflt <- "profile_default" %in% self$config$parsed$ors$engine &&
+        "default" %in% new
+
+      if (any(changed) || changed_dflt) {
+        ors_cli(info = c("*" = paste(
+          "Removing {cli::qty(length(new[changed]))}",
+          "profile{?s}: {.field {new[changed]}}"
+        )))
+        if (changed_dflt) {
+          ors_cli(info = c("*" = "Removing profile defaults"))
+        }
+
+        self$config$parsed$ors$engine <- remove_profiles(self, ...)
+        self$config$profiles <- get_profile_names(
+          self$config$parsed$ors$engine$profiles
+        )
+        self$update()
+      }
     },
 
     #' @description
@@ -422,7 +495,7 @@ ORSLocal <- R6::R6Class(
     #' @param ... \code{[list/NULL]}
     #'
     #' Named arguments containing the configuration for the endpoints.
-    #' Available endpoits are \code{routing}, \code{isochrone},
+    #' Available endpoits are \code{routing}, \code{isochrones},
     #' \code{matrix}, and \code{snap}. Refer to
     #' \href{https://github.com/GIScience/openrouteservice/blob/master/ors-api/src/main/resources/application.yml}{application.yml}
     #' for a list of defaults.
@@ -432,9 +505,10 @@ ORSLocal <- R6::R6Class(
       changed <- compare_endpoints(old, new)
 
       if (length(changed)) {
-        cli::cli_inform(c("*" = "Changing the following endpoints:"))
-        cli::cli_bullets(stats::setNames(
-          cli::style_bold(changed),
+        verb <- ifelse(is.null(old), "Adding", "Changing")
+        ors_cli(info = c("*" = "{verb} the following endpoints:"))
+        ors_cli(bullets = stats::setNames(
+          cli::style_bold(paste("-", changed)),
           rep(" ", length(changed))
         ))
         self$config$parsed$ors$endpoints <- change_endpoints(self, ...)
@@ -478,6 +552,7 @@ ORSLocal <- R6::R6Class(
     #' \code{docker logs [name]} in the terminal.
     up = function(wait = TRUE, ...) {
       ors_up(self, private, wait, ...)
+      self$set_graphbuilding(FALSE)
       private$.mount()
       invisible(self)
     },
@@ -531,9 +606,23 @@ ORSLocal <- R6::R6Class(
     #' @description
     #' Show container logs as returned by \code{docker logs}. Useful for
     #' debugging docker setups.
-    show_logs = function() {
+    #'
+    #' @param format \code{[logical]}
+    #'
+    #' If \code{TRUE}, includes ANSI colors and adds exdents. Otherwise,
+    #' trims ANSI colors. Disabling formatting increases performance, which
+    #' can be useful for larger logs.
+    show_logs = function(format = TRUE) {
       logs <- get_docker_logs(self$compose$name)
-      cat(logs)
+
+      if (format) {
+        logs <- strwrap(logs, width = cli::console_width(), exdent = 2)
+        logs <- gsub("\\s", "\u00a0", logs)
+      } else {
+        logs <- cli::ansi_strip(logs)
+      }
+
+      cli::cli_text(paste(logs, collapse = "\f"))
       invisible(logs)
     },
 
@@ -557,7 +646,6 @@ ORSLocal <- R6::R6Class(
   private = list(
     .overwrite = FALSE,
     .verbose = TRUE,
-    .initial = FALSE,
     .dry = FALSE,
     .alive = TRUE,
     .mount = function() {
@@ -596,10 +684,10 @@ ORSLocal <- R6::R6Class(
         ors_cli(line = TRUE, info = c(
           i = paste(
             "Docker will now jumpstart an initial ORS setup. This setup runs the",
-            "default config, settings, and 2014 map data from Monaco.",
-            "It will fail for any coordinates outside of Monaco.",
+            "default config, settings, and data from Heidelberg, Germany.",
+            "It will fail for any coordinates outside of Heidelberg.",
             "You can make changes to this setup afterwards.",
-            "This process can take between 1-2 minutes.",
+            "This process can take a few minutes.",
             "Jumpstarting is recommended by the ORS developer team, but you can",
             "also start a dry run and jumpstart yourself."
           )
@@ -608,28 +696,20 @@ ORSLocal <- R6::R6Class(
         cli::cli_inform(c("i" = "Docker will now jumpstart an initial ORS setup."))
       }
 
-      if (isFALSE(yes_no("Do you want to proceed?"))) return()
-
-      # Manually create docker/data and use a light-weight pbf
-      # 2014 Monaco has a size of 150kb an fits this requirement nicely
-      data_dir <- file.path(self$paths$top, "docker/data")
-      init_pbf <- system.file("setup/monaco.pbf", package = "ORSRouting")
-      dir.create(data_dir, recursive = TRUE)
-      file.copy(init_pbf, file.path(data_dir, "monaco.pbf"))
-      self$compose$parsed$services$`ors-app`$build <- list(
-        context = "./",
-        args = list(OSM_FILE = "./docker/data/monaco.pbf")
+      proceed <- yes_no(
+        "Do you want to proceed?",
+        ask = private$.verbose > 1,
+        dflt = TRUE
       )
+      if (isFALSE(proceed)) return()
 
       # For initialization, avoid overwriting existing setups by setting
-      # a random container name
+      # a random container name and port
       self$set_name()
+      self$set_port()
 
       self$up()
       self$update("self")
-      private$.initial <- FALSE
-      self$compose$parsed$services$`ors-app`$build <- NULL
-      private$.write()
 
       ors_cli(line = TRUE)
       ors_cli(info = c(
@@ -713,11 +793,7 @@ ORSLocal <- R6::R6Class(
   }
 
   # parse the most important config contents
-  profiles <- vapply(
-    config$ors$engine$profiles,
-    "[[", "profile",
-    FUN.VALUE = character(1)
-  )
+  profiles <- get_profile_names(config$ors$engine$profiles)
 
   # construct R representation
   structure(
@@ -745,10 +821,7 @@ ORSLocal <- R6::R6Class(
   }
 
   # construct R representation
-  structure(
-    list(name = name, size = size),
-    class = "ors_extract"
-  )
+  list(name = name, size = size)
 }
 
 
@@ -815,7 +888,7 @@ start_docker <- function(verbose = TRUE) {
       ors_cli(
         progress = "step",
         msg = "Starting Docker...",
-        spinner = TRUE,
+        spinner = verbose == 2,
         msg_done = "Docker Desktop is now running.",
         msg_failed = "The Docker startup has timed out."
       )

@@ -75,11 +75,6 @@
 #' is specified, returns a list of sf dataframes instead with each element
 #' containing a route alternative.
 #'
-#' \code{ors_inspect} returns an sf data.frame containing the smallest
-#' possible linestrings for a route along with additional information on each
-#' segment. \code{ors_summary} returns an object of type \code{route_summary}
-#' that contains information on distances, durations, speed, elevation, detour
-#' factors as well as all available extra information for the requested route.
 #' @details OpenRouteService distinguishes between three
 #' types of route aggregation: Segments, steps and waypoints. A segment is a
 #' single route between \code{src[i, ]} and \code{src[i + 1, ]}. A step
@@ -172,7 +167,7 @@
 #' )
 #'
 #' # Summarizing route specifics
-#' route_summary <- ors_summary(sample_source, sample_dest, profile)
+#' route_summary <- summary(insp_adv)
 #' }
 ors_inspect <- function(src,
                         profile = get_profiles(),
@@ -322,7 +317,7 @@ plot_section <- function(x,
                          subtitle = NULL,
                          caption = NULL,
                          ...) {
-  if (!requireNamespace("ggplot2")) {
+  if (!loadable("ggplot2")) {
     cli::cli_abort("The {.pkg ggplot2} package is necessary to create cross-sections.")
   }
 

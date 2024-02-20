@@ -46,13 +46,12 @@ ORSRemote <- R6::R6Class(
         Sys.setenv(ORS_TOKEN = token)
       }
 
-      if (server %in% c("pub", public_api)) {
-        server <- "https://api.openrouteservice.org/"
+      if (server %in% c("pub", "public", public_api)) {
+        server <- public_api
 
         if (!nzchar(get_ors_token())) {
-          link <- cli::style_hyperlink(
-            "https://openrouteservice.org/", "https://openrouteservice.org/"
-          )
+          link <- "https://openrouteservice.org/"
+          link <- cli::style_hyperlink(link, link)
           cli::cli_abort(c(
             "!" = "The public API requires an API token!",
             "i" = paste(

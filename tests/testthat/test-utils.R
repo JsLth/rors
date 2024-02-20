@@ -3,6 +3,14 @@ test_that("%||% works", {
   expect_equal(NULL %||% 2, 2)
 })
 
+test_that("%NA% works", {
+  expect_equal(1 %NA% 2, 1)
+  expect_equal(NA %NA% 2, 2)
+  expect_equal(NULL %NA% 2, 2)
+  expect_equal(c(1, NA) %NA% 2, c(1, NA))
+  expect_equal(c(NA, NA) %NA% 2, 2)
+})
+
 test_that("file_path_up works", {
   home <- normalizePath("~", "/")
   path1 <- file.path(home, "first")
@@ -152,6 +160,38 @@ test_that("dataframe nesting works", {
 
 test_that("sys tools work", {
   mem <- get_memory_info()
-  expect_s3_class(mem$total, "double")
-  expect_s3_class(mem$free, "double")
+  expect_type(mem$total, "double")
+  expect_type(mem$free, "double")
+})
+
+test_that("is_true_or_false works", {
+  expect_true(is_true_or_false(TRUE))
+  expect_true(is_true_or_false(FALSE))
+  expect_false(is_true_or_false(NA))
+  expect_false(is_true_or_false(logical()))
+})
+
+test_that("is_sf works", {
+  withr::local_package("sf")
+
+  sf1 <- st_sfc()
+  sf2 <- st_sf(sf1)
+
+  expect_true(is_sf(sf1))
+  expect_true(is_sf(sf2))
+  expect_false(is_sf(sf1, sfc = FALSE))
+})
+
+test_that("is_geometry_type works", {
+  withr::local_package("sf")
+
+  sf1 <- st_sfc(st_point())
+  sf2 <- st_sfc(st_point(), st_polygon())
+  sf3 <- st_sfc(st_point(), st_polygon(), st_linestring())
+
+  expect_false(is_geometry_type(sf1, c("POINT", "POLYGON")))
+  expect_true(is_geometry_type(sf1, c("POINT", "POLYGON"), exclusive = FALSE))
+  expect_true(is_geometry_type(sf2, c("POINT", "POLYGON"), exclusive = FALSE))
+  expect_false(is_geometry_type(sf2, c("POINT")))
+  expect_true(is_geometry_type(sf2, c("POINT"), strict = FALSE))
 })

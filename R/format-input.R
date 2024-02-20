@@ -3,7 +3,14 @@
 #' holding coordinates
 #' @noRd
 prepare_input <- function(.data, to_coords = TRUE, len = NULL) {
-  .data <- sf::st_transform(sf::st_geometry(.data), 4326L)
+  assert_that(is_geometry_type(.data, "POINT"))
+  .data <- sf::st_geometry(.data)
+
+  if (has_crs(.data)) {
+    .data <- sf::st_transform(.data, 4326)
+  } else {
+    .data <- sf::st_set_crs(.data, 4326)
+  }
 
   if (to_coords) {
     .data <- sf::st_coordinates(.data)[, c("X", "Y"), drop = FALSE]

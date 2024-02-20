@@ -23,6 +23,18 @@ ORSInstance <- R6::R6Class(
       if (self$is_ready()) {
         get_status(id = private$.get_id())
       }
+    },
+
+    #' @description
+    #' Checks whether the instance is currently mounted to the session.
+    #' More technically, \code{$is_mounted} compares the MD5 hashes of its
+    #' R6 object and the currently mounted instance. Hence, an instance
+    #' only counts as mounted if it is exactly the same as the currently
+    #' mounted instance. An instance that was manually manipulated and has
+    #' not been updated with \code{$update()} thus is not considered
+    #' mounted.
+    is_mounted = function() {
+      identical(private$.get_hash(), cli::hash_obj_md5(get_instance()))
     }
   ),
 
@@ -34,6 +46,10 @@ ORSInstance <- R6::R6Class(
       } else if (inherits(self, "ors_remote")) {
         self$url
       }
+    },
+
+    .get_hash = function() {
+      cli::hash_obj_md5(self)
     },
 
     .mount = function() {
@@ -85,7 +101,8 @@ ORSInstance <- R6::R6Class(
 #' @param version \code{[character]}
 #'
 #' The OpenRouteService version to use. Can either be a version number (e.g.
-#' 7.2.0) or \code{"master"}. Ignored if \code{server} is not \code{NULL}.
+#' 7.2.0), a commit hash, or \code{"master"}. Ignored if \code{server} is not
+#' \code{NULL}.
 #' @param overwrite \code{[logical]}
 #'
 #' Whether to overwrite the current OpenRouteService directory

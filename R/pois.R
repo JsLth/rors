@@ -30,9 +30,7 @@
 #'
 #' by_points <- get_closest_pois(sample, pois, n = 5)
 #' by_buffer <- get_closest_pois(sample, pois, radius = 5000)
-#' by_both <- get_closest_pois(sample_pois, n = 5, radius = 5000)
-#' }
-#'
+#' by_both <- get_closest_pois(sample_pois, n = 5, radius = 5000)}
 #' @export
 get_closest_pois <- function(src,
                              pois,

@@ -23,15 +23,17 @@ ors_accessibility(
 )
 }
 \arguments{
-\item{src}{\code{[sf]}
+\item{src}{\code{[sf/sfc]}
 
-Source dataset containing point geometries that shall be routed from.}
+Source dataset containing point geometries that should be routed from.}
 
 \item{profile}{\code{[character]}
 
-Character vector. Means of transport as supported by OpenRouteService. For a
-list of active profiles, call \code{\link{get_profiles}}. For details on all
-profiles, refer to the
+Means of transport as supported by OpenRouteService.
+Defaults to the first profile in a call to \code{\link{get_profiles}}.
+For \code{ors_shortest_distances}, \code{profile} can be a character
+vector, for all other functions it needs to be a character scalar.
+For details on all profiles, refer to the
 \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
 \item{range}{\code{[character]}
@@ -105,7 +107,7 @@ options that modify the routing results. For details on each argument,
 refer to the
 \href{https://openrouteservice.org/dev/#/api-docs/v2/isochrones/{profile}/post}{API playground}
 and
-\href{https://giscience.github.io/openrouteservice/documentation/routing-options/Routing-Options.html}{documentation}.
+\href{https://giscience.github.io/openrouteservice/api-reference/endpoints/directions/routing-options}{documentation}.
 \describe{
 \item{\strong{avoid_borders}}{Length-1 character vector specifying whether
 to avoid, all borders, only controlled ones
@@ -141,9 +143,9 @@ for a set of source points, either as polygons or as a raster.
 }
 \examples{
 \dontrun{
-set.seed(111)
-source_sf <- ors_sample(10, as_sf = TRUE)
-source_df <- ors_sample(10)
+set.seed(123)
+src <- ors_sample(10)
+data("pharma")
 
 # Returns a polygon sf dataframe divided by four 15 minute time breaks
 # Also contains information on the area and population inside the isochrones
@@ -175,7 +177,5 @@ ors_accessibility(
   location_type = "start",
   interval = 50,
   range_type = "distance"
-)
-}
-
+)}
 }

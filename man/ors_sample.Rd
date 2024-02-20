@@ -22,7 +22,9 @@ Number of points to be sampled.}
 
 \item{force_new_extract}{\code{[logical]}
 
-If \code{TRUE}, forces the cached extract path to be overwritten.}
+If \code{TRUE}, forces the cached extract geometries to be overwritten.
+Defaults to \code{FALSE} to increase speed. Set this to \code{TRUE} if the
+extract has changed and a new one needs to be loaded.}
 
 \item{instance}{\code{[ors_instance]}
 

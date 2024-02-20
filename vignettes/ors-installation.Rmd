@@ -1,7 +1,7 @@
 ---
 title: "Installing and setting up OpenRouteService locally"
 author: Jonas Lieth
-date: "`r Sys.Date()`"
+date: "2024-02-16"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Installing and setting up OpenRouteService locally}
@@ -9,91 +9,380 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
-```{r setup}
+
+
+
+```r
 library(ORSRouting)
 ```
 
 # Why do the routing functions not work off the shelf?
 
-First off, ORSRouting is powered by OpenRouteService (ORS) and as such depends on a running ORS instance. If you did not mount a working ORS instance first, all routing functions will throw an error. An OpenRouteService instance is a server that can be communicated with using a specified REST API. This can either be the [public API](https://api.openrouteservice.org), a local server or any kind of web server that runs ORS. Instances are controlled through the `ors_instance` functions and the ORS setup function family. The resulting `ors_instance` object is automatically stored in a package environment and detected by all routing functions in the package. If you have no interest in setting up a local instance and just want to make quick routing requests, you can grab a free API key from the [official website](https://openrouteservice.org/) and chuck it into the `ORS_TOKEN` environment variable:
+ORSRouting is powered by OpenRouteService (ORS) and as such depends on a running ORS instance. If you did not mount a working ORS instance first, all routing functions will throw an error. An OpenRouteService instance is a server that can be communicated with using a specified REST API. This can either be the [public API](https://api.openrouteservice.org), a local server or any kind of web server that runs ORS. Instances are controlled through the `ors_instance` functions and the ORS setup function family. The resulting `ors_instance` object is automatically attached to the session and detected by all routing functions in the package.
 
-```{r public, eval=FALSE}
-Sys.setenv(ORS_TOKEN = "API token goes here")
+If you have no interest in setting up a local instance and just want to make quick routing requests, you can grab a free API key from the [official website](https://openrouteservice.org/) and chuck it into the `ORS_TOKEN` environment variable. It is best practice to do so without exposing the token to R code, e.g. through an [`.Renviron`](https://rstats.wtf/r-startup.html#renviron) file. After doing so, you can call `ors_instance` to attach the token to your session.
 
-# `server = "api"` is short for https://api.openrouteservice.org/
-public <- ors_instance(server = "api")
+
+```r
+token_exists <- nzchar(Sys.getenv("ORS_TOKEN"))
+cat(sprintf("ORS token available? %s\n", ifelse(token_exists, "yes", "no")))
+
+# `server = "pub"` is short for https://api.openrouteservice.org/
+public <- ors_instance(server = "pub")
 ```
 
-After doing this, all functions should be ready to use. Keep in mind though, that firing requests at the public API comes with lots of rate restrictions. For a simple request involving 100 routes you will wait upwards of two minutes as requests are throttled according to their rate restrictions. If you plan on working with larger datasets, if you're impatient, or if you're handling sensitive data, it is strongly suggested that you set up a local instance. This vignette will cover the usage of `ors_instance` and family to construct and start a customized ORS instance using R.
+After doing this, all functions should be ready to use. Keep in mind though, that firing requests at the public API comes with lots of rate restrictions. For a simple request involving 100 routes you will wait upwards of two minutes as requests are throttled according to their rate restrictions. If you plan on working with larger datasets, if you are limited by server-side restrictions of the public API, or if you're handling sensitive data, it is strongly suggested that you set up a local instance. This vignette will cover the usage of `ors_instance` and family to construct and start a customized ORS instance using R.
 
 
 
 # Setting up the service backend
 
-In order to set up the ORS backend locally, three requirements must be met:
+In order to set up the ORS backend locally, we need three things:
 
-- Docker (Docker Desktop on Windows)
+- Docker
 - An OpenStreetMap extract of the desired region
-- The source code of OpenRouteService
+- A compose file telling Docker how to set up ORS
 
-Of these, only Docker needs to be installed beforehand. `ORSRouting` can verify the installation and start Docker, but it cannot assist in the installation process. OpenRouteService will sit in a container which is accessible over a localhost address. After installing Docker, a new ORS instance can be initialized. If necessary, this will download the ORS GitHub repository and start the Docker daemon.
+Of these, only Docker needs to be installed beforehand. `ors_instance` can verify the installation and start Docker, but it cannot assist in the installation process. You can get Docker from [here](https://docs.docker.com/get-docker/). Local ORS instances use Docker containers to host the service endpoints on a local server.
 
-```{r init, eval=FALSE}
-ors <- ors_instance(dir = "~", version = "6.7.0", verbose = FALSE)
-ors
+OpenStreetMap (OSM) extracts are regional data files from the OSM project. It contains spatial information relevant for routing such as streets, buildings and natural features. OSM extracts are distributed by providers such as [Geofabrik](https://download.geofabrik.de/) or [bbbike](https://extract.bbbike.org/). `ORSRouting` wraps the `osmextract` package to match, download, and process extract files.
+
+Finally, a compose file is a file that instructs Docker how to create a container. The `ors_instance` function helps adjust this file, e.g. to change allocated memory or ports.
+
+You can initialize a local ORS instance by passing a directory to `ors_instance`. The function then downloads a compose file from the official [ORS Github repository](https://github.com/GIScience/openrouteservice). It then proceeds to "jumpstart" ORS, i.e. it starts a default instance with default configurations and OSM data from 2014 Monaco. This is probably not what you want, but worry not, because you can make changes to this setup afterwards. Jumpstarting is deemed good practice by the ORS developer team and simplifies the rest of the setup.
+
+
+```r
+ors <- ors_instance(dir = ".", version = "7c77ae5", verbose = 1)
+#> ── Jumpstarting container ───────────────────────────────────────────────────────────────────────────────────────────────────────
+#> ℹ Docker will now jumpstart an initial ORS setup. This setup runs the default config, settings, and 2014 map data from Monaco.
+#>   It will fail for any coordinates outside of Monaco. You can make changes to this setup afterwards. This process can take
+#>   between 1-2 minutes. Jumpstarting is recommended by the ORS developer team, but you can also start a dry run and jumpstart
+#>   yourself.
+#> • Setting name to "ors-app-7c8a762"
+#> • Setting ports to 5318 and 40554
+#> ── Pulling image ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+#> 
+#> ℹ ORS image already exists.
+#> ── Building container ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+#> ── Setting up service ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+#> ℹ The container is being set up and started now. You can stop the process now or let it run and get notified when the service is
+#>   ready.
+#> ℹ If you wish to make changes to the existing setup, run `$down()`, or `$stop()` and make the required changes manually.
 ```
 
-The resulting `ors_instance` object is stored in a cache environment for the entire R session. If the `ors` instance needs to be updated (when changing a file outside of R) or renewed (when starting a new R session), you can use the same function:
+Immediately after, we can take down the service to make changes to the ORS setup:
 
-```{r renew, eval=FALSE}
-ors <- ors_instance(ors)
+
+```r
+ors$down()
 ```
 
-The `ors` object holds all information about the instance and its current configuration. `$paths` contains information about all relevant directories and files. `$extract` shows the mounted extract. `$config` contains the parsed configuration file. `$settings` contains the parsed `docker-compose.yml` file. `$status` displays the current status of the Docker container. Each of these elements can be modified using the ORS setup family functions. All of these functions are designed to be pipeable and the entire setup can be reduced to a (admittedly pretty long) one-liner:
+The resulting `ors_instance` object is stored in a cache environment for the entire R session. All API functions automatically detect the currently mounted instance.
 
-```{r all-in-one, eval=FALSE}
-ors <- ors %>%
-    ors_extract("Rutland") %>%
-    ors_config(
-      profiles = c("car", "bike-regular", "walking"),
-      maximum_snapping_radius = -1,
-      maximum_distance = 100000
-    ) %>%
-    ors_settings(
-      name = "ors_stable",
-      ports = NA,
-      memory = c(0.1, 0.2),
-      auto_deletion = FALSE
-    ) %>%
-    ors_up()
+
+```r
+get_instance()
+#> <ORSInstance> 
+#>   server : https://localhost:5318/ 
+#>   type   : local 
+#>   active : TRUE 
+#>   init   : TRUE
+```
+
+The instance object already shows some important information when printed. We are dealing with a local instance on a localhost. The instance is "active" in that it is currently mounted to the session and it is "init" in that it was already built for the first time.
+
+`ors` is an R6 and provides multiple methods to set up a custom ORS instance. These methods can be divided into four categories:
+
+- **Extract**: Methods and fields to interact with OSM extracts
+- **Config**: Methods and fields to interact with the configuration
+- **Settings**: Methods and fields to interact with the compose file
+- **Docker**: Methods and fields to interact with Docker
+
+
+## Changing the extract
+
+If we wanted to learn more about the currently selected OSM extract, we can run:
+
+
+```r
+ors$extract
+#> $name
+#> [1] "osm_file.pbf"
+#> 
+#> $size
+#> [1] 15
 ```
 
 
-This code chuck follows a rather simple workflow:
+As you can see, we are currently running an extract file of Monaco. If we wanted to get a new extract, we can run:
 
-1. Create an instance
-2. Mount an OpenStreetMap extract
-3. Adjust the routing configuration
-4. Change the Docker container settings
-5. Start the service by building the container
 
-You can choose to either mount a local extract or download one by providing a place name. Extract downloads are powered by the `oe_match` and `oe_download` functions from the [osmextract](https://docs.ropensci.org/osmextract/) package and follow their logic.
+```r
+ors$set_extract("Rutland", provider = "geofabrik")
+#> Provider : geofabrik
+#> Name     : rutland-latest.osm.pbf
+#> Size     : 2 MB
+#> • Using extract "geofabrik_rutland-latest.osm.pbf"
+#> • Enabling graph building.
+```
 
-Adjusting the routing configuration means making changes to the configuration file of OpenRouteService. The config file controls how routes are computed. The most common options are included as arguments for convenience. For example, in the chunk above, the maximum number of of routes that are allowed to be computed at once is increased to 10,000. For more specified changes, you can choose to provide a modified version of the parsed json file (as returned by `jsonlite::toJSON`) or change the file in an editor and update the instance. One central part of the configuration file are routing profiles. A profile is a means of transporation that is used as a basis for routing. Each profile needs its own graphs built and thus increases the time and memory that a container needs to be built. You should therefore limit the profiles you activate in a single instance based on the amount of available RAM. In the code chunk, two profiles are activated: `driving-car` and `cycling-regular`.
+This code runs `osmextract::oe_match` and `osmextract::oe_download` to download an extract of the British county Rutland. The extract is automatically added to the compose file, so you don't need to do anything else.
 
-Changing the Docker settings means editing the Docker compose file (`docker-compose.yml`) in the ORS directory. Again, the most important settings are included as arguments (project name, ports, memory and graph building). Other relevant options (if there are any) can be provided through a parsed yaml file (as returned by `yaml::as.yaml`) or by modifying the compose file directly and updating the instance. Keep in mind that RAM is an important resource for local ORS instances and the more profiles you build the more RAM you have to allocate. Not allocating enough RAM leads to the container build failing.
 
-The Docker container can be controlled through a purpose-tailored low-level Docker interface that understands the following commands:
 
-- Build and start a container (`ors_up` / `docker-compose up -d`)
-- Take a container down (`ors_down` / `docker-compose down`)
-- Start a container (`ors_start` / `docker-compose start`)
-- Stop a container (`ors_stop` / `docker-compose stop`)
+## Changing the configuration
+
+ORS defines a `ors-config.yml` file inside the ORS directory that holds the configuration for the service. If you have ever used ORS before, chances are you have encountered errors that told you about server-side limits. The config file is the place where these limits are defined and where you can change them for your own setup.
+
+The configuration especially includes the active routing profiles, profile-specific options and endpoint-specific options. Routing profiles are the transport modes used to do the routing with. The default is `driving-car`, but there are several other profiles you can choose from (refer to the [API playground](https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post)).
+
+We can learn more about the currently active routing profiles:
+
+
+```r
+ors$config
+#> car              : TRUE
+#> hgv              : FALSE
+#> bike-regular     : FALSE
+#> bike-mountain    : FALSE
+#> bike-road        : FALSE
+#> bike-electric    : FALSE
+#> walking          : FALSE
+#> hiking           : FALSE
+#> wheelchair       : FALSE
+#> public-transport : FALSE
+```
+
+As you can see, there is currently only one active profile: `driving-car`. To add more profiles, we can use the `$add_profiles` method. The method accepts either character values or objects of class `ors_profile`. For quickly adding a new profile, you can simply refer to it by name.
+
+
+```r
+ors$add_profiles("walking", ors_profile("hiking"))
+#> • The following profiles were added: foot-walking and foot-hiking
+```
+
+However, each routing profile comes with its own set of configurations. To have a better control over the configurations in each profile, we can create `ors_profile` objects. The following code creates a walking profile with the same defaults as above, but without taking into account elevation to its routing computations.
+
+
+```r
+ors_profile("walking", elevation = FALSE)
+#> <ors_profile>
+#>  walking:
+#>   profile: foot-walking
+#>   interpolate_bridges_and_tunnels: false
+#>   elevation: false
+#>   encoder_options:
+#>     block_fords: false
+```
+
+To remove a profile, you can refer to it by name:
+
+
+```r
+ors$rm_profiles("hiking")
+#> • Removing the following profiles: hiking
+```
+
+
+Besides routing profiles, we can also change the configuration of entire endpoints. Endpoints include `directions`, `isochrones` and `matrix`. Each endpoint comes with its own limitations. For example, by default we can only create isochrones for 2 locations. To increase this limit, we can run:
+
+
+```r
+ors$set_endpoints(isochrone = list(maximum_locations = 100))
+```
+
+A full list of endpoint defaults set by ORS can be found [here](https://giscience.github.io/openrouteservice/run-instance/configuration/ors/endpoints/). A full list of profiles and their specific configuration defaults
+
+
+
+## Changing the compose file
+
+The final step before starting the setup is to check the container settings aka the `docker-compose.yml` file. You can check the current status of the compose file by printing:
+
+
+```r
+ors$compose
+#> Build  : TRUE
+#> Name   : ors-app-7c8a762
+#> Ports  : 5318 -> 8080, 40554 -> 9001
+#> Image  : nightly
+#> 
+#>  Total memory Free memory Initial memory Max memory
+#>  15.93 GB     4.48 GB     1 GB           2 GB
+```
+
+By default, ORS uses 1 GB of initial memory and 2 GB of maximum memory. This means that Docker starts allocating 1 GB of memory, but is only allowed to allocate a maximum of 2 GB. You can adjust these defaults to your needs using `$set_ram`. Usually, ORS requires about 2.5 times the size of the extract file for each routing profile as memory. You can either set the memory manually or let `$set_ram` make an educated guess:
+
+
+```r
+# Not passing anything tells `$set_ram` to freestyle
+ors$set_ram()
+#> • Setting memory to:
+#>   init: 0.005 GB
+#> 
+#>   max: 0.009 GB
+
+# Alternatively, pass values directly (as GB)
+ors$set_ram(init = 0.1, max = 0.2)
+#> • Setting memory to:
+#>   init: 0.1 GB
+#> 
+#>   max: 0.2 GB
+
+ors$compose$memory
+#> $total
+#> [1] 15.92733
+#> 
+#> $free
+#> [1] 4.483795
+#> 
+#> $init
+#> [1] 0.1
+#> 
+#> $max
+#> [1] 0.2
+```
+
+Similarly, not passing anything to compose methods, makes them freestyle. `$set_name()` creates a random container name and `$set_port()` assigns a random port.
+
+
+```r
+ors$set_name()
+#> • Setting name to "ors-app-6eea399"
+ors$compose$name
+#> [1] "ors-app-6eea399"
+```
+
+
+```r
+ors$set_port()
+#> • Setting ports to 40118 and 15060
+ors$compose$ports
+#>    host docker
+#> 1 40118  15060
+#> 2 40554   9001
+```
+
+
+## Docker
+
+The final step of the ORS setup is to start the Docker container and, ultimately, the service. The Docker container can be controlled through a purpose-tailored high-level Docker interface that understands the following commands:
+
+- Build and start a container (`$up()` / `docker-compose up -d`)
+- Take a container down (`$down()` / `docker-compose down`)
+- Start a container (`$start()` / `docker-compose start`)
+- Stop a container (`$stop()` / `docker-compose stop`)
+- Show logs (`$show_logs()` / `docker logs`)
+
+The service can be started using the `$up()` method:
+
+
+```r
+ors$up()
+#> ── Pulling image ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+#> ℹ ORS image already exists.
+#> ── Building container ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+#> ── Setting up service ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+#> ℹ The container is being set up and started now. You can stop the process now or let it run and get notified when the service is
+#>   ready.• Disabling graph building.
+```
+
+By default, `$up()` blocks the console until the setup is done and gives out a visual and audible notification upon completion. If the setup fails, `$up()` immediately invokes an informative error. This is useful for short to moderately long setup times. However, especially for longer setups, this can be obtrusive. By passing `wait = FALSE`, the entire setup happens in a background process and you can keep using the console. There are two tools that enable you to monitor the setup progress nonetheless:
+
+- `$show_logs()`: Prints the ORS logs to the console. Should the setup fail, this is the first place to look for errors. In fact, `$up(wait = TRUE)` also uses it to determine errors in the setup.
+- `$is_ready()`: Shows whether the setup is done and ORS is ready to use. It accesses the `health` endpoint to determine whether the setup has completed without any errors. `$is_ready()` is a simple wrapper around `ors_ready()` which polls the currently mounted ORS instance.
+
+
+When `ors_ready()` returns `TRUE`, you are officially ready to use the rest of the package functions!
+
+
+
+
+## Manual changes
+
+The methods of an ORS instance object cover only some settings and configurations. Many functionalities were deliberately left out to keep the number of methods neat and tidy. If you are missing some important feature, feel free to open a [Github issue](https://github.com/JsLth/ORSRouting/issues).
+
+Yet, you can always make manual changes yourself. The methods introduced above are merely convenience wrappers that take care of some tedious tasks. Parsed versions of `ors-config.yml` and `docker-compose.yml` are readily accessible in the instance object:
+
+
+```r
+ors$config$parsed
+#> List of 1
+#>  $ ors:List of 1
+#>   ..$ engine:List of 4
+#>   .. ..$ source_file     : chr "./ors-core/data/osm_file.pbf"
+#>   .. ..$ graphs_root_path: chr "./ors-core/data/graphs"
+#>   .. ..$ elevation       :List of 1
+#>   .. ..$ profiles        :List of 2
+```
+
+
+```r
+ors$compose$parsed
+#> version: '2.4'
+#> services:
+#>   ors-app:
+#>     container_name: ors-app-6eea399
+#>     ports:
+#>       - 40118:8080
+#>       - 15060:9001
+#>     image: openrouteservice/openrouteservice:nightly
+#>     user: ${UID:-0}:${GID:-0}
+#>     volumes:
+#>       - ./docker/graphs:/home/ors/ors-core/data/graphs
+#>       - ./docker/elevation_cache:/home/ors/ors-core/data/elevation_cache
+#>       - ./docker/logs/ors:/home/ors/logs
+#>       - ./docker/logs/tomcat:/home/ors/tomcat/logs
+#>       - ./docker/conf:/home/ors/ors-conf
+#>       - ./docker/data:/home/ors/ors-core/data
+#>       - ./docker/data/geofabrik_rutland-latest.osm.pbf:/home/ors/ors-core/data/osm_file.pbf
+#>     environment:
+#>       - BUILD_GRAPHS=False
+#>       - JAVA_OPTS=-Djava.awt.headless=true -server -XX:TargetSurvivorRatio=75 -XX:SurvivorRatio=64
+#>         -XX:MaxTenuringThreshold=3 -XX:+UseG1GC -XX:+ScavengeBeforeFullGC -XX:ParallelGCThreads=4
+#>         -Xms100m -Xmx200m
+#>       - CATALINA_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9001
+#>         -Dcom.sun.management.jmxremote.rmi.port=9001 -Dcom.sun.management.jmxremote.authenticate=false
+#>         -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost
+#>       - ORS_CONFIG=/home/ors/ors-conf/ors-config.json
+#> 
+```
+
+Both objects are lists, which can simply be modified:
+
+
+```r
+ors$compose$parsed$services$`ors-app`$container_name <- "new-name-123"
+```
+
+One caveat is that such simple assignments only change the state of the object, but not the state of the actual files. To synchronize the ORS file system, you have to `$update()` after making manual changes:
+
+
+```r
+ors$update()
+```
+
+This command writes the current state of the parsed ORS files to disk. Conversely, if you make manual changes to one of the relevant ORS files, you can update the R instance object using:
+
+
+```r
+ors$update("self")
+```
+
+This command re-parses all ORS files. Again, it is advisable to make the majority of changes using the convenience wrappers as they automatically update and mount the instance object. Manually updating the instance is prone to errors which can be quite hard to spot and debug.
+
+
+## Other methods
+
+ORS instance objects contain some other important functions that didn't make it into this vignette. Among them are:
+
+- `$is_built()` / `$is_running()`: Check whether a container is built and running. These are the two steps before a service is ready and are useful to monitor a container before the service is ready.
+- `$is_mounted()`: Checks whether an instance is currently mounted to the session. If not the case, simply invoke one of the methods (e.g. `$update()`) to mount it.
+- `$get_image()` / `$get_container()` Return some useful diagnostics about the image and container.
+- `$get_status()`: Returns configurations and attributes of the ORS service (given that the service is ready)
+- `$purge()`: Purges an ORS instance, i.e. takes down containers, deletes the ORS directory and cleans the instance object
+
+
 
 

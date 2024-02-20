@@ -56,7 +56,7 @@ ors_polygon <- function(res) {
 #' Rasterizes the isochrone polygons from ORS isochrones
 #' @noRd
 rasterize_isochrones <- function(isochrones, resolution) {
-  if (!requireNamespace("terra")) {
+  if (!loadable("terra")) {
     cli::cli_abort("The {.pkg raster} package is needed to rasterize isochrones.")
   }
 
@@ -74,8 +74,8 @@ rasterize_isochrones <- function(isochrones, resolution) {
 }
 
 
-#' Check if an object is of class sf or sfc
+#' Check if an object has a CRS
 #' @noRd
-is_sf <- function(x) {
-  inherits(x, c("sf", "sfc"))
+has_crs <- function(x) {
+  !is.na(sf::st_crs(x))
 }

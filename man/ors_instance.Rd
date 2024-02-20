@@ -31,7 +31,8 @@ minute. Routing functions \emph{will} be slow for larger datasets.}
 \item{version}{\code{[character]}
 
 The OpenRouteService version to use. Can either be a version number (e.g.
-7.2.0) or \code{"master"}. Ignored if \code{server} is not \code{NULL}.}
+7.2.0), a commit hash, or \code{"master"}. Ignored if \code{server} is not
+\code{NULL}.}
 
 \item{overwrite}{\code{[logical]}
 

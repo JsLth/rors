@@ -24,8 +24,10 @@ start_vignette("README")
 # <img src="inst/figures/orsr_sticker.png" width = "150" align="right" />
 
 <!-- badges: start -->
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
+[![R-CMD-check](https://github.com/JsLth/ORSRouting/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/JsLth/ORSRouting/actions/workflows/R-CMD-check.yaml)
+[![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
 [![](https://www.r-pkg.org/badges/version/ORSRouting)](https://cran.r-project.org/package=ORSRouting)
+
 <!-- badges: end -->
 
 The purpose of this package is to provide a comprehensive and convenient R interface to local OpenRouteService instances in order to facilitate batch routing. The package functions (so far) enable qualitative and quantitative route computations, distance matrix generation, and accessibility analyses (i.e. isochrones). Also included is a function family to build local customized OpenRouteService instances from scratch. While it is possible to use ORSRouting with the official web API, requests will be very slow due to rate restrictions and therefore not really suitable for larger scale analyses.
@@ -41,105 +43,32 @@ devtools::install_github("JsLth/ORSRouting")
 
 ## Basic usage
 
-Some basic functionalities using a running local OpenRouteService instance:
+To connect to a running OpenRouteService server - or to build a new one, use the workhorse function `ors_instance`:
 
-```{r, eval=FALSE}
+```{r}
 library(ORSRouting)
 
-# Set up a local OpenRouteService server using Docker
-ors <- ors_instance(dir = "~/Documents") %>%
-  ors_extract("Rutland") %>%
-  ors_config(
-    profiles = c("car", "bike-regular", "walking"),
-    isochrones.maximum_locations = 20,
-    default = c(maximum_snapping_radius = -1, maximum_distance = 1e+07),
-    car = c(maximum_snapping_radius = -1, maximum_distance = 1e+07)
-  ) %>%
-  ors_settings(ports = NA, memory = 0.1, auto_deletion = FALSE) %>%
-  ors_up()
-```
+# API keys are stored in the ORS_TOKEN environment variable
+ors <- ors_instance(server = "public")
 ```
 
-Generate random sample points:
+The ORS instance is then attached to the session and is automatically detected by all other functions. To perform a simple routing request, run `ors_inspect`:
 
 ```{r}
-rut_bbox <- sf::st_as_sfc(sf::st_bbox(c(
-  xmin = -0.82,
-  ymin = 52.52,
-  xmax = -0.43,
-  ymax = 52.76), crs = 4326))
-
-set.seed(111)
-sam <- ors_sample(20, poly = rut_bbox)
+ors_inspect(pharma[1:2, ], profile = "driving-car", extra_info = "surface")
 ```
 
-`ors_pairwise` returns only distances, durations and geometries - but lots of them (i.e., row-wise):
-
-```{r}
-dis <- ors_pairwise(sam[1:10, ], sam[11:20, ], geometry = TRUE, radiuses = -1)
-dis
-```
-
-```{r}
-library(leaflet)
-
-leaflet(dis) %>%
-  addTiles() %>%
-  addPolylines()
-```
-
-
-`ors_matrix` also returns lots of distances, but many-to-many, not row-wise:
-
-```{r}
-ors_matrix(sam[1:10, ], sam[11:20, ], proximity_type = "duration")
-```
-
-`ors_shortest_distances` returns routes with the shortest distances from each point in a dataset to all points in another dataset:
-
-```{r}
-short <- ors_shortest_distances(
-  sam[1:2, ],
-  sam[3:20, ],
-  profile = "cycling-regular",
-  geometry = TRUE,
-  radiuses = -1,
-  progress = FALSE
-)
-```
-
-```{r}
-leaflet(short) %>%
-  addTiles() %>%
-  addPolylines()
-```
-
-
-`ors_inspect` returns all requested information on a single route, i.e. just one route but lots of data:
-
-```{r}
-insp <- ors_inspect(sam[1:2, ], radiuses = -1)
-insp
-```
-
-```{r}
-plot_section(insp)
-```
-
-
-`ors_accessibility` requests isochrones and, optionally, rasterizes them to produce an accessibility raster:
-
-```{r}
-library(terra)
-
-isochr <- ors_accessibility(sam[1:5, ], range = seq(100, 1000, 100), location_type = "destination", rasterize = TRUE)
-
-terra::plot(isochr)
-```
 
 ## Local instances
 
-While `ORSRouting` can work with public API requests, it is primarily designed to be used together with local instances. The `ors_instance` family can be used to manage, control and build local ORS instances. The following code would download the source code and an OSM extract of Rutland, change the setup files and finally start a local Docker-powered server:
+While `ORSRouting` can work with public API requests, it is primarily designed to be used together with local instances. The `ors_instance` family can be used to manage, control and build local ORS instances. The following code would jumpstart an initial instance, add an OSM extract of Rutland, add three routing profiles, set a random port, 100 MB of RAM and finally start the ORS instance. For more details, refer to `vignette("ors-installation")`.
 
-
+```{r, eval=FALSE}
+ors <- ors_instance(dir = "~")
+ors$set_extract("Rutland", provider = "geofabrik")
+ors$add_profiles("car", "bike-regular", "walking")
+ors$set_port()
+ors$set_ram(0.1)
+ors$up()
+```
 

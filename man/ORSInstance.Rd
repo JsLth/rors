@@ -14,6 +14,7 @@ the R session.
 \itemize{
 \item \href{#method-ORSInstance-is_ready}{\code{ORSInstance$is_ready()}}
 \item \href{#method-ORSInstance-get_status}{\code{ORSInstance$get_status()}}
+\item \href{#method-ORSInstance-is_mounted}{\code{ORSInstance$is_mounted()}}
 \item \href{#method-ORSInstance-clone}{\code{ORSInstance$clone()}}
 }
 }
@@ -35,6 +36,22 @@ routing functions can be used.
 Retrieves information about the ORS server.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$get_status()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSInstance-is_mounted"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSInstance-is_mounted}{}}}
+\subsection{Method \code{is_mounted()}}{
+Checks whether the instance is currently mounted to the session.
+More technically, \code{$is_mounted} compares the MD5 hashes of its
+R6 object and the currently mounted instance. Hence, an instance
+only counts as mounted if it is exactly the same as the currently
+mounted instance. An instance that was manually manipulated and has
+not been updated with \code{$update()} thus is not considered
+mounted.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$is_mounted()}\if{html}{\out{</div>}}
 }
 
 }

@@ -31,23 +31,25 @@ ports_to_df <- function(ports) {
   ports <- strsplit(ports, ":")
   ports <- do.call(rbind.data.frame, ports)
   names(ports) <- c("host", "docker")
-}
-
-
-format_ports <- function(self, port) {
-  assert_that(length(port) == 1)
-  compose <- self$compose$parsed
-  ports_chr <- compose$services$`ors-app`$ports
-  old_ports <- ports_to_df(ports_chr)
-  ports_chr[1] <- sprintf("%s:%s", port %||% old_ports[1, 1], old_ports[1, 2])
   ports
 }
 
 
-random_port <- function() {
-  if (requireNamespace("httpuv")) {
+format_ports <- function(self, port) {
+  assert_that(length(port) <= 2)
+  compose <- self$compose$parsed
+  ports_chr <- compose$services$`ors-app`$ports
+  old_ports <- ports_to_df(ports_chr)
 
-    httpuv::randomPort()
+  ports_chr[1] <- sprintf("%s:%s", port[1] %||% old_ports[1, 1], old_ports[1, 2])
+  ports_chr[2] <- sprintf("%s:%s", port[2] %NA% old_ports[2, 1], old_ports[2, 2])
+  ports_chr
+}
+
+
+random_port <- function(n = 1) {
+  if (loadable("httpuv")) {
+    replicate(n, httpuv::randomPort())
   } else {
     cli::cli_abort("To assign a random port, install the {.pkg httpuv} package.")
   }
@@ -109,13 +111,13 @@ adjust_memory <- function(self, private, init, max) {
     }
   }
 
-  if (get_memory_info()$free * 0.8 - max / 1024 <= 0) {
+  if (self$compose$memory$free * 0.8 - max / 1024 <= 0) {
     msg <- paste(
       "You are allocating more than your available memory.",
       "Consider lowering the allocated RAM."
     )
 
-    if (max >= 1000) {
+    if (max >= 1e+05) {
       msg <- c(
         "!" = msg,
         "i" = "Did you accidentally pass megabytes instead of gigabytes?"
@@ -125,7 +127,7 @@ adjust_memory <- function(self, private, init, max) {
     ors_cli(warn = msg)
   }
 
-  c(as.integer(init), as.integer(max))
+  c(init, max)
 }
 
 
@@ -169,11 +171,9 @@ read_compose_image <- function(compose) {
 }
 
 
-set_ors_name <- function(self, name) {
-  compose <- self$compose$parsed
-  if (is.null(name))
-    name <- paste0("ors-app", sample(1:9999, size = 1))
-  name
+random_ors_name <- function(private, name) {
+  hash <- substr(private$.get_hash(), 1, 7)
+  paste0("ors-app-", hash)
 }
 
 
@@ -214,4 +214,32 @@ force_gp <- function(mode, compose) {
   build_graphs_string <- sprintf("BUILD_GRAPHS=%s", mode)
   compose$services$`ors-app`$environment[1L] <- build_graphs_string
   compose
+}
+
+
+change_extract <- function(compose, path) {
+  volumes <- compose$services$`ors-app`$volumes
+  change_node <- sprintf(
+    "./docker/data/%s:/home/ors/ors-core/data/osm_file.pbf",
+    basename(path)
+  )
+
+  # is there already a pbf volume?
+  pbf_vol <- is_pbf(compose$services$`ors-app`$volumes)
+
+  if (any(pbf_vol)) {
+    # if yes, replace it
+    idx <- pbf_vol
+  } else {
+    # otherwise, add a new volume
+    idx <- length(volumes) + 1
+  }
+
+  compose$services$`ors-app`$volumes[idx] <- change_node
+  compose
+}
+
+
+check_version <- function(version) {
+  if (is_numver(version)) version
 }

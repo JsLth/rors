@@ -1,13 +1,15 @@
 skip_if_offline("github.com")
 skip_on_cran()
 skip_on_ci()
+skip_on_os(c("mac", "solaris"))
 skip_if_not(docker_installed() && has_docker_access(), "docker unavailable")
 
-tdir <- file.path(normalizePath(tempdir, "/"), "ors-test")
-dir.create(tdir, recursive = TRUE)
-on.exit(unlink(tdir, recursive = TRUE))
-
-expect_silent(ors <- ors_instance(tdir, verbose = FALSE))
+ors <- local_ors_instance(
+  dir = tempdir(),
+  verbose = FALSE,
+  dry = FALSE,
+  version = "7c77ae5"
+)
 
 test_that("docker setup works", {
   # check if successful

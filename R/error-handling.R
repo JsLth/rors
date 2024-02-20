@@ -166,25 +166,27 @@ cond_tip <- function(last = NULL) {
 #' Replaces empty error message strings based on their error code
 #' @noRd
 fill_empty_error_message <- function(code) {
-  switch(as.character(code),
-         `2000` = "Unable to parse JSON request.",
-         `2001` = "Required parameter is missing.",
-         `2002` = "Invalid parameter format.",
-         `2003` = "Invalid parameter value.",
-         `2004` = "Parameter value exceeds the maximum allowed limit.",
-         `2006` = "Unable to parse the request to the export handler.",
-         `2007` = "Unsupported export format.",
-         `2008` = "Empty Element.",
-         `2009` = "Route could not be found between locations.",
-         `2099` = "Unknown internal error.",
-         `6000` = "Unable to parse JSON request.",
-         `6001` = "Required parameter is missing.",
-         `6002` = "Invalid parameter format.",
-         `6003` = "Invalid parameter value.",
-         `6004` = "Parameter value exceeds the maximum allowed limit.",
-         `6006` = "Unable to parse the request to the export handler.",
-         `6007` = "Unsupported export format.",
-         `6008` = "Empty Element.",
-         `6099` = "Unknown internal error."
+  switch(
+    as.character(code),
+    `2000` = "Unable to parse JSON request.",
+    `2001` = "Required parameter is missing.",
+    `2002` = "Invalid parameter format.",
+    `2003` = "Invalid parameter value.",
+    `2004` = "Parameter value exceeds the maximum allowed limit.",
+    `2006` = "Unable to parse the request to the export handler.",
+    `2007` = "Unsupported export format.",
+    `2008` = "Empty Element.",
+    `2009` = "Route could not be found between locations.",
+    `2099` = "Unknown internal error.",
+    `6000` = "Unable to parse JSON request.",
+    `6001` = "Required parameter is missing.",
+    `6002` = "Invalid parameter format.",
+    `6003` = "Invalid parameter value.",
+    `6004` = "Parameter value exceeds the maximum allowed limit.",
+    `6006` = "Unable to parse the request to the export handler.",
+    `6007` = "Unsupported export format.",
+    `6008` = "Empty Element.",
+    `6099` = "Unknown internal error.",
+    "Unknown error code"
   )
 }

@@ -8,11 +8,7 @@ get_ors_geometry <- function(res, alt = 1L, as_coords = FALSE) {
   }
 
   features <- get_ors_features(res, properties = FALSE)
-
-  if (is.na(alt)) {
-    alt <- seq(1, length(features$geometry$coordinates))
-  }
-
+  alt <- alt %NA% seq(1, length(features$geometry$coordinates))
   geom <- features$geometry$coordinates[alt]
 
   if (length(geom) == 1) {

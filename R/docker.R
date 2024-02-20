@@ -25,7 +25,7 @@ ors_up <- function(self, private, wait = TRUE, ...) {
   proc <- callr::run(
     command = "docker",
     args = cmd,
-    stdout = if (isTRUE(verbose)) "" else NULL,
+    stdout = if (verbose) "" else NULL,
     stderr = "2>&1",
     error_on_status = FALSE
   )
@@ -43,7 +43,7 @@ ors_up <- function(self, private, wait = TRUE, ...) {
     ors_cli(line = TRUE)
     ors_cli(rule = "Setting up service")
     setup_info(verbose)
-    notify_when_ready(name, interval = 10L, verbose = "no sound")
+    notify_when_ready(name, interval = 10L, verbose = verbose)
   }
 }
 
@@ -94,6 +94,8 @@ ors_down <- function(self, private) {
 
 
 ors_start <- function(self, private, wait = TRUE) {
+  verbose <- private$.verbose
+
   if (!docker_running()) {
     cli::cli_abort("Docker is not running.")
   }
@@ -123,7 +125,7 @@ ors_start <- function(self, private, wait = TRUE) {
     }
 
     if (isTRUE(wait)) {
-      notify_when_ready(name, interval = 2L, verbose = TRUE)
+      notify_when_ready(name, interval = 2L, verbose = verbose)
     }
   } else {
     ors_cli(info = c("i" = "Container {name} is already running."))
@@ -193,7 +195,7 @@ pull_ors <- function(self, private) {
       stdout = if (verbose) "|",
       stderr = if (verbose) "2>&1",
       error_on_status = FALSE,
-      spinner = verbose && interactive(),
+      spinner = verbose > 1 && interactive(),
       encoding = "UTF-8",
       stdout_line_callback = if (verbose) pull_callback,
     )
@@ -253,7 +255,7 @@ rm_image <- function(self, private) {
         if (!identical(rmvd$status, 0L)) {
           cli::cli_abort(c(
             "The docker command encountered an error",
-            "Error code {.val {proc$status}}"
+            "Error code {.val {rmvd$status}}"
           ))
         }
       }
@@ -348,12 +350,17 @@ container_info <- function(name) {
 
 get_docker_logs <- function(name) {
   cmd <- c("logs", name)
-  callr::run(
+  logs <- callr::run(
     "docker",
     args = cmd,
     stdout = "|",
-    stderr = "2>&1"
-  )$stdout
+    stderr = "2>&1",
+    error_on_status = FALSE
+  )
+
+  if (identical(logs$status, 0L)) {
+    strsplit(logs$stdout, "\n")[[1]]
+  }
 }
 
 
@@ -394,7 +401,7 @@ container_running <- function(name) {
 
 
 pull_callback <- function(newout, proc) {
-  verbose <- as.logical(Sys.getenv("ORS_VERBOSE"))
+  verbose <- as.numeric(Sys.getenv("ORS_VERBOSE"))
   exc_list <- c(
     "Download complete", "Downloading", "Extracting", "Waiting",
     "Pulling fs layer", "Verifying Checksum"
@@ -427,13 +434,6 @@ setup_info <- function(verbose) {
 # notification when the server is ready. Also watches out for errors
 # in the log files.
 notify_when_ready <- function(ors_name, interval, verbose) {
-  if (is.character(verbose)) {
-    sound <- !identical(verbose, "no sound")
-    verbose <- !sound
-  } else {
-    sound <- verbose
-  }
-
   ors_cli(
     progress = "step",
     msg = "Starting service",
@@ -468,7 +468,7 @@ notify_when_ready <- function(ors_name, interval, verbose) {
     ))
   }
 
-  if (sound) {
+  if (verbose > 1) {
     notify("ORS Service is ready!")
   }
 

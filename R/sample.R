@@ -12,7 +12,9 @@
 #' @param ... Passed to \code{\link[sf]{st_sample}}.
 #' @param force_new_extract \code{[logical]}
 #'
-#' If \code{TRUE}, forces the cached extract path to be overwritten.
+#' If \code{TRUE}, forces the cached extract geometries to be overwritten.
+#' Defaults to \code{FALSE} to increase speed. Set this to \code{TRUE} if the
+#' extract has changed and a new one needs to be loaded.
 #' @param poly \code{[sf/sfc]}
 #'
 #' Boundary polygon used to sample points. If \code{NULL}, the default, boundary
@@ -43,8 +45,10 @@ ors_sample <- function(size,
 
 
 #' Extract boundaries
-#' @description Returns boundary geometries of the currently mounted extract
-#' either from the local host or from a local cache.
+#' @description Returns boundary geometries of the currently mounted extract.
+#' For local instances, \code{get_extract_boundaries} wraps
+#' \code{\link[osmextract]{oe_read}}. For remote instances, see section
+#' "Remote instances".
 #' @param force \code{[logical]}
 #'
 #' If \code{TRUE}, extract must be identified and parsed. If
@@ -58,6 +62,50 @@ ors_sample <- function(size,
 #' random seed as in \code{\link{set.seed}}.
 #' @returns An \code{sfc} object of the currently mounted extract boundaries.
 #' @inheritParams ors_pairwise
+#'
+#' @section Remote instances:
+#'
+#' If \code{instance} is not local, it is more difficult to derive the
+#' extract boundaries. There is thus far no way of accessing an OSM extract file
+#' knowing only the server address. We can, however, make use of some
+#' heuristics:
+#'
+#' \code{\link{ors_extract}} can export the built graphs from an ORS server
+#' if it allows it. However, it does not work on the public API and it
+#' requires knowledge about the approximate area of an extract.
+#'
+#' \code{\link{ors_guess}} can make an approximation of an extract area. It
+#' accesses the snap endpoint which also does not work on the public API and
+#' needs to be enabled on other servers. \code{ors_guess} can make a lot of
+#' requests and might not be feasible in many situations.
+#'
+#' If the public API is mounted, we know that the coverage is global.
+#' \code{get_boundaries} generates a random buffer polygon somewhere in the
+#' world. The size and position depend on the dot arguments \code{dist} and
+#' \code{seed}. If possible, it makes use of the global land mass boundaries of
+#' \code{\link[rnaturalearthdata]{coastline110}}. Otherwise, it assumes basic
+#' WGS84 boundaries. While this practice does not always represent the real
+#' boundaries, it can quite often enable working samples to be taken
+#' by \code{\link{ors_sample}}.
+#'
+#' @examples
+#' \dontrun{
+#' library(rnaturalearthdata)
+#' library(sf)
+#'
+#' # For local instances, reads the extract file
+#' ors <- ors_instance(tempdir(), verbose = FALSE)
+#' bounds <- get_extract_boundaries()
+#' plot(bounds)
+#'
+#' # For public API instances, limits the routing area to a random polygon
+#' ors <- ors_instance(server = "pub")
+#' bounds <- get_extract_boundaries(dist = 200000, seed = 123)
+#'
+#' plot(sf::st_as_sfc(rnaturalearthdata::countries110))
+#' plot(bounds, add = TRUE)
+#' }
+#'
 #'
 #' @export
 get_extract_boundaries <- function(instance = NULL,
@@ -119,13 +167,14 @@ get_extract_boundaries <- function(instance = NULL,
       poly <- proc$get_result()
     } else {
       if (is_ors_api(instance$url)) {
-        poly <- random_bbox()
+        poly <- random_bbox(...)
       } else {
         cli::cli_abort(c(
           "Cannot get extract from a server URL.",
           "i" = paste(
             "{.code get_extract_boundaries} is not usable for unkown remote",
-            "servers as the extract boundaries cannot easily be determined."
+            "servers as the extract boundaries cannot easily be determined.",
+            "Consider using {.fn ors_guess}."
           )
         ))
       }
@@ -140,7 +189,7 @@ get_extract_boundaries <- function(instance = NULL,
 
 
 random_bbox <- function(dist = 5000, seed = NULL) {
-  if (requireNamespace("rnaturalearthdata", quietly = TRUE)) {
+  if (loadable("rnaturalearthdata")) {
     poly <- sf::st_as_sfc(rnaturalearthdata::countries110)
     poly <- sf::st_union(sf::st_make_valid(poly))
   } else {
@@ -157,7 +206,7 @@ random_bbox <- function(dist = 5000, seed = NULL) {
   repeat {
     set.seed(seed)
     pt <- sf::st_sample(poly, 1)
-    bbox <- sf::st_as_sfc(sf::st_bbox(sf::st_buffer(pt, 5000)))
+    bbox <- sf::st_as_sfc(sf::st_bbox(sf::st_buffer(pt, dist)))
     if (sf::st_within(bbox, poly, sparse = FALSE)) break
   }
   bbox

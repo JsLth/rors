@@ -1,0 +1,272 @@
+ors:
+  cors:
+    allowed_origins: https://example.org, https://test.com, http://localhost:8080,
+      http://127.0.0.1:8082
+    allowed_headers: Content-Type, X-Tested-With, accept, Origin, Access-Control-Request-Method,
+      Access-Control-Request-Headers, Authorization
+    preflight_max_age: 12345
+  endpoints:
+    matrix:
+      maximum_routes: 200
+      maximum_visited_nodes: 50000
+    isochrones:
+      maximum_intervals: 10
+  engine:
+    source_file: ./src/test/files/heidelberg.osm.gz
+    graphs_root_path: graphs-apitests
+    elevation:
+      cache_path: ./src/test/files/elevation
+    profile_default:
+      elevation: yes
+      elevation_smoothing: yes
+      encoder_flags_size: 4
+      maximum_snapping_radius: 350
+      preparation:
+        fastisochrones:
+          enabled: no
+          threads: 12
+          weightings: recommended
+          maxcellnodes: 5000
+    profiles:
+      car:
+        enabled: yes
+        profile: driving-car
+        encoder_options:
+          turn_costs: yes
+          block_fords: no
+          use_acceleration: yes
+          maximum_grade_level: 1
+          conditional_access: yes
+          conditional_speed: yes
+        preparation:
+          min_network_size: 200
+          methods:
+            ch:
+              enabled: yes
+              threads: 1
+              weightings: fastest
+            lm:
+              enabled: no
+              threads: 1
+              weightings: fastest
+              landmarks: 16
+            core:
+              enabled: yes
+              threads: 1
+              weightings: fastest,shortest
+              landmarks: 64
+        execution:
+          methods:
+            lm:
+              active_landmarks: 8
+            core:
+              active_landmarks: 6
+        ext_storages:
+          WayCategory: ~
+          HeavyVehicle:
+            restrictions: yes
+          WaySurfaceType: ~
+          Tollways: ~
+          Borders:
+            boundaries: ./src/test/files/borders/borders.geojson
+            ids: ./src/test/files/borders/ids.csv
+            openborders: ./src/test/files/borders/openborders.csv
+          RoadAccessRestrictions:
+            use_for_warnings: yes
+          HereTraffic:
+            enabled: yes
+            streets: ./src/test/files/traffic_data/here/Streets.shp
+            ref_pattern: ./src/test/files/traffic_data/here/ref_pattern.csv
+            pattern_15min: ./src/test/files/traffic_data/here/pattern_kph_15min.csv
+            radius: 150
+            output_log: no
+            log_location: ors/traffic_log
+      hgv:
+        enabled: yes
+        profile: driving-hgv
+        maximum_speed_lower_bound: 75
+        encoder_options:
+          turn_costs: yes
+          block_fords: no
+          use_acceleration: yes
+        preparation:
+          min_network_size: 200
+          methods:
+            ch:
+              enabled: yes
+              threads: 1
+              weightings: recommended
+            lm:
+              enabled: yes
+              threads: 1
+              weightings: recommended
+              landmarks: 16
+            core:
+              enabled: yes
+              threads: 1
+              weightings: recommended,shortest
+              landmarks: 32
+            fastisochrones:
+              enabled: yes
+              threads: 12
+              weightings: recommended, shortest
+              maxcellnodes: 5000
+        execution:
+          methods:
+            lm:
+              active_landmarks: 8
+            core:
+              active_landmarks: 6
+        ext_storages:
+          WayCategory: ~
+          HeavyVehicle:
+            restrictions: yes
+          WaySurfaceType: ~
+          Tollways: ~
+          Borders:
+            boundaries: ./src/test/files/borders/borders.geojson
+            ids: ./src/test/files/borders/ids.csv
+            openborders: ./src/test/files/borders/openborders.csv
+          HereTraffic:
+            enabled: yes
+            streets: ./src/test/files/traffic_data/here/Streets.shp
+            ref_pattern: ./src/test/files/traffic_data/here/ref_pattern.csv
+            pattern_15min: ./src/test/files/traffic_data/here/pattern_kph_15min.csv
+            radius: 150
+            output_log: no
+            log_location: ors/traffic_log
+      bike-regular:
+        enabled: yes
+        profile: cycling-regular
+        encoder_options:
+          consider_elevation: no
+          turn_costs: yes
+          block_fords: no
+        preparation:
+          min_network_size: 200
+          methods:
+            core:
+              enabled: yes
+              threads: 1
+              weightings: recommended,shortest
+              landmarks: 32
+        execution:
+          methods:
+            core:
+              active_landmarks: 6
+        ext_storages:
+          WayCategory: ~
+          WaySurfaceType: ~
+          HillIndex: ~
+          TrailDifficulty: ~
+      bike-mountain:
+        enabled: yes
+        profile: cycling-mountain
+        maximum_snapping_radius: 10
+        encoder_options:
+          consider_elevation: no
+          turn_costs: yes
+          block_fords: no
+        ext_storages:
+          WayCategory: ~
+          WaySurfaceType: ~
+          HillIndex: ~
+          TrailDifficulty: ~
+      bike-road:
+        enabled: yes
+        profile: cycling-road
+        encoder_options:
+          consider_elevation: no
+          turn_costs: no
+          block_fords: no
+        ext_storages:
+          WayCategory: ~
+          WaySurfaceType: ~
+          HillIndex: ~
+          TrailDifficulty: ~
+      bike-electric:
+        enabled: yes
+        profile: cycling-electric
+        encoder_options:
+          consider_elevation: no
+          turn_costs: yes
+          block_fords: no
+        ext_storages:
+          WayCategory: ~
+          WaySurfaceType: ~
+          HillIndex: ~
+          TrailDifficulty: ~
+      walking:
+        enabled: yes
+        profile: foot-walking
+        interpolate_bridges_and_tunnels: no
+        encoder_options:
+          block_fords: no
+        ext_storages:
+          GreenIndex:
+            filepath: ./src/test/files/green_streets_hd.csv
+          NoiseIndex:
+            filepath: ./src/test/files/noise_data_hd.csv
+          csv:
+            filepath: ./src/test/files/csv_data_hd.csv
+          ShadowIndex:
+            filepath: ./src/test/files/shadow_index_hd.csv
+          WayCategory: ~
+          WaySurfaceType: ~
+          HillIndex: ~
+          TrailDifficulty: ~
+      hiking:
+        enabled: yes
+        profile: foot-hiking
+        encoder_options:
+          block_fords: no
+        ext_storages:
+          GreenIndex:
+            filepath: ./src/test/files/green_streets_hd.csv
+          NoiseIndex:
+            filepath: ./src/test/files/noise_data_hd.csv
+          ShadowIndex:
+            filepath: ./src/test/files/shadow_index_hd.csv
+          WayCategory: ~
+          WaySurfaceType: ~
+          HillIndex: ~
+          TrailDifficulty: ~
+      wheelchair:
+        enabled: yes
+        profile: wheelchair
+        maximum_snapping_radius: 50
+        encoder_options:
+          block_fords: no
+        ext_storages:
+          Wheelchair:
+            KerbsOnCrossings: yes
+          WaySurfaceType: ~
+          WayCategory: ~
+          OsmId: ~
+      public-transport:
+        enabled: yes
+        profile: public-transport
+        encoder_options:
+          block_fords: no
+        maximum_visited_nodes: 15000
+        gtfs_file: ./src/test/files/vrn_gtfs_cut.zip
+  messages:
+  - active: yes
+    text: This message would be sent with every routing bike fastest request
+    condition:
+    - request_service: routing
+    - request_profile: cycling-regular,cycling-mountain,cycling-road,cycling-electric
+    - request_preference: fastest
+  - active: yes
+    text: This message would be sent with every request for geojson response
+    condition:
+    - api_format: geojson
+  - active: yes
+    text: This message would be sent with every request on API v1 from January 2020
+      until June 2050
+    condition:
+    - api_version: 1
+    - time_after: '2020-01-01T00:00:00Z'
+    - time_before: '2050-06-01T00:00:00Z'
+  - active: yes
+    text: This message would be sent with every request

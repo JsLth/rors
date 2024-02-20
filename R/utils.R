@@ -3,6 +3,11 @@
 }
 
 
+"%NA%" <- function(x, y) {
+  if (all(is.na(x))) y else x
+}
+
+
 #' Given a path, returns the parent path
 #' @param times_back Number of times to up a folder
 #' @noRd
@@ -39,6 +44,11 @@ is_ors_api <- function(url) {
 #' @noRd
 is_numver <- function(x) {
   !is.na(numeric_version(x, strict = FALSE))
+}
+
+
+loadable <- function(pkg) {
+  suppressPackageStartupMessages(requireNamespace(pkg, quietly = TRUE))
 }
 
 
@@ -146,6 +156,7 @@ modify_list <- function(x, y) {
 #' Checks if list x is modifiable by list y, i.e. if modify_list would
 #' change something. NULL is ignored.
 #' @param x,y Named lists
+#' @noRd
 equivalent_list <- function(x, y) {
   y <- y[!vapply(y, is.null, logical(1))]
   idx <- names(y) %||% rev(seq_along(y))
@@ -229,7 +240,7 @@ df_nest <- function(...) {
 
 
 as_data_frame <- function(...) {
-  if (requireNamespace("tibble", quietly = TRUE)) {
+  if (loadable("tibble")) {
     tibble::as_tibble(...)
   } else {
     as.data.frame(...)
@@ -238,7 +249,7 @@ as_data_frame <- function(...) {
 
 
 data_frame <- function(...) {
-  if (requireNamespace("tibble", quietly = TRUE)) {
+  if (loadable("tibble")) {
     tibble::tibble(...)
   } else {
     data.frame(...)
@@ -251,11 +262,12 @@ data_frame <- function(...) {
 #' @param msg Message to show in the input field
 #' @param yes,no What to return in case yes/no is selected
 #' @param dflt What to return in case the session is not interactive
+#' @param ask Whether to show a prompt or not. If FALSE, returns dflt
 #' @returns Arguments yes or no
 #' @noRd
-yes_no <- function(msg, yes = TRUE, no = FALSE, dflt = NULL) {
-  if (!interactive()) {
-    return(default)
+yes_no <- function(msg, yes = TRUE, no = FALSE, dflt = NULL, ask = TRUE) {
+  if (!interactive() || !ask) {
+    return(dflt)
   }
 
   input <- readline(paste0(msg, " (y/N/Cancel) "))

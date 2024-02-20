@@ -54,7 +54,7 @@
 #' refer to the
 #' \href{https://openrouteservice.org/dev/#/api-docs/v2/isochrones/{profile}/post}{API playground}
 #' and
-#' \href{https://giscience.github.io/openrouteservice/documentation/routing-options/Routing-Options.html}{documentation}.
+#' \href{https://giscience.github.io/openrouteservice/api-reference/endpoints/directions/routing-options}{documentation}.
 #' \describe{
 #'  \item{\strong{avoid_borders}}{Length-1 character vector specifying whether
 #'                                to avoid, all borders, only controlled ones
@@ -75,6 +75,7 @@
 #'                               of heavy goods vehicle. Needed to set
 #'                               restrictions for \code{driving-hgv}.}
 #' }
+#' @inheritParams ors_pairwise
 #'
 #' @returns If \code{rasterize = FALSE}, returns an \code{sf} object containing
 #' the isochrone or isodistance polygon geometries as well as additional
@@ -85,9 +86,9 @@
 #'
 #' @examples
 #' \dontrun{
-#' set.seed(111)
-#' source_sf <- ors_sample(10, as_sf = TRUE)
-#' source_df <- ors_sample(10)
+#' set.seed(123)
+#' src <- ors_sample(10)
+#' data("pharma")
 #'
 #' # Returns a polygon sf dataframe divided by four 15 minute time breaks
 #' # Also contains information on the area and population inside the isochrones
@@ -119,13 +120,8 @@
 #'   location_type = "start",
 #'   interval = 50,
 #'   range_type = "distance"
-#' )
-#' }
-#'
-#' @inheritParams ors_pairwise
-#'
+#' )}
 #' @export
-
 ors_accessibility <- function(src,
                               profile = get_profiles(force = TRUE),
                               range = c(200L, 300L),

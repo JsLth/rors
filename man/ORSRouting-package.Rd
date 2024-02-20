@@ -5,9 +5,9 @@
 \name{ORSRouting-package}
 \alias{ORSRouting}
 \alias{ORSRouting-package}
-\title{ORSRouting: Batch routing distance computations using OpenRouteService}
+\title{ORSRouting: Routing using OpenRouteService}
 \description{
-Flexible interface to (custom) OpenRouteService instances. The package enables qualitative and quantitative route computations, accessibility analyses and distance matrix calculations using route distances (i.e., routing through real streets). It is primarily aimed at processing moderately large datasets and thus supports the setup and usage of custom OpenRouteService instances. However, it is also possible to use the public API given a valid key.
+Flexible and opinionated interface to local and remote OpenRouteService instances. The package enables qualitative and quantitative route computations, accessbility analyses, distance matrix calculations, street snapping and graph network exports. It is primarily aimed at processing larger datasets with controlled server-side limitations. R6 classes support the setup and and management of custom OpenRouteService instances. The package functions take a tidy and graceful approach in querying and formatting the API output.
 }
 \section{Usage}{
 
@@ -29,6 +29,7 @@ service, refer to \url{https://github.com/GIScience/openrouteservice}
 Useful links:
 \itemize{
   \item \url{https://github.com/JsLth/ORSRouting}
+  \item \url{https://jslth.github.io/ORSRouting/}
   \item Report bugs at \url{https://github.com/JsLth/ORSRouting/issues}
 }
 

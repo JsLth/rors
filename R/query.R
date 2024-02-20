@@ -9,9 +9,7 @@ perform_call <- function(req) {
   res <- httr2::req_perform(req, verbosity = 0L)
 
   if (req$parse) {
-    res <- try(httr2::resp_body_json(res, simplifyVector = TRUE))
-    # sometimes weird errors occur. if that happens, stop and inspect.
-    if (inherits(res, "try-error")) {browser();res}
+    res <- httr2::resp_body_json(res, simplifyVector = TRUE)
   } else {
     res <- httr2::resp_body_string(res)
   }
@@ -51,7 +49,7 @@ call_ors_directions <- function(src,
       "application/json, application/geo+json,",
       "application/gpx+xml, img/png; charset=utf-8"
     ),
-    Authorization = if (isTRUE(token)) Sys.getenv("ORS_TOKEN"),
+    Authorization = if (isTRUE(token)) get_ors_token(),
     `Content-Type` = "application/json; charset=utf-8"
   )
 
@@ -184,6 +182,45 @@ call_ors_isochrones <- function(src,
     area_units = area_units,
     units = units
   )
+  req <- httr2::req_body_json(req, body_list, digits = NA)
+  req$parse <- TRUE
+
+  perform_call(req)
+}
+
+
+call_ors_snap <- function(src, profile, radius, url, ...) {
+  locations <- unname(split(src, seq_len(nrow(src))))
+  locations <- lapply(locations, as.numeric)
+
+  req <- httr2::request(url)
+  req <- httr2::req_url_path(req, "ors/v2/snap", profile, "json")
+  req <- httr2::req_headers(
+    req,
+    Accept = "application/json",
+    `Content-Type` = "application/json"
+  )
+
+  body_list <- list(locations = locations, radius = radius, ...)
+  req <- httr2::req_body_json(req, body_list, digits = NA)
+  req$parse <- TRUE
+
+  perform_call(req)
+}
+
+
+call_ors_export <- function(bbox, profile, url, ...) {
+  bbox <- list(bbox[1:2], bbox[3:4])
+
+  req <- httr2::request(url)
+  req <- httr2::req_url_path(req, "ors/v2/export", profile)
+  req <- httr2::req_headers(
+    req,
+    Accept = "application/geo+json",
+    `Content-Type` = "application/json"
+  )
+
+  body_list <- list(bbox = bbox, ...)
   req <- httr2::req_body_json(req, body_list, digits = NA)
   req$parse <- TRUE
 

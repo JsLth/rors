@@ -6,7 +6,7 @@
 \usage{
 ors_matrix(
   src,
-  dst,
+  dst = NULL,
   profile = get_profiles(),
   units = c("m", "km", "mi"),
   proximity_type = c("distance", "duration"),
@@ -14,26 +14,22 @@ ors_matrix(
 )
 }
 \arguments{
-\item{src}{\code{[sf]}
+\item{src}{\code{[sf/sfc]}
 
-Source dataset containing point geometries that shall be routed from.}
+Source dataset containing point geometries that should be routed from.}
 
-\item{dst}{\code{[sf]}
+\item{dst}{\code{[sf/sfc]}
 
-Destination dataset containing point geometries that shall be routed from.
-The destination dataset follows the same format requirements as the source
-dataset. For \code{ors_shortest_distances}, the destination argument can also
-be a dataframe containing a grouping column specified by the \code{group}
-argument that indicates which destinations refer to which row in the source
-dataset (as returned by \code{\link{get_closest_pois}}). This is
-recommended for large datasets because passing a plain sf dataframe routes
-from each source point to each point in the entire destination dataset.}
+Destination dataset containing point geometries that should be routed to.
+If \code{NULL}, only routes between points in \code{src}.}
 
 \item{profile}{\code{[character]}
 
-Character vector. Means of transport as supported by OpenRouteService. For a
-list of active profiles, call \code{\link{get_profiles}}. For details on all
-profiles, refer to the
+Means of transport as supported by OpenRouteService.
+Defaults to the first profile in a call to \code{\link{get_profiles}}.
+For \code{ors_shortest_distances}, \code{profile} can be a character
+vector, for all other functions it needs to be a character scalar.
+For details on all profiles, refer to the
 \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
 \item{units}{\code{[character]}

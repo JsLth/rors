@@ -1,18 +1,19 @@
 Package: ORSRouting
 Type: Package
 Title: Routing using OpenRouteService
-Version: 0.12.0
+Version: 0.12.8
 Authors@R: person("Lieth", "Jonas", email = "jonas.lieth@gesis.org",
                   role = c("aut", "cre"))
 Maintainer: Jonas Lieth <jonas.lieth@gesis.org>
-Description: Flexible interface to (custom) OpenRouteService instances.
-    The package enables qualitative and quantitative route computations,
-    accessibility analyses and distance matrix calculations using route
-    distances (i.e., routing through real streets). It is primarily aimed at
-    processing moderately large datasets and thus supports the setup and usage
-    of custom OpenRouteService instances. However, it is also possible to use
-    the public API given a valid key.
-URL: https://github.com/JsLth/ORSRouting
+Description: Flexible and opinionated interface to local and remote
+    OpenRouteService instances. The package enables qualitative and
+    quantitative route computations, accessbility analyses, distance matrix
+    calculations, street snapping and graph network exports. It is primarily
+    aimed at processing larger datasets with controlled server-side
+    limitations. R6 classes support the setup and and management of
+    custom OpenRouteService instances. The package functions take a tidy
+    and graceful approach in querying and formatting the API output.
+URL: https://github.com/JsLth/ORSRouting, https://jslth.github.io/ORSRouting/
 BugReports: https://github.com/JsLth/ORSRouting/issues
 Encoding: UTF-8
 LazyData: true
@@ -30,21 +31,22 @@ Imports:
     osmextract (>= 0.2.0),
     cli (>= 3.0.0),
     callr (>= 3.5.0),
-    httpuv
-Suggests: 
+Suggests:
     covr,
-    ggplot2,
+    testthat (>= 3.0.0),
+    webfakes,
+    httptest2,
+    withr,
     knitr (>= 1.31),
-    maps,
     rmarkdown (>= 2.7),
     leaflet,
+    ggplot2,
     terra,
-    testthat (>= 3.0.0),
+    rnaturalearthdata,
     units,
     tibble,
-    vcr,
-    waldo,
-    webfakes
+    httpuv,
+    sfnetworks
 SystemRequirements: Docker (>= 20.10.6)
 RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)

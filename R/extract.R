@@ -1,8 +1,5 @@
-get_extract <- function(place, provider, paths, verbose, ...) {
-  if (!requireNamespace("osmextract")) {
-    cli::cli_abort("{.pkg osmextract} required to match extracts by name.")
-  }
-  data_dir <- file.path(paths$top, "docker/data")
+get_extract <- function(self, place, provider, timeout, verbose, ...) {
+  data_dir <- file.path(self$paths$top, "docker/data")
   ok <- TRUE
   i <- 0L
 
@@ -12,9 +9,9 @@ get_extract <- function(place, provider, paths, verbose, ...) {
     providers <- provider
   }
 
-  if (!interactive() && length(providers) > 1L) {
+  if ((!interactive() || verbose <= 1) && length(providers) > 1L) {
     cli::cli_abort(paste(
-      "In batch mode, explicitly pass",
+      "In batch or non-verbose mode, explicitly pass",
       "a single provider name to {.fun ors_extract}."
     ))
   }
@@ -56,7 +53,7 @@ get_extract <- function(place, provider, paths, verbose, ...) {
   }
 
   # If the while loop exits and the last answer given is yes, exit
-  if (ok) {
+  if (ok && length(providers) > 1) {
     ors_cli(info = c(
       "!" = "All providers have been searched. Please download the extract manually."
     ))
@@ -67,10 +64,7 @@ get_extract <- function(place, provider, paths, verbose, ...) {
   file_occurences <- grepl(file_name, dir(data_dir))
   if (sum(file_occurences) == 1L) {
     ors_cli(info = c(
-      "i" = paste(
-        "The extract already exists in {.href [docker/data](data_dir)}.",
-        "Download will be skipped."
-      )
+      "i" = paste("The extract already exists. Download will be skipped.")
     ))
 
     path <- paste(data_dir,
@@ -78,13 +72,13 @@ get_extract <- function(place, provider, paths, verbose, ...) {
       sep = "/"
     )
 
-    rel_path <- relative_path(path, paths$top)
+    rel_path <- relative_path(path, self$paths$top)
 
-    ors_cli(info = c("i" = paste("Download path: {.href [{rel_path}](file://{path})}")))
+    ors_cli(info = c("i" = paste("Download path: {rel_path}")))
     # If no file exists, remove all download a new one
   } else {
     path <- file.path(data_dir, paste0(providers[i], "_", file_name))
-    rel_path <- relative_path(path, paths$top)
+    rel_path <- relative_path(path, self$paths$top)
     ors_cli(
       progress = "step",
       msg = "Downloading OSM extract...",
@@ -93,15 +87,20 @@ get_extract <- function(place, provider, paths, verbose, ...) {
       spinner = TRUE
     )
 
+    timeout <- timeout %||% getOption("timeout")
+
     proc <- callr::r_bg(
-      function(place_match, providers, data_dir) {
-        osmextract::oe_download(place_match$url,
+      function(place_match, providers, data_dir, timeout) {
+        options(timeout = timeout)
+        osmextract::oe_download(
+          place_match$url,
           provider = providers[i],
           download_directory = data_dir,
-          quiet = TRUE
+          quiet = TRUE,
+          max_file_size =
         )
       },
-      args = list(place_match, providers, data_dir),
+      args = list(place_match, providers, data_dir, timeout),
       package = TRUE
     )
 
@@ -133,7 +132,9 @@ set_extract <- function(self, file) {
       cli::cli_abort("Extract file does not exist.")
     }
 
-    copied <- file.copy(file, file.path(data_dir, filename), overwrite = TRUE)
+    copied <- suppressWarnings(
+      file.copy(file, file.path(data_dir, filename), overwrite = TRUE)
+    )
 
     if (!copied) {
       cli::cli_abort(c(

@@ -7,9 +7,9 @@
 get_closest_pois(src, pois, n = NULL, radius = NULL)
 }
 \arguments{
-\item{src}{\code{[sf]}
+\item{src}{\code{[sf/sfc]}
 
-Source dataset containing point geometries that shall be routed from.}
+Source dataset containing point geometries that should be routed from.}
 
 \item{pois}{\code{[sf]}
 
@@ -46,7 +46,5 @@ pois <- get_osm_pois("Cologne", amenity = "hospital")
 
 by_points <- get_closest_pois(sample, pois, n = 5)
 by_buffer <- get_closest_pois(sample, pois, radius = 5000)
-by_both <- get_closest_pois(sample_pois, n = 5, radius = 5000)
-}
-
+by_both <- get_closest_pois(sample_pois, n = 5, radius = 5000)}
 }

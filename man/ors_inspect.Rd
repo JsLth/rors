@@ -32,9 +32,11 @@ a single coordinate pair from which a round trip is generated.}
 
 \item{profile}{\code{[character]}
 
-Character vector. Means of transport as supported by OpenRouteService. For a
-list of active profiles, call \code{\link{get_profiles}}. For details on all
-profiles, refer to the
+Means of transport as supported by OpenRouteService.
+Defaults to the first profile in a call to \code{\link{get_profiles}}.
+For \code{ors_shortest_distances}, \code{profile} can be a character
+vector, for all other functions it needs to be a character scalar.
+For details on all profiles, refer to the
 \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
 
 \item{level}{\code{[character]}
@@ -194,12 +196,6 @@ between the coordinates specified in \code{src}, aggregated according to
 the level of aggregation stated in \code{level}. If \code{alternative_routes}
 is specified, returns a list of sf dataframes instead with each element
 containing a route alternative.
-
-\code{ors_inspect} returns an sf data.frame containing the smallest
-possible linestrings for a route along with additional information on each
-segment. \code{ors_summary} returns an object of type \code{route_summary}
-that contains information on distances, durations, speed, elevation, detour
-factors as well as all available extra information for the requested route.
 }
 \description{
 Calls the directions service once to get a closer look at route
@@ -300,7 +296,7 @@ insp_opts <- ors_inspect(
 )
 
 # Summarizing route specifics
-route_summary <- ors_summary(sample_source, sample_dest, profile)
+route_summary <- summary(insp_adv)
 }
 }
 \seealso{

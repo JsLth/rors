@@ -162,7 +162,6 @@ get_profiles <- function(id = NULL, force = TRUE) {
 #' @rdname get_instance
 #' @export
 ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
-  call_env <- parent.frame()
   if (is.null(ors_cache$ors_ready) || isFALSE(ors_cache$ors_ready) || force) {
     id <- get_id(id)
     url <- paste0(get_ors_url(id), "ors/v2/health")
@@ -178,10 +177,13 @@ ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
         },
         error = function(e) {
           if (error) {
-            cli::cli_abort(c(
-              "x" = "Cannot reach the OpenRouteService server.",
-              "i" = "Did you start your local instance?"
-            ), call = call_env)
+            if (is_local(url)) {
+              tip <- c("i" = "Did you start your local instance?")
+            } else {
+              tip <- NULL
+            }
+
+            cli::cli_abort(c("Cannot reach the OpenRouteService server.", tip))
           } else {
             ready <<- FALSE
           }
@@ -270,4 +272,9 @@ get_ors_url <- function(id = NULL) {
 #' @noRd
 any_mounted <- function() {
   "instance" %in% names(ors_cache)
+}
+
+
+ors_is_local <- function(instance) {
+  inherits(instance, "ORSLocal")
 }

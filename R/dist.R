@@ -6,14 +6,13 @@
 #' source dataset to a dataset of points of interest from the destination dataset
 #' and then extracts the route with the shortest distance.
 #'
-#' @param src \code{[sf]}
+#' @param src \code{[sf/sfc]}
 #'
-#' Source dataset containing point geometries that shall be routed from.
-#' @param dst \code{[sf]}
+#' Source dataset containing point geometries that should be routed from.
+#' @param dst \code{[sf/sfc]}
 #'
-#' Destination dataset containing point geometries that shall be routed from.
-#' The destination dataset follows the same format requirements as the source
-#' dataset. For \code{ors_shortest_distances}, the destination argument can also
+#' Destination dataset containing point geometries that should be routed to.
+#' For \code{ors_shortest_distances}, the destination argument can also
 #' be a dataframe containing a grouping column specified by the \code{group}
 #' argument that indicates which destinations refer to which row in the source
 #' dataset (as returned by \code{\link{get_closest_pois}}). This is
@@ -21,9 +20,11 @@
 #' from each source point to each point in the entire destination dataset.
 #' @param profile \code{[character]}
 #'
-#' Character vector. Means of transport as supported by OpenRouteService. For a
-#' list of active profiles, call \code{\link{get_profiles}}. For details on all
-#' profiles, refer to the
+#' Means of transport as supported by OpenRouteService.
+#' Defaults to the first profile in a call to \code{\link{get_profiles}}.
+#' For \code{ors_shortest_distances}, \code{profile} can be a character
+#' vector, for all other functions it needs to be a character scalar.
+#' For details on all profiles, refer to the
 #' \href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.
 #' @param units \code{[character]}
 #'
@@ -147,60 +148,60 @@
 #'
 #' @examples
 #' \dontrun{
-#' set.seed(111)
-#' source_sf <- ors_sample(10, as_sf = TRUE)
-#' source_df <- ors_sample(10)
+#' data("pharma")
 #'
-#' set.seed(222)
-#' dest_sf <- ors_sample(10, as_sf = TRUE)
-#' dest_df <- ors_sample(10)
+#' set.seed(123)
+#' dest <- ors_sample(10)
 #'
 #' car <- "driving-car"
 #' bike <- "cycling-regular"
 #'
 #' # Running with sf objects
-#' route_lengths_sf <- ors_pairwise(source_sf, dest_sf, profile = car)
+#' route_lengths_sf <- ors_pairwise(pharma, dest, profile = car)
 #' route_lengths_sf
 #'
 #' # Running with coordinate pairs
-#' route_lengths_df <- ors_pairwise(source_df, dest_df, profile = bike)
+#' route_lengths_df <- ors_pairwise(pharma, dest, profile = bike)
 #' route_lengths_df
 #'
 #' # Returns route geometries
 #' route_lengths_geom <- ors_pairwise(
-#'   source_df,
-#'   dest_df,
+#'   pharma,
+#'   dest,
 #'   profile = car,
 #'   geometry = TRUE
 #' )
 #'
 #' # Returns routes in kilometers
 #' route_lengths_km <- ors_pairwise(
-#'   source_df,
-#'   dest_df,
+#'   pharma,
+#'   dest,
 #'   profile = bike,
 #'   units = "km"
 #' )
 #'
 #' # Running with additional arguments
 #' route_lengths_opts <- ors_pairwise(
-#'   source_df,
-#'   dest_df,
+#'   pharma,
+#'   dest,
 #'   profile = car,
 #'   continue_straight = TRUE,
 #'   preference = "fastest"
 #' )
 #'
 #' # Finding shortest routes from each point in sample_a to sample_b
-#' shortest_routes <- ors_shortest_distances(source_df, dest_df, units = "km")
+#' shortest_routes <- ors_shortest_distances(pharma, dest, units = "km")
 #' shortest_routes
 #'
-#' # Finding the shortest routes to the nearest hospitals
-#' pois <- get_osm_pois(sf::st_bbox(source_sf), amenity = "hospital")
+#' # Pre-filter the nearest 5 destination points by Euclidian distance
+#' pois <- get_closest_pois(pharma, dest, n = 5)
 #'
+#' # Only route from each pharmacy to one of the closest 5 destination points
+#' # respectively. For larger datasets, this can increase performance.
 #' nearest_hospitals <- ors_shortest_distances(
-#'   source,
+#'   pharma,
 #'   pois,
+#'   group = ".group",
 #'   geometry = TRUE
 #' )
 #' nearest_hospitals
@@ -248,7 +249,7 @@ ors_pairwise <- function(src,
 
   handle_missing_directions(route_df, call_index)
 
-  if (requireNamespace("units")) {
+  if (loadable("units")) {
     units(route_df$distance) <- units
     units(route_df$duration) <- "s"
   }

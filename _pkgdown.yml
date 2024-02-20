@@ -1,0 +1,64 @@
+url: https://jslth.github.io/ORSRouting/
+pkwurl: ~
+template:
+  bootstrap: 5
+  bootswatch: litera
+  bslib:
+    base_font:
+      google: Roboto
+    heading_font:
+      google: Roboto Slab
+    code_font:
+      google: JetBrains Mono
+    link-color: '#0054AD'
+
+navbar:
+  title: "ORSRouting"
+  left:
+    - icon: fa-home
+      href: index.html
+    - text: "Vignettes"
+      icon: fa-book
+      menu:
+        - text: "OpenRouteService setup"
+          href: articles/ors-installation.html
+        - text: "Routing functions"
+          href: articles/ors-routing.html
+    - text: "Reference"
+      icon: fa-search
+      href: reference/index.html
+
+reference:
+  - title: ORS setup
+    contents:
+      - ors_instance
+      - ORSLocal
+      - ORSRemote
+      - ORSInstance
+      - ors_profile
+
+  - title: Main endpoints
+    contents:
+      - ors_inspect
+      - ors_pairwise
+      - ors_accessibility
+      - ors_matrix
+
+  - title: Peripheral endpoints
+    contents:
+      - ors_snap
+      - ors_export
+      - ors_guess
+
+  - title: Utility functions
+    contents:
+      - ors_sample
+      - get_closest_pois
+      - get_extract_boundaries
+      - get_instance
+      - last_ors_conditions
+      - plot_section
+
+  - title: Data
+    contents:
+      - pharma

@@ -8,9 +8,13 @@
 ^\.idea$
 ^\.Rhistory$
 ^\.RData$
-^openrouteservice-master$
+^openrouteservice-
 ^public$
 ^ci$
 ^codecov\.yml$
 ^\.github$
 ^README\.Rmd$
+^data-raw$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

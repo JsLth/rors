@@ -157,25 +157,16 @@ print.ors_condition <- function(x, ...) {
 
 #' @export
 print.ORSInstance <- function(x, ...) {
+  if (is.null(x$paths)) {
+    cat("<ORSInstance>", "\n")
+    return(invisible(x))
+  }
+
   # check if local or remote
-  type <- switch(
-    intersect(class(ors), c("ORSLocal", "ORSRemote")),
-    ORSLocal = "local",
-    ORSRemote = "remote",
-    ORSInstance = "N/A"
-  )
+  type <- ifelse(ors_is_local(x), "local", "remote")
 
   # check if instance is mounted to the session
-  if (any_mounted()) {
-    mounted <- get_instance()
-    active <- switch(
-      type,
-      local = identical(x$paths$top, mounted$paths$top),
-      remote = identical(x$url, mounted$url)
-    )
-  } else {
-    active <- FALSE
-  }
+  active <- x$is_mounted()
 
   # check if instance on initial run
   init <- switch(
@@ -197,7 +188,6 @@ print.ORSInstance <- function(x, ...) {
     " type   :", type, "\n",
     " active :", active, "\n",
     " init   :", init, "\n"
-
   )
 
   invisible(x)
@@ -228,17 +218,17 @@ print.ors_paths <- function(x, ...) {
   end_files <- subdocker_paths_files[lengths(subdocker_paths_files) > 0]
 
   top_dir <- c(
-    basedir,
-    basename(topdir_files),
-    basename(file.path(docker_path, dir(docker_path))),
-    unlist(subdocker_paths_files)
+    base = basedir,
+    top = basename(topdir_files),
+    sub = basename(file.path(docker_path, dir(docker_path))),
+    end = unlist(end_files)
   )
 
   children <- c(
-    list(dir(x$top)),
-    lapply(topdir_files, \(x) list.files(x)),
-    subdocker_paths_files,
-    rep(list(character()), length(end_files))
+    base = list(dir(x$top)),
+    top = lapply(topdir_files, \(x) list.files(x)),
+    sub = subdocker_paths_files,
+    end = rep(list(character()), length(unlist(end_files)))
   )
 
   compose_i <- config_i <- extract_i <- NULL
@@ -255,9 +245,9 @@ print.ors_paths <- function(x, ...) {
   }
 
   annot <- top_dir
-  annot[compose_i] <- paste(annot[compose_i], "\033[33m<- compose file\033[39m")
-  annot[config_i] <- paste(annot[config_i], "\033[34m<- config file\033[39m")
-  annot[extract_i] <- paste(annot[extract_i], "\033[32m<- extract file\033[39m")
+  annot[compose_i] <- paste(annot[compose_i], "\033[33m<- compose\033[39m")
+  annot[config_i] <- paste(annot[config_i], "\033[34m<- config\033[39m")
+  annot[extract_i] <- paste(annot[extract_i], "\033[32m<- extract\033[39m")
 
   tree <- cli::tree(
     data.frame(
@@ -270,10 +260,7 @@ print.ors_paths <- function(x, ...) {
     ...
   )
 
-  for (node in gsub(" ", "\u00a0", tree)) {
-    cli::cli_text(node)
-  }
-
+  cat(tree, sep = "\n")
   invisible(x)
 }
 
@@ -308,7 +295,7 @@ print.ors_settings <- function(x, ...) {
     x$ports[2L, 2L]
   )
 
-  cli::cli_text("Mode\u00a0\u00a0\u00a0: {x$graph_building}")
+  cli::cli_text("Build\u00a0\u00a0: {x$graph_building}")
   cli::cli_text("Name\u00a0\u00a0\u00a0: {x$name}")
   cli::cli_text("Ports\u00a0\u00a0: {port_chr}")
   cli::cli_text("Image\u00a0\u00a0: {x$image}")

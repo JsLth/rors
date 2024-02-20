@@ -16,8 +16,8 @@ detect_config <- function(dir) {
     link <- cli::style_hyperlink(
       text = "Running with Docker",
       url = paste0(
-        "https://giscience.github.io/openrouteservice/installation/",
-        "Running-with-Docker#docker-configuration"
+        "https://giscience.github.io/openrouteservice/run-instance/",
+        "installation/running-with-docker#customization",
       )
     )
     cli::cli_warn(c(
@@ -65,26 +65,35 @@ write_config <- function(config, file = NULL) {
 
 
 compare_endpoints <- function(x, y) {
-  new_ep <- !names(y) %in% names(x)
+  if (is.null(x)) return(names(y))
+  old_ep <- names(x)
+  new_ep <- names(y)
+  is_added <- !new_ep %in% old_ep
+  ep_added <- new_ep[is_added]
 
-  if (!any(new_ep)) {
-    y <- y[!new_ep]
-    names(y)[!vapply(
-      seq_along(y),
+  # if not all endpoints are brand-new, look for differences
+  if (!all(is_added)) {
+    y_changed <- y[!is_added]
+    ep_changed <- names(y_changed)[!vapply(
+      names(y_changed),
       function(i) equivalent_list(x[[i]], y[[i]]),
       logical(1)
     )]
-  } else {
-    character()
+    new_ep <- c(ep_added, ep_changed)
   }
+
+  new_ep
 }
 
 
 change_endpoints <- function(self, ...) {
+  all_endpoints <- c("routing", "matrix", "isochrones", "snap")
   config <- self$config$parsed
   dots <- list(...)
-  dots <- dots[names(dots) %in% c("routing", "matrix", "isochrone", "snap")]
+  dots <- dots[names(dots) %in% all_endpoints]
   dots <- dots[lengths(dots) > 0]
+  names(dots)["snap" %in% names(dots)] <- "Snap"
+
   if (is.null(config$ors$endpoints)) {
     config$ors$endpoints <- list()
   }
@@ -104,7 +113,22 @@ change_endpoints <- function(self, ...) {
 }
 
 
-insert_profiles <- function(self, ...) {
+get_profile_names <- function(profiles) {
+  vapply(profiles, FUN.VALUE = character(1), function(x) {
+    if (inherits(x, "ors_profile")) {
+      x[[1]]$profile
+    } else if (is.list(x)) {
+      x$profile
+    } else if (is.character(x)) {
+      x
+    } else {
+      character()
+    }
+  })
+}
+
+
+insert_profiles <- function(self, private, ...) {
   dots <- list(...)
   engine <- self$config$parsed$ors$engine
 
@@ -115,7 +139,7 @@ insert_profiles <- function(self, ...) {
       if (is.character(prof)) {
         prof <- ors_profile(prof, template = TRUE)
       } else {
-        cli::cli_warn(paste(
+        ors_cli(warn = paste(
           "Argument {i} cannot be coerced to class {.cls ors_profile}",
           "and will be skipped."
         ))
@@ -123,14 +147,11 @@ insert_profiles <- function(self, ...) {
     }
 
     name <- names(prof)
-
     if (identical(name, "profile_default")) {
       engine[[name]] <- prof[[name]]
     } else {
       engine$profiles[[name]] <- prof[[name]]
     }
-
-    engine
   }
 
   engine
@@ -138,12 +159,24 @@ insert_profiles <- function(self, ...) {
 
 
 remove_profiles <- function(self, ...) {
-  dots <- list(...)
-  profiles <- self$config$parsed$ors$engine$profiles
-  pnames <- vapply(profiles, "[[", "profile", FUN.VALUE = character(1))
+  dots <- c(...)
+  engine <- self$config$parsed$ors$engine
+
+  # handle profiles and default differently
+  rm_default <- "default" %in% dots
+  dots <- setdiff(dots, "default")
+
+  # remove profiles
+  pnames <- vapply(engine$profiles, "[[", "profile", FUN.VALUE = character(1))
   del <- pnames %in% dots | names(pnames) %in% dots
-  profiles[del] <- NULL
-  profiles
+  engine$profiles[del] <- NULL
+
+  # remove default if needed
+  if (rm_default) {
+    engine$profile_default <- NULL
+  }
+
+  engine
 }
 
 
@@ -210,7 +243,7 @@ is_base_profile <- function(profile) {
 #' @param ...
 #'
 #' Configuration parameters for the ORS profile. Must be key-value pairs. For
-#' details, refer to the \href{https://giscience.github.io/openrouteservice/installation/Configuration#ors-services-routing-profiles}{configuration reference}.
+#' details, refer to the \href{https://giscience.github.io/openrouteservice/run-instance/configuration/ors/engine/profiles}{configuration reference}.
 #'
 #' @param template \code{logical}
 #'
@@ -263,8 +296,8 @@ ors_profile <- function(name = NULL, ..., template = TRUE) {
     title <- "profile_default"
     name <- NULL
   } else if (length(name) == 2) {
-    name <- name[1]
     title <- name[2]
+    name <- name[1]
   } else if (is_base_profile(name)) {
     if (name %in% base_profiles) {
       title <- stats::setNames(names(base_profiles), base_profiles)[name]
@@ -277,19 +310,17 @@ ors_profile <- function(name = NULL, ..., template = TRUE) {
   }
 
   if (isFALSE(template)) {
+    args <- list(...)
+
     if (!...length()) {
-      cli::cli_abort(c(
-        "!" = "Routing profiles need at least one dot argument.",
-        "i" = "If you cannot think of any, try {.code template = TRUE}!"
-      ))
+      args <- c(enabled = TRUE, args)
     }
 
-    if (is.null(name)) {
-      profile <- list(list(...))
-    } else {
-      profile <- list(list(profile = name, ...))
+    if (!is.null(name)) {
+      args <- c(profile = name, args)
     }
 
+    profile <- list(args)
     names(profile) <- title
     structure(profile, class = "ors_profile")
   } else {
@@ -481,6 +512,7 @@ make_default_profile <- function(profile) {
       maximum_visited_nodes = 1000000,
       elevation = TRUE,
       encoder_options = list(block_fords = FALSE)
-    )
+    ),
+    cli::cli_abort("No template defined for profile {.val profile}.")
   )
 }

@@ -15,7 +15,7 @@ title of the profile in the configuration file
 (e.g. \code{c("driving-car", "car")}).}
 
 \item{...}{Configuration parameters for the ORS profile. Must be key-value pairs. For
-details, refer to the \href{https://giscience.github.io/openrouteservice/installation/Configuration#ors-services-routing-profiles}{configuration reference}.}
+details, refer to the \href{https://giscience.github.io/openrouteservice/run-instance/configuration/ors/engine/profiles}{configuration reference}.}
 
 \item{template}{\code{logical}
 

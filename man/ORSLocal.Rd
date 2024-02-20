@@ -137,6 +137,7 @@ size of the selected extract file.}
 \item \href{#method-ORSLocal-set_port}{\code{ORSLocal$set_port()}}
 \item \href{#method-ORSLocal-set_ram}{\code{ORSLocal$set_ram()}}
 \item \href{#method-ORSLocal-set_graphbuilding}{\code{ORSLocal$set_graphbuilding()}}
+\item \href{#method-ORSLocal-set_image}{\code{ORSLocal$set_image()}}
 \item \href{#method-ORSLocal-add_profiles}{\code{ORSLocal$add_profiles()}}
 \item \href{#method-ORSLocal-rm_profiles}{\code{ORSLocal$rm_profiles()}}
 \item \href{#method-ORSLocal-set_endpoints}{\code{ORSLocal$set_endpoints()}}
@@ -156,6 +157,7 @@ size of the selected extract file.}
 <details open><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="get_status"><a href='../../ORSRouting/html/ORSInstance.html#method-ORSInstance-get_status'><code>ORSRouting::ORSInstance$get_status()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="is_mounted"><a href='../../ORSRouting/html/ORSInstance.html#method-ORSInstance-is_mounted'><code>ORSRouting::ORSInstance$is_mounted()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="is_ready"><a href='../../ORSRouting/html/ORSInstance.html#method-ORSInstance-is_ready'><code>ORSRouting::ORSInstance$is_ready()</code></a></span></li>
 </ul>
 </details>
@@ -166,7 +168,13 @@ size of the selected extract file.}
 \subsection{Method \code{new()}}{
 Initialize the ORSInstance object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$new(dir = NULL, version = "7.2.0", overwrite = FALSE, verbose = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$new(
+  dir = NULL,
+  version = "7.2.0",
+  overwrite = FALSE,
+  dry = FALSE,
+  verbose = 2L
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -184,12 +192,27 @@ Ignored if \code{server} is not \code{NULL}.}
 The OpenRouteService version to use. Can either be a version number (e.g.
 7.2.0) or \code{"master"}. Ignored if \code{server} is not \code{NULL}.}
 
-\item{\code{overwrite}}{\code{[logical]}
+\item{\code{overwrite}}{\code{[logical]}}
+
+\item{\code{dry}}{\code{[logical]}
+
+Whether to start a dry run, i.e. run an instance without jumpstarting.
 
 Whether to overwrite the current OpenRouteService directory
 if it exists.}
 
 \item{\code{verbose}}{\code{[logical]}
+
+Level of verbosity. Must be an integer between 0 and 2. The verbosity
+levels are deconstructed as follows:
+\itemize{
+\item{0}{No messages, progress bars, sounds, and prompts. Only important
+warnings.}
+\item{1}{Informative messages, warnings and prompts, but no system
+notifications or progress bars.}
+\item{2}{Messages, warnings, prompts, progress bars, and system
+notifications.}
+}
 
 If \code{TRUE}, prints informative messages and spinners.}
 
@@ -372,10 +395,11 @@ memory than this value. If not specified, uses \code{init}. If both are
 \if{html}{\out{<a id="method-ORSLocal-set_graphbuilding"></a>}}
 \if{latex}{\out{\hypertarget{method-ORSLocal-set_graphbuilding}{}}}
 \subsection{Method \code{set_graphbuilding()}}{
-Specifies whether routing graphs should be (re-)built. Turning graph
-building on enables new profiles to be built or the extract to be
-changed but significantly increases setup time. Turn this off if you
-are changing configuration options that do not alter routing graphs.
+Graph building specifies whether routing graphs should be (re-)built.
+Turning graph building on enables new profiles to be built or the
+extract to be changed but significantly increases setup time. Turn
+this off if you are changing configuration options that do not alter
+routing graphs.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSLocal$set_graphbuilding(mode)}\if{html}{\out{</div>}}
 }
@@ -386,6 +410,26 @@ are changing configuration options that do not alter routing graphs.
 \item{\code{mode}}{\code{[logical]}
 
 Whether to turn graph building on or off.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSLocal-set_image"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSLocal-set_image}{}}}
+\subsection{Method \code{set_image()}}{
+Set version of the ORS Docker image. This should preferably be compatible
+with the compose version.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$set_image(version = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{version}}{\code{[character]}
+
+Version specification of the ORS image.}
 }
 \if{html}{\out{</div>}}
 }
@@ -420,7 +464,8 @@ Remove routing profiles from the ORS configuration.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{Names of routing profiles to remove.}
+\item{\code{...}}{Names of routing profiles to remove. \code{"default"}
+removes profile defaults.}
 }
 \if{html}{\out{</div>}}
 }
@@ -429,22 +474,20 @@ Remove routing profiles from the ORS configuration.
 \if{html}{\out{<a id="method-ORSLocal-set_endpoints"></a>}}
 \if{latex}{\out{\hypertarget{method-ORSLocal-set_endpoints}{}}}
 \subsection{Method \code{set_endpoints()}}{
-Change endpoint-specific configurations.
+Change endpoint-specific configurations. Specifies options that are
+relevant for entire API endpoints such as isochrones.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$set_endpoints(
-  routing = NULL,
-  matrix = NULL,
-  isochrone = NULL,
-  snap = NULL
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$set_endpoints(...)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{routing, matrix, isochrone, snap}}{\code{[list/NULL]}
+\item{\code{...}}{\code{[list/NULL]}
 
-List of configurations for each endpoint. Refer to
+Named arguments containing the configuration for the endpoints.
+Available endpoits are \code{routing}, \code{isochrones},
+\code{matrix}, and \code{snap}. Refer to
 \href{https://github.com/GIScience/openrouteservice/blob/master/ors-api/src/main/resources/application.yml}{application.yml}
 for a list of defaults.}
 }
@@ -568,9 +611,20 @@ Retrieve technical information on the docker container used.
 Show container logs as returned by \code{docker logs}. Useful for
 debugging docker setups.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$show_logs()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$show_logs(format = TRUE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{format}}{\code{[logical]}
+
+If \code{TRUE}, includes ANSI colors and adds exdents. Otherwise,
+trims ANSI colors. Disabling formatting increases performance, which
+can be useful for larger logs.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ORSLocal-is_built"></a>}}

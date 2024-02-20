@@ -1,5 +1,9 @@
 #' Routing distance matrix
 #' @description Calls the matrix service and returns a routing distance matrix.
+#' @param dst \code{[sf/sfc]}
+#'
+#' Destination dataset containing point geometries that should be routed to.
+#' If \code{NULL}, only routes between points in \code{src}.
 #' @inheritParams ors_pairwise
 #' @returns If \code{length(proximity_type) == 1}, returns a
 #' \code{nrow(src) * nrow(dst)} routing distance matrix. Otherwise,
@@ -7,7 +11,7 @@
 #'
 #' @export
 ors_matrix <- function(src,
-                       dst,
+                       dst = NULL,
                        profile = get_profiles(),
                        units = c("m", "km", "mi"),
                        proximity_type = c("distance", "duration"),
@@ -23,7 +27,12 @@ ors_matrix <- function(src,
   units <- match.arg(units)
 
   src <- prepare_input(src, len = nrow(dst))
-  dst <- prepare_input(dst, len = nrow(src))
+
+  if (is.null(dst)) {
+    dst <- src
+  } else {
+    dst <- prepare_input(dst, len = nrow(src))
+  }
 
   url <- get_ors_url(id = iid)
 
