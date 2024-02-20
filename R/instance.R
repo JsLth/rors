@@ -41,9 +41,9 @@ ORSInstance <- R6::R6Class(
   # Private ----
   private = list(
     .get_id = function() {
-      if (inherits(self, "ors_local")) {
+      if (inherits(self, "ORSLocal")) {
         self$compose$name
-      } else if (inherits(self, "ors_remote")) {
+      } else if (inherits(self, "ORSRemote")) {
         self$url
       }
     },
