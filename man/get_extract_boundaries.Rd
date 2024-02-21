@@ -53,33 +53,16 @@ requires knowledge about the approximate area of an extract.
 accesses the snap endpoint which also does not work on the public API and
 needs to be enabled on other servers. \code{ors_guess} can make a lot of
 requests and might not be feasible in many situations.
-
-If the public API is mounted, we know that the coverage is global.
-\code{get_boundaries} generates a random buffer polygon somewhere in the
-world. The size and position depend on the dot arguments \code{dist} and
-\code{seed}. If possible, it makes use of the global land mass boundaries of
-\code{\link[rnaturalearthdata]{coastline110}}. Otherwise, it assumes basic
-WGS84 boundaries. While this practice does not always represent the real
-boundaries, it can quite often enable working samples to be taken
-by \code{\link{ors_sample}}.
 }
 
 \examples{
 \dontrun{
-library(rnaturalearthdata)
-library(sf)
-
 # For local instances, reads the extract file
-ors <- ors_instance(tempdir(), verbose = FALSE)
 bounds <- get_extract_boundaries()
 plot(bounds)
 
-# For public API instances, limits the routing area to a random polygon
-ors <- ors_instance(server = "pub")
-bounds <- get_extract_boundaries(dist = 200000, seed = 123)
-
-plot(sf::st_as_sfc(rnaturalearthdata::countries110))
-plot(bounds, add = TRUE)
+# Subsequent calls recover from the cache
+get_extract_boundaries()
 }
 
 

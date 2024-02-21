@@ -79,33 +79,14 @@ ors_sample <- function(size,
 #' needs to be enabled on other servers. \code{ors_guess} can make a lot of
 #' requests and might not be feasible in many situations.
 #'
-#' If the public API is mounted, we know that the coverage is global.
-#' \code{get_boundaries} generates a random buffer polygon somewhere in the
-#' world. The size depends on the dot argument \code{dist}.
-#' The function checks whether the random polygon falls within some land
-#' mass and tries again \code{tries} times before aborting. If available,
-#' it uses the world map data defined by \code{\link[maps]{map}}. Otherwise,
-#' it falls back to global WGS84 boundaries. While this practice
-#' does not always represent the real boundaries, it can quite often
-#' enable working samples to be taken
-#' by \code{\link{ors_sample}}.
-#'
 #' @examples
 #' \dontrun{
-#' library(rnaturalearthdata)
-#' library(sf)
-#'
 #' # For local instances, reads the extract file
-#' ors <- ors_instance(tempdir(), verbose = FALSE)
 #' bounds <- get_extract_boundaries()
 #' plot(bounds)
 #'
-#' # For public API instances, limits the routing area to a random polygon
-#' ors <- ors_instance(server = "pub")
-#' bounds <- get_extract_boundaries(dist = 200000)
-#'
-#' plot(sf::st_as_sfc(rnaturalearthdata::countries110))
-#' plot(bounds, add = TRUE)
+#' # Subsequent calls recover from the cache
+#' get_extract_boundaries()
 #' }
 #'
 #'
@@ -168,18 +149,14 @@ get_extract_boundaries <- function(instance = NULL,
 
       poly <- proc$get_result()
     } else {
-      if (is_ors_api(instance$url)) {
-        poly <- random_bbox(...)
-      } else {
-        cli::cli_abort(c(
-          "Cannot get extract from a server URL.",
-          "i" = paste(
-            "{.code get_extract_boundaries} is not usable for unkown remote",
-            "servers as the extract boundaries cannot easily be determined.",
-            "Consider using {.fn ors_guess}."
-          )
-        ))
-      }
+      cli::cli_abort(c(
+        "Cannot get extract from a server URL.",
+        "i" = paste(
+          "{.code get_extract_boundaries} is not usable for unkown remote",
+          "servers as the extract boundaries cannot easily be determined.",
+          "Consider using {.fn ors_guess}."
+        )
+      ))
     }
 
     assign("extract_boundaries", poly, envir = ors_cache)
@@ -187,20 +164,4 @@ get_extract_boundaries <- function(instance = NULL,
   } else {
     ors_cache$extract_boundaries
   }
-}
-
-
-random_bbox <- function(dist = 5000, tries = 5) {
-  poly <- world_data()
-  pts <- sf::st_sample(poly, tries)
-
-  for (pt in pts) {
-    bbox <- sf::st_as_sfc(sf::st_bbox(sf::st_buffer(pt, dist)))
-    if (sf::st_within(bbox, poly, sparse = FALSE)) return(bbox)
-  }
-
-  cli::cli_abort(c(
-    "Could not find a routeable boundary box within {.field {tries}} tries.",
-    "i" = "Maybe increase {.var tries} or set a different seed?"
-  ))
 }

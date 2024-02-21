@@ -22,15 +22,16 @@ Depends:
 Imports:
     utils,
     stats,
-    assertthat,
-    R6,
-    httr2 (>= 0.2.0),
-    jsonlite,
-    yaml,
-    sf,
-    osmextract (>= 0.2.0),
     cli (>= 3.0.0),
     callr (>= 3.5.0),
+    assertthat,
+    R6,
+    httpuv,
+    yaml,
+    osmextract (>= 0.2.0),
+    jsonlite,
+    httr2 (>= 0.2.0),
+    sf
 Suggests:
     covr,
     testthat (>= 3.0.0),
@@ -42,10 +43,8 @@ Suggests:
     leaflet,
     ggplot2,
     terra,
-    rnaturalearthdata,
     units,
     tibble,
-    httpuv,
     sfnetworks
 SystemRequirements: Docker (>= 20.10.6)
 RoxygenNote: 7.2.3
