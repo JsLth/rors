@@ -47,7 +47,7 @@ Suggests:
     tibble,
     sfnetworks
 SystemRequirements: Docker (>= 20.10.6)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Config/testthat/edition: 3

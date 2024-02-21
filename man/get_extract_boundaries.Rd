@@ -45,7 +45,7 @@ extract boundaries. There is thus far no way of accessing an OSM extract file
 knowing only the server address. We can, however, make use of some
 heuristics:
 
-\code{\link{ors_extract}} can export the built graphs from an ORS server
+\code{\link{ors_export}} can export the built graphs from an ORS server
 if it allows it. However, it does not work on the public API and it
 requires knowledge about the approximate area of an extract.
 
