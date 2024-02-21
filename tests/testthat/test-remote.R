@@ -11,8 +11,10 @@ test_that("public api works", {
   expect_true(ors$is_ready())
   expect_true(ors$token)
 
-  # test global sampling
-  sample <- ors_sample(2)
+  sample <- sf::st_sfc(
+    sf::st_point(c(1, 2)),
+    sf::st_point(c(2, 3))
+  )
 
   expect_warning(ors_pairwise(sample[1], sample[2]))
   cond <- last_ors_conditions()
