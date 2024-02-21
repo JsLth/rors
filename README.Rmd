@@ -1,9 +1,6 @@
 ---
 output: github_document
-always_allow_html: yes
 ---
-
-<!-- README.md is generated from README.Rmd. Please edit that file -->
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -14,14 +11,17 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r, include=FALSE}
+```{r httptest, include=FALSE}
 library(httptest2)
+set_redactor(function(x) {
+  gsub_response(x, "https\\://api.openrouteservice.org/v2/directions/driving-car/", "api/")
+})
 start_vignette("README")
 ```
 
 # ORSRouting
 
-# <img src="inst/figures/orsr_sticker.png" width = "150" align="right" />
+<img src="man/figures/orsrouting_sticker.png" width = "150" align="right" />
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/JsLth/ORSRouting/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/JsLth/ORSRouting/actions/workflows/R-CMD-check.yaml)
@@ -45,8 +45,9 @@ devtools::install_github("JsLth/ORSRouting")
 
 To connect to a running OpenRouteService server - or to build a new one, use the workhorse function `ors_instance`:
 
-```{r}
+```{r instance}
 library(ORSRouting)
+library(sf)
 
 # API keys are stored in the ORS_TOKEN environment variable
 ors <- ors_instance(server = "public")
@@ -54,7 +55,7 @@ ors <- ors_instance(server = "public")
 
 The ORS instance is then attached to the session and is automatically detected by all other functions. To perform a simple routing request, run `ors_inspect`:
 
-```{r}
+```{r inspect}
 ors_inspect(pharma[1:2, ], profile = "driving-car", extra_info = "surface")
 ```
 
@@ -63,7 +64,7 @@ ors_inspect(pharma[1:2, ], profile = "driving-car", extra_info = "surface")
 
 While `ORSRouting` can work with public API requests, it is primarily designed to be used together with local instances. The `ors_instance` family can be used to manage, control and build local ORS instances. The following code would jumpstart an initial instance, add an OSM extract of Rutland, add three routing profiles, set a random port, 100 MB of RAM and finally start the ORS instance. For more details, refer to `vignette("ors-installation")`.
 
-```{r, eval=FALSE}
+```{r local, eval=FALSE}
 ors <- ors_instance(dir = "~")
 ors$set_extract("Rutland", provider = "geofabrik")
 ors$add_profiles("car", "bike-regular", "walking")
