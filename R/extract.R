@@ -82,7 +82,7 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
     ors_cli(
       progress = "step",
       msg = "Downloading OSM extract...",
-      msg_done = "The extract was successfully downloaded to the following path: {.href [{rel_path}](file://{path})}",
+      msg_done = "The extract was successfully downloaded to the following path: {rel_path}",
       msg_failed = "Extract could not be downloaded.",
       spinner = TRUE
     )
@@ -156,17 +156,16 @@ set_extract <- function(self, file) {
 
 
 get_current_extract <- function(compose, dir) {
-  current_extract <- identify_extract(compose, dir)
+  cur_extract <- identify_extract(compose, dir)
 
-  if (!is.null(current_extract) && !file.exists(current_extract)) {
-    pretty_path <- relative_path(current_extract, dir)
+  if (!is.null(cur_extract) && !file.exists(cur_extract)) {
     cli::cli_warn(c(
-      "The current extract {.href [{pretty_path}]({current_extract})} could not be found.",
-      "Consider mounting a different extract."
+      "The current extract {.val {basename(cur_extract)}} could not be found.",
+      "i" = "Consider mounting a different extract."
     ))
   }
 
-  current_extract
+  cur_extract
 }
 
 

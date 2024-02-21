@@ -8,16 +8,6 @@
 }
 
 
-#' Given a path, returns the parent path
-#' @param times_back Number of times to up a folder
-#' @noRd
-file_path_up <- function(path, times_back = 1L) {
-  path <- normalizePath(path, winslash = "/", mustWork = FALSE)
-  new_path <- utils::head(unlist(strsplit(path, "/")), -times_back)
-  do.call(file.path, as.list(new_path))
-}
-
-
 #' Checks if a URL is local (i.e. localhost or 127.0.0.1)
 #' @noRd
 is_local <- function(url) {
@@ -57,18 +47,30 @@ loadable <- function(pkg) {
 #' @param basedir Path that contains `targetdir`
 #' @param pretty Whether to add a tilde and a slash in front
 #' @noRd
-relative_path <- function(targetdir, basedir) {
-  relative_path <- gsub(
+relative_path <- function(targetdir, basedir, pretty = FALSE) {
+  rel <- gsub(
     pattern = sprintf("%s/?", basedir),
     replacement = "",
     x = targetdir
   )
 
-  if (!nzchar(relative_path)) {
-    relative_path <- "."
+  if (!nzchar(rel)) {
+    rel <- "."
+  } else if (pretty) {
+    rel <- file.path(".", rel)
   }
 
-  relative_path
+  rel
+}
+
+
+#' Given a path, returns the parent path
+#' @param times_back Number of times to up a folder
+#' @noRd
+file_path_up <- function(path, times_back = 1L) {
+  path <- normalizePath(path, winslash = "/", mustWork = FALSE)
+  new_path <- utils::head(unlist(strsplit(path, "/")), -times_back)
+  do.call(file.path, as.list(new_path))
 }
 
 
