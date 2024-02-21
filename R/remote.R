@@ -31,23 +31,18 @@ ORSRemote <- R6::R6Class(
     #' rate-restricted and requests are automatically throttled to 40 requests per
     #' minute. Routing functions \emph{will} be slow for larger datasets.
     #'
-    #' @param token Some remote APIs require tokens to function. Although this
-    #' is an argument, it is advisable to store API tokens in the environment
-    #' variable \code{ORS_TOKEN} which is read internally.
-    initialize = function(server, token = NULL) {
-      assert_that(is.character(server))
-
-      if (!is.null(token)) {
-        cli::cli_warn(paste(
-          "Consider storing your ORS token in the {.code ORS_TOKEN}",
-          "environment variable in order to keep your API access safe!"
-        ))
-
-        Sys.setenv(ORS_TOKEN = token)
-      }
+    #' @param token \code{[logical]}
+    #'
+    #' Whether \code{server} requires authorization over a token. ORS tokens
+    #' are stored in the \code{ORS_TOKEN} environment variable. Defaults to
+    #' \code{FALSE}. If \code{server} is the public API, \code{token} is set
+    #' to \code{TRUE}.
+    initialize = function(server, token = FALSE) {
+      assert_that(is.character(server), is_true_or_false(token))
 
       if (server %in% c("pub", "public", public_api)) {
         server <- public_api
+        token <- TRUE
 
         if (!nzchar(get_ors_token())) {
           link <- "https://openrouteservice.org/"
@@ -63,7 +58,7 @@ ORSRemote <- R6::R6Class(
       }
 
       if (nzchar(get_ors_token())) {
-        token <- ors_token()
+        token <- ors_token(token)
       }
 
       if (!is_url(server)) {
@@ -86,8 +81,8 @@ get_ors_token <- function() {
 }
 
 
-ors_token <- function() {
-  structure(nzchar(get_ors_token()), class = "ors_token")
+ors_token <- function(active = FALSE) {
+  structure(nzchar(get_ors_token()), class = "ors_token", active = active)
 }
 
 
@@ -96,6 +91,30 @@ public_api <- "https://api.openrouteservice.org/"
 
 #' @export
 print.ors_token <- function(x, ...) {
-  cat("<ors_token>\n")
-  cat("  A token is stored in the `ORS_TOKEN` env variable.")
+  active <- attr(x, "active")
+
+  if (active) {
+    emph <- cli::col_red("requires")
+    msg1 <- cli::format_message(c("i" = paste(
+      "This instance", underline, "a token."
+    )))
+  } else {
+    emph <- cli::style_underline("no")
+    msg1 <- cli::format_message(c("i" = paste(
+      "This instance requires", emph, "token."
+    )))
+  }
+
+  if (x) {
+    msg2 <- cli::format_message(c(
+      "v" = "A token is stored in the `ORS_TOKEN` environment variable."
+    ))
+  } else {
+    msg2 <- cli::format_message(c(
+      "x" = "No token found in the `ORS_TOKEN` environment variable."
+    ))
+  }
+
+
+  cat("<ors_token>", "\n", msg1, "\n", msg2, "\n")
 }

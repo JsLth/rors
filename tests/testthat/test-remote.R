@@ -10,6 +10,7 @@ test_that("public api works", {
   expect_type(ors$get_status(), "character")
   expect_true(ors$is_ready())
   expect_true(ors$token)
+  expect_true(attr(ors$token, "active"))
 
   sample <- sf::st_sfc(
     sf::st_point(c(1, 2)),
