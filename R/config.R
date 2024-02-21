@@ -114,7 +114,7 @@ change_endpoints <- function(self, ...) {
 
 
 get_profile_names <- function(profiles) {
-  vapply(seq_along(profiles), FUN.VALUE = character(1), function(x) {
+  vapply(seq_along(profiles), FUN.VALUE = character(1), function(i) {
     x <- profiles[[i]]
     if (inherits(x, "ors_profile")) {
       x[[1]]$profile
