@@ -275,6 +275,12 @@ ORSLocal <- R6::R6Class(
     #' providers can be found by running
     #' \code{\link[osmextract:oe_providers]{oe_providers()}}. If \code{NULL},
     #' tries all providers.
+    #'
+    #' @param timeout \code{[numeric]}
+    #'
+    #' Timeout for extract downloads. Defaults to 30 minutes to enable
+    #' longer extract downloads. The adopted timeout is the maximum of
+    #' this argument and \code{getOption("timeout")}.
     #' @param file \code{[character / NULL]}
     #'
     #' Path to a local OSM extract. Can either be a full path to any OSM file
@@ -288,14 +294,16 @@ ORSLocal <- R6::R6Class(
     #' \code{\link[osmextract:oe_get]{oe_get()}}.
     set_extract = function(place,
                            provider = "geofabrik",
+                           timeout = 1800,
                            file = NULL,
                            do_use = TRUE,
                            ...) {
       if (is.null(file)) {
         file <- get_extract(
-          place,
-          provider,
-          paths = self$paths,
+          self,
+          place = place,
+          provider = provider,
+          timeout = timeout,
           verbose = private$.verbose,
           ...
         )

@@ -87,7 +87,7 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
       spinner = TRUE
     )
 
-    timeout <- timeout %||% getOption("timeout")
+    timeout <- max(timeout, getOption("timeout"))
 
     proc <- callr::r_bg(
       function(place_match, providers, data_dir, timeout) {
@@ -97,7 +97,8 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
           provider = providers[i],
           download_directory = data_dir,
           quiet = TRUE,
-          max_file_size =
+          # maximum of 50 GB; above that, you probably need something else
+          max_file_size = 5e+10
         )
       },
       args = list(place_match, providers, data_dir, timeout),
