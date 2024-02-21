@@ -71,7 +71,12 @@ ors_guess <- function(poly = NULL,
                       instance = NULL,
                       ...) {
   if (is.null(poly)) {
-    poly <- world_data()
+    poly <- sf::st_as_sfc(sf::st_bbox(c(
+      xmin = -180,
+      ymin = -90,
+      xmax = 180,
+      ymax = 90
+    ), crs = 4326))
   }
 
   if (!is_sf(poly)) {
