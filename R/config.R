@@ -114,15 +114,22 @@ change_endpoints <- function(self, ...) {
 
 
 get_profile_names <- function(profiles) {
-  vapply(profiles, FUN.VALUE = character(1), function(x) {
+  vapply(seq_along(profiles), FUN.VALUE = character(1), function(x) {
+    x <- profiles[[i]]
     if (inherits(x, "ors_profile")) {
       x[[1]]$profile
     } else if (is.list(x)) {
-      x$profile
+      if ("profile" %in% names(x)) {
+        x$profile
+      } else if (names(profiles[i]) %in% names(base_profiles)) {
+        base_profiles[[names(profiles[i])]]
+      } else {
+        NA_character_
+      }
     } else if (is.character(x)) {
       x
     } else {
-      character()
+      NA_character_
     }
   })
 }
@@ -185,25 +192,6 @@ get_all_profiles <- function() {
     "car", "hgv", "bike-regular", "bike-mountain", "bike-road", "bike-electric",
     "walking", "hiking", "wheelchair", "public-transport"
   )
-}
-
-
-apply_config_dots <- function(config, ...) {
-  dots <- list(...)
-  names(dots) <- paste0("profile-", names(dots))
-  names(dots)[grepl("default", names(dots))] <- "default_params"
-  for (profile in names(dots)) {
-    opts <- names(dots[[profile]])
-    for (opt in opts) {
-      val <- dots[[profile]][[opt]]
-      if (profile == "default_params") {
-        config$ors$services$routing$profiles[[profile]][[opt]] <- val
-      } else {
-        config$ors$services$routing$profiles[[profile]]$parameters[[opt]] <- val
-      }
-    }
-  }
-  config
 }
 
 
