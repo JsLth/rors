@@ -131,33 +131,17 @@ requires knowledge about the approximate area of an extract.</p>
 accesses the snap endpoint which also does not work on the public API and
 needs to be enabled on other servers. <code>ors_guess</code> can make a lot of
 requests and might not be feasible in many situations.</p>
-<p>If the public API is mounted, we know that the coverage is global.
-<code>get_boundaries</code> generates a random buffer polygon somewhere in the
-world. The size and position depend on the dot arguments <code>dist</code> and
-<code>seed</code>. If possible, it makes use of the global land mass boundaries of
-<code><a href="https://docs.ropensci.org/rnaturalearthdata/reference/coastlines.html" class="external-link">coastline110</a></code>. Otherwise, it assumes basic
-WGS84 boundaries. While this practice does not always represent the real
-boundaries, it can quite often enable working samples to be taken
-by <code><a href="ors_sample.html">ors_sample</a></code>.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://docs.ropensci.org/rnaturalearthdata/" class="external-link">rnaturalearthdata</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># For local instances, reads the extract file</span></span></span>
-<span class="r-in"><span><span class="va">ors</span> <span class="op">&lt;-</span> <span class="fu"><a href="ors_instance.html">ors_instance</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">bounds</span> <span class="op">&lt;-</span> <span class="fu">get_extract_boundaries</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bounds</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># For public API instances, limits the routing area to a random polygon</span></span></span>
-<span class="r-in"><span><span class="va">ors</span> <span class="op">&lt;-</span> <span class="fu"><a href="ors_instance.html">ors_instance</a></span><span class="op">(</span>server <span class="op">=</span> <span class="st">"pub"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">bounds</span> <span class="op">&lt;-</span> <span class="fu">get_extract_boundaries</span><span class="op">(</span>dist <span class="op">=</span> <span class="fl">200000</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sfc.html" class="external-link">st_as_sfc</a></span><span class="op">(</span><span class="fu">rnaturalearthdata</span><span class="fu">::</span><span class="va"><a href="https://docs.ropensci.org/rnaturalearthdata/reference/countries.html" class="external-link">countries110</a></span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bounds</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Subsequent calls recover from the cache</span></span></span>
+<span class="r-in"><span><span class="fu">get_extract_boundaries</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
