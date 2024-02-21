@@ -1,7 +1,7 @@
 skip_if_offline("github.com")
 
 if (is_macos()) {
-  print(system("top -l 1 -s 0 | grep PhysMem", intern = TRUE))
+  try(print(system("top -l 1 -s 0", intern = TRUE)))
 }
 
 ors <- local_ors_instance(

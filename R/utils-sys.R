@@ -32,6 +32,12 @@ get_memory_info <- function() {
     mem_csv <- paste(gsub("\\s+", ",", mem_csv), "\n")
     mem_df <- utils::read.csv(text = mem_csv)[1, c("total", "free")]
     lapply(mem_df, function(x) x / 1048576L)
+  } else if (is_macos()) {
+    cmd <- c("-l 1", "-s 0", "| grep PhysMem")
+    mem <- callr::run("top", cmd, stdout = "|", stderr = NULL)$stdout
+    used <- as.numeric(regex_match(mem, "([0-9]+)M used"))[[1]][2] / 1024
+    free <- as.numeric(regex_match(mem, "([0-9]+)M unused"))[[1]][2] / 1024
+    list(total = used + free, free = free)
   }
 }
 
