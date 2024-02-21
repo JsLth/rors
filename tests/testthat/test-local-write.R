@@ -1,8 +1,7 @@
 skip_if_offline("github.com")
 
 ors <- local_ors_instance(
-  dir = tempdir(),
-  verbose = 1,
+  verbose = TRUE,
   dry = TRUE,
   complete = TRUE,
   version = "7c77ae5"

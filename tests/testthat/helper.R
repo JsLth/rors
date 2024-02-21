@@ -12,11 +12,15 @@ is_mock_test <- function() {
 #' @param complete If dry = TRUE, whether to start a complete instance
 #' including extract and config
 #' @noRd
-local_ors_instance <- function(..., complete = FALSE, .local_envir = parent.frame()) {
+local_ors_instance <- function(dir = tempdir(),
+                               ...,
+                               dry = TRUE,
+                               complete = FALSE,
+                               .local_envir = parent.frame()) {
   args <- list(...)
-  ors <- ORSLocal$new(...)
+  ors <- ORSLocal$new(dir = dir, dry = dry, ...)
 
-  if (isTRUE(args$dry) && complete) {
+  if (isTRUE(dry) && complete) {
     create_dry_files(ors)
     ors$update("self")
   }

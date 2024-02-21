@@ -5,7 +5,6 @@ skip_on_os(c("mac", "solaris"))
 skip_if_not(docker_installed() && has_docker_access(), "docker unavailable")
 
 ors <- local_ors_instance(
-  dir = tempdir(),
   verbose = FALSE,
   dry = FALSE,
   version = "7c77ae5"
@@ -23,7 +22,8 @@ test_that("docker setup works", {
 
   # restart
   expect_no_error(ors$start())
-  expect_output(ors$show_logs())
+  expect_message(ors$show_logs())
+  expect_true(any(cli::ansi_has_any(ors$show_logs())))
 
   # info
   expect_type(ors$get_container(), "list")
