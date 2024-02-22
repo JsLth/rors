@@ -28,6 +28,7 @@ start_vignette("README")
 [![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
 [![](https://www.r-pkg.org/badges/version/ORSRouting)](https://cran.r-project.org/package=ORSRouting)
 
+[![Codecov test coverage](https://codecov.io/gh/JsLth/ORSRouting/branch/master/graph/badge.svg)](https://app.codecov.io/gh/JsLth/ORSRouting?branch=master)
 <!-- badges: end -->
 
 The purpose of this package is to provide a comprehensive and convenient R interface to local OpenRouteService instances in order to facilitate batch routing. The package functions (so far) enable qualitative and quantitative route computations, distance matrix generation, and accessibility analyses (i.e. isochrones). Also included is a function family to build local customized OpenRouteService instances from scratch. While it is possible to use ORSRouting with the official web API, requests will be very slow due to rate restrictions and therefore not really suitable for larger scale analyses.
