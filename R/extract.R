@@ -4,16 +4,16 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
   i <- 0L
 
   if (is.null(provider)) {
-    providers <- osmextract::oe_providers(quiet = TRUE)$available_providers
+    providers <- osmextract::oe_providers(quiet = TRUE)$available_providers # nocov
   } else {
     providers <- provider
   }
 
   if ((!interactive() || verbose <= 1) && length(providers) > 1L) {
-    cli::cli_abort(paste(
+    cli::cli_abort(paste( # nocov start
       "In batch or non-verbose mode, explicitly pass",
       "a single provider name to {.fun ors_extract}."
-    ))
+    )) # nocov end
   }
 
   if (length(providers) > 1) {
@@ -39,10 +39,10 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
     ors_cli(info = "Size \u00a0\u00a0\u00a0\u00a0: {cli::col_green(file_size)} MB")
 
     if (providers[i] == "bbbike") {
-      ors_cli(warn = paste(
+      ors_cli(warn = paste( # nocov start
         "bbbike extracts are known to cause issues with",
         "memory allocation. Use with caution."
-      ))
+      )) # nocov end
     }
 
     ors_cli(line = TRUE)
@@ -54,10 +54,10 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
 
   # If the while loop exits and the last answer given is yes, exit
   if (ok && length(providers) > 1) {
-    ors_cli(info = c(
+    ors_cli(info = c( # nocov start
       "!" = "All providers have been searched. Please download the extract manually."
     ))
-    return(invisible())
+    return(invisible()) # nocov end
   }
 
   # If a file with the same name already exists, skip the download
@@ -113,10 +113,10 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
   # If the size is over 6 GB in size, give out a warning
   size <- file.info(path)$size / 1024L / 1024L
   if (size >= 6000L) {
-    ors_cli(info = paste(c("i" =
+    ors_cli(info = paste(c("i" = # nocov start
       "The OSM extract is very large. Make sure that you have enough",
       "working memory available."
-    )))
+    ))) # nocov end
   }
 
   invisible(path)
@@ -166,15 +166,6 @@ get_current_extract <- function(compose, dir) {
   }
 
   cur_extract
-}
-
-
-validate_extract <- function(extract_path) {
-  if (!is.null(extract_path) &&
-      file.exists(extract_path) &&
-      is_pbf(extract_path)) {
-    extract_path
-  }
 }
 
 

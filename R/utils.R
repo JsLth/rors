@@ -241,7 +241,7 @@ df_nest <- function(...) {
 }
 
 
-as_data_frame <- function(...) {
+as_data_frame <- function(...) { # nocov start
   if (loadable("tibble")) {
     tibble::as_tibble(...)
   } else {
@@ -256,7 +256,7 @@ data_frame <- function(...) {
   } else {
     data.frame(...)
   }
-}
+} # nocov end
 
 
 #' Simple yes-no input that defines the output of yes/no answers.
@@ -267,7 +267,7 @@ data_frame <- function(...) {
 #' @param ask Whether to show a prompt or not. If FALSE, returns dflt
 #' @returns Arguments yes or no
 #' @noRd
-yes_no <- function(msg, yes = TRUE, no = FALSE, dflt = NULL, ask = TRUE) {
+yes_no <- function(msg, yes = TRUE, no = FALSE, dflt = NULL, ask = TRUE) { # nocov start
   if (!interactive() || !ask) {
     return(dflt)
   }
@@ -289,4 +289,4 @@ yes_no <- function(msg, yes = TRUE, no = FALSE, dflt = NULL, ask = TRUE) {
 cancel <- function(what = "Function") {
   cli::cli_inform(c("x" = "{what} cancelled."))
   invokeRestart("abort")
-}
+} # nocov end
