@@ -113,28 +113,6 @@ change_endpoints <- function(self, ...) {
 }
 
 
-get_profile_names <- function(profiles) {
-  vapply(seq_along(profiles), FUN.VALUE = character(1), function(i) {
-    x <- profiles[[i]]
-    if (inherits(x, "ors_profile")) {
-      x[[1]]$profile
-    } else if (is.list(x)) {
-      if ("profile" %in% names(x)) {
-        x$profile
-      } else if (names(profiles[i]) %in% names(base_profiles)) {
-        base_profiles[[names(profiles[i])]]
-      } else {
-        NA_character_
-      }
-    } else if (is.character(x)) {
-      x
-    } else {
-      NA_character_
-    }
-  })
-}
-
-
 insert_profiles <- function(self, private, ...) {
   dots <- list(...)
   engine <- self$config$parsed$ors$engine
@@ -184,6 +162,32 @@ remove_profiles <- function(self, ...) {
   }
 
   engine
+}
+
+
+get_profile_names <- function(profiles) {
+  nm <- vapply(seq_along(profiles), FUN.VALUE = character(1), function(i) {
+    x <- profiles[[i]]
+    if (inherits(x, "ors_profile")) {
+      x[[1]]$profile
+    } else if (is.list(x)) {
+      if ("profile" %in% names(x)) {
+        x$profile
+      } else if (names(profiles[i]) %in% names(base_profiles)) {
+        base_profiles[[names(profiles[i])]]
+      } else {
+        NA_character_
+      }
+    } else if (is.character(x)) {
+      x
+    } else {
+      NA_character_
+    }
+  })
+
+  nm <- nm[!is.na(nm)]
+  names(nm) <- names(profiles)
+  nm
 }
 
 
