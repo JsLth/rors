@@ -1,9 +1,5 @@
 skip_if_offline("github.com")
 
-if (is_macos()) {
-  try(print(system("top -l 1 -s 0", intern = TRUE)))
-}
-
 ors <- local_ors_instance(
   verbose = FALSE,
   dry = TRUE,

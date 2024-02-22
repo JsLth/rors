@@ -90,6 +90,11 @@ test_that("$set_extract() works", {
   skip_if_offline("geofabrik.de")
 
   ors$set_extract("Rutland", provider = "geofabrik")
+  expect_message(
+    ors$set_extract("Rutland", provider = "geofabrik"),
+    "already exists",
+    fixed = TRUE
+  )
 
   expect_match(
     ors$compose$parsed$services$`ors-app`$volumes,
@@ -97,6 +102,15 @@ test_that("$set_extract() works", {
     fixed = TRUE,
     all = FALSE
   )
+
+  expect_error(
+    ors$set_extract(file = "test.pbf"),
+    "file does not exist",
+    fixed = TRUE
+  )
+
+  unlink(ors$paths$extract)
+  expect_warning(ors$update("self"), "could not be found", fixed = TRUE)
 })
 
 test_that("profiles work", {

@@ -80,6 +80,7 @@ test_that("rbind_list works", {
   withr::local_package("sf")
   df1 <- data.frame(a = 1, b = "a")
   df2 <- data.frame(a = 2, c = "b")
+  df3 <- data.frame()
   sf1 <- st_sf(
     a = c(1, 2),
     geometry = st_sfc(st_point(c(1, 2)), st_point(c(5, 8)))
@@ -102,6 +103,8 @@ test_that("rbind_list works", {
 
   st_crs(sf2) <- 4326
   expect_no_error(rbind_list(list(sf1, sf2)))
+
+  expect_identical(rbind_list(df2, df3), df2)
 })
 
 test_that("list tools work", {
