@@ -104,7 +104,7 @@ test_that("rbind_list works", {
   st_crs(sf2) <- 4326
   expect_no_error(rbind_list(list(sf1, sf2)))
 
-  expect_identical(rbind_list(df2, df3), df2)
+  expect_identical(rbind_list(list(df2, df3)), df2)
 })
 
 test_that("list tools work", {
