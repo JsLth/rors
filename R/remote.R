@@ -43,18 +43,18 @@ ORSRemote <- R6::R6Class(
       if (server %in% c("pub", "public", public_api)) {
         server <- public_api
         token <- TRUE
+      }
 
-        if (!nzchar(get_ors_token())) {
-          link <- "https://openrouteservice.org/"
-          link <- cli::style_hyperlink(link, link)
-          cli::cli_abort(c(
-            "!" = "The public API requires an API token!",
-            "i" = paste(
-              "Request one under {.url {link}} and store it",
-              "in the {.code ORS_TOKEN} environment variable."
-            )
-          ))
-        }
+      if (!nzchar(get_ors_token()) && token) {
+        link <- "https://openrouteservice.org/"
+        link <- cli::style_hyperlink(link, link)
+        cli::cli_abort(c(
+          "!" = "The public API requires an API token!",
+          "i" = paste(
+            "Request one under {.url {link}} and store it",
+            "in the {.code ORS_TOKEN} environment variable."
+          )
+        ))
       }
 
       if (nzchar(get_ors_token())) {
@@ -86,6 +86,15 @@ ors_token <- function(active = FALSE) {
 }
 
 
+needs_token <- function(x) {
+  if (inherits(x, "ors_token")) {
+    isTRUE(attr(x, "active"))
+  } else {
+    FALSE
+  }
+}
+
+
 public_api <- "https://api.openrouteservice.org/"
 
 
@@ -96,25 +105,29 @@ print.ors_token <- function(x, ...) {
   if (active) {
     emph <- cli::col_red("requires")
     msg1 <- cli::format_message(c("i" = paste(
-      "This instance", underline, "a token."
+      "This instance", emph, "a token."
     )))
+
+    if (x) {
+      msg2 <- cli::format_message(c(
+        "v" = "A token is stored in the `ORS_TOKEN` environment variable."
+      ))
+    } else {
+      msg2 <- cli::format_message(c(
+        "x" = "No token found in the `ORS_TOKEN` environment variable."
+      ))
+    }
   } else {
     emph <- cli::style_underline("no")
     msg1 <- cli::format_message(c("i" = paste(
       "This instance requires", emph, "token."
     )))
-  }
 
-  if (x) {
-    msg2 <- cli::format_message(c(
-      "v" = "A token is stored in the `ORS_TOKEN` environment variable."
-    ))
-  } else {
-    msg2 <- cli::format_message(c(
-      "x" = "No token found in the `ORS_TOKEN` environment variable."
-    ))
+    msg2 <- NULL
   }
 
 
-  cat("<ors_token>", "\n", msg1, "\n", msg2, "\n")
+
+
+  cat("<ors_token>", "\n", msg1, "\n", msg2, if (!is.null(msg2)) "\n")
 }
