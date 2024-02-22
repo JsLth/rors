@@ -111,6 +111,9 @@ ORSInstance <- R6::R6Class(
 #'
 #' If \code{TRUE}, prints informative messages and spinners.
 #'
+#' @param ... Further arguments passed to \code{\link{ORSLocal}} or
+#' \code{\link{ORSRemote}}.
+#'
 #' @returns R6 object of class \code{ors_instance} as created by
 #' \code{\link{ORSInstance}}
 #'
@@ -133,15 +136,17 @@ ors_instance <- function(dir = "~",
                          server = NULL,
                          version = "latest",
                          overwrite = FALSE,
-                         verbose = TRUE) {
+                         verbose = TRUE,
+                         ...) {
   if (!is.null(server)) {
-    ORSRemote$new(server = server)
+    ORSRemote$new(server = server, ...)
   } else {
     ORSLocal$new(
       dir = dir,
       version = version,
       overwrite = overwrite,
-      verbose = verbose
+      verbose = verbose,
+      ...
     )
   }
 }
