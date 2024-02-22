@@ -43,7 +43,7 @@ ors_matrix <- function(src,
     metrics = proximity_type,
     units = units,
     url = url,
-    token = instance$token
+    token = needs_token(instance$token)
   )
 
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)

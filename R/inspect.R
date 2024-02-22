@@ -216,7 +216,7 @@ ors_inspect <- function(src,
     geometry = TRUE,
     params = params,
     url = url,
-    token = instance$token,
+    token = needs_token(instance$token),
     parse = as != "raw"
   )
 

@@ -19,7 +19,7 @@ apply_directions <- function(index,
     geometry = geometry,
     params = params,
     url = url,
-    token = instance$token
+    token = needs_token(instance$token)
   )
 
   cond <- handle_ors_conditions(res)

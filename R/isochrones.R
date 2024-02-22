@@ -169,7 +169,7 @@ ors_accessibility <- function(src,
     area_units = area_units,
     units = units,
     url = url,
-    token = instance$token
+    token = needs_token(instance$token)
   )
 
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
