@@ -9,7 +9,6 @@
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
 [![](https://www.r-pkg.org/badges/version/ORSRouting)](https://cran.r-project.org/package=ORSRouting)
-
 [![Codecov test
 coverage](https://codecov.io/gh/JsLth/ORSRouting/branch/master/graph/badge.svg)](https://app.codecov.io/gh/JsLth/ORSRouting?branch=master)
 <!-- badges: end -->
