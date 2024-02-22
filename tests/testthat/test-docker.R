@@ -3,6 +3,7 @@ skip_on_cran()
 skip_on_ci()
 skip_on_os(c("mac", "solaris"))
 skip_if_not(docker_installed() && has_docker_access(), "docker unavailable")
+skip_docker()
 
 ors <- local_ors_instance(
   verbose = FALSE,

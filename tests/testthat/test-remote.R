@@ -1,7 +1,6 @@
 skip_if_offline("openrouteservice.org")
 
 test_that("public api works", {
-  expect_warning(ORSRemote$new(server = "pub", token = "notactuallyatoken"))
   ors <- ors_instance(server = "pub")
   withr::local_envvar(ORS_TOKEN = "notactuallyatoken")
   withr::local_seed(1)

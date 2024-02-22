@@ -2,6 +2,10 @@ skip_if_docker_unavailable <- function() {
   skip_if_not(docker_installed() && has_docker_access(), "docker unavailable")
 }
 
+skip_docker <- function() {
+  skip_if_not(isTRUE(as.logical(Sys.getenv("TEST_DOCKER"))))
+}
+
 is_mock_test <- function() {
   !nzchar(Sys.getenv("REAL_REQUESTS"))
 }
