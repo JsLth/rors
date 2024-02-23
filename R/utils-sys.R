@@ -37,8 +37,8 @@ get_memory_info <- function() {
     # cmd <- c("-l 1", "-s 0", "| grep PhysMem")
     # mem <- callr::run("top", cmd, stdout = "|", stderr = NULL)$stdout
     mem <- system("top -l 1 -s 0 | grep PhysMem", intern = TRUE)
-    used <- as.numeric(regex_match(mem, "([0-9]+)M used"))[[1]][2] / 1024
-    free <- as.numeric(regex_match(mem, "([0-9]+)M unused"))[[1]][2] / 1024
+    used <- as.numeric(regex_match(mem, "([0-9]+)M used")[[1]][2]) / 1024
+    free <- as.numeric(regex_match(mem, "([0-9]+)M unused")[[1]][2]) / 1024
     list(total = used + free, free = free)
   }
 }
