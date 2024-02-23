@@ -157,13 +157,14 @@ print.ors_condition <- function(x, ...) {
 
 #' @export
 print.ORSInstance <- function(x, ...) {
-  if (is.null(x$paths)) {
+  # check if local or remote
+  type <- ifelse(ors_is_local(x), "local", "remote")
+  is_local <- identical(type, "local")
+
+  if (is.null(x$paths) && is_local) {
     cat("<ORSInstance>", "\n")
     return(invisible(x))
   }
-
-  # check if local or remote
-  type <- ifelse(ors_is_local(x), "local", "remote")
 
   # check if instance is mounted to the session
   active <- x$is_mounted()
@@ -187,7 +188,7 @@ print.ORSInstance <- function(x, ...) {
     " server :", server, "\n",
     " type   :", type, "\n",
     " active :", active, "\n",
-    " init   :", init, "\n"
+    if (is_local) paste(" init   :", init, "\n")
   )
 
   invisible(x)
