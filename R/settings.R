@@ -127,7 +127,7 @@ adjust_memory <- function(self, private, init, max) {
     ors_cli(warn = msg)
   }
 
-  c(init, max)
+  c(ceiling(init), ceiling(max))
 }
 
 
