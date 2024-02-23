@@ -103,10 +103,10 @@ print.ors_token <- function(x, ...) {
   active <- attr(x, "active")
 
   if (active) {
-    emph <- cli::col_red("requires")
-    msg1 <- cli::format_message(c("i" = paste(
+    emph <- cli::style_underline("requires")
+    msg1 <- cli::format_message(paste(
       "This instance", emph, "a token."
-    )))
+    ))
 
     if (x) {
       msg2 <- cli::format_message(c(
@@ -119,9 +119,9 @@ print.ors_token <- function(x, ...) {
     }
   } else {
     emph <- cli::style_underline("no")
-    msg1 <- cli::format_message(c("i" = paste(
+    msg1 <- cli::format_message(paste(
       "This instance requires", emph, "token."
-    )))
+    ))
 
     msg2 <- NULL
   }
