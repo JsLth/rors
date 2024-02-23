@@ -90,7 +90,7 @@
                         <h4 data-toc-skip class="author">Jonas
 Lieth</h4>
             
-            <h4 data-toc-skip class="date">2024-02-16</h4>
+            <h4 data-toc-skip class="date">2024-02-23</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/JsLth/ORSRouting/blob/HEAD/vignettes/ors-installation.Rmd" class="external-link"><code>vignettes/ors-installation.Rmd</code></a></small>
       <div class="d-none name"><code>ors-installation.Rmd</code></div>
@@ -98,8 +98,6 @@ Lieth</h4>
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/JsLth/ORSRouting" class="external-link">ORSRouting</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="why-do-the-routing-functions-not-work-off-the-shelf">Why do the routing functions not work off the shelf?<a class="anchor" aria-label="anchor" href="#why-do-the-routing-functions-not-work-off-the-shelf"></a>
 </h2>
@@ -120,12 +118,14 @@ practice to do so without exposing the token to R code, e.g. through an
 <a href="https://rstats.wtf/r-startup.html#renviron" class="external-link"><code>.Renviron</code></a>
 file. After doing so, you can call <code>ors_instance</code> to attach
 the token to your session.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># `server = "pub"` is short for https://api.openrouteservice.org/</span></span>
+<span><span class="va">public</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ors_instance.html">ors_instance</a></span><span class="op">(</span>server <span class="op">=</span> <span class="st">"pub"</span><span class="op">)</span></span>
+<span><span class="va">public</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-2.svg" width="100%"></p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">token_exists</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nzchar</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"ORS_TOKEN"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"ORS token available? %s\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">token_exists</span>, <span class="st">"yes"</span>, <span class="st">"no"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># `server = "pub"` is short for https://api.openrouteservice.org/</span></span>
-<span><span class="va">public</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ors_instance.html">ors_instance</a></span><span class="op">(</span>server <span class="op">=</span> <span class="st">"pub"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">public</span><span class="op">$</span><span class="va">token</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-3.svg" width="100%"></p>
 <p>After doing this, all functions should be ready to use. Keep in mind
 though, that firing requests at the public API comes with lots of rate
 restrictions. For a simple request involving 100 routes you will wait
@@ -166,48 +166,37 @@ file, e.g. to change allocated memory or ports.</p>
 <code>ors_instance</code>. The function then downloads a compose file
 from the official <a href="https://github.com/GIScience/openrouteservice" class="external-link">ORS Github
 repository</a>. It then proceeds to “jumpstart” ORS, i.e. it starts a
-default instance with default configurations and OSM data from 2014
-Monaco. This is probably not what you want, but worry not, because you
-can make changes to this setup afterwards. Jumpstarting is deemed good
-practice by the ORS developer team and simplifies the rest of the
-setup.</p>
+default instance with default configurations and OSM data from
+Heidelberg, Germany. This is probably not what you want, but worry not,
+because you can make changes to this setup afterwards. Jumpstarting is
+deemed good practice by the ORS developer team and simplifies the rest
+of the setup.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ors_instance.html">ors_instance</a></span><span class="op">(</span>dir <span class="op">=</span> <span class="st">"."</span>, version <span class="op">=</span> <span class="st">"7c77ae5"</span>, verbose <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Jumpstarting container ───────────────────────────────────────────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; ℹ Docker will now jumpstart an initial ORS setup. This setup runs the default config, settings, and 2014 map data from Monaco.</span></span>
-<span><span class="co">#&gt;   It will fail for any coordinates outside of Monaco. You can make changes to this setup afterwards. This process can take</span></span>
-<span><span class="co">#&gt;   between 1-2 minutes. Jumpstarting is recommended by the ORS developer team, but you can also start a dry run and jumpstart</span></span>
-<span><span class="co">#&gt;   yourself.</span></span>
-<span><span class="co">#&gt; • Setting name to "ors-app-7c8a762"</span></span>
-<span><span class="co">#&gt; • Setting ports to 5318 and 40554</span></span>
-<span><span class="co">#&gt; ── Pulling image ────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ℹ ORS image already exists.</span></span>
-<span><span class="co">#&gt; ── Building container ───────────────────────────────────────────────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; ── Setting up service ───────────────────────────────────────────────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; ℹ The container is being set up and started now. You can stop the process now or let it run and get notified when the service is</span></span>
-<span><span class="co">#&gt;   ready.</span></span>
-<span><span class="co">#&gt; ℹ If you wish to make changes to the existing setup, run `$down()`, or `$stop()` and make the required changes manually.</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ors</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ors_instance.html">ors_instance</a></span><span class="op">(</span>dir <span class="op">=</span> <span class="st">"."</span>, version <span class="op">=</span> <span class="st">"7c77ae5"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-4.svg" width="100%"></p>
 <p>Immediately after, we can take down the service to make changes to
 the ORS setup:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">down</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span><span class="fu">down</span>()</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>ℹ Taking down container ors<span class="sc">-</span>app<span class="sc">-</span>6eea399...</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning: No resource found to remove for project "ors-app-6eea399".</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>✖ Cannot take down container ors<span class="sc">-</span>app<span class="sc">-</span>6eea399. [292ms]</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span></code></pre></div>
 <p>The resulting <code>ors_instance</code> object is stored in a cache
 environment for the entire R session. All API functions automatically
 detect the currently mounted instance.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/get_instance.html">get_instance</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;ORSInstance&gt; </span></span>
-<span><span class="co">#&gt;   server : https://localhost:5318/ </span></span>
-<span><span class="co">#&gt;   type   : local </span></span>
-<span><span class="co">#&gt;   active : TRUE </span></span>
-<span><span class="co">#&gt;   init   : TRUE</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/get_instance.html">get_instance</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-6.svg" width="100%"></p>
 <p>The instance object already shows some important information when
 printed. We are dealing with a local instance on a localhost. The
 instance is “active” in that it is currently mounted to the session and
 it is “init” in that it was already built for the first time.</p>
-<p><code>ors</code> is an R6 and provides multiple methods to set up a
-custom ORS instance. These methods can be divided into four
+<p><code>ors</code> is an R6 object and provides multiple methods to set
+up a custom ORS instance. These methods can be divided into four
 categories:</p>
 <ul>
 <li>
@@ -229,21 +218,13 @@ Docker</li>
 <p>If we wanted to learn more about the currently selected OSM extract,
 we can run:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">extract</span></span>
-<span><span class="co">#&gt; $name</span></span>
-<span><span class="co">#&gt; [1] "osm_file.pbf"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $size</span></span>
-<span><span class="co">#&gt; [1] 15</span></span></code></pre></div>
-<p>As you can see, we are currently running an extract file of Monaco.
-If we wanted to get a new extract, we can run:</p>
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">extract</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-7.svg" width="100%"></p>
+<p>As you can see, we are currently running the default OSM file. If we
+wanted to get a new extract, we can run:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">set_extract</span><span class="op">(</span><span class="st">"Rutland"</span>, provider <span class="op">=</span> <span class="st">"geofabrik"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Provider : geofabrik</span></span>
-<span><span class="co">#&gt; Name     : rutland-latest.osm.pbf</span></span>
-<span><span class="co">#&gt; Size     : 2 MB</span></span>
-<span><span class="co">#&gt; • Using extract "geofabrik_rutland-latest.osm.pbf"</span></span>
-<span><span class="co">#&gt; • Enabling graph building.</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">set_extract</span><span class="op">(</span><span class="st">"Rutland"</span>, provider <span class="op">=</span> <span class="st">"geofabrik"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-8.svg" width="100%"></p>
 <p>This code runs <code><a href="https://docs.ropensci.org/osmextract/reference/oe_match.html" class="external-link">osmextract::oe_match</a></code> and
 <code><a href="https://docs.ropensci.org/osmextract/reference/oe_download.html" class="external-link">osmextract::oe_download</a></code> to download an extract of the
 British county Rutland. The extract is automatically added to the
@@ -265,43 +246,29 @@ choose from (refer to the <a href="https://openrouteservice.org/dev/#/api-docs/v
 playground</a>).</p>
 <p>We can learn more about the currently active routing profiles:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">config</span></span>
-<span><span class="co">#&gt; car              : TRUE</span></span>
-<span><span class="co">#&gt; hgv              : FALSE</span></span>
-<span><span class="co">#&gt; bike-regular     : FALSE</span></span>
-<span><span class="co">#&gt; bike-mountain    : FALSE</span></span>
-<span><span class="co">#&gt; bike-road        : FALSE</span></span>
-<span><span class="co">#&gt; bike-electric    : FALSE</span></span>
-<span><span class="co">#&gt; walking          : FALSE</span></span>
-<span><span class="co">#&gt; hiking           : FALSE</span></span>
-<span><span class="co">#&gt; wheelchair       : FALSE</span></span>
-<span><span class="co">#&gt; public-transport : FALSE</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">config</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-9.svg" width="100%"></p>
 <p>As you can see, there is currently only one active profile:
 <code>driving-car</code>. To add more profiles, we can use the
 <code>$add_profiles</code> method. The method accepts either character
-values or objects of class <code>ors_profile</code>. For quickly adding
-a new profile, you can simply refer to it by name.</p>
+values or objects of class <code>ors_profile</code> - or a combination
+of both. For quickly adding a new profile, you can simply refer to it by
+name.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">add_profiles</span><span class="op">(</span><span class="st">"walking"</span>, <span class="fu"><a href="../reference/ors_profile.html">ors_profile</a></span><span class="op">(</span><span class="st">"hiking"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; • The following profiles were added: foot-walking and foot-hiking</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">add_profiles</span><span class="op">(</span><span class="st">"walking"</span>, <span class="fu"><a href="../reference/ors_profile.html">ors_profile</a></span><span class="op">(</span><span class="st">"hiking"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-10.svg" width="100%"></p>
 <p>However, each routing profile comes with its own set of
 configurations. To have a better control over the configurations in each
 profile, we can create <code>ors_profile</code> objects. The following
 code creates a walking profile with the same defaults as above, but
-without taking into account elevation to its routing computations.</p>
+without taking into account elevation in its routing computations.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ors_profile.html">ors_profile</a></span><span class="op">(</span><span class="st">"walking"</span>, elevation <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;ors_profile&gt;</span></span>
-<span><span class="co">#&gt;  walking:</span></span>
-<span><span class="co">#&gt;   profile: foot-walking</span></span>
-<span><span class="co">#&gt;   interpolate_bridges_and_tunnels: false</span></span>
-<span><span class="co">#&gt;   elevation: false</span></span>
-<span><span class="co">#&gt;   encoder_options:</span></span>
-<span><span class="co">#&gt;     block_fords: false</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ors_profile.html">ors_profile</a></span><span class="op">(</span><span class="st">"walking"</span>, elevation <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-11.svg" width="100%"></p>
 <p>To remove a profile, you can refer to it by name:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">rm_profiles</span><span class="op">(</span><span class="st">"hiking"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; • Removing the following profiles: hiking</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">rm_profiles</span><span class="op">(</span><span class="st">"hiking"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-12.svg" width="100%"></p>
 <p>Besides routing profiles, we can also change the configuration of
 entire endpoints. Endpoints include <code>directions</code>,
 <code>isochrones</code> and <code>matrix</code>. Each endpoint comes
@@ -309,8 +276,11 @@ with its own limitations. For example, by default we can only create
 isochrones for 2 locations. To increase this limit, we can run:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">set_endpoints</span><span class="op">(</span>isochrone <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maximum_locations <span class="op">=</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>A full list of endpoint defaults set by ORS can be found <a href="https://giscience.github.io/openrouteservice/run-instance/configuration/ors/endpoints/" class="external-link">here</a>.
-A full list of profiles and their specific configuration defaults</p>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-13.svg" width="100%"></p>
+<p>A full list of endpoint defaults set by ORS can be found in the <a href="https://giscience.github.io/openrouteservice/run-instance/configuration/ors/endpoints/" class="external-link">endpoint
+reference</a>. A full list of profiles and their specific configuration
+defaults can be found in the <a href="https://giscience.github.io/openrouteservice/run-instance/configuration/ors/engine/profiles" class="external-link">profile
+reference</a>.</p>
 </div>
 <div class="section level3">
 <h3 id="changing-the-compose-file">Changing the compose file<a class="anchor" aria-label="anchor" href="#changing-the-compose-file"></a>
@@ -319,14 +289,8 @@ A full list of profiles and their specific configuration defaults</p>
 settings aka the <code>docker-compose.yml</code> file. You can check the
 current status of the compose file by printing:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span></span>
-<span><span class="co">#&gt; Build  : TRUE</span></span>
-<span><span class="co">#&gt; Name   : ors-app-7c8a762</span></span>
-<span><span class="co">#&gt; Ports  : 5318 -&gt; 8080, 40554 -&gt; 9001</span></span>
-<span><span class="co">#&gt; Image  : nightly</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Total memory Free memory Initial memory Max memory</span></span>
-<span><span class="co">#&gt;  15.93 GB     4.48 GB     1 GB           2 GB</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-14.svg" width="100%"></p>
 <p>By default, ORS uses 1 GB of initial memory and 2 GB of maximum
 memory. This means that Docker starts allocating 1 GB of memory, but is
 only allowed to allocate a maximum of 2 GB. You can adjust these
@@ -336,46 +300,42 @@ profile as memory. You can either set the memory manually or let
 <code>$set_ram</code> make an educated guess:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Not passing anything tells `$set_ram` to freestyle</span></span>
-<span><span class="va">ors</span><span class="op">$</span><span class="fu">set_ram</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; • Setting memory to:</span></span>
-<span><span class="co">#&gt;   init: 0.005 GB</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   max: 0.009 GB</span></span>
-<span></span>
-<span><span class="co"># Alternatively, pass values directly (as GB)</span></span>
-<span><span class="va">ors</span><span class="op">$</span><span class="fu">set_ram</span><span class="op">(</span>init <span class="op">=</span> <span class="fl">0.1</span>, max <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; • Setting memory to:</span></span>
-<span><span class="co">#&gt;   init: 0.1 GB</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   max: 0.2 GB</span></span>
-<span></span>
-<span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">memory</span></span>
+<span><span class="va">ors</span><span class="op">$</span><span class="fu">set_ram</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-15.svg" width="100%"></p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Alternatively, pass values directly (as GB)</span></span>
+<span><span class="va">ors</span><span class="op">$</span><span class="fu">set_ram</span><span class="op">(</span>init <span class="op">=</span> <span class="fl">0.1</span>, max <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-16.svg" width="100%"></p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">memory</span></span>
 <span><span class="co">#&gt; $total</span></span>
 <span><span class="co">#&gt; [1] 15.92733</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $free</span></span>
-<span><span class="co">#&gt; [1] 4.483795</span></span>
+<span><span class="co">#&gt; [1] 6.157669</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $init</span></span>
-<span><span class="co">#&gt; [1] 0.1</span></span>
+<span><span class="co">#&gt; [1] 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $max</span></span>
-<span><span class="co">#&gt; [1] 0.2</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 2</span></span></code></pre></div>
 <p>Similarly, not passing anything to compose methods, makes them
 freestyle. <code>$set_name()</code> creates a random container name and
 <code>$set_port()</code> assigns a random port.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">set_name</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; • Setting name to "ors-app-6eea399"</span></span>
-<span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">name</span></span>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">set_name</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-18.svg" width="100%"></p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">name</span></span>
 <span><span class="co">#&gt; [1] "ors-app-6eea399"</span></span></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">set_port</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; • Setting ports to 40118 and 15060</span></span>
-<span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">ports</span></span>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">set_port</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-20.svg" width="100%"></p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">ports</span></span>
 <span><span class="co">#&gt;    host docker</span></span>
-<span><span class="co">#&gt; 1 40118  15060</span></span>
-<span><span class="co">#&gt; 2 40554   9001</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 18225   8080</span></span>
+<span><span class="co">#&gt; 2 13260   9001</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="docker">Docker<a class="anchor" aria-label="anchor" href="#docker"></a>
@@ -397,14 +357,9 @@ following commands:</p>
 <code>docker logs</code>)</li>
 </ul>
 <p>The service can be started using the <code>$up()</code> method:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">up</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Pulling image ────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; ℹ ORS image already exists.</span></span>
-<span><span class="co">#&gt; ── Building container ───────────────────────────────────────────────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; ── Setting up service ───────────────────────────────────────────────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; ℹ The container is being set up and started now. You can stop the process now or let it run and get notified when the service is</span></span>
-<span><span class="co">#&gt;   ready.• Disabling graph building.</span></span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">up</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="../reference/figures/ors-installation/unnamed-chunk-22.svg" width="100%"></p>
 <p>By default, <code>$up()</code> blocks the console until the setup is
 done and gives out a visual and audible notification upon completion. If
 the setup fails, <code>$up()</code> immediately invokes an informative
@@ -417,8 +372,8 @@ enable you to monitor the setup progress nonetheless:</p>
 <li>
 <code>$show_logs()</code>: Prints the ORS logs to the console.
 Should the setup fail, this is the first place to look for errors. In
-fact, <code>$up(wait = TRUE)</code> also uses it to determine errors in
-the setup.</li>
+fact, <code>$up(wait = TRUE)</code> also uses Docker logs to determine
+errors in the setup.</li>
 <li>
 <code>$is_ready()</code>: Shows whether the setup is done and ORS is
 ready to use. It accesses the <code>health</code> endpoint to determine
@@ -430,9 +385,10 @@ instance.</li>
 <p>When <code><a href="../reference/get_instance.html">ors_ready()</a></code> returns <code>TRUE</code>, you are
 officially ready to use the rest of the package functions!</p>
 </div>
-<div class="section level3">
-<h3 id="manual-changes">Manual changes<a class="anchor" aria-label="anchor" href="#manual-changes"></a>
-</h3>
+</div>
+<div class="section level2">
+<h2 id="manual-changes">Manual changes<a class="anchor" aria-label="anchor" href="#manual-changes"></a>
+</h2>
 <p>The methods of an ORS instance object cover only some settings and
 configurations. Many functionalities were deliberately left out to keep
 the number of methods neat and tidy. If you are missing some important
@@ -442,24 +398,28 @@ introduced above are merely convenience wrappers that take care of some
 tedious tasks. Parsed versions of <code>ors-config.yml</code> and
 <code>docker-compose.yml</code> are readily accessible in the instance
 object:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">config</span><span class="op">$</span><span class="va">parsed</span></span>
 <span><span class="co">#&gt; List of 1</span></span>
-<span><span class="co">#&gt;  $ ors:List of 1</span></span>
-<span><span class="co">#&gt;   ..$ engine:List of 4</span></span>
+<span><span class="co">#&gt;  $ ors:List of 2</span></span>
+<span><span class="co">#&gt;   ..$ engine   :List of 4</span></span>
 <span><span class="co">#&gt;   .. ..$ source_file     : chr "./ors-core/data/osm_file.pbf"</span></span>
 <span><span class="co">#&gt;   .. ..$ graphs_root_path: chr "./ors-core/data/graphs"</span></span>
 <span><span class="co">#&gt;   .. ..$ elevation       :List of 1</span></span>
-<span><span class="co">#&gt;   .. ..$ profiles        :List of 2</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt;   .. ..$ profiles        :List of 3</span></span>
+<span><span class="co">#&gt;   ..$ endpoints:List of 3</span></span>
+<span><span class="co">#&gt;   .. ..$ isochrones:List of 4</span></span>
+<span><span class="co">#&gt;   .. ..$ matrix    :List of 1</span></span>
+<span><span class="co">#&gt;   .. ..$ isochrone :List of 1</span></span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">parsed</span></span>
 <span><span class="co">#&gt; version: '2.4'</span></span>
 <span><span class="co">#&gt; services:</span></span>
 <span><span class="co">#&gt;   ors-app:</span></span>
 <span><span class="co">#&gt;     container_name: ors-app-6eea399</span></span>
 <span><span class="co">#&gt;     ports:</span></span>
-<span><span class="co">#&gt;       - 40118:8080</span></span>
-<span><span class="co">#&gt;       - 15060:9001</span></span>
+<span><span class="co">#&gt;       - 18225:8080</span></span>
+<span><span class="co">#&gt;       - 13260:9001</span></span>
 <span><span class="co">#&gt;     image: openrouteservice/openrouteservice:nightly</span></span>
 <span><span class="co">#&gt;     user: ${UID:-0}:${GID:-0}</span></span>
 <span><span class="co">#&gt;     volumes:</span></span>
@@ -469,30 +429,30 @@ object:</p>
 <span><span class="co">#&gt;       - ./docker/logs/tomcat:/home/ors/tomcat/logs</span></span>
 <span><span class="co">#&gt;       - ./docker/conf:/home/ors/ors-conf</span></span>
 <span><span class="co">#&gt;       - ./docker/data:/home/ors/ors-core/data</span></span>
-<span><span class="co">#&gt;       - ./docker/data/geofabrik_rutland-latest.osm.pbf:/home/ors/ors-core/data/osm_file.pbf</span></span>
+<span><span class="co">#&gt;       - ./docker/data/geofabrik_monaco-latest.osm.pbf:/home/ors/ors-core/data/osm_file.pbf</span></span>
 <span><span class="co">#&gt;     environment:</span></span>
 <span><span class="co">#&gt;       - BUILD_GRAPHS=False</span></span>
 <span><span class="co">#&gt;       - JAVA_OPTS=-Djava.awt.headless=true -server -XX:TargetSurvivorRatio=75 -XX:SurvivorRatio=64</span></span>
 <span><span class="co">#&gt;         -XX:MaxTenuringThreshold=3 -XX:+UseG1GC -XX:+ScavengeBeforeFullGC -XX:ParallelGCThreads=4</span></span>
-<span><span class="co">#&gt;         -Xms100m -Xmx200m</span></span>
+<span><span class="co">#&gt;         -Xms1g -Xmx2g</span></span>
 <span><span class="co">#&gt;       - CATALINA_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9001</span></span>
 <span><span class="co">#&gt;         -Dcom.sun.management.jmxremote.rmi.port=9001 -Dcom.sun.management.jmxremote.authenticate=false</span></span>
 <span><span class="co">#&gt;         -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost</span></span>
 <span><span class="co">#&gt;       - ORS_CONFIG=/home/ors/ors-conf/ors-config.json</span></span>
 <span><span class="co">#&gt; </span></span></code></pre></div>
 <p>Both objects are lists, which can simply be modified:</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">parsed</span><span class="op">$</span><span class="va">services</span><span class="op">$</span><span class="va">`ors-app`</span><span class="op">$</span><span class="va">container_name</span> <span class="op">&lt;-</span> <span class="st">"new-name-123"</span></span></code></pre></div>
 <p>One caveat is that such simple assignments only change the state of
 the object, but not the state of the actual files. To synchronize the
 ORS file system, you have to <code>$update()</code> after making manual
 changes:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">update</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>This command writes the current state of the parsed ORS files to
 disk. Conversely, if you make manual changes to one of the relevant ORS
 files, you can update the R instance object using:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">update</span><span class="op">(</span><span class="st">"self"</span><span class="op">)</span></span></code></pre></div>
 <p>This command re-parses all ORS files. Again, it is advisable to make
 the majority of changes using the convenience wrappers as they
@@ -500,9 +460,9 @@ automatically update and mount the instance object. Manually updating
 the instance is prone to errors which can be quite hard to spot and
 debug.</p>
 </div>
-<div class="section level3">
-<h3 id="other-methods">Other methods<a class="anchor" aria-label="anchor" href="#other-methods"></a>
-</h3>
+<div class="section level2">
+<h2 id="other-methods">Other methods<a class="anchor" aria-label="anchor" href="#other-methods"></a>
+</h2>
 <p>ORS instance objects contain some other important functions that
 didn’t make it into this vignette. Among them are:</p>
 <ul>
@@ -526,7 +486,6 @@ the ORS service (given that the service is ready)</li>
 containers, deletes the ORS directory and cleans the instance
 object</li>
 </ul>
-</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

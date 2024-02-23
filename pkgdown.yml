@@ -3,7 +3,7 @@ pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   ors-installation: ors-installation.html
-last_built: 2024-02-22T01:31Z
+last_built: 2024-02-23T01:12Z
 urls:
   reference: https://jslth.github.io/ORSRouting/reference
   article: https://jslth.github.io/ORSRouting/articles
