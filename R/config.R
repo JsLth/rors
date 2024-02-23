@@ -64,7 +64,17 @@ write_config <- function(config, file = NULL) {
 }
 
 
+#' @param x old endpoints
+#' @param y new endpoints
+#' @noRd
 compare_endpoints <- function(x, y) {
+  if (!any(names(y) %in% endpoints())) {
+    cli::cli_abort(c(
+      "{.var ...} must contain a valid endpoint as argument name.",
+      "i" = "Valid endpoints include: {.val {all_endpoints}}"
+    ))
+  }
+
   if (is.null(x)) return(names(y))
   old_ep <- names(x)
   new_ep <- names(y)
@@ -87,10 +97,11 @@ compare_endpoints <- function(x, y) {
 
 
 change_endpoints <- function(self, ...) {
-  all_endpoints <- c("routing", "matrix", "isochrones", "snap")
+  valid_ep <- c("routing", "matrix", "isochrone", "snap")
   config <- self$config$parsed
   dots <- list(...)
-  dots <- dots[names(dots) %in% all_endpoints]
+
+  dots <- dots[names(dots) %in% endpoints()]
   dots <- dots[lengths(dots) > 0]
   names(dots)["snap" %in% names(dots)] <- "Snap"
 
@@ -171,10 +182,11 @@ get_profile_names <- function(profiles) {
     if (inherits(x, "ors_profile")) {
       x[[1]]$profile
     } else if (is.list(x)) {
+      bprof <- base_profiles()
       if ("profile" %in% names(x)) {
         x$profile
-      } else if (names(profiles[i]) %in% names(base_profiles)) {
-        base_profiles[[names(profiles[i])]]
+      } else if (names(profiles[i]) %in% names(bprof)) {
+        bprof[[names(profiles[i])]]
       } else {
         NA_character_
       }
@@ -199,22 +211,29 @@ get_all_profiles <- function() {
 }
 
 
-base_profiles <- list(
-  "car" = "driving-car",
-  "hgv" = "driving-hgv",
-  "bike-regular" = "cycling-regular",
-  "bike-mountain" = "cycling-mountain",
-  "bike-electric" = "cycling-electric",
-  "bike-road" = "cycling-road",
-  "walking" = "foot-walking",
-  "hiking" = "foot-hiking",
-  "wheelchair" = "wheelchair",
-  "public-transport" = "public-transport"
-)
+endpoints <- function() {
+  c("routing", "matrix", "isochrone", "snap")
+}
+
+base_profiles <- function() {
+  list(
+    "car" = "driving-car",
+    "hgv" = "driving-hgv",
+    "bike-regular" = "cycling-regular",
+    "bike-mountain" = "cycling-mountain",
+    "bike-electric" = "cycling-electric",
+    "bike-road" = "cycling-road",
+    "walking" = "foot-walking",
+    "hiking" = "foot-hiking",
+    "wheelchair" = "wheelchair",
+    "public-transport" = "public-transport"
+  )
+}
 
 
 is_base_profile <- function(profile) {
-  profile %in% base_profiles || profile %in% names(base_profiles)
+  bprof <- base_profiles()
+  profile %in% bprof || profile %in% names(bprof)
 }
 
 
@@ -283,6 +302,7 @@ is_base_profile <- function(profile) {
 #' @export
 ors_profile <- function(name = NULL, ..., template = TRUE) {
   assert_that(length(name) <= 2)
+  bprof <- base_profiles()
 
   if (is.null(name)) {
     title <- "profile_default"
@@ -291,11 +311,11 @@ ors_profile <- function(name = NULL, ..., template = TRUE) {
     title <- name[2]
     name <- name[1]
   } else if (is_base_profile(name)) {
-    if (name %in% base_profiles) {
-      title <- stats::setNames(names(base_profiles), base_profiles)[name]
+    if (name %in% bprof) {
+      title <- stats::setNames(names(bprof), bprof)[name]
     } else {
       title <- name
-      name <- base_profiles[[name]]
+      name <- bprof[[name]]
     }
   } else {
     title <- name
@@ -304,7 +324,7 @@ ors_profile <- function(name = NULL, ..., template = TRUE) {
   if (isFALSE(template)) {
     args <- list(...)
 
-    if (!...length()) {
+    if (!"enabled" %in% names(args)) {
       args <- c(enabled = TRUE, args)
     }
 
@@ -318,8 +338,7 @@ ors_profile <- function(name = NULL, ..., template = TRUE) {
   } else {
     profile <- make_default_profile(name)
     dots <- list(...)
-    for (opt in names(dots))
-      profile[[1]][[opt]] <- dots[[opt]]
+    for (opt in names(dots)) profile[[1]][[opt]] <- dots[[opt]]
     profile
   }
 }
