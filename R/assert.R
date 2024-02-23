@@ -9,6 +9,10 @@ is_true_or_false <- function(x) {
   is.logical(x) && length(x) == 1L && !is.na(x)
 }
 
+is_integerish <- function(x) {
+  identical(x %% 1, 0)
+}
+
 is_sf <- function(x, sfc = TRUE) {
   inherits(x, c("sf", if (sfc) "sfc"))
 }
@@ -42,19 +46,24 @@ is_geometry_type <- function(x, types, exclusive = TRUE, strict = TRUE) {
 assertthat::on_failure(is_sf) <- function(call, env) {
   x <- sprintf("{.var %s}", deparse(call$x))
   if (isTRUE(call$sfc)) {
-    paste(x, "is not an {.cls sf} or {.cls sfc} object.")
+    sprintf("%s is not an {.cls sf} or {.cls sfc} object.", x)
   } else {
-    paste(x, "is not an {.cls sf} dataframe.")
+    sprintf("%s is not an {.cls sf} dataframe.", x)
   }
 }
 
 assertthat::on_failure(is_true_or_false) <- function(call, env) {
   x <- sprintf("{.var %s}", deparse(call$x))
   if (is.logical(eval(call$x, env))) {
-    paste(x, "is NA, expected {.var TRUE} or {.var FALSE}.")
+    sprintf("%s is NA, expected {.var TRUE} or {.var FALSE}.", x)
   } else {
-    paste0(x, " is of type ", typeof(x), ", expected {.var TRUE} or {.var FALSE}.")
+    sprintf("%s is of type %s, expected TRUE or FALSE", x, typeof(x))
   }
+}
+
+assertthat::on_failure(is_integerish) <- function(call, env) {
+  x <- sprintf("{.var %s}", deparse(call$x))
+  sprintf("%s is of type %s, expected an integer-like", x, typeof(x))
 }
 
 assertthat::on_failure(is_geometry_type) <- function(call, env) {
@@ -73,5 +82,5 @@ assertthat::on_failure(is_geometry_type) <- function(call, env) {
     )
   }
 
-  paste0(x, " must consist of only ", types, ", not ", given)
+  sprintf("%s must consist of only %s, not %s", x, types, given)
 }
