@@ -1,119 +1,6 @@
 #' @export
 print.ors_matrix <- function(x, ...) {
-  prmatrix(x)
-}
-
-
-#' @export
-print.route_summary <- function(x, ncols = 3L, table_gap = 2L, ...) {
-  cli::cli_text("{.strong Attributes}")
-  for (n in names(x[1:5])) {
-    name <- capitalize_char(n)
-    if (identical(n, "Detourfactor")) name <- "Detour factor"
-    attribute_row <- paste(name, ": ", round(x[[n]], 2L), "\n")
-    cat(attribute_row)
-  }
-
-  cat("\n")
-
-  for (n in names(x[c(6L, 7L)])) {
-    name <- capitalize_char(n)
-    cli::cli_text("{.strong {name}}")
-    print(x[[n]])
-    cat("\n")
-  }
-
-  cli::cli_text("{.strong Additional infos}")
-
-  tables <- x$tables
-
-  # Get the maximum row length of the input tables
-  row_lengths <- sapply(tables, function(tb) sapply(utils::capture.output(tb), nchar))
-  max_row_length <- max(unlist(row_lengths))
-
-  for (nc in seq(1, ncols - 1)) {
-    if (cli::console_width() / ncols < 35) {
-      ncols <- ncols - 1
-    } else {
-      break
-    }
-  }
-
-  # Get an iterator that splits up the tables at the indices defined by ncols
-  table_iterator <- split(tables, ceiling(seq_along(tables) / ncols))
-
-  # Iterate through each table row (as defined by ncols)
-  for (t in table_iterator) {
-    # Number of rows of each table
-    rows <- sapply(t, nrow)
-
-    # Cumulated number of rows + table name + column names + empty line
-    border_indices <- cumsum(rows + 3L)
-
-    # Catch the output of print.data.frame and split it by table
-    output <- utils::capture.output(t)
-    output_split <- split(
-      output,
-      cumsum(is.element(
-        seq_along(output),
-        border_indices + 1L
-      ))
-    )
-
-    # Get the maximum number of rows of one table row
-    max_length <- max(sapply(output_split, length))
-
-    # Iterate through each table of one table row
-    op_vec <- lapply(output_split, function(op_vec) {
-      # Remove empty character string
-      op_vec <- op_vec[nchar(op_vec) != 0L]
-
-      # If the table name is shorter than the row length, fill with white space
-      add_ws <- function(char, row_length, max_length) {
-        if (row_length < max_length) {
-          paste0(char, strrep(" ", max_length - row_length))
-        } else {
-          char
-        }
-      }
-
-      name <- op_vec[1L]
-      name <- add_ws(name, nchar(name), max_row_length)
-
-      columns <- op_vec[2L]
-      row_length <- nchar(columns)
-      columns <- add_ws(columns, row_length, max_row_length)
-
-      rows <- op_vec[seq(3, length(op_vec))]
-      rows <- unlist(lapply(rows, add_ws, row_length, max_row_length))
-
-      # Get the number of rows. If the table has less rows than the table
-      # with the most rows, add rows and fill them with white space
-      len <- length(rows)
-      if (len < max_length) {
-        rows[seq(len + 1L, max_length - 2L)] <- strrep(" ", max_row_length)
-      }
-      c(name, columns, rows)
-    })
-
-    # Transpose list to align corresponding rows from each table
-    to_vector <- lapply(do.call(Map, c(f = c, op_vec)), unlist)
-    # Piece together character strings
-    to_string <- lapply(
-      to_vector,
-      function(v) {
-        if (nchar(paste(v, collapse = "")) + table_gap >= cli::console_width()) {
-          table_gap <- 0
-        }
-        trimws(paste(v, collapse = strrep(" ", table_gap)), which = "right")
-      }
-    )
-    to_string <- lapply(to_string, trimws, which = "right")
-    row_string <- paste(to_string, collapse = "\n")
-    cat(row_string, "\n")
-  }
-
-  invisible(x)
+  print(structure(x, class = NULL))
 }
 
 
@@ -197,7 +84,7 @@ print.ORSInstance <- function(x, ...) {
 
 #' @export
 print.ors_paths <- function(x, ...) {
-  basedir <- relative_path(x$top, path.expand("~"))
+  basedir <- basename(x$top)
   compose <- if (!is.null(x$compose)) basename(x$compose) else NULL
   config <- if (!is.null(x$config)) basename(x$config) else NULL
   extract <- if (!is.null(x$extract)) basename(x$extract) else NULL
@@ -329,4 +216,39 @@ print.ors_profile <- function(x, ...) {
 #' @export
 print.stprof <- function(x, ...) {
   cat(write_config(x, ...))
+}
+
+
+#' @export
+print.ors_token <- function(x, ...) {
+  active <- attr(x, "active")
+
+  if (active) {
+    emph <- cli::style_underline("requires")
+    msg1 <- cli::format_message(paste(
+      "This instance", emph, "a token."
+    ))
+
+    if (x) {
+      msg2 <- cli::format_message(c(
+        "v" = "A token is stored in the `ORS_TOKEN` environment variable."
+      ))
+    } else {
+      msg2 <- cli::format_message(c(
+        "x" = "No token found in the `ORS_TOKEN` environment variable."
+      ))
+    }
+  } else {
+    emph <- cli::style_underline("no")
+    msg1 <- cli::format_message(paste(
+      "This instance requires", emph, "token."
+    ))
+
+    msg2 <- NULL
+  }
+
+
+
+
+  cat("<ors_token>", "\n", msg1, "\n", msg2, if (!is.null(msg2)) "\n")
 }
