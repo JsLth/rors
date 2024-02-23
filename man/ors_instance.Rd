@@ -9,7 +9,8 @@ ors_instance(
   server = NULL,
   version = "latest",
   overwrite = FALSE,
-  verbose = TRUE
+  verbose = 2L,
+  ...
 )
 }
 \arguments{
@@ -42,6 +43,9 @@ if it exists.}
 \item{verbose}{\code{[logical]}
 
 If \code{TRUE}, prints informative messages and spinners.}
+
+\item{...}{Further arguments passed to \code{\link{ORSLocal}} or
+\code{\link{ORSRemote}}.}
 }
 \value{
 R6 object of class \code{ors_instance} as created by

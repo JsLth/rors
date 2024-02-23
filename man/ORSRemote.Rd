@@ -44,7 +44,7 @@ the public API.
 \subsection{Method \code{new()}}{
 Initialize the remote ORS instance.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSRemote$new(server, token = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSRemote$new(server, token = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -58,9 +58,12 @@ the shortcut \code{"pub"}. Keep in mind that the public API is
 rate-restricted and requests are automatically throttled to 40 requests per
 minute. Routing functions \emph{will} be slow for larger datasets.}
 
-\item{\code{token}}{Some remote APIs require tokens to function. Although this
-is an argument, it is advisable to store API tokens in the environment
-variable \code{ORS_TOKEN} which is read internally.}
+\item{\code{token}}{\code{[logical]}
+
+Whether \code{server} requires authorization over a token. ORS tokens
+are stored in the \code{ORS_TOKEN} environment variable. Defaults to
+\code{FALSE}. If \code{server} is the public API, \code{token} is set
+to \code{TRUE}.}
 }
 \if{html}{\out{</div>}}
 }
