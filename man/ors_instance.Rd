@@ -55,8 +55,8 @@ levels are deconstructed as follows:
 \itemize{
 \item{0: No messages, progress bars, sounds, and prompts. Only important
 warnings.}
-\item{1: Informative messages, warnings and prompts, but no system
-notifications or progress bars.}
+\item{1: Informative messages and warnings, but no system
+notifications, prompts, or progress bars.}
 \item{2: Messages, warnings, prompts, progress bars, and system
 notifications.}
 }
