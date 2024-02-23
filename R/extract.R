@@ -72,13 +72,13 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
       sep = "/"
     )
 
-    rel_path <- relative_path(path, self$paths$top)
+    rel_path <- relative_path(path, self$paths$top, pretty = TRUE)
 
     ors_cli(info = c("i" = paste("Download path: {rel_path}")))
     # If no file exists, remove all download a new one
   } else {
     path <- file.path(data_dir, paste0(providers[i], "_", file_name))
-    rel_path <- relative_path(path, self$paths$top)
+    rel_path <- relative_path(path, self$paths$top, pretty = TRUE)
     ors_cli(
       progress = "step",
       msg = "Downloading OSM extract...",
