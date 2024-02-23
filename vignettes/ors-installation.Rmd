@@ -68,9 +68,11 @@ Immediately after, we can take down the service to make changes to the ORS setup
 
 ```r
 ors$down()
-#> ℹ Taking down container ors-app-6eea399...
-#> Warning: No resource found to remove for project "ors-app-6eea399".
-#> ✖ Cannot take down container ors-app-6eea399. [292ms]
+#> ℹ Taking down container ...
+#> Error in `ors_down()` at ORSRouting/R/local.R:577:7:
+#> ! The docker command encountered an error
+#> Error code 1: "-f" is not a valid project name
+#> ✖ Cannot take down container . [294ms]
 ```
 
 The resulting `ors_instance` object is stored in a cache environment for the entire R session. All API functions automatically detect the currently mounted instance.
@@ -110,7 +112,7 @@ As you can see, we are currently running the default OSM file. If we wanted to g
 
 
 ```r
-ors$set_extract("Rutland", provider = "geofabrik")
+ors$set_extract("Rutland", provider = "geofabrik", asciicast_at = "all")
 ```
 
 
@@ -216,17 +218,7 @@ ors$set_ram(init = 0.1, max = 0.2)
 
 ```r
 ors$compose$memory
-#> $total
-#> [1] 15.92733
-#> 
-#> $free
-#> [1] 6.157669
-#> 
-#> $init
-#> [1] 1
-#> 
-#> $max
-#> [1] 2
+#> NULL
 ```
 
 Similarly, not passing anything to compose methods, makes them freestyle. `$set_name()` creates a random container name and `$set_port()` assigns a random port.
@@ -242,7 +234,7 @@ ors$set_name()
 
 ```r
 ors$compose$name
-#> [1] "ors-app-6eea399"
+#> NULL
 ```
 
 
@@ -256,9 +248,7 @@ ors$set_port()
 
 ```r
 ors$compose$ports
-#>    host docker
-#> 1 18225   8080
-#> 2 13260   9001
+#> NULL
 ```
 
 
@@ -302,49 +292,13 @@ Yet, you can always make manual changes yourself. The methods introduced above a
 
 ```r
 ors$config$parsed
-#> List of 1
-#>  $ ors:List of 2
-#>   ..$ engine   :List of 4
-#>   .. ..$ source_file     : chr "./ors-core/data/osm_file.pbf"
-#>   .. ..$ graphs_root_path: chr "./ors-core/data/graphs"
-#>   .. ..$ elevation       :List of 1
-#>   .. ..$ profiles        :List of 3
-#>   ..$ endpoints:List of 3
-#>   .. ..$ isochrones:List of 4
-#>   .. ..$ matrix    :List of 1
-#>   .. ..$ isochrone :List of 1
+#> NULL
 ```
 
 
 ```r
 ors$compose$parsed
-#> version: '2.4'
-#> services:
-#>   ors-app:
-#>     container_name: ors-app-6eea399
-#>     ports:
-#>       - 18225:8080
-#>       - 13260:9001
-#>     image: openrouteservice/openrouteservice:nightly
-#>     user: ${UID:-0}:${GID:-0}
-#>     volumes:
-#>       - ./docker/graphs:/home/ors/ors-core/data/graphs
-#>       - ./docker/elevation_cache:/home/ors/ors-core/data/elevation_cache
-#>       - ./docker/logs/ors:/home/ors/logs
-#>       - ./docker/logs/tomcat:/home/ors/tomcat/logs
-#>       - ./docker/conf:/home/ors/ors-conf
-#>       - ./docker/data:/home/ors/ors-core/data
-#>       - ./docker/data/geofabrik_monaco-latest.osm.pbf:/home/ors/ors-core/data/osm_file.pbf
-#>     environment:
-#>       - BUILD_GRAPHS=False
-#>       - JAVA_OPTS=-Djava.awt.headless=true -server -XX:TargetSurvivorRatio=75 -XX:SurvivorRatio=64
-#>         -XX:MaxTenuringThreshold=3 -XX:+UseG1GC -XX:+ScavengeBeforeFullGC -XX:ParallelGCThreads=4
-#>         -Xms1g -Xmx2g
-#>       - CATALINA_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9001
-#>         -Dcom.sun.management.jmxremote.rmi.port=9001 -Dcom.sun.management.jmxremote.authenticate=false
-#>         -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost
-#>       - ORS_CONFIG=/home/ors/ors-conf/ors-config.json
-#> 
+#> NULL
 ```
 
 Both objects are lists, which can simply be modified:
@@ -359,6 +313,7 @@ One caveat is that such simple assignments only change the state of the object, 
 
 ```r
 ors$update()
+#> Error in attr(compose$services$`ors-app`$ports, "quoted") <- TRUE: attempt to set an attribute on NULL
 ```
 
 This command writes the current state of the parsed ORS files to disk. Conversely, if you make manual changes to one of the relevant ORS files, you can update the R instance object using:
@@ -366,6 +321,7 @@ This command writes the current state of the parsed ORS files to disk. Conversel
 
 ```r
 ors$update("self")
+#> Error in file(file, "rt", encoding = fileEncoding): invalid 'description' argument
 ```
 
 This command re-parses all ORS files. Again, it is advisable to make the majority of changes using the convenience wrappers as they automatically update and mount the instance object. Manually updating the instance is prone to errors which can be quite hard to spot and debug.
