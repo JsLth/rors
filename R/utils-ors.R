@@ -38,9 +38,10 @@ get_instance <- function() {
   if (any_mounted()) {
     get("instance", envir = ors_cache)
   } else {
+    code <- cli::code_highlight("ors_instance()")
     cli::cli_abort(c(
       "No OpenRouteService instance initialized.",
-      "i" = "You can initialize an instance using {.code ors_instance}"
+      "i" = "You can initialize an instance using {code}"
     ))
   }
 }
@@ -131,7 +132,7 @@ get_status <- function(id = NULL) {
     class(res$profiles) <- "stprof"
     res
   } else {
-    unlist(base_profiles, use.names = FALSE)
+    unlist(base_profiles(), use.names = FALSE)
   }
 }
 
