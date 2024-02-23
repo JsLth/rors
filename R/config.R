@@ -64,17 +64,7 @@ write_config <- function(config, file = NULL) {
 }
 
 
-#' @param x old endpoints
-#' @param y new endpoints
-#' @noRd
-compare_endpoints <- function(x, y) {
-  if (!any(names(y) %in% endpoints())) {
-    cli::cli_abort(c(
-      "{.var ...} must contain a valid endpoint as argument name.",
-      "i" = "Valid endpoints include: {.val {all_endpoints}}"
-    ))
-  }
-
+compare_config <- function(x, y) {
   if (is.null(x)) return(names(y))
   old_ep <- names(x)
   new_ep <- names(y)
@@ -93,6 +83,18 @@ compare_endpoints <- function(x, y) {
   }
 
   new_ep
+}
+
+
+compare_endpoints <- function(x, y) {
+  if (!any(names(y) %in% endpoints())) {
+    cli::cli_abort(c(
+      "{.var ...} must contain a valid endpoint as argument name.",
+      "i" = "Valid endpoints include: {.val {all_endpoints}}"
+    ))
+  }
+
+  compare_config(x, y)
 }
 
 

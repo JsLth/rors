@@ -540,20 +540,31 @@ ORSLocal <- R6::R6Class(
     #' Add routing profiles to the ORS configuration. ORS only builds routing
     #' graphs for active profiles.
     #'
-    #' @param ... Objects of class \code{\link{ors_profile}}.
+    #' @param ... Objects of class \code{\link{ors_profile}} or character
+    #' strings. If a character string is passed, it is interpreted as
+    #' \code{ors_profile(..., template = TRUE)}.
     add_profiles = function(...) {
       old <- self$config$parsed$ors$engine
       new <- insert_profiles(self, private, ...)
+      changed <- compare_config(old$profiles, new$profiles)
+      changed_dflt <- "profile_default" %in% names(new) &&
+        !equivalent_list(old$profile_default, new$profile_default)
 
-      if (!identical(old, new)) {
-        new_names <- get_profile_names(new$profiles)
-        old_names <- get_profile_names(old$profiles)
-        changed <- setdiff(new_names, old_names)
-        ors_cli(info = c(
-          "*" = "Adding {cli::qty(changed)} profile{?s}: {.field {changed}}"
-        ))
+      if (length(changed) || changed_dflt) {
+        if (length(changed)) {
+          ors_cli(info = c(
+            "*" = "Adding {cli::qty(changed)} profile{?s}: {.field {changed}}"
+          ))
+        }
+
+        if (changed_dflt) {
+          ors_cli(info = c(
+            "*" = "Adding profile defaults"
+          ))
+        }
+
         self$config$parsed$ors$engine <- new
-        self$config$profiles <- new_names
+        self$config$profiles <- names(new$profiles)
         self$update()
       }
     },
@@ -567,14 +578,17 @@ ORSLocal <- R6::R6Class(
       old <- self$config$profiles
       new <- c(...)
       changed <- setdiff(new, "default") %in% c(old, names(old))
-      changed_dflt <- "profile_default" %in% self$config$parsed$ors$engine &&
+      changed_dflt <- "profile_default" %in% names(self$config$parsed$ors$engine) &&
         "default" %in% new
 
       if (any(changed) || changed_dflt) {
-        ors_cli(info = c("*" = paste(
-          "Removing {cli::qty(length(new[changed]))}",
-          "profile{?s}: {.field {new[changed]}}"
-        )))
+        if (any(changed)) {
+          ors_cli(info = c("*" = paste(
+            "Removing {cli::qty(length(new[changed]))}",
+            "profile{?s}: {.field {new[changed]}}"
+          )))
+        }
+
         if (changed_dflt) {
           ors_cli(info = c("*" = "Removing profile defaults"))
         }
