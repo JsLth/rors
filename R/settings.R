@@ -96,8 +96,8 @@ adjust_memory <- function(self, private, init, max) {
     if (!is.null(self$extract$size) && !is.null(self$config$profiles)) {
       size <- self$extract$size
       no_prof <- length(self$config$profiles)
-      max <- ceiling(size * 2.5 * no_prof)
-      init <- ceiling(max / 2L)
+      max <- max(ceiling(size * 2.5 * no_prof), 100)
+      init <- max(ceiling(max / 2L), 50)
     } else {
       ors_cli(
         warn = paste(
