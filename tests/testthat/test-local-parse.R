@@ -65,3 +65,22 @@ test_that("config is parsed correctly", {
   expect_output(print(ors$paths), "<- config", fixed = TRUE)
 })
 
+test_that("numeric version is re-used", {
+  skip("Skipping until later ORS release")
+
+  with_ors_instance(
+    {
+      expect_identical(ors$version, "8.0.0")
+      expect_identical(ors$compose$version, "8.0.0")
+    },
+    version = "8.0.0"
+  )
+})
+
+test_that("version errors are informative", {
+  expect_error(
+    with_ors_instance({}, version = "notaversion"),
+    regexp = "ORS version/commit",
+    fixed = TRUE
+  )
+})

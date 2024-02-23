@@ -21,7 +21,6 @@ local_ors_instance <- function(dir = tempdir(),
                                dry = TRUE,
                                complete = FALSE,
                                .local_envir = parent.frame()) {
-  args <- list(...)
   ors <- ORSLocal$new(dir = dir, dry = dry, ...)
 
   if (isTRUE(dry) && complete) {
@@ -31,6 +30,27 @@ local_ors_instance <- function(dir = tempdir(),
 
   withr::defer(ors$purge(), envir = .local_envir)
   invisible(ors)
+}
+
+with_ors_instance <- function(code,
+                              dir = tempdir(),
+                              ...,
+                              verbose = 1L,
+                              dry = TRUE,
+                              complete = FALSE,
+                              .local_envir = parent.frame()) {
+  ors <- ORSLocal$new(dir = dir, dry = dry, verbose = verbose, ...)
+
+  if (isTRUE(dry) && complete) {
+    create_dry_files(ors)
+    ors$update("self")
+  }
+
+  env <- new.env(parent = .local_envir)
+  assign("ors", ors, envir = env)
+
+  withr::defer(ors$purge(), envir = env)
+  force(eval(substitute(code), envir = env))
 }
 
 create_dry_files <- function(ors) {
