@@ -7,6 +7,22 @@
 #' This object represents a remote instance, i.e. an existing server like
 #' the public API.
 #'
+#' @param server \code{[character]}
+#'
+#' URL of a server that accepts OpenRouteService requests. This can be a URL
+#' to a local or a remote server. The official public API can be accessed using
+#' the shortcuts \code{"public"} or \code{"pub"}. Keep in mind that the public
+#' API is rate-restricted and requests are automatically throttled to 40
+#' requests per minute. Routing functions \emph{will} be slow for larger
+#' datasets.
+#'
+#' @param token \code{[logical]}
+#'
+#' Whether \code{server} requires authorization over a token. ORS tokens
+#' are stored in the \code{ORS_TOKEN} environment variable. Defaults to
+#' \code{FALSE}. If \code{server} is the public API, \code{token} is set
+#' to \code{TRUE}.
+#'
 #' @export
 ORSRemote <- R6::R6Class(
   classname = "ORSRemote",
@@ -22,21 +38,6 @@ ORSRemote <- R6::R6Class(
 
     #' @description
     #' Initialize the remote ORS instance.
-    #'
-    #' @param server \code{[character]}
-    #'
-    #' URL of a server that accepts OpenRouteService requests. This can be a URL
-    #' to a local or a remote server. The official public API can be accessed using
-    #' the shortcut \code{"pub"}. Keep in mind that the public API is
-    #' rate-restricted and requests are automatically throttled to 40 requests per
-    #' minute. Routing functions \emph{will} be slow for larger datasets.
-    #'
-    #' @param token \code{[logical]}
-    #'
-    #' Whether \code{server} requires authorization over a token. ORS tokens
-    #' are stored in the \code{ORS_TOKEN} environment variable. Defaults to
-    #' \code{FALSE}. If \code{server} is the public API, \code{token} is set
-    #' to \code{TRUE}.
     initialize = function(server, token = FALSE) {
       assert_that(is.character(server), is_true_or_false(token))
 
@@ -96,38 +97,3 @@ needs_token <- function(x) {
 
 
 public_api <- "https://api.openrouteservice.org/"
-
-
-#' @export
-print.ors_token <- function(x, ...) {
-  active <- attr(x, "active")
-
-  if (active) {
-    emph <- cli::style_underline("requires")
-    msg1 <- cli::format_message(paste(
-      "This instance", emph, "a token."
-    ))
-
-    if (x) {
-      msg2 <- cli::format_message(c(
-        "v" = "A token is stored in the `ORS_TOKEN` environment variable."
-      ))
-    } else {
-      msg2 <- cli::format_message(c(
-        "x" = "No token found in the `ORS_TOKEN` environment variable."
-      ))
-    }
-  } else {
-    emph <- cli::style_underline("no")
-    msg1 <- cli::format_message(paste(
-      "This instance requires", emph, "token."
-    ))
-
-    msg2 <- NULL
-  }
-
-
-
-
-  cat("<ors_token>", "\n", msg1, "\n", msg2, if (!is.null(msg2)) "\n")
-}

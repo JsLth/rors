@@ -6,6 +6,15 @@
 \description{
 Creates a new ORS instance object. This R6 class is typically
 constructed by \code{\link{ors_instance}}.
+
+For technical details on the setup of local ORS instances, refer to the
+\href{https://giscience.github.io/openrouteservice/run-instance/}{official ORS reference}.
+For details on how to use \code{ORSLocal} objects, refer to the installation
+vignette:
+
+\preformatted{
+vignette("ors-installation", package = "rors")
+}
 }
 \details{
 \code{ORSLocal} defines methods for all four steps in the ORS setup:
@@ -16,6 +25,75 @@ constructed by \code{\link{ors_instance}}.
 \item{\bold{Docker: }}{Send commands to docker to control the ORS container.}
 }
 }
+\section{Docker commands}{
+
+
+Local ORS instances are built using Docker containers. Initializing
+\code{ORSLocal} downloads a \code{docker-compose.yml} file that tells
+Docker how to build an ORS container. The Docker backend is pulled as
+a Docker image (see
+\href{https://hub.docker.com/r/openrouteservice/openrouteservice}{Dockerhub}).
+\code{rors} communicates with Docker from within R to setup and manage ORS
+containers.
+
+On Unix systems, Docker requires superuser permissions. In Unix shells,
+this is not problematic. However, R cannot communicate with Docker without
+explicitly being granted superuser permissions or at least permissions to
+access Docker. Thus, \code{ORSLocal} checks if the current user is the
+superuser or if the current user has access to the Docker group. If not,
+it aborts. For more details on how to manage Docker as a non-root user on
+Linux, refer to the
+\href{https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user}{Docker documentation}.
+Note that this procedure grants root-level privileges to a user and can
+negatively impact your system's security.
+}
+
+\section{Jumpstarting}{
+
+
+When first initializing \code{ORSLocal} or when first creating a new
+directory, \code{ORSLocal} will ask you if you would like to perform a
+jumpstart. Jumpstarting means creating an initial Docker build that runs
+on default settings, config and an extract file from Heidelberg, Germany.
+On the initial build, Docker also creates the file system of ORS instances
+including a configuration file. Irrespective of your choice to jumpstart,
+Docker only allows one routing profile and automatically uses the
+default extract of Heidelberg on the initial run.
+
+By jumpstarting, \code{ORSLocal} takes over this initial build,
+so that subsequent builds run flawlessly without the need to manually
+create the file system. This is deemed good practice by the ORS developer
+team (refer to the
+\href{https://giscience.github.io/openrouteservice/run-instance/installation/running-with-docker}{ORS reference}
+for details).
+
+Conversely, if you choose not to jumpstart (\code{dry = TRUE}),
+\code{ORSLocal} does not interact with Docker until explicitly told to.
+The configuration and extract files as well as the rest of the file system
+do not exist yet. You can manually jumpstart by calling \code{$up()}.
+Initializing a dry instance can be useful if you need to make changes to
+the compose file before building ORS for the first time.
+}
+
+\section{Manual changes}{
+
+
+\code{ORSLocal} provides a range of convenience methods to change the
+setup of the ORS instance. All of these methods automatically read or write
+their changes to disk. It is also possible to make direct changes to the
+(parsed) configuration and compose files. In this case, reading and writing
+also need to be done manually. To write changes to disk, run
+\code{$update()}, e.g.:
+
+\preformatted{
+ ors$compose$parsed$services$`ors-app`$container_name <- "new-name-123"
+ ors$update()
+}
+
+To read changes done manually to the files on disk, run
+\code{$update("self")}.
+}
+
 \examples{
 \dontrun{
 # Download ORS, start docker and jumpstart a default session
@@ -99,27 +177,35 @@ the top directory, compose file, config file and extract file.}
 
 \item{\code{version}}{Version of the local ORS backend}
 
-\item{\code{compose}}{Information of the compose file. The
-compose file holds various settings for the Docker setup. The most
+\item{\code{compose}}{Information of the compose file (\code{docker-compose.yml}).
+The compose file holds various settings for the Docker setup. The most
 important settings are included in this field:
 
 \itemize{
-\item{\code{ports}:} {A 2×2 matrix with Docker ports}
-\item{\code{name}:} {Name of the Docker container}
-\item{\code{memory}:} {List with memory information on total and free
+\item{\code{ports}: A 2×2 matrix with Docker ports}
+\item{\code{name}: Name of the Docker container}
+\item{\code{memory}: List with memory information on total and free
 system memory as well as initial and max memory allocated to the Docker
 instance.}
-\item{\code{image}:} {Version of the ORS image. \code{"latest"} refers
+\item{\code{image}: Version of the ORS image. \code{"latest"} refers
 to the latest stable version. \code{"nightly"} refers to the devel
 version.}
-\item{\code{parsed}:} {Parsed compose file. When making changes to this
+\item{\code{parsed}: Parsed compose file. When making changes to this
 object, make sure to run \code{$update()} to apply the changes. For details,
-refer to the \href{https://giscience.github.io/openrouteservice/installation/Running-with-Docker#docker-configuration}{official reference}.}
+refer to the \href{https://giscience.github.io/openrouteservice/run-instance/installation/running-with-docker#docker-configuration}{official reference}.}
 }}
 
-\item{\code{config}}{Parsed config file. When making changes to this object,
-make sure to run \code{$update()} to apply the changes. For details,
-refer to the \href{https://giscience.github.io/openrouteservice/installation/Configuration}{official reference}.}
+\item{\code{config}}{Information of the configuration file (\code{ors-config.yml}).
+The config file holds various options about the ORS instance. This
+field gives details about:
+
+\itemize{
+\item{profiles: A named vector of active routing profiles}
+\item{parsed: Parsed configuration file. When making changes to
+this obhect, make sure to run \code{$update()} to apply the changes.
+For details, refer to the
+\href{https://giscience.github.io/openrouteservice/run-instance/configuration/}{ORS reference}.}
+}}
 
 \item{\code{extract}}{Information on the extract file. Contains the name and
 size of the selected extract file.}
@@ -192,37 +278,27 @@ Ignored if \code{server} is not \code{NULL}.}
 The OpenRouteService version to use. Can either be a version number (e.g.
 7.2.0) or \code{"master"}. Ignored if \code{server} is not \code{NULL}.}
 
-\item{\code{overwrite}}{\code{[logical]}}
-
-\item{\code{dry}}{\code{[logical]}
-
-Whether to start a dry run, i.e. run an instance without jumpstarting.
+\item{\code{overwrite}}{\code{[logical]}
 
 Whether to overwrite the current OpenRouteService directory
 if it exists.}
+
+\item{\code{dry}}{\code{[logical]}
+
+Whether to start a dry run, i.e. run an instance without jumpstarting.}
 
 \item{\code{verbose}}{\code{[logical]}
 
 Level of verbosity. Must be an integer between 0 and 2. The verbosity
 levels are deconstructed as follows:
 \itemize{
-\item{0}{No messages, progress bars, sounds, and prompts. Only important
+\item{0: No messages, progress bars, sounds, and prompts. Only important
 warnings.}
-\item{1}{Informative messages, warnings and prompts, but no system
+\item{1: Informative messages, warnings and prompts, but no system
 notifications or progress bars.}
-\item{2}{Messages, warnings, prompts, progress bars, and system
+\item{2: Messages, warnings, prompts, progress bars, and system
 notifications.}
-}
-
-If \code{TRUE}, prints informative messages and spinners.}
-
-\item{\code{server}}{\code{[character]}
-
-URL of a server that accepts OpenRouteService requests. This can be a URL
-to a local or a remote server. The official public API can be accessed using
-the shortcut \code{"public"}. Keep in mind that the public API is
-rate-restricted and requests are automatically throttled to 40 requests per
-minute. Routing functions \emph{will} be slow for larger datasets.}
+}}
 }
 \if{html}{\out{</div>}}
 }
@@ -304,7 +380,7 @@ Place name, \code{sf/sfc/bbox} object or bounding box for which to
 download an extract file. For details, refer to
 \code{\link[osmextract:oe_match]{oe_match()}}.}
 
-\item{\code{provider}}{\code{[character / NULL]}
+\item{\code{provider}}{\code{[character/NULL]}
 
 Extract provider to download extract from. Available
 providers can be found by running
@@ -317,7 +393,7 @@ Timeout for extract downloads. Defaults to 30 minutes to enable
 longer extract downloads. The adopted timeout is the maximum of
 this argument and \code{getOption("timeout")}.}
 
-\item{\code{file}}{\code{[character / NULL]}
+\item{\code{file}}{\code{[character/NULL]}
 
 Path to a local OSM extract. Can either be a full path to any OSM file
 or the filename of an OSM file in the data folder of ORS. If file is

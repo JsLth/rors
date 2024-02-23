@@ -18,38 +18,60 @@ ors_instance(
 
 Custom OpenRouteService directory. If not specified, the directory
 will be downloaded to the system's home directory. If a directory called
-\code{"openrouteservice-{version}"} is present, the download will be skipped.
-Ignored if \code{server} is not \code{NULL}.}
+\code{"openrouteservice-{version}"} is present, the download will be skipped
+\itemize{
+\item unless overwrite is \code{TRUE}.
+Ignored if \code{server} is given.
+}}
 
 \item{server}{\code{[character]}
 
 URL of a server that accepts OpenRouteService requests. This can be a URL
 to a local or a remote server. The official public API can be accessed using
-the shortcut \code{"public"}. Keep in mind that the public API is
-rate-restricted and requests are automatically throttled to 40 requests per
-minute. Routing functions \emph{will} be slow for larger datasets.}
+the shortcuts \code{"public"} or \code{"pub"}. Keep in mind that the public
+API is rate-restricted and requests are automatically throttled to 40
+requests per minute. Routing functions \emph{will} be slow for larger
+datasets.}
 
 \item{version}{\code{[character]}
 
 The OpenRouteService version to use. Can either be a version number (e.g.
-7.2.0), a commit hash, or \code{"master"}. Ignored if \code{server} is not
-\code{NULL}.}
+7.2.0), a commit hash, or a version description (\code{"master"},
+\code{"latest"} or \code{"nightly"}). Ignored if \code{server} is not
+\code{NULL}. If \code{version} is a numeric version or a version
+description, both compose version and image version are set. If
+\code{version} is a hash, the image version defaults to \code{"nightly"}.
+Ignored if \code{server} is given.}
 
 \item{overwrite}{\code{[logical]}
 
 Whether to overwrite the current OpenRouteService directory
-if it exists.}
+if it exists. Ignored if \code{server} is given.}
 
 \item{verbose}{\code{[logical]}
 
-If \code{TRUE}, prints informative messages and spinners.}
+Level of verbosity. Must be an integer between 0 and 2. The verbosity
+levels are deconstructed as follows:
+\itemize{
+\item{0: No messages, progress bars, sounds, and prompts. Only important
+warnings.}
+\item{1: Informative messages, warnings and prompts, but no system
+notifications or progress bars.}
+\item{2: Messages, warnings, prompts, progress bars, and system
+notifications.}
+}
+Ignored if \code{server} is given.}
 
-\item{...}{Further arguments passed to \code{\link{ORSLocal}} or
-\code{\link{ORSRemote}}.}
+\item{token}{\code{[logical]}
+
+Whether \code{server} requires authorization over a token. ORS tokens
+are stored in the \code{ORS_TOKEN} environment variable. Defaults to
+\code{FALSE}. If \code{server} is the public API, \code{token} is set
+to \code{TRUE}. Ignored if \code{server} is \code{NULL}.}
 }
 \value{
 R6 object of class \code{ors_instance} as created by
-\code{\link{ORSInstance}}
+\code{\link{ORSLocal}} or \code{\link{ORSRemote}}.
 }
 \description{
 Creates an OpenRouteService instance object. An instance
@@ -75,6 +97,22 @@ source code and returns an object of class \code{ors_instance}.
 For a full reference of the methods of an ORS instance, refer to
 \code{\link{ORSLocal}} and \code{\link{ORSRemote}}.
 }
+\section{Session mounting}{
+
+
+Upon initialization (or whenever calling a method) the object created by
+\code{ors_instance} mounts itself to the current R session.
+\code{ors_*} functions automatically identify the mounted ORS instance to
+retrieve important information for querying ORS servers or processing other
+data. Mounted instances are cleared when starting a new session or
+when overwriting with a new instance.
+
+In case multiple instances are running simultaneously and should be queried
+in the same instance, \code{ors_*} functions allow to directly pass an
+\code{instance} object. Otherwise, it is recommended to implicitly use
+the mounted instance.
+}
+
 \examples{
 \dontrun{
 dir <- dir.create("~/test_ors")
