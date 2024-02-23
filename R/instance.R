@@ -136,7 +136,7 @@ ors_instance <- function(dir = "~",
                          server = NULL,
                          version = "latest",
                          overwrite = FALSE,
-                         verbose = TRUE,
+                         verbose = 2L,
                          ...) {
   if (!is.null(server)) {
     ORSRemote$new(server = server, ...)
