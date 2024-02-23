@@ -37,6 +37,19 @@ is_numver <- function(x) {
 }
 
 
+is_version_desc <- function(x, platform = NULL) {
+  gh <- "master"
+  dh <- c("latest", "nightly")
+  if (identical(platform, "gh")) {
+    x %in% gh
+  } else if (identical(platform, "dh")) {
+    x %in% dh
+  } else {
+    x %in% c(gh, dh)
+  }
+}
+
+
 loadable <- function(pkg) {
   suppressPackageStartupMessages(requireNamespace(pkg, quietly = TRUE))
 }
