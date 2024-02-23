@@ -25,8 +25,9 @@ ors_up <- function(self, private, wait = TRUE, ...) {
   proc <- callr::run(
     command = "docker",
     args = cmd,
-    stdout = if (verbose) "" else NULL,
+    stdout = if (verbose) "|" else NULL,
     stderr = "2>&1",
+    stdout_line_callback = cat_callback,
     error_on_status = FALSE
   )
 
@@ -399,6 +400,11 @@ container_running <- function(name) {
   )
 
   grepl("running", container_check$stdout)
+}
+
+
+cat_callback <- function(newout, proc) {
+  cat(newout, "\n")
 }
 
 
