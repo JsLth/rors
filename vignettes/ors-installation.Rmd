@@ -1,7 +1,7 @@
 ---
 title: "Installing and setting up OpenRouteService locally"
 author: Jonas Lieth
-date: "2024-02-23"
+date: "2024-02-24"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Installing and setting up OpenRouteService locally}
@@ -68,11 +68,9 @@ Immediately after, we can take down the service to make changes to the ORS setup
 
 ```r
 ors$down()
-#> ℹ Taking down container ...
-#> Error in `ors_down()` at ORSRouting/R/local.R:577:7:
-#> ! The docker command encountered an error
-#> Error code 1: "-f" is not a valid project name
-#> ✖ Cannot take down container . [294ms]
+#> ℹ Taking down container ors-app-9c12bcc...
+#> Warning: No resource found to remove for project "ors-app-9c12bcc".
+#> ✖ Cannot take down container ors-app-9c12bcc. [330ms]
 ```
 
 The resulting `ors_instance` object is stored in a cache environment for the entire R session. All API functions automatically detect the currently mounted instance.
@@ -218,7 +216,17 @@ ors$set_ram(init = 0.1, max = 0.2)
 
 ```r
 ors$compose$memory
-#> NULL
+#> $total
+#> [1] 15.92733
+#> 
+#> $free
+#> [1] 5.019341
+#> 
+#> $init
+#> [1] 0.25
+#> 
+#> $max
+#> [1] 0.5
 ```
 
 Similarly, not passing anything to compose methods, makes them freestyle. `$set_name()` creates a random container name and `$set_port()` assigns a random port.
@@ -234,7 +242,7 @@ ors$set_name()
 
 ```r
 ors$compose$name
-#> NULL
+#> [1] "ors-app-9c12bcc"
 ```
 
 
@@ -248,7 +256,9 @@ ors$set_port()
 
 ```r
 ors$compose$ports
-#> NULL
+#>    host docker
+#> 1 18225   8080
+#> 2 13260   9001
 ```
 
 
@@ -292,13 +302,48 @@ Yet, you can always make manual changes yourself. The methods introduced above a
 
 ```r
 ors$config$parsed
-#> NULL
+#> List of 1
+#>  $ ors:List of 2
+#>   ..$ engine   :List of 4
+#>   .. ..$ source_file     : chr "./ors-core/data/osm_file.pbf"
+#>   .. ..$ graphs_root_path: chr "./ors-core/data/graphs"
+#>   .. ..$ elevation       :List of 1
+#>   .. ..$ profiles        :List of 10
+#>   ..$ endpoints:List of 3
+#>   .. ..$ isochrones:List of 4
+#>   .. ..$ matrix    :List of 1
+#>   .. ..$ isochrone :List of 1
 ```
 
 
 ```r
 ors$compose$parsed
-#> NULL
+#> version: '2.4'
+#> services:
+#>   ors-app:
+#>     container_name: ors-app-9c12bcc
+#>     ports:
+#>       - 18225:8080
+#>       - 13260:9001
+#>     image: openrouteservice/openrouteservice:nightly
+#>     user: ${UID:-0}:${GID:-0}
+#>     volumes:
+#>       - ./docker/graphs:/home/ors/ors-core/data/graphs
+#>       - ./docker/elevation_cache:/home/ors/ors-core/data/elevation_cache
+#>       - ./docker/logs/ors:/home/ors/logs
+#>       - ./docker/logs/tomcat:/home/ors/tomcat/logs
+#>       - ./docker/conf:/home/ors/ors-conf
+#>       - ./docker/data:/home/ors/ors-core/data
+#>     environment:
+#>       - BUILD_GRAPHS=True
+#>       - JAVA_OPTS=-Djava.awt.headless=true -server -XX:TargetSurvivorRatio=75 -XX:SurvivorRatio=64
+#>         -XX:MaxTenuringThreshold=3 -XX:+UseG1GC -XX:+ScavengeBeforeFullGC -XX:ParallelGCThreads=4
+#>         -Xms250m -Xmx500m
+#>       - CATALINA_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9001
+#>         -Dcom.sun.management.jmxremote.rmi.port=9001 -Dcom.sun.management.jmxremote.authenticate=false
+#>         -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost
+#>       - ORS_CONFIG=/home/ors/ors-conf/ors-config.json
+#> 
 ```
 
 Both objects are lists, which can simply be modified:
@@ -313,7 +358,6 @@ One caveat is that such simple assignments only change the state of the object, 
 
 ```r
 ors$update()
-#> Error in attr(compose$services$`ors-app`$ports, "quoted") <- TRUE: attempt to set an attribute on NULL
 ```
 
 This command writes the current state of the parsed ORS files to disk. Conversely, if you make manual changes to one of the relevant ORS files, you can update the R instance object using:
@@ -321,7 +365,6 @@ This command writes the current state of the parsed ORS files to disk. Conversel
 
 ```r
 ors$update("self")
-#> Error in file(file, "rt", encoding = fileEncoding): invalid 'description' argument
 ```
 
 This command re-parses all ORS files. Again, it is advisable to make the majority of changes using the convenience wrappers as they automatically update and mount the instance object. Manually updating the instance is prone to errors which can be quite hard to spot and debug.
@@ -334,8 +377,10 @@ ORS instance objects contain some other important functions that didn't make it 
 - `$is_built()` / `$is_running()`: Check whether a container is built and running. These are the two steps before a service is ready and are useful to monitor a container before the service is ready.
 - `$is_mounted()`: Checks whether an instance is currently mounted to the session. If not the case, simply invoke one of the methods (e.g. `$update()`) to mount it.
 - `$get_image()` / `$get_container()` Return some useful diagnostics about the image and container.
-- `$get_status()`: Returns configurations and attributes of the ORS service (given that the service is ready)
-- `$purge()`: Purges an ORS instance, i.e. takes down containers, deletes the ORS directory and cleans the instance object
+- `$get_status()`: Returns configurations and attributes of the ORS service (given that the service is ready).
+- `$purge()`: Purges an ORS instance, i.e. takes down containers, deletes the ORS directory and cleans the instance object.
+- `$rm_extract()`: Removes one or several extracts from the ORS directory.
+- `$report()`: Prints a situation report of the ORS instance object.
 
 
 

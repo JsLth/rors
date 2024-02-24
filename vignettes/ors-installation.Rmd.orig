@@ -265,8 +265,10 @@ ORS instance objects contain some other important functions that didn't make it 
 - `$is_built()` / `$is_running()`: Check whether a container is built and running. These are the two steps before a service is ready and are useful to monitor a container before the service is ready.
 - `$is_mounted()`: Checks whether an instance is currently mounted to the session. If not the case, simply invoke one of the methods (e.g. `$update()`) to mount it.
 - `$get_image()` / `$get_container()` Return some useful diagnostics about the image and container.
-- `$get_status()`: Returns configurations and attributes of the ORS service (given that the service is ready)
-- `$purge()`: Purges an ORS instance, i.e. takes down containers, deletes the ORS directory and cleans the instance object
+- `$get_status()`: Returns configurations and attributes of the ORS service (given that the service is ready).
+- `$purge()`: Purges an ORS instance, i.e. takes down containers, deletes the ORS directory and cleans the instance object.
+- `$rm_extract()`: Removes one or several extracts from the ORS directory.
+- `$report()`: Prints a situation report of the ORS instance object.
 
 
 ```{asciicast, include=FALSE}
