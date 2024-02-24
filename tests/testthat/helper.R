@@ -49,8 +49,10 @@ with_ors_instance <- function(code,
   env <- new.env(parent = .local_envir)
   assign("ors", ors, envir = env)
 
-  withr::defer(ors$purge(), envir = env)
-  force(eval(substitute(code), envir = env))
+  withr::defer(capture.output(ors$purge(), type = "message"), envir = env)
+  res <- force(eval(substitute(code), envir = env))
+  withr::deferred_run(envir = env)
+  res
 }
 
 create_dry_files <- function(ors) {
