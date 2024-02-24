@@ -323,13 +323,13 @@ ORSLocal <- R6::R6Class(
     #' Whether to remove the docker image or keep it for other projects. The
     #' default is \code{FALSE} to prevent accidentally breaking other projects.
     purge = function(image = FALSE) {
-      ors_cli(rule = "Purging ORS")
+      ors_cli(h2 = "Purging ORS")
 
       if (private$.verbose > 1) {
-        ors_cli(info = c("i" = paste(
+        ors_cli(info = list(c("i" = paste(
           "Purging the current instance removes the docker container,",
           "ORS directory and cleans up the R6 object."
-        )))
+        ))))
 
         yes_no("Do you want to proceed?", no = cancel())
       }
@@ -337,10 +337,10 @@ ORSLocal <- R6::R6Class(
       if (self$is_built()) self$down()
       if (image) rm_image(self, private)
 
-      ors_cli(info = c("i" = "Removing ORS directory"))
+      ors_cli(info = list(c("i" = "Removing ORS directory")))
       unlink(self$paths$top, recursive = TRUE, force = TRUE)
 
-      ors_cli(info = c("i" = "Cleaning up R6 object"))
+      ors_cli(info = list(c("i" = "Cleaning up R6 object")))
       self$extract <- NULL
       self$compose <- NULL
       self$config <- NULL
@@ -428,7 +428,7 @@ ORSLocal <- R6::R6Class(
       }
 
       if (do_use && !is.null(file)) {
-        ors_cli(info = c("*" = "Using extract {.val {basename(file)}}"))
+        ors_cli(info = list(c("*" = "Using extract {.val {basename(file)}}")))
         self$paths$extract <- file
         self$extract <- list(
           name = basename(file),
@@ -464,10 +464,10 @@ ORSLocal <- R6::R6Class(
         to_rm_fmt[to_rm %in% cur_extract] <- paste(
           basename(cur_extract), cli::col_red("<- active extract")
         )
-        ors_cli(info = c("*" = "Removing extract files:"))
-        ors_cli(bullets = stats::setNames(
+        ors_cli(info = list(c("*" = "Removing extract files:")))
+        ors_cli(bullets = list(stats::setNames(
           sprintf("- %s", to_rm_fmt), rep(" ", length(to_rm))
-        ))
+        )))
 
         yes_no(
           "Do you want to proceed?",
@@ -480,9 +480,9 @@ ORSLocal <- R6::R6Class(
         }
 
         if (cur_extract %in% to_rm) {
-          ors_cli(info = c(
+          ors_cli(info = list(c(
             "*" = "Unsetting active extract file: {.emph {basename(cur_extract)}}"
-          ))
+          )))
           self$extract <- NULL
           self$compose$parsed <- change_extract(self$compose$parsed, NULL)
           self$update()
@@ -502,7 +502,7 @@ ORSLocal <- R6::R6Class(
       new <- name %||% random_ors_name(private, name)
 
       if (!identical(old, new)) {
-        ors_cli(info = c("*" = "Setting name to {.val {new}}"))
+        ors_cli(info = list(c("*" = "Setting name to {.val {new}}")))
         self$compose$parsed$services$`ors-app`$container_name <- new
         self$compose$name <- new
         self$update()
@@ -521,9 +521,9 @@ ORSLocal <- R6::R6Class(
 
 
       if (!identical(old, new)) {
-        ors_cli(info = c(
+        ors_cli(info = list(c(
           "*" = "Setting {cli::qty(length(new))} port{?s} to {.val {new}}"
-        ))
+        )))
         compose <- self$compose$parsed
         self$compose$parsed$services$`ors-app`$ports <- format_ports(self, new)
         self$compose$ports[1, seq(length(new))] <- new
@@ -548,15 +548,15 @@ ORSLocal <- R6::R6Class(
       old <- unlist(self$compose$memory[3:4], use.names = FALSE) * 1000
       new <- adjust_memory(self, private, init, max)
 
-      if (!identical(old, new)) {
-        ors_cli(info = c("*" = "Setting memory to:"))
-        ors_cli(bullets = stats::setNames(
+      if (!identical(old, new) && !is.null(new)) {
+        ors_cli(info = list(c("*" = "Setting memory to:")))
+        ors_cli(bullets = list(stats::setNames(
           paste0(cli::style_bold(sprintf(
             c("- init: {.field {%s}} GB", "- max: {.field {%s}} GB"),
             new / 1000
           ))),
-          c(" ", " ")
-        ))
+          rep(" ", 2)
+        )))
         self$compose$parsed$services$`ors-app`$environment[2] <- format_memory(self, new)
         self$compose$memory$init <- new[1] / 1000
         self$compose$memory$max <- new[2] / 1000
@@ -580,7 +580,7 @@ ORSLocal <- R6::R6Class(
 
       if (!identical(old, new)) {
         verb <- ifelse(mode, "Enabling", "Disabling")
-        ors_cli(info = c("*" = "{verb} graph building"))
+        ors_cli(info = list(c("*" = "{verb} graph building")))
         self$compose$parsed$services$`ors-app`$environment[1] <- set_gp(self, mode)
         self$compose$graph_building <- mode
         self$update()
@@ -599,7 +599,7 @@ ORSLocal <- R6::R6Class(
       new <- check_version(version) %||% old
 
       if (!identical(old, new)) {
-        ors_cli(info = c("*" = "Setting image version to {.field {new}}"))
+        ors_cli(info = list(c("*" = "Setting image version to {.field {new}}")))
         self$compose$parsed$services$`ors-app`$image <- paste0(
           "openrouteservice/openrouteservice:", new
         )
@@ -626,15 +626,15 @@ ORSLocal <- R6::R6Class(
 
       if (length(changed) || changed_dflt) {
         if (length(changed)) {
-          ors_cli(info = c(
+          ors_cli(info = list(c(
             "*" = "Adding {cli::qty(changed)} profile{?s}: {.field {changed}}"
-          ))
+          )))
         }
 
         if (changed_dflt) {
-          ors_cli(info = c(
+          ors_cli(info = list(c(
             "*" = "Adding profile defaults"
-          ))
+          )))
         }
 
         self$config$parsed$ors$engine <- new
@@ -657,14 +657,14 @@ ORSLocal <- R6::R6Class(
 
       if (any(changed) || changed_dflt) {
         if (any(changed)) {
-          ors_cli(info = c("*" = paste(
+          ors_cli(info = list(c("*" = paste(
             "Removing {cli::qty(length(new[changed]))}",
             "profile{?s}: {.field {new[changed]}}"
-          )))
+          ))))
         }
 
         if (changed_dflt) {
-          ors_cli(info = c("*" = "Removing profile defaults"))
+          ors_cli(info = list(c("*" = "Removing profile defaults")))
         }
 
         self$config$parsed$ors$engine <- remove_profiles(self, ...)
@@ -693,11 +693,11 @@ ORSLocal <- R6::R6Class(
 
       if (length(changed)) {
         verb <- ifelse(is.null(old), "Adding", "Changing")
-        ors_cli(info = c("*" = "{verb} the following endpoints:"))
-        ors_cli(bullets = stats::setNames(
+        ors_cli(info = list(c("*" = "{verb} the following endpoints:")))
+        ors_cli(bullets = list(stats::setNames(
           cli::style_bold(paste("-", changed)),
           rep(" ", length(changed))
-        ))
+        )))
         self$config$parsed$ors$endpoints <- change_endpoints(self, ...)
         self$update()
       }
@@ -800,7 +800,7 @@ ORSLocal <- R6::R6Class(
     #' trims ANSI colors. Disabling formatting increases performance, which
     #' can be useful for larger logs.
     show_logs = function(format = TRUE) {
-      logs <- get_docker_logs(self$compose$name)
+      logs <- docker_logs(self$compose$name)
 
       if (format) {
         logs <- strwrap(logs, width = cli::console_width(), exdent = 2)
@@ -864,12 +864,12 @@ ORSLocal <- R6::R6Class(
       !dir.exists(file.path(self$paths$top, "docker", "graphs"))
     },
     .jumpstart = function() {
-      ors_cli(line = TRUE)
-      ors_cli(rule = "Jumpstarting container")
+      ors_cli(h1 = "Jumpstarting container")
 
       if (private$.verbose) {
-        ors_cli(line = TRUE, info = c(
-          i = paste(
+        ors_cli(
+          cat = "line",
+          info = list(c("i" = paste(
             "Docker will now jumpstart an initial ORS setup. This setup runs the",
             "default config, settings, and data from Heidelberg, Germany.",
             "It will fail for any coordinates outside of Heidelberg.",
@@ -877,10 +877,12 @@ ORSLocal <- R6::R6Class(
             "This process can take a few minutes.",
             "Jumpstarting is recommended by the ORS developer team, but you can",
             "also start a dry run and jumpstart yourself."
-          )
-        ))
+          )))
+        )
       } else {
-        cli::cli_inform(c("i" = "Docker will now jumpstart an initial ORS setup."))
+        cli::cli_inform(list(c(
+          "i" = "Docker will now jumpstart an initial ORS setup.")
+        ))
       }
 
       proceed <- yes_no(
@@ -898,14 +900,14 @@ ORSLocal <- R6::R6Class(
       self$up()
       self$update("self")
 
-      ors_cli(line = TRUE)
-      ors_cli(info = c(
-        i = paste(
+      ors_cli(
+        cat = "line",
+        info = list(c("i" = paste(
           "If you wish to make changes to the existing setup,",
           "run {.code $down()}, or {.code $stop()} and make the",
           "required changes manually."
-        )
-      ))
+        )))
+      )
     }
   )
 )
@@ -1055,12 +1057,12 @@ start_docker <- function(verbose = TRUE) {
   }
 
   if (is_windows()) {
-    ors_cli(info = c(
+    ors_cli(info = list(c(
       "i" = paste(
         "Docker is required to be running in order to",
         "start an OpenRouteService instance."
       )
-    ))
+    )))
 
     docker_path <- Sys.which("docker")
     docker_desktop <- file.path(
@@ -1072,13 +1074,13 @@ start_docker <- function(verbose = TRUE) {
 
     # If Docker is installed, it will try to open
     if (status() == 0L || is.null(status())) {
-      ors_cli(
-        progress = "step",
+      ors_cli(progress = c(
+        "step",
         msg = "Starting Docker...",
-        spinner = verbose == 2,
+        spinner = verbose > 1,
         msg_done = "Docker Desktop is now running.",
         msg_failed = "The Docker startup has timed out."
-      )
+      ))
 
       # Check if Docker is usable by running a Docker command
       proc <- callr::r_bg(

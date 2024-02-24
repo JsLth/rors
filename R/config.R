@@ -130,17 +130,16 @@ insert_profiles <- function(self, private, ...) {
   dots <- list(...)
   engine <- self$config$parsed$ors$engine
 
+  corrupt <- logical(length(dots))
   for (i in seq_along(dots)) {
     prof <- dots[[i]]
 
+    corrupt[i] <- FALSE
     if (!inherits(prof, "ors_profile")) {
       if (is.character(prof)) {
         prof <- ors_profile(prof, template = TRUE)
       } else {
-        ors_cli(warn = paste(
-          "Argument {i} cannot be coerced to class {.cls ors_profile}",
-          "and will be skipped."
-        ))
+        corrupt[i] <- TRUE
       }
     }
 
@@ -151,6 +150,12 @@ insert_profiles <- function(self, private, ...) {
       engine$profiles[[name]] <- prof[[name]]
     }
   }
+
+  corrupt <- which(corrupt)
+  ors_cli(warn = list(c("!" = paste(
+    "{length(cli::qty(corrupt))} Arguments {corrupt} cannot be coerced to",
+    "class {.cls ors_profile} and will be skipped."
+  ))))
 
   engine
 }

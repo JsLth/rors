@@ -303,8 +303,7 @@ ors_shortest_distances <- function(src,
                                    geometry = FALSE,
                                    instance = NULL,
                                    ...,
-                                   proximity_type = c
-                                   ("duration", "distance"),
+                                   proximity_type = c("duration", "distance"),
                                    progress = TRUE) {
   # Validate arguments
   assert_that(
@@ -330,21 +329,19 @@ ors_shortest_distances <- function(src,
     stringsAsFactors = FALSE
   )
 
-  if (progress) {
-    ors_cli(progress = "bar", total = nrow(nested_iterator))
-  }
+  if (progress) cli::cli_progress_bar(total = nrow(nested_iterator))
 
   # Find shortest route for each coordinate pair
   route_df <- lapply(seq_len(nrow(nested_iterator)), function(i) {
-    if (progress) {
-      ors_cli(progress = "update", .envir = parent.frame(2L))
-    }
+    if (progress) cli::cli_progress_update(.envir = parent.frame(2))
     apply_shortest_routes(
       index = i, src = src, dst = dst,
       iter = nested_iterator, units = units, geometry = geometry,
       instance = instance, type = proximity_type, ...
     )
   })
+
+  if (progress) cli::cli_progress_done()
 
   route_df <- cbind(
     profile = nested_iterator[["profile"]],

@@ -17,7 +17,7 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
   }
 
   if (length(providers) > 1) {
-    ors_cli(info = c("i" = "Trying different extract providers..."))
+    ors_cli(info = list(c("i" = "Trying different extract providers...")))
   }
 
   # While there are providers left to try out, keep trying until
@@ -34,18 +34,19 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
     file_name <- basename(place_match$url)
     file_size <- round(place_match$file_size / 1024L / 1024L)
 
-    ors_cli(info = "Provider : {cli::col_green(providers[i])}")
-    ors_cli(info = "Name \u00a0\u00a0\u00a0\u00a0: {cli::col_green(file_name)}")
-    ors_cli(info = "Size \u00a0\u00a0\u00a0\u00a0: {cli::col_green(file_size)} MB")
+    ors_cli(
+      text = "Provider : {cli::col_green(providers[i])}",
+      text = "Name \u00a0\u00a0\u00a0\u00a0: {cli::col_green(file_name)}",
+      text = "Size \u00a0\u00a0\u00a0\u00a0: {cli::col_green(file_size)} MB",
+      cat = "line"
+    )
 
     if (providers[i] == "bbbike") {
-      ors_cli(warn = paste( # nocov start
+      ors_cli(warn = list(c("!" = paste( # nocov start
         "bbbike extracts are known to cause issues with",
         "memory allocation. Use with caution."
-      )) # nocov end
+      )))) # nocov end
     }
-
-    ors_cli(line = TRUE)
 
     if (length(providers) > 1) {
       ok <- yes_no("Do you want to try another provider?")
@@ -54,18 +55,18 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
 
   # If the while loop exits and the last answer given is yes, exit
   if (ok && length(providers) > 1) {
-    ors_cli(info = c( # nocov start
+    ors_cli(info = list(c( # nocov start
       "!" = "All providers have been searched. Please download the extract manually."
-    ))
+    )))
     return(invisible()) # nocov end
   }
 
   # If a file with the same name already exists, skip the download
   file_occurences <- grepl(file_name, dir(data_dir))
   if (sum(file_occurences) == 1L) {
-    ors_cli(info = c(
+    ors_cli(info = list(c(
       "i" = paste("The extract already exists. Download will be skipped.")
-    ))
+    )))
 
     path <- paste(data_dir,
       dir(data_dir)[file_occurences],
@@ -74,18 +75,19 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
 
     rel_path <- relative_path(path, self$paths$top, pretty = TRUE)
 
-    ors_cli(info = c("i" = paste("Download path: {rel_path}")))
+    ors_cli(info = list(c("i" = "Download path: {rel_path}")))
     # If no file exists, remove all download a new one
   } else {
     path <- file.path(data_dir, paste0(providers[i], "_", file_name))
     rel_path <- relative_path(path, self$paths$top, pretty = TRUE)
-    ors_cli(
-      progress = "step",
+
+    ors_cli(progress = c(
+      "step",
       msg = "Downloading OSM extract...",
       msg_done = "The extract was successfully downloaded to the following path: {rel_path}",
       msg_failed = "Extract could not be downloaded.",
-      spinner = TRUE
-    )
+      spinner = verbose > 1
+    ))
 
     timeout <- max(timeout, getOption("timeout"))
 
@@ -111,12 +113,12 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
   }
 
   # If the size is over 6 GB in size, give out a warning
-  size <- file.info(path)$size / 1024L / 1024L
-  if (size >= 6000L) {
-    ors_cli(info = paste(c("i" = # nocov start
-      "The OSM extract is very large. Make sure that you have enough",
-      "working memory available."
-    ))) # nocov end
+  size <- file.info(path)$size / 1024L
+  if (size >= 6) {
+    ors_cli(info = list(c("i" = paste( # nocov start
+      "The OSM extract is very large ({.field {round(size, 2)}} GB).",
+      "Make sure that you have enough working memory available."
+    )))) # nocov end
   }
 
   invisible(path)

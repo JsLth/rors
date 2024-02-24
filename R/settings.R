@@ -93,19 +93,21 @@ adjust_memory <- function(self, private, init, max) {
     max <- max * 1000
     init <- max / 2
   } else {
-    if (!is.null(self$extract$size) && !is.null(self$config$profiles)) {
+    if (length(self$extract) && length(self$config)) {
       size <- self$extract$size
       no_prof <- length(self$config$profiles)
       max <- max(ceiling(size * 2.5 * no_prof), 100)
       init <- max(ceiling(max / 2L), 50)
     } else {
       ors_cli(
-        warn = paste(
-          "Memory allocation options were not changed.",
-          "Memory estimation is based on extract size and number of profiles.",
-          "Either pass memory specifications explicitly or add extract and",
-          "configuration first"
-        )
+        warn = list(c(
+          "!" = "Memory allocation options were not changed.",
+          "i" = paste(
+            "Memory estimation is based on extract size and number",
+            "of profiles. Either pass memory specifications explicitly",
+            "or add extract and configuration first"
+          )
+        ))
       )
       return(NULL)
     }
@@ -118,13 +120,10 @@ adjust_memory <- function(self, private, init, max) {
     )
 
     if (max >= 1e+05) {
-      msg <- c(
-        "!" = msg,
-        "i" = "Did you accidentally pass megabytes instead of gigabytes?"
-      )
+      msg <- c("!" = msg, "i" = "Did you accidentally pass MB instead of GB?")
     }
 
-    ors_cli(warn = msg)
+    ors_cli(warn = list(msg))
   }
 
   c(ceiling(init), ceiling(max))

@@ -4,20 +4,12 @@
 #' @param line logical indicating whether an empty line should be printed
 #' @param ... further arguments passed to the respective functions
 #' @noRd
-ors_cli <- function(info = NULL,
-                    bullets = NULL,
-                    warn = NULL,
-                    progress = NULL,
-                    rule = NULL,
-                    line = NULL,
-                    ...,
-                    .envir = NULL) {
-  # TODO: make this more flexible
+ors_cli <- function(..., .envir = NULL) {
   .envir <- .envir %||% parent.frame()
-  verbose <- get0("verbose", envir = parent.frame(), ifnotfound = 0L)
+  verbose <- get0("verbose", envir = .envir, ifnotfound = 0L)
 
   if (!verbose) {
-    private <- get0("private", envir = parent.frame(), ifnotfound = list())
+    private <- get0("private", envir = .envir, ifnotfound = list())
     verbose <- private$.verbose %||% 0L
   }
 
@@ -25,33 +17,39 @@ ors_cli <- function(info = NULL,
     return(invisible(NULL))
   }
 
-  if (!is.null(info)) {
-    cli::cli_inform(info, ..., .envir = .envir)
-  }
+  dots <- list(...)
+  for (i in seq_len(...length())) {
+    cfun <- names(dots[i])
+    args <- as.list(dots[[i]])
 
-  if (!is.null(bullets)) {
-    cli::cli_bullets(bullets, ..., .envir = .envir)
-  }
-
-  if (!is.null(warn)) {
-    cli::cli_warn(warn, ..., .envir = parent.frame())
-  }
-
-  if (!is.null(progress)) {
-    if (verbose > 1 && interactive()) {
-      pfun <- get(
-        paste0("cli_progress_", progress),
-        envir = asNamespace("cli")
-      )
-      pfun(..., .envir = .envir)
+    # dispatch cat arguments to cli::cat_line
+    if (identical(cfun, "cat")) {
+      # replace "line" with line breaks
+      line <- which(args %in% "line")
+      args[line] <- list(NULL)
+      do.call(cli::cat_line, args)
+      next
     }
-  }
 
-  if (!is.null(rule)) {
-    cli::cli_rule(rule, ..., .envir = parent.frame())
-  }
+    # handle progress bars
+    if (identical(cfun, "progress")) {
+      if (verbose < 2 || !interactive()) next
+      cfun <- sprintf("%s_%s", cfun, args[[1]])
+      args[[1]] <- NULL
+    }
 
-  if (!is.null(line)) {
-    cli::cat_line()
+    # info is short for inform
+    if (identical(cfun, "info")) {
+      cfun <- "inform"
+    }
+
+    cfun <- get(sprintf("cli_%s", cfun), envir = asNamespace("cli"))
+
+    # pass .envir only when it is needed
+    if (".envir" %in% names(formals(cfun))) {
+      args <- c(args, .envir = .envir)
+    }
+
+    do.call(cfun, args)
   }
 }

@@ -7,7 +7,7 @@ ors_up <- function(self, private, wait = TRUE, ...) {
 
   name <- self$compose$name
 
-  ors_cli(rule = "Pulling image")
+  ors_cli(h2 = "Pulling image")
   pull_ors(self, private)
 
   cmd <- c(
@@ -19,8 +19,7 @@ ors_up <- function(self, private, wait = TRUE, ...) {
     c(...) # custom flags
   )
 
-  ors_cli(line = TRUE)
-  ors_cli(rule = "Building container")
+  ors_cli(h2 = "Building container")
 
   proc <- callr::run(
     command = "docker",
@@ -41,8 +40,7 @@ ors_up <- function(self, private, wait = TRUE, ...) {
   }
 
   if (wait) {
-    ors_cli(line = TRUE)
-    ors_cli(rule = "Setting up service")
+    ors_cli(h2 = "Setting up service")
     setup_info(verbose)
     notify_when_ready(name, interval = 10L, verbose = verbose)
   }
@@ -54,12 +52,12 @@ ors_down <- function(self, private) {
     cli::cli_abort("Docker is not running.")
   }
 
-  ors_cli(
-    progress = "step",
+  ors_cli(progress = c(
+    "step",
     msg = "Taking down container {self$compose$name}...",
     msg_failed = "Cannot take down container {self$compose$name}.",
     msg_done = "Successfully took down container {self$compose$name}."
-  )
+  ))
 
   name <- self$compose$name
 
@@ -79,14 +77,16 @@ ors_down <- function(self, private) {
   )
 
   if (!identical(proc$status, 0L)) {
-    cli::cli_abort(c(
+    cli::cli_abort(c( # nocov start
       "The docker command encountered an error",
       "Error code {proc$status}: {proc$stderr}"
     ))
   } else if (grepl("Warning", proc$stderr)) {
     cli::cli_warn(strsplit(proc$stderr, ": ")[[1]][2])
-    ors_cli(progress = "done", result = "failed")
-  } else ors_cli(progress = "done", result = "done")
+    ors_cli(progress = c("done", result = "failed")) # nocov end
+  } else {
+    ors_cli(progress = c("done", result = "done"))
+  }
 
   self$update()
   private$.mount()
@@ -129,7 +129,7 @@ ors_start <- function(self, private, wait = TRUE) {
       notify_when_ready(name, interval = 2L, verbose = verbose)
     }
   } else {
-    ors_cli(info = c("i" = "Container {name} is already running."))
+    ors_cli(info = list(c("i" = "Container {name} is already running.")))
   }
 
   self$update()
@@ -146,12 +146,12 @@ ors_stop <- function(self, private) {
   name <- self$compose$name
 
   if (isTRUE(self$is_running())) {
-    ors_cli(
-      progress = "step",
+    ors_cli(progress = c(
+      "step",
       msg = "Stopping container...",
       msg_done = "Container stopped.",
       msg_failed = "Cannot stop container."
-    )
+    ))
 
     cmd <- c("stop", name)
 
@@ -170,7 +170,7 @@ ors_stop <- function(self, private) {
       ))
     }
   } else {
-    ors_cli(info = c("i" = "Container {name} is already stopped."))
+    ors_cli(info = list(c("i" = "Container {name} is already stopped.")))
   }
 
   self$update()
@@ -211,7 +211,7 @@ pull_ors <- function(self, private) {
       ))
     }
   } else {
-    ors_cli(info = c("i" = "ORS image already exists."))
+    ors_cli(info = list(c("i" = "ORS image already exists.")))
   }
 
   invisible(self)
@@ -235,12 +235,12 @@ rm_image <- function(self, private) {
     )
 
     if (nchar(image_ids$stdout)) {
-      ors_cli(
-        progress = "step",
+      ors_cli(progress = c(
+        "step",
         msg = "Removing {length(image_ids)} image{?s}...",
         msg_done = "Removed {length(image_ids)} image{?s}.",
         msg_failed = "Cannot remove image."
-      )
+      ))
 
       for (id in image_ids) {
         cmd2 <- c("rmi", id)
@@ -261,7 +261,7 @@ rm_image <- function(self, private) {
         }
       }
     } else {
-      ors_cli(info = c("i" = "No images to remove."))
+      ors_cli(info = list(c("i" = "No images to remove.")))
     }
   } else {
     cli::cli_abort("Remove the container before removing the image")
@@ -349,14 +349,15 @@ container_info <- function(name) {
 }
 
 
-get_docker_logs <- function(name) {
+docker_logs <- function(name) {
   cmd <- c("logs", name)
   logs <- callr::run(
     "docker",
     args = cmd,
     stdout = "|",
     stderr = "2>&1",
-    error_on_status = FALSE
+    error_on_status = FALSE,
+    encoding = "UTF-8"
   )
 
   if (identical(logs$status, 0L)) {
@@ -419,9 +420,9 @@ pull_callback <- function(newout, proc) {
   if (!exc) {
     prc <- grepl("Pull complete", newout)
     if (prc) {
-      ors_cli(info = c("v" = newout))
+      ors_cli(info = list(c("v" = newout)))
     } else {
-      ors_cli(info = c("i" = newout))
+      ors_cli(info = list(c("i" = newout)))
     }
   }
 }
@@ -429,11 +430,11 @@ pull_callback <- function(newout, proc) {
 
 setup_info <- function(verbose) {
   ors_cli(
-    info = c("i" = paste(
+    info = list(c("i" = paste(
       "The container is being set up and started now.",
       "You can stop the process now or let it run",
       "and get notified when the service is ready."
-    ))
+    )))
   )
 }
 
@@ -442,13 +443,13 @@ setup_info <- function(verbose) {
 # notification when the server is ready. Also watches out for errors
 # in the log files.
 notify_when_ready <- function(ors_name, interval, verbose) {
-  ors_cli(
-    progress = "step",
+  ors_cli(progress = c(
+    "step",
     msg = "Starting service",
     msg_done = "Service setup done.",
     msg_failed = "Service setup failed.",
-    spinner = TRUE
-  )
+    spinner = verbose > 1
+  ))
 
   proc <- callr::r_bg(
     function(ors_name, watch_for_error) {
@@ -488,16 +489,7 @@ watch_for_error <- function(ors_name) {
   # Searches the OpenRouteService logs for the keyword 'error' and returns
   # their error messages. If it turns out that tomcat and the local host can
   # raise errors, too, this will have to be overhauled from the get-go.
-  cmd <- c("logs", ors_name)
-  logs <- callr::run(
-    command = "docker",
-    args = cmd,
-    stdout = "|",
-    stderr = "2>&1",
-    error_on_status = FALSE,
-    encoding = "UTF-8"
-  )$stdout
-  logs <- strsplit(logs, "\n")[[1]]
+  logs <- docker_logs(ors_name)$stdout
 
   errors <- grep(
     "error|exception",

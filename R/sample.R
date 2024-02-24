@@ -107,13 +107,13 @@ get_extract_boundaries <- function(instance = NULL,
         cli::cli_abort("Cannot identify current extract file. Pass it explicitly.")
       }
 
-      ors_cli(
-        progress = "step",
+      ors_cli(progress = c(
+        "step",
         msg = "Reading and processing extract file...",
         msg_done = "Extract file successfully read in!",
         msg_failed = "Extract file could either not be read or not converted.",
         spinner = TRUE
-      )
+      ))
 
       proc <- callr::r_bg(
         function(extract_path) {
@@ -142,10 +142,10 @@ get_extract_boundaries <- function(instance = NULL,
         ors_cli(progress = "update")
       }
 
-      ors_cli(
+      ors_cli(progress = c(
         progress = "done",
         result = ifelse(nzchar(proc$read_error()), "failed", "done")
-      )
+      ))
 
       poly <- proc$get_result()
     } else {
