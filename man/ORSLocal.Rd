@@ -218,6 +218,7 @@ size of the selected extract file.}
 \item \href{#method-ORSLocal-new}{\code{ORSLocal$new()}}
 \item \href{#method-ORSLocal-update}{\code{ORSLocal$update()}}
 \item \href{#method-ORSLocal-purge}{\code{ORSLocal$purge()}}
+\item \href{#method-ORSLocal-report}{\code{ORSLocal$report()}}
 \item \href{#method-ORSLocal-set_extract}{\code{ORSLocal$set_extract()}}
 \item \href{#method-ORSLocal-set_name}{\code{ORSLocal$set_name()}}
 \item \href{#method-ORSLocal-set_port}{\code{ORSLocal$set_port()}}
@@ -353,6 +354,18 @@ default is \code{FALSE} to prevent accidentally breaking other projects.}
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSLocal-report"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSLocal-report}{}}}
+\subsection{Method \code{report()}}{
+Prints a situation report of the ORS instance. Invokes all relevant
+print methods that summarize the current state of the instance
+object.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$report()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ORSLocal-set_extract"></a>}}
@@ -530,7 +543,9 @@ graphs for active profiles.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{Objects of class \code{\link{ors_profile}}.}
+\item{\code{...}}{Objects of class \code{\link{ors_profile}} or character
+strings. If a character string is passed, it is interpreted as
+\code{ors_profile(..., template = TRUE)}.}
 }
 \if{html}{\out{</div>}}
 }

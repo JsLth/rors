@@ -349,6 +349,31 @@ ORSLocal <- R6::R6Class(
       invisible(NULL)
     },
 
+    #' @description
+    #' Prints a situation report of the ORS instance. Invokes all relevant
+    #' print methods that summarize the current state of the instance
+    #' object.
+    report = function() {
+      print(self)
+
+      if (!is.null(self$compose)) {
+        cli::cat_line()
+        print(self$compose)
+      }
+
+      if (!is.null(self$extract)) {
+        cli::cat_line()
+        print(self$extract)
+      }
+
+      if (!is.null(self$config)) {
+        cli::cat_line()
+        print(self$config)
+      }
+
+      invisible(self)
+    },
+
 
     ## Extract ----
     #' @description
@@ -934,7 +959,7 @@ ORSLocal <- R6::R6Class(
   }
 
   # construct R representation
-  list(name = name, size = size)
+  structure(list(name = name, size = size), class = "ors_extract")
 }
 
 
