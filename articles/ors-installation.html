@@ -90,7 +90,7 @@
                         <h4 data-toc-skip class="author">Jonas
 Lieth</h4>
             
-            <h4 data-toc-skip class="date">2024-02-23</h4>
+            <h4 data-toc-skip class="date">2024-02-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/JsLth/ORSRouting/blob/HEAD/vignettes/ors-installation.Rmd" class="external-link"><code>vignettes/ors-installation.Rmd</code></a></small>
       <div class="d-none name"><code>ors-installation.Rmd</code></div>
@@ -178,15 +178,13 @@ of the setup.</p>
 the ORS setup:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ors<span class="sc">$</span><span class="fu">down</span>()</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>ℹ Taking down container ...</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>ℹ Taking down container ors<span class="sc">-</span>app<span class="sc">-</span>9c12bcc...</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error in `ors_down()` at ORSRouting/R/local.R:577:7:</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ! The docker command encountered an error</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error code 1: "-f" is not a valid project name</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>✖ Cannot take down container . [294ms]</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span></code></pre></div>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning: No resource found to remove for project "ors-app-9c12bcc".</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>✖ Cannot take down container ors<span class="sc">-</span>app<span class="sc">-</span>9c12bcc. [330ms]</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span></code></pre></div>
 <p>The resulting <code>ors_instance</code> object is stored in a cache
 environment for the entire R session. All API functions automatically
 detect the currently mounted instance.</p>
@@ -310,7 +308,17 @@ profile as memory. You can either set the memory manually or let
 <p><img src="../reference/figures/ors-installation/unnamed-chunk-16.svg" width="100%"></p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">memory</span></span>
-<span><span class="co">#&gt; NULL</span></span></code></pre></div>
+<span><span class="co">#&gt; $total</span></span>
+<span><span class="co">#&gt; [1] 15.92733</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $free</span></span>
+<span><span class="co">#&gt; [1] 5.019341</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $init</span></span>
+<span><span class="co">#&gt; [1] 0.25</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $max</span></span>
+<span><span class="co">#&gt; [1] 0.5</span></span></code></pre></div>
 <p>Similarly, not passing anything to compose methods, makes them
 freestyle. <code>$set_name()</code> creates a random container name and
 <code>$set_port()</code> assigns a random port.</p>
@@ -319,13 +327,15 @@ freestyle. <code>$set_name()</code> creates a random container name and
 <p><img src="../reference/figures/ors-installation/unnamed-chunk-18.svg" width="100%"></p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">name</span></span>
-<span><span class="co">#&gt; NULL</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "ors-app-9c12bcc"</span></span></code></pre></div>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">set_port</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="../reference/figures/ors-installation/unnamed-chunk-20.svg" width="100%"></p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">ports</span></span>
-<span><span class="co">#&gt; NULL</span></span></code></pre></div>
+<span><span class="co">#&gt;    host docker</span></span>
+<span><span class="co">#&gt; 1 18225   8080</span></span>
+<span><span class="co">#&gt; 2 13260   9001</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="docker">Docker<a class="anchor" aria-label="anchor" href="#docker"></a>
@@ -390,10 +400,45 @@ tedious tasks. Parsed versions of <code>ors-config.yml</code> and
 object:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">config</span><span class="op">$</span><span class="va">parsed</span></span>
-<span><span class="co">#&gt; NULL</span></span></code></pre></div>
+<span><span class="co">#&gt; List of 1</span></span>
+<span><span class="co">#&gt;  $ ors:List of 2</span></span>
+<span><span class="co">#&gt;   ..$ engine   :List of 4</span></span>
+<span><span class="co">#&gt;   .. ..$ source_file     : chr "./ors-core/data/osm_file.pbf"</span></span>
+<span><span class="co">#&gt;   .. ..$ graphs_root_path: chr "./ors-core/data/graphs"</span></span>
+<span><span class="co">#&gt;   .. ..$ elevation       :List of 1</span></span>
+<span><span class="co">#&gt;   .. ..$ profiles        :List of 10</span></span>
+<span><span class="co">#&gt;   ..$ endpoints:List of 3</span></span>
+<span><span class="co">#&gt;   .. ..$ isochrones:List of 4</span></span>
+<span><span class="co">#&gt;   .. ..$ matrix    :List of 1</span></span>
+<span><span class="co">#&gt;   .. ..$ isochrone :List of 1</span></span></code></pre></div>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">parsed</span></span>
-<span><span class="co">#&gt; NULL</span></span></code></pre></div>
+<span><span class="co">#&gt; version: '2.4'</span></span>
+<span><span class="co">#&gt; services:</span></span>
+<span><span class="co">#&gt;   ors-app:</span></span>
+<span><span class="co">#&gt;     container_name: ors-app-9c12bcc</span></span>
+<span><span class="co">#&gt;     ports:</span></span>
+<span><span class="co">#&gt;       - 18225:8080</span></span>
+<span><span class="co">#&gt;       - 13260:9001</span></span>
+<span><span class="co">#&gt;     image: openrouteservice/openrouteservice:nightly</span></span>
+<span><span class="co">#&gt;     user: ${UID:-0}:${GID:-0}</span></span>
+<span><span class="co">#&gt;     volumes:</span></span>
+<span><span class="co">#&gt;       - ./docker/graphs:/home/ors/ors-core/data/graphs</span></span>
+<span><span class="co">#&gt;       - ./docker/elevation_cache:/home/ors/ors-core/data/elevation_cache</span></span>
+<span><span class="co">#&gt;       - ./docker/logs/ors:/home/ors/logs</span></span>
+<span><span class="co">#&gt;       - ./docker/logs/tomcat:/home/ors/tomcat/logs</span></span>
+<span><span class="co">#&gt;       - ./docker/conf:/home/ors/ors-conf</span></span>
+<span><span class="co">#&gt;       - ./docker/data:/home/ors/ors-core/data</span></span>
+<span><span class="co">#&gt;     environment:</span></span>
+<span><span class="co">#&gt;       - BUILD_GRAPHS=True</span></span>
+<span><span class="co">#&gt;       - JAVA_OPTS=-Djava.awt.headless=true -server -XX:TargetSurvivorRatio=75 -XX:SurvivorRatio=64</span></span>
+<span><span class="co">#&gt;         -XX:MaxTenuringThreshold=3 -XX:+UseG1GC -XX:+ScavengeBeforeFullGC -XX:ParallelGCThreads=4</span></span>
+<span><span class="co">#&gt;         -Xms250m -Xmx500m</span></span>
+<span><span class="co">#&gt;       - CATALINA_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9001</span></span>
+<span><span class="co">#&gt;         -Dcom.sun.management.jmxremote.rmi.port=9001 -Dcom.sun.management.jmxremote.authenticate=false</span></span>
+<span><span class="co">#&gt;         -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost</span></span>
+<span><span class="co">#&gt;       - ORS_CONFIG=/home/ors/ors-conf/ors-config.json</span></span>
+<span><span class="co">#&gt; </span></span></code></pre></div>
 <p>Both objects are lists, which can simply be modified:</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">parsed</span><span class="op">$</span><span class="va">services</span><span class="op">$</span><span class="va">`ors-app`</span><span class="op">$</span><span class="va">container_name</span> <span class="op">&lt;-</span> <span class="st">"new-name-123"</span></span></code></pre></div>
@@ -402,14 +447,12 @@ the object, but not the state of the actual files. To synchronize the
 ORS file system, you have to <code>$update()</code> after making manual
 changes:</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">update</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error in attr(compose$services$`ors-app`$ports, "quoted") &lt;- TRUE: attempt to set an attribute on NULL</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">update</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>This command writes the current state of the parsed ORS files to
 disk. Conversely, if you make manual changes to one of the relevant ORS
 files, you can update the R instance object using:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">update</span><span class="op">(</span><span class="st">"self"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error in file(file, "rt", encoding = fileEncoding): invalid 'description' argument</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">update</span><span class="op">(</span><span class="st">"self"</span><span class="op">)</span></span></code></pre></div>
 <p>This command re-parses all ORS files. Again, it is advisable to make
 the majority of changes using the convenience wrappers as they
 automatically update and mount the instance object. Manually updating
@@ -436,11 +479,17 @@ methods (e.g. <code>$update()</code>) to mount it.</li>
 some useful diagnostics about the image and container.</li>
 <li>
 <code>$get_status()</code>: Returns configurations and attributes of
-the ORS service (given that the service is ready)</li>
+the ORS service (given that the service is ready).</li>
 <li>
 <code>$purge()</code>: Purges an ORS instance, i.e. takes down
 containers, deletes the ORS directory and cleans the instance
-object</li>
+object.</li>
+<li>
+<code>$rm_extract()</code>: Removes one or several extracts from the
+ORS directory.</li>
+<li>
+<code>$report()</code>: Prints a situation report of the ORS
+instance object.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

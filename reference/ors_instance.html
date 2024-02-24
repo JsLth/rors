@@ -142,40 +142,56 @@ source code and returns an object of class <code>ors_instance</code>.</p>
 <dd><p><code>[character]</code></p>
 <p>Custom OpenRouteService directory. If not specified, the directory
 will be downloaded to the system's home directory. If a directory called
-<code>"openrouteservice-{version}"</code> is present, the download will be skipped.
-Ignored if <code>server</code> is not <code>NULL</code>.</p></dd>
+<code>"openrouteservice-{version}"</code> is present, the download will be skipped</p><ul><li><p>unless overwrite is <code>TRUE</code>.
+Ignored if <code>server</code> is given.</p></li>
+</ul></dd>
 
 
 <dt>server</dt>
 <dd><p><code>[character]</code></p>
 <p>URL of a server that accepts OpenRouteService requests. This can be a URL
 to a local or a remote server. The official public API can be accessed using
-the shortcut <code>"public"</code>. Keep in mind that the public API is
-rate-restricted and requests are automatically throttled to 40 requests per
-minute. Routing functions <em>will</em> be slow for larger datasets.</p></dd>
+the shortcuts <code>"public"</code> or <code>"pub"</code>. Keep in mind that the public
+API is rate-restricted and requests are automatically throttled to 40
+requests per minute. Routing functions <em>will</em> be slow for larger
+datasets.</p></dd>
 
 
 <dt>version</dt>
 <dd><p><code>[character]</code></p>
 <p>The OpenRouteService version to use. Can either be a version number (e.g.
-7.2.0), a commit hash, or <code>"master"</code>. Ignored if <code>server</code> is not
-<code>NULL</code>.</p></dd>
+7.2.0), a commit hash, or a version description (<code>"master"</code>,
+<code>"latest"</code> or <code>"nightly"</code>). Ignored if <code>server</code> is not
+<code>NULL</code>. If <code>version</code> is a numeric version or a version
+description, both compose version and image version are set. If
+<code>version</code> is a hash, the image version defaults to <code>"nightly"</code>.
+Ignored if <code>server</code> is given.</p></dd>
 
 
 <dt>overwrite</dt>
 <dd><p><code>[logical]</code></p>
 <p>Whether to overwrite the current OpenRouteService directory
-if it exists.</p></dd>
+if it exists. Ignored if <code>server</code> is given.</p></dd>
 
 
 <dt>verbose</dt>
 <dd><p><code>[logical]</code></p>
-<p>If <code>TRUE</code>, prints informative messages and spinners.</p></dd>
+<p>Level of verbosity. Must be an integer between 0 and 2. The verbosity
+levels are deconstructed as follows:</p><ul><li><p>0: No messages, progress bars, sounds, and prompts. Only important
+warnings.</p></li>
+<li><p>1: Informative messages and warnings, but no system
+notifications, prompts, or progress bars.</p></li>
+<li><p>2: Messages, warnings, prompts, progress bars, and system
+notifications.</p></li>
+</ul><p>Ignored if <code>server</code> is given.</p></dd>
 
 
-<dt>...</dt>
-<dd><p>Further arguments passed to <code><a href="ORSLocal.html">ORSLocal</a></code> or
-<code><a href="ORSRemote.html">ORSRemote</a></code>.</p></dd>
+<dt>token</dt>
+<dd><p><code>[logical]</code></p>
+<p>Whether <code>server</code> requires authorization over a token. ORS tokens
+are stored in the <code>ORS_TOKEN</code> environment variable. Defaults to
+<code>FALSE</code>. If <code>server</code> is the public API, <code>token</code> is set
+to <code>TRUE</code>. Ignored if <code>server</code> is <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -183,9 +199,23 @@ if it exists.</p></dd>
     
 
 <p>R6 object of class <code>ors_instance</code> as created by
-<code><a href="ORSInstance.html">ORSInstance</a></code></p>
+<code><a href="ORSLocal.html">ORSLocal</a></code> or <code><a href="ORSRemote.html">ORSRemote</a></code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="session-mounting">Session mounting<a class="anchor" aria-label="anchor" href="#session-mounting"></a></h2>
+    
 
 
+<p>Upon initialization (or whenever calling a method) the object created by
+<code>ors_instance</code> mounts itself to the current R session.
+<code>ors_*</code> functions automatically identify the mounted ORS instance to
+retrieve important information for querying ORS servers or processing other
+data. Mounted instances are cleared when starting a new session or
+when overwriting with a new instance.</p>
+<p>In case multiple instances are running simultaneously and should be queried
+in the same instance, <code>ors_*</code> functions allow to directly pass an
+<code>instance</code> object. Otherwise, it is recommended to implicitly use
+the mounted instance.</p>
     </div>
 
     <div class="section level2">
