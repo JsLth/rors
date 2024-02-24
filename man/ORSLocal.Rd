@@ -220,6 +220,7 @@ size of the selected extract file.}
 \item \href{#method-ORSLocal-purge}{\code{ORSLocal$purge()}}
 \item \href{#method-ORSLocal-report}{\code{ORSLocal$report()}}
 \item \href{#method-ORSLocal-set_extract}{\code{ORSLocal$set_extract()}}
+\item \href{#method-ORSLocal-rm_extract}{\code{ORSLocal$rm_extract()}}
 \item \href{#method-ORSLocal-set_name}{\code{ORSLocal$set_name()}}
 \item \href{#method-ORSLocal-set_port}{\code{ORSLocal$set_port()}}
 \item \href{#method-ORSLocal-set_ram}{\code{ORSLocal$set_ram()}}
@@ -419,6 +420,24 @@ If \code{TRUE}, enables graph building with the new extract. If
 
 \item{\code{...}}{Further arguments passed to
 \code{\link[osmextract:oe_get]{oe_get()}}.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSLocal-rm_extract"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSLocal-rm_extract}{}}}
+\subsection{Method \code{rm_extract()}}{
+Removes extract files from the data directory.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$rm_extract(...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{File names of extract files in the data directory. All
+files that exist are removed.}
 }
 \if{html}{\out{</div>}}
 }

@@ -446,7 +446,6 @@ ORSLocal <- R6::R6Class(
     #'
     #' @param ... File names of extract files in the data directory. All
     #' files that exist are removed.
-    #'
     rm_extract = function(...) {
       old <- c(...)
 
@@ -455,14 +454,19 @@ ORSLocal <- R6::R6Class(
         old <- all_files[is_pbf(all_files)]
       }
 
-      old <- file.path(ors$paths$top, "docker", "data", old)
+      old <- file.path(self$paths$top, "docker", "data", old)
       changed <- vapply(old, file.exists, logical(1))
 
       if (any(changed)) {
         to_rm <- old[changed]
+        cur_extract <- identify_extract(self$compose$parsed, self$paths$top)
+        to_rm_fmt <- basename(to_rm)
+        to_rm_fmt[to_rm %in% cur_extract] <- paste(
+          basename(cur_extract), cli::col_red("<- active extract")
+        )
         ors_cli(info = c("*" = "Removing extract files:"))
         ors_cli(bullets = stats::setNames(
-          sprintf("- %s", basename(to_rm)), rep(" ", length(to_rm))
+          sprintf("- %s", to_rm_fmt), rep(" ", length(to_rm))
         ))
 
         yes_no(
@@ -475,9 +479,10 @@ ORSLocal <- R6::R6Class(
           unlink(extract, recursive = FALSE)
         }
 
-        cur_extract <- identify_extract(self$compose$parsed, self$paths$top)
         if (cur_extract %in% to_rm) {
-          ors_cli(info = c("*" = "Unsetting active extract file"))
+          ors_cli(info = c(
+            "*" = "Unsetting active extract file: {.emph {basename(cur_extract)}}"
+          ))
           self$extract <- NULL
           self$compose$parsed <- change_extract(self$compose$parsed, NULL)
           self$update()
