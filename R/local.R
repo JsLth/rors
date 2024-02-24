@@ -441,6 +441,50 @@ ORSLocal <- R6::R6Class(
       self$update()
     },
 
+    #' @description
+    #' Removes extract files from the data directory.
+    #'
+    #' @param ... File names of extract files in the data directory. All
+    #' files that exist are removed.
+    #'
+    rm_extract = function(...) {
+      old <- c(...)
+
+      if (is.null(old)) {
+        all_files <- list.files(file.path(self$paths$top, "docker", "data"))
+        old <- all_files[is_pbf(all_files)]
+      }
+
+      old <- file.path(ors$paths$top, "docker", "data", old)
+      changed <- vapply(old, file.exists, logical(1))
+
+      if (any(changed)) {
+        to_rm <- old[changed]
+        ors_cli(info = c("*" = "Removing extract files:"))
+        ors_cli(bullets = stats::setNames(
+          sprintf("- %s", basename(to_rm)), rep(" ", length(to_rm))
+        ))
+
+        yes_no(
+          "Do you want to proceed?",
+          no = cancel(),
+          ask = private$.verbose > 1
+        )
+
+        for (extract in to_rm) {
+          unlink(extract, recursive = FALSE)
+        }
+
+        cur_extract <- identify_extract(self$compose$parsed, self$paths$top)
+        if (cur_extract %in% to_rm) {
+          ors_cli(info = c("*" = "Unsetting active extract file"))
+          self$extract <- NULL
+          self$compose$parsed <- change_extract(self$compose$parsed, NULL)
+          self$update()
+        }
+      }
+    },
+
 
     ## Compose ----
     #' @description

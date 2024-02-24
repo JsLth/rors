@@ -219,10 +219,17 @@ force_gp <- function(mode, compose) {
 
 change_extract <- function(compose, path) {
   volumes <- compose$services$`ors-app`$volumes
-  change_node <- sprintf(
-    "./docker/data/%s:/home/ors/ors-core/data/osm_file.pbf",
-    basename(path)
-  )
+  do_rm <- is.null(path)
+
+  if (!do_rm) {
+    change_node <- sprintf(
+      "./docker/data/%s:/home/ors/ors-core/data/osm_file.pbf",
+      basename(path)
+    )
+  } else {
+    # remove extract node if path is null
+    change_node <- NULL
+  }
 
   # is there already a pbf volume?
   pbf_vol <- is_pbf(compose$services$`ors-app`$volumes)
@@ -230,12 +237,19 @@ change_extract <- function(compose, path) {
   if (any(pbf_vol)) {
     # if yes, replace it
     idx <- pbf_vol
-  } else {
+  } else if (!do_rm) {
     # otherwise, add a new volume
     idx <- length(volumes) + 1
+  } else {
+    idx <- NULL
   }
 
-  compose$services$`ors-app`$volumes[idx] <- change_node
+  if (!do_rm && !is.null(idx)) {
+    compose$services$`ors-app`$volumes[idx] <- change_node
+  } else {
+    compose$services$`ors-app`$volumes <- compose$services$`ors-app`$volumes[!idx]
+  }
+
   compose
 }
 
