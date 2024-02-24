@@ -1,7 +1,7 @@
 
 # ORSRouting
 
-<img src="man/figures/orsrouting_sticker.png" width = "150" align="right" />
+<img src="man/figures/orsrouting_sticker.png" width="150" align="right"/>
 
 <!-- badges: start -->
 
@@ -9,19 +9,33 @@
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
 [![](https://www.r-pkg.org/badges/version/ORSRouting)](https://cran.r-project.org/package=ORSRouting)
+
 [![Codecov test
 coverage](https://codecov.io/gh/JsLth/ORSRouting/branch/master/graph/badge.svg)](https://app.codecov.io/gh/JsLth/ORSRouting?branch=master)
+
 <!-- badges: end -->
 
-The purpose of this package is to provide a comprehensive and convenient
-R interface to local OpenRouteService instances in order to facilitate
-batch routing. The package functions (so far) enable qualitative and
-quantitative route computations, distance matrix generation, and
-accessibility analyses (i.e. isochrones). Also included is a function
-family to build local customized OpenRouteService instances from
-scratch. While it is possible to use ORSRouting with the official web
-API, requests will be very slow due to rate restrictions and therefore
-not really suitable for larger scale analyses.
+The purpose of `rors` is to provide a tidy, pipeable and comprehensive R
+interface to local or remote
+[OpenRouteService](https://openrouteservice.org/) (ORS) instances.
+`rors` currently enables analyses based on all available endpoints:
+
+- Qualitative and quantitative routing computations
+- Distance matrices
+- Accessibility analyses
+- Street snapping
+- Graph network export
+
+Functions are designed to be pipeable, API calls are performed
+gracefully and the results are tidied up to digestible (sf) tibbles.
+
+Another important feature of `rors` is the setup and management of local
+OpenRouteService instances from scratch. Local instances facilitate
+computationally intensive data analyses and allow the definition of
+custom API configurations. While it is possible to use ORSRouting with
+the official web API, requests will be very slow due to rate
+restrictions and therefore not really suitable for larger scale
+analyses.
 
 ## Installation
 
@@ -53,27 +67,22 @@ detected by all other functions. To perform a simple routing request,
 run `ors_inspect`:
 
 ``` r
-ors_inspect(pharma[1:2, ], profile = "driving-car", extra_info = "surface")
-#> Simple feature collection with 139 features and 9 fields
-#> Geometry type: LINESTRING
+ors_inspect(pharma, profile = "driving-car", level = "segment")
+#> Simple feature collection with 7 features and 5 fields
+#> Geometry type: MULTILINESTRING
 #> Dimension:     XY
-#> Bounding box:  xmin: -0.727928 ymin: 52.5876 xmax: -0.704255 ymax: 52.66963
+#> Bounding box:  xmin: -0.730349 ymin: 52.5876 xmax: -0.467708 ymax: 52.6747
 #> Geodetic CRS:  WGS 84
-#> # A tibble: 139 × 10
-#>    name       distance duration avgspeed elevation  type instruction exit_number
-#>  * <chr>           [m]      [s]   [km/h]       [m] <int> <chr>             <int>
-#>  1 Market Pl…    19.5      7        10.0      148     11 Head west …          NA
-#>  2 Orange St…    25.0      2.06     43.6      148      1 Turn right…          NA
-#>  3 Orange St…    23.0      1.89     43.8      148      1 Turn right…          NA
-#>  4 Orange St…     7.92     0.65     43.9      148      1 Turn right…          NA
-#>  5 Orange St…    16.4      1.35     43.8      148      1 Turn right…          NA
-#>  6 Orange St…    23.4      1.93     43.6      148      1 Turn right…          NA
-#>  7 Orange St…    63.8      5.25     43.7      148      1 Turn right…          NA
-#>  8 Orange St…    81.8      6.73     43.7      148      1 Turn right…          NA
-#>  9 Orange St…    40.2      3.31     43.7      147.     1 Turn right…          NA
-#> 10 Orange St…    42.7      3.52     43.7      147.     1 Turn right…          NA
-#> # ℹ 129 more rows
-#> # ℹ 2 more variables: surface <fct>, geometry <LINESTRING [°]>
+#> # A tibble: 7 × 6
+#>   name            distance duration avgspeed elevation                  geometry
+#> * <chr>                [m]      [s]   [km/h]       [m]     <MULTILINESTRING [°]>
+#> 1 Uppingham Road…   9983.     618.      69.8     121.  ((-0.722324 52.58762, -0…
+#> 2 High Street, B…     26.3      2.4     39.4     111.  ((-0.727928 52.66962, -0…
+#> 3 Uppingham Road…  10059.     628.      68.8     120.  ((-0.728317 52.66962, -0…
+#> 4 Uppingham Road…  10642.     676.      69.8     123.  ((-0.721097 52.58816, -0…
+#> 5 Stamford Road,…  19188.    1137.      66.0      77.9 ((-0.730349 52.66991, -0…
+#> 6 St Mary's Stre…    358.      61.9     25.0      32.5 ((-0.478222 52.65071, -0…
+#> 7 St George's St…   1094.     140.      27.7      38.9 ((-0.477902 52.65231, -0…
 ```
 
 ## Local instances
@@ -84,13 +93,13 @@ family can be used to manage, control and build local ORS instances. The
 following code would jumpstart an initial instance, add an OSM extract
 of Rutland, add three routing profiles, set a random port, 100 MB of RAM
 and finally start the ORS instance. For more details, refer to
-`vignette("ors-installation")`.
+`vignette("ors-installation")`.d
 
 ``` r
-ors <- ors_instance(dir = "~")
-ors$set_extract("Rutland", provider = "geofabrik")
-ors$add_profiles("car", "bike-regular", "walking")
-ors$set_port()
-ors$set_ram(0.1)
-ors$up()
+ors <- ors_instance(dir = "~")$
+  set_extract("Rutland", provider = "geofabrik")$
+  add_profiles("car", "bike-regular", "walking")$
+  set_port()$
+  set_ram(0.1)$
+  up()
 ```
