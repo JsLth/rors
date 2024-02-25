@@ -11,7 +11,7 @@ ORSInstance <- R6::R6Class(
   # Public ----
   public = list(
     #' @description
-    #' Checks if ORS is ready to use. If \code{TRUE}, the \link{ORSRouting}
+    #' Checks if ORS is ready to use. If \code{TRUE}, the
     #' routing functions can be used.
     is_ready = function() {
       ors_ready(id = private$.get_id())
@@ -69,7 +69,7 @@ ORSInstance <- R6::R6Class(
 #' and enables functions like \code{\link{ors_pairwise}} to
 #' automatically detect the appropriate server information needed to make a
 #' successful request. Hence, this function should always be run after
-#' loading \code{ORSRouting} as a means of fixing an instance to the current
+#' loading \code{rors} as a means of fixing an instance to the current
 #' session.
 #'
 #' While initializing an instance using an already running server requires no

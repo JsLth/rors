@@ -1,4 +1,4 @@
-url: https://jslth.github.io/ORSRouting/
+url: https://jslth.github.io/rors/
 pkwurl: ~
 template:
   bootstrap: 5
@@ -13,9 +13,10 @@ template:
     link-color: '#0054AD'
 
 navbar:
-  title: "ORSRouting"
+  title: "rors"
   left:
-    - icon: fa-home
+    - text: Overview
+      icon: fa-home
       href: index.html
     - text: "Vignettes"
       icon: fa-book

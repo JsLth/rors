@@ -260,14 +260,14 @@ ors_pairwise <- function(src,
     route_df <- as_data_frame(route_df)
   }
 
-  structure(
+  structure( # TODO: metadata in attributes
     route_df,
     call = match.call(),
     data = locations,
     class = c("ors_dist", class(route_df))
   )
 }
-
+# TODO: _raw and _single functions to increase performance
 
 #' Calculate shortest routes to nearby points of interest
 #' @param group \code{[character/numeric]}

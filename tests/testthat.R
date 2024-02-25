@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(ORSRouting)
+library(rors)
 
-test_check("ORSRouting")
+test_check("rors")

@@ -77,7 +77,7 @@ test_that("$set_graphbuilding() works", {
 test_that("$set_extract() works", {
   expect_message(ors$set_extract(file = system.file(
     "setup/monaco.pbf",
-    package = "ORSRouting"
+    package = "rors"
   )))
 
   expect_match(

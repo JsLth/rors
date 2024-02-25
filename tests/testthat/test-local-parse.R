@@ -46,7 +46,7 @@ test_that("writing works", {
 })
 
 expect_error(
-  ors$set_extract(file = system.file("setup/monaco.pbf", package = "ORSRouting"))
+  ors$set_extract(file = system.file("setup/monaco.pbf", package = "rors"))
 )
 
 create_dry_files(ors)

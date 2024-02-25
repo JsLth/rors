@@ -60,7 +60,7 @@ create_dry_files <- function(ors) {
   if (dir.exists(data_dir)) stop("Data dir somehow already exists")
   dir.create(data_dir, recursive = TRUE)
   ors$set_extract(
-    file = system.file("setup/monaco.pbf", package = "ORSRouting"),
+    file = system.file("setup/monaco.pbf", package = "rors"),
     do_use = FALSE
   )
 
@@ -68,7 +68,7 @@ create_dry_files <- function(ors) {
   if (dir.exists(conf_dir)) stop("Conf dir somehow already exists")
   dir.create(conf_dir, recursive = TRUE)
   file.copy(
-    system.file("setup/ors-config.yml", package = "ORSRouting"),
+    system.file("setup/ors-config.yml", package = "rors"),
     file.path(conf_dir, "ors-config.yml"),
     overwrite = TRUE
   )

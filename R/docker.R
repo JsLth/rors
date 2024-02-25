@@ -40,7 +40,7 @@ ors_up <- function(self, private, wait = TRUE, ...) {
   }
 
   if (wait) {
-    ors_cli(h2 = "Setting up service")
+    ors_cli(cat = "line", h2 = "Setting up service")
     setup_info(verbose)
     notify_when_ready(name, interval = 10L, verbose = verbose)
   }
@@ -52,7 +52,7 @@ ors_down <- function(self, private) {
     cli::cli_abort("Docker is not running.")
   }
 
-  ors_cli(progress = c(
+  ors_cli(progress = list(
     "step",
     msg = "Taking down container {self$compose$name}...",
     msg_failed = "Cannot take down container {self$compose$name}.",
@@ -146,7 +146,7 @@ ors_stop <- function(self, private) {
   name <- self$compose$name
 
   if (isTRUE(self$is_running())) {
-    ors_cli(progress = c(
+    ors_cli(progress = list(
       "step",
       msg = "Stopping container...",
       msg_done = "Container stopped.",
@@ -235,7 +235,7 @@ rm_image <- function(self, private) {
     )
 
     if (nchar(image_ids$stdout)) {
-      ors_cli(progress = c(
+      ors_cli(progress = list(
         "step",
         msg = "Removing {length(image_ids)} image{?s}...",
         msg_done = "Removed {length(image_ids)} image{?s}.",
@@ -443,7 +443,7 @@ setup_info <- function(verbose) {
 # notification when the server is ready. Also watches out for errors
 # in the log files.
 notify_when_ready <- function(ors_name, interval, verbose) {
-  ors_cli(progress = c(
+  ors_cli(progress = list(
     "step",
     msg = "Starting service",
     msg_done = "Service setup done.",
@@ -453,7 +453,7 @@ notify_when_ready <- function(ors_name, interval, verbose) {
 
   proc <- callr::r_bg(
     function(ors_name, watch_for_error) {
-      while (!ORSRouting::ors_ready(force = TRUE, id = ors_name)) {
+      while (!rors::ors_ready(force = TRUE, id = ors_name)) {
         errors <- watch_for_error(ors_name)
         if (length(errors)) {
           return(errors)
@@ -489,7 +489,7 @@ watch_for_error <- function(ors_name) {
   # Searches the OpenRouteService logs for the keyword 'error' and returns
   # their error messages. If it turns out that tomcat and the local host can
   # raise errors, too, this will have to be overhauled from the get-go.
-  logs <- docker_logs(ors_name)$stdout
+  logs <- docker_logs(ors_name)
 
   errors <- grep(
     "error|exception",

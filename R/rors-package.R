@@ -4,8 +4,8 @@
 #' To learn more about the usage of this package, look into the two
 #' vignettes for this package:
 #' \preformatted{
-#' vignette("ors-installation", package = "ORSRouting")
-#' vignette("ors-routing", package = "ORSROuting")
+#' vignette("ors-installation", package = "rors")
+#' vignette("ors-routing", package = "rors")
 #' }
 #' @references
 #' This package is powered by OpenRouteService. For problems concerning their
@@ -21,7 +21,3 @@
 ## usethis namespace: start
 ## usethis namespace: end
 NULL
-
-utils::globalVariables(c(
-
-))

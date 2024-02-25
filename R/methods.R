@@ -5,8 +5,7 @@ format.ORSInstance <- function(x, ...) {
   is_local <- identical(type, "local")
 
   if (is.null(x$paths) && is_local) {
-    cat("<ORSInstance>", "\n")
-    return(invisible(x))
+    return(c("<ORSInstance>"))
   }
 
   # check if instance is mounted to the session

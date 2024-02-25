@@ -23,7 +23,7 @@ detect_config <- function(dir) {
     cli::cli_warn(c(
       "!" = "A JSON-style configuration file was mounted.",
       "i" = paste(
-        "JSON configs are deprecated and not supported by {.pkg ORSRouting}.",
+        "JSON configs are deprecated and not supported by {.pkg rors}.",
         "See {link} for details."
       )
     ))
@@ -151,11 +151,13 @@ insert_profiles <- function(self, private, ...) {
     }
   }
 
-  corrupt <- which(corrupt)
-  ors_cli(warn = list(c("!" = paste(
-    "{length(cli::qty(corrupt))} Arguments {corrupt} cannot be coerced to",
-    "class {.cls ors_profile} and will be skipped."
-  ))))
+  if (any(corrupt)) {
+    corrupt <- which(corrupt)
+    ors_cli(warn = list(c("!" = paste(
+      "{cli::qty(length(corrupt))} Arguments {corrupt} cannot be coerced to",
+      "class {.cls ors_profile} and will be skipped."
+    ))))
+  }
 
   engine
 }

@@ -1,10 +1,10 @@
 ---
-title: "Introduction to the ORSRouting functions"
+title: "Introduction to the rors functions"
 author: Jonas Lieth
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Introduction to the ORSRouting functions}
+  %\VignetteIndexEntry{Introduction to the rors functions}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(ORSRouting)
+library(rors)
 library(leaflet)
 library(units)
 library(sf)
@@ -28,7 +28,7 @@ library(terra)
 
 ## Introduction
 
-The `ORSRouting` package allows you to easily utilize the power and performance of OpenRouteService to generate routing data. After either setting up a local server or providing a link to an existing server (for details, refer to `vignette("ors-installation")`), you are ready to make requests using one of the package's functions. `ORSRouting` supports three OpenRouteService endpoints, namely:
+The `rors` package allows you to easily utilize the power and performance of OpenRouteService to generate routing data. After either setting up a local server or providing a link to an existing server (for details, refer to `vignette("ors-installation")`), you are ready to make requests using one of the package's functions. `rors` supports three OpenRouteService endpoints, namely:
 
 -   Directions
     -   `ors_distances`, `ors_shortest_distances`, `ors_inspect`, `ors_summary`
@@ -229,7 +229,7 @@ time_needed <- ors_accessibility(
 terra::plot(time_needed)
 ```
 
-OpenRouteService itself can only return isochrones as vector data. `ORSRouting` adds a `rasterize` argument to turn these isochrones into a pretty accessibility map that is able to combine multiple isochrone datasets into a single, comprehensible raster image.
+OpenRouteService itself can only return isochrones as vector data. `rors` adds a `rasterize` argument to turn these isochrones into a pretty accessibility map that is able to combine multiple isochrone datasets into a single, comprehensible raster image.
 
 ## Additional remarks
 

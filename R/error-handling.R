@@ -153,8 +153,8 @@ handle_missing_directions_batch <- function(has_cond) {
 cond_tip <- function(last = NULL) {
   callstr <- ifelse(
     is.null(last) || last == 1,
-    "ORSRouting::last_ors_conditions()",
-    sprintf("ORSRouting::last_ors_conditions(last = %s)", last)
+    "rors::last_ors_conditions()",
+    sprintf("rors::last_ors_conditions(last = %s)", last)
   )
   callstr <- cli::style_hyperlink(callstr, paste0("rstudio:run:", callstr))
   cli::col_grey(sprintf(

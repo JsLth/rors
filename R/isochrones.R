@@ -126,14 +126,14 @@ ors_accessibility <- function(src,
                               profile = get_profiles(force = TRUE),
                               range = c(200L, 300L),
                               attributes = "area",
-                              intersections = FALSE,
+                              intersections = FALSE, # FIXME: check intersections
                               interval = 30L,
                               location_type = c("start", "destination"),
                               range_type = c("time", "distance"),
                               smoothing = 25L,
                               area_units = c("m", "km", "mi"),
                               units = c("m", "km", "mi"),
-                              rasterize = FALSE,
+                              rasterize = FALSE, # TODO: revise rasterize
                               raster_resolution = c(100L, 100L),
                               instance = NULL,
                               ...) {

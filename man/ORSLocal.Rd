@@ -167,7 +167,7 @@ ors$start()
 
 }
 \section{Super class}{
-\code{\link[ORSRouting:ORSInstance]{ORSRouting::ORSInstance}} -> \code{ORSLocal}
+\code{\link[rors:ORSInstance]{rors::ORSInstance}} -> \code{ORSLocal}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -244,9 +244,9 @@ size of the selected extract file.}
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="get_status"><a href='../../ORSRouting/html/ORSInstance.html#method-ORSInstance-get_status'><code>ORSRouting::ORSInstance$get_status()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="is_mounted"><a href='../../ORSRouting/html/ORSInstance.html#method-ORSInstance-is_mounted'><code>ORSRouting::ORSInstance$is_mounted()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="is_ready"><a href='../../ORSRouting/html/ORSInstance.html#method-ORSInstance-is_ready'><code>ORSRouting::ORSInstance$is_ready()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="get_status"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-get_status'><code>rors::ORSInstance$get_status()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_mounted"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-is_mounted'><code>rors::ORSInstance$is_mounted()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_ready"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-is_ready'><code>rors::ORSInstance$is_ready()</code></a></span></li>
 </ul>
 </details>
 }}

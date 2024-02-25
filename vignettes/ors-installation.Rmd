@@ -1,7 +1,7 @@
 ---
 title: "Installing and setting up OpenRouteService locally"
 author: Jonas Lieth
-date: "2024-02-24"
+date: "2024-02-25"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Installing and setting up OpenRouteService locally}
@@ -13,7 +13,7 @@ vignette: >
 
 # Why do the routing functions not work off the shelf?
 
-ORSRouting is powered by OpenRouteService (ORS) and as such depends on a running ORS instance. If you did not mount a working ORS instance first, all routing functions will throw an error. An OpenRouteService instance is a server that can be communicated with using a specified REST API. This can either be the [public API](https://api.openrouteservice.org), a local server or any kind of web server that runs ORS. Instances are controlled through the `ors_instance` functions and the ORS setup function family. The resulting `ors_instance` object is automatically attached to the session and detected by all routing functions in the package.
+`rors` is powered by OpenRouteService (ORS) and as such depends on a running ORS instance. If you did not mount a working ORS instance first, all routing functions will throw an error. An OpenRouteService instance is a server that can be communicated with using a specified REST API. This can either be the [public API](https://api.openrouteservice.org), a local server or any kind of web server that runs ORS. Instances are controlled through the `ors_instance` functions and the ORS setup function family. The resulting `ors_instance` object is automatically attached to the session and detected by all routing functions in the package.
 
 If you have no interest in setting up a local instance and just want to make quick routing requests, you can grab a free API key from the [official website](https://openrouteservice.org/) and chuck it into the `ORS_TOKEN` environment variable. It is best practice to do so without exposing the token to R code, e.g. through an [`.Renviron`](https://rstats.wtf/r-startup.html#renviron) file. After doing so, you can call `ors_instance` to attach the token to your session.
 
@@ -49,7 +49,7 @@ In order to set up the ORS backend locally, we need three things:
 
 Of these, only Docker needs to be installed beforehand. `ors_instance` can verify the installation and start Docker, but it cannot assist in the installation process. You can get Docker from [here](https://docs.docker.com/get-docker/). Local ORS instances use Docker containers to host the service endpoints on a local server.
 
-OpenStreetMap (OSM) extracts are regional data files from the OSM project. It contains spatial information relevant for routing such as streets, buildings and natural features. OSM extracts are distributed by providers such as [Geofabrik](https://download.geofabrik.de/) or [bbbike](https://extract.bbbike.org/). `ORSRouting` wraps the `osmextract` package to match, download, and process extract files.
+OpenStreetMap (OSM) extracts are regional data files from the OSM project. It contains spatial information relevant for routing such as streets, buildings and natural features. OSM extracts are distributed by providers such as [Geofabrik](https://download.geofabrik.de/) or [bbbike](https://extract.bbbike.org/). `rors` wraps the `osmextract` package to match, download, and process extract files.
 
 Finally, a compose file is a file that instructs Docker how to create a container. The `ors_instance` function helps adjust this file, e.g. to change allocated memory or ports.
 
@@ -68,10 +68,10 @@ Immediately after, we can take down the service to make changes to the ORS setup
 
 ```r
 ors$down()
-#> ℹ Taking down container ors-app-9c12bcc...
-#> Warning: No resource found to remove for project "ors-app-9c12bcc".
-#> ✖ Cannot take down container ors-app-9c12bcc. [330ms]
 ```
+
+
+<img src="../man/figures/ors-installation/unnamed-chunk-5.svg" width="100%" />
 
 The resulting `ors_instance` object is stored in a cache environment for the entire R session. All API functions automatically detect the currently mounted instance.
 
@@ -110,7 +110,7 @@ As you can see, we are currently running the default OSM file. If we wanted to g
 
 
 ```r
-ors$set_extract("Rutland", provider = "geofabrik", asciicast_at = "all")
+ors$set_extract("Rutland", provider = "geofabrik")
 ```
 
 
@@ -216,17 +216,7 @@ ors$set_ram(init = 0.1, max = 0.2)
 
 ```r
 ors$compose$memory
-#> $total
-#> [1] 15.92733
-#> 
-#> $free
-#> [1] 5.019341
-#> 
-#> $init
-#> [1] 0.25
-#> 
-#> $max
-#> [1] 0.5
+#> NULL
 ```
 
 Similarly, not passing anything to compose methods, makes them freestyle. `$set_name()` creates a random container name and `$set_port()` assigns a random port.
@@ -242,7 +232,7 @@ ors$set_name()
 
 ```r
 ors$compose$name
-#> [1] "ors-app-9c12bcc"
+#> NULL
 ```
 
 
@@ -256,9 +246,7 @@ ors$set_port()
 
 ```r
 ors$compose$ports
-#>    host docker
-#> 1 18225   8080
-#> 2 13260   9001
+#> NULL
 ```
 
 
@@ -295,55 +283,23 @@ When `ors_ready()` returns `TRUE`, you are officially ready to use the rest of t
 
 # Manual changes
 
-The methods of an ORS instance object cover only some settings and configurations. Many functionalities were deliberately left out to keep the number of methods neat and tidy. If you are missing some important feature, feel free to open a [Github issue](https://github.com/JsLth/ORSRouting/issues).
+The methods of an ORS instance object cover only some settings and configurations. Many functionalities were deliberately left out to keep the number of methods neat and tidy. If you are missing some important feature, feel free to open a [Github issue](https://github.com/JsLth/rors/issues).
 
 Yet, you can always make manual changes yourself. The methods introduced above are merely convenience wrappers that take care of some tedious tasks. Parsed versions of `ors-config.yml` and `docker-compose.yml` are readily accessible in the instance object:
 
 
 ```r
 ors$config$parsed
-#> List of 1
-#>  $ ors:List of 2
-#>   ..$ engine   :List of 4
-#>   .. ..$ source_file     : chr "./ors-core/data/osm_file.pbf"
-#>   .. ..$ graphs_root_path: chr "./ors-core/data/graphs"
-#>   .. ..$ elevation       :List of 1
-#>   .. ..$ profiles        :List of 10
-#>   ..$ endpoints:List of 3
-#>   .. ..$ isochrones:List of 4
-#>   .. ..$ matrix    :List of 1
-#>   .. ..$ isochrone :List of 1
+#> NULL
 ```
 
 
 ```r
 ors$compose$parsed
-#> version: '2.4'
-#> services:
-#>   ors-app:
-#>     container_name: ors-app-9c12bcc
-#>     ports:
-#>       - 18225:8080
-#>       - 13260:9001
-#>     image: openrouteservice/openrouteservice:nightly
-#>     user: ${UID:-0}:${GID:-0}
-#>     volumes:
-#>       - ./docker/graphs:/home/ors/ors-core/data/graphs
-#>       - ./docker/elevation_cache:/home/ors/ors-core/data/elevation_cache
-#>       - ./docker/logs/ors:/home/ors/logs
-#>       - ./docker/logs/tomcat:/home/ors/tomcat/logs
-#>       - ./docker/conf:/home/ors/ors-conf
-#>       - ./docker/data:/home/ors/ors-core/data
-#>     environment:
-#>       - BUILD_GRAPHS=True
-#>       - JAVA_OPTS=-Djava.awt.headless=true -server -XX:TargetSurvivorRatio=75 -XX:SurvivorRatio=64
-#>         -XX:MaxTenuringThreshold=3 -XX:+UseG1GC -XX:+ScavengeBeforeFullGC -XX:ParallelGCThreads=4
-#>         -Xms250m -Xmx500m
-#>       - CATALINA_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9001
-#>         -Dcom.sun.management.jmxremote.rmi.port=9001 -Dcom.sun.management.jmxremote.authenticate=false
-#>         -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost
-#>       - ORS_CONFIG=/home/ors/ors-conf/ors-config.json
-#> 
+#> $services
+#> $services$`ors-app`
+#> $services$`ors-app`$container_name
+#> [1] "new-name-123"
 ```
 
 Both objects are lists, which can simply be modified:
@@ -358,6 +314,7 @@ One caveat is that such simple assignments only change the state of the object, 
 
 ```r
 ors$update()
+#> Error in attr(compose$services$`ors-app`$ports, "quoted") <- TRUE: attempt to set an attribute on NULL
 ```
 
 This command writes the current state of the parsed ORS files to disk. Conversely, if you make manual changes to one of the relevant ORS files, you can update the R instance object using:
@@ -365,6 +322,7 @@ This command writes the current state of the parsed ORS files to disk. Conversel
 
 ```r
 ors$update("self")
+#> Error in file(file, "rt", encoding = fileEncoding): invalid 'description' argument
 ```
 
 This command re-parses all ORS files. Again, it is advisable to make the majority of changes using the convenience wrappers as they automatically update and mount the instance object. Manually updating the instance is prone to errors which can be quite hard to spot and debug.
@@ -381,7 +339,5 @@ ORS instance objects contain some other important functions that didn't make it 
 - `$purge()`: Purges an ORS instance, i.e. takes down containers, deletes the ORS directory and cleans the instance object.
 - `$rm_extract()`: Removes one or several extracts from the ORS directory.
 - `$report()`: Prints a situation report of the ORS instance object.
-
-
 
 

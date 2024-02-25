@@ -178,7 +178,7 @@ ors_inspect <- function(src,
                         navigation = FALSE,
                         alternative_routes = NULL,
                         round_trip = NULL,
-                        as = c("tidy", "list", "string"),
+                        as = c("tidy", "list", "string"), # TODO: revise tidy approach
                         elev_as_z = FALSE,
                         instance = NULL,
                         ...) {

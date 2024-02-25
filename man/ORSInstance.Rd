@@ -22,7 +22,7 @@ the R session.
 \if{html}{\out{<a id="method-ORSInstance-is_ready"></a>}}
 \if{latex}{\out{\hypertarget{method-ORSInstance-is_ready}{}}}
 \subsection{Method \code{is_ready()}}{
-Checks if ORS is ready to use. If \code{TRUE}, the \link{ORSRouting}
+Checks if ORS is ready to use. If \code{TRUE}, the
 routing functions can be used.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$is_ready()}\if{html}{\out{</div>}}

@@ -81,7 +81,7 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
     path <- file.path(data_dir, paste0(providers[i], "_", file_name))
     rel_path <- relative_path(path, self$paths$top, pretty = TRUE)
 
-    ors_cli(progress = c(
+    ors_cli(progress = list(
       "step",
       msg = "Downloading OSM extract...",
       msg_done = "The extract was successfully downloaded to the following path: {rel_path}",
@@ -113,8 +113,8 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
   }
 
   # If the size is over 6 GB in size, give out a warning
-  size <- file.info(path)$size / 1024L
-  if (size >= 6) {
+  size <- file.size(path)
+  if (size >= 5.5e+9) {
     ors_cli(info = list(c("i" = paste( # nocov start
       "The OSM extract is very large ({.field {round(size, 2)}} GB).",
       "Make sure that you have enough working memory available."

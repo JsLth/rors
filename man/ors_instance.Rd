@@ -81,7 +81,7 @@ functions listed below stores the instance in an internal environment object
 and enables functions like \code{\link{ors_pairwise}} to
 automatically detect the appropriate server information needed to make a
 successful request. Hence, this function should always be run after
-loading \code{ORSRouting} as a means of fixing an instance to the current
+loading \code{rors} as a means of fixing an instance to the current
 session.
 
 While initializing an instance using an already running server requires no

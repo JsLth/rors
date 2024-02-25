@@ -337,10 +337,22 @@ ORSLocal <- R6::R6Class(
       if (self$is_built()) self$down()
       if (image) rm_image(self, private)
 
-      ors_cli(info = list(c("i" = "Removing ORS directory")))
+      ors_cli(progress = list(
+        "step",
+        msg = "Removing ORS directory",
+        msg_done = "Removed ORS directory",
+        msg_failed = "Could not remove ORS directory"
+      ))
+
       unlink(self$paths$top, recursive = TRUE, force = TRUE)
 
-      ors_cli(info = list(c("i" = "Cleaning up R6 object")))
+      ors_cli(progress = list(
+        "step",
+        msg = "Cleaning up R6 object",
+        msg_done = "Cleaned up R6 object",
+        msg_failed = "Could not clean up R6 object"
+      ))
+
       self$extract <- NULL
       self$compose <- NULL
       self$config <- NULL
@@ -1074,7 +1086,7 @@ start_docker <- function(verbose = TRUE) {
 
     # If Docker is installed, it will try to open
     if (status() == 0L || is.null(status())) {
-      ors_cli(progress = c(
+      ors_cli(progress = list(
         "step",
         msg = "Starting Docker...",
         spinner = verbose > 1,

@@ -107,7 +107,7 @@ get_extract_boundaries <- function(instance = NULL,
         cli::cli_abort("Cannot identify current extract file. Pass it explicitly.")
       }
 
-      ors_cli(progress = c(
+      ors_cli(progress = list(
         "step",
         msg = "Reading and processing extract file...",
         msg_done = "Extract file successfully read in!",

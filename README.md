@@ -1,17 +1,17 @@
 
-# ORSRouting
+# rors
 
-<img src="man/figures/orsrouting_sticker.png" width="150" align="right"/>
+<img src="man/figures/rors_sticker.png" width="150" align="right"/>
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/JsLth/ORSRouting/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/JsLth/ORSRouting/actions/workflows/check-standard.yaml)
+[![R-CMD-check](https://github.com/JsLth/rors/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/JsLth/rors/actions/workflows/check-standard.yaml)
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
-[![](https://www.r-pkg.org/badges/version/ORSRouting)](https://cran.r-project.org/package=ORSRouting)
+[![](https://www.r-pkg.org/badges/version/rors)](https://cran.r-project.org/package=rors)
 
 [![Codecov test
-coverage](https://codecov.io/gh/JsLth/ORSRouting/branch/master/graph/badge.svg)](https://app.codecov.io/gh/JsLth/ORSRouting?branch=master)
+coverage](https://codecov.io/gh/JsLth/rors/branch/master/graph/badge.svg)](https://app.codecov.io/gh/JsLth/rors?branch=master)
 
 <!-- badges: end -->
 
@@ -32,19 +32,18 @@ gracefully and the results are tidied up to digestible (sf) tibbles.
 Another important feature of `rors` is the setup and management of local
 OpenRouteService instances from scratch. Local instances facilitate
 computationally intensive data analyses and allow the definition of
-custom API configurations. While it is possible to use ORSRouting with
-the official web API, requests will be very slow due to rate
-restrictions and therefore not really suitable for larger scale
-analyses.
+custom API configurations. While it is possible to use `rors` with the
+official web API, requests will be very slow due to rate restrictions
+and therefore not really suitable for larger scale analyses.
 
 ## Installation
 
-You can install the development version of ORSRouting from
-[GitHub](https://github.com/) with:
+You can install the development version of `rors` from
+[GitHub](https://github.com/jslth/rors) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("JsLth/ORSRouting")
+devtools::install_github("jslth/rors")
 ```
 
 ## Basic usage
@@ -53,7 +52,7 @@ To connect to a running OpenRouteService server - or to build a new one,
 use the workhorse function `ors_instance`:
 
 ``` r
-library(ORSRouting)
+library(rors)
 #> © openrouteservice.org by HeiGIT | Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright
 library(sf)
 #> Linking to GEOS 3.11.2, GDAL 3.7.2, PROJ 9.3.0; sf_use_s2() is TRUE
@@ -87,13 +86,13 @@ ors_inspect(pharma, profile = "driving-car", level = "segment")
 
 ## Local instances
 
-While `ORSRouting` can work with public API requests, it is primarily
-designed to be used together with local instances. The `ors_instance`
-family can be used to manage, control and build local ORS instances. The
-following code would jumpstart an initial instance, add an OSM extract
-of Rutland, add three routing profiles, set a random port, 100 MB of RAM
-and finally start the ORS instance. For more details, refer to
-`vignette("ors-installation")`.d
+While `rors` can work with public API requests, it is primarily designed
+to be used together with local instances. The `ors_instance` family can
+be used to manage, control and build local ORS instances. The following
+code would jumpstart an initial instance, add an OSM extract of Rutland,
+add three routing profiles, set a random port, 100 MB of RAM and finally
+start the ORS instance. For more details, refer to
+`vignette("ors-installation")`.
 
 ``` r
 ors <- ors_instance(dir = "~")$

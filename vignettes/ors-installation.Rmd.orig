@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
   fig.path = "../man/figures/ors-installation",
   fig.cap = "",
   cache = FALSE,
+  asciicast_cursor = FALSE,
   asciicast_theme = if (Sys.getenv("IN_PKGDOWN") == "true") "pkgdown" else "github-light"
 )
 
@@ -24,7 +25,7 @@ asciicast::init_knitr_engine(
   echo = TRUE,
   echo_input = FALSE,
   startup = quote({
-    library(ORSRouting)
+    library(rors)
   }),
   record_env = c(ORS_TOKEN = "something"),
   interactive = FALSE
@@ -33,7 +34,7 @@ asciicast::init_knitr_engine(
 
 # Why do the routing functions not work off the shelf?
 
-ORSRouting is powered by OpenRouteService (ORS) and as such depends on a running ORS instance. If you did not mount a working ORS instance first, all routing functions will throw an error. An OpenRouteService instance is a server that can be communicated with using a specified REST API. This can either be the [public API](https://api.openrouteservice.org), a local server or any kind of web server that runs ORS. Instances are controlled through the `ors_instance` functions and the ORS setup function family. The resulting `ors_instance` object is automatically attached to the session and detected by all routing functions in the package.
+`rors` is powered by OpenRouteService (ORS) and as such depends on a running ORS instance. If you did not mount a working ORS instance first, all routing functions will throw an error. An OpenRouteService instance is a server that can be communicated with using a specified REST API. This can either be the [public API](https://api.openrouteservice.org), a local server or any kind of web server that runs ORS. Instances are controlled through the `ors_instance` functions and the ORS setup function family. The resulting `ors_instance` object is automatically attached to the session and detected by all routing functions in the package.
 
 If you have no interest in setting up a local instance and just want to make quick routing requests, you can grab a free API key from the [official website](https://openrouteservice.org/) and chuck it into the `ORS_TOKEN` environment variable. It is best practice to do so without exposing the token to R code, e.g. through an [`.Renviron`](https://rstats.wtf/r-startup.html#renviron) file. After doing so, you can call `ors_instance` to attach the token to your session.
 
@@ -61,19 +62,19 @@ In order to set up the ORS backend locally, we need three things:
 
 Of these, only Docker needs to be installed beforehand. `ors_instance` can verify the installation and start Docker, but it cannot assist in the installation process. You can get Docker from [here](https://docs.docker.com/get-docker/). Local ORS instances use Docker containers to host the service endpoints on a local server.
 
-OpenStreetMap (OSM) extracts are regional data files from the OSM project. It contains spatial information relevant for routing such as streets, buildings and natural features. OSM extracts are distributed by providers such as [Geofabrik](https://download.geofabrik.de/) or [bbbike](https://extract.bbbike.org/). `ORSRouting` wraps the `osmextract` package to match, download, and process extract files.
+OpenStreetMap (OSM) extracts are regional data files from the OSM project. It contains spatial information relevant for routing such as streets, buildings and natural features. OSM extracts are distributed by providers such as [Geofabrik](https://download.geofabrik.de/) or [bbbike](https://extract.bbbike.org/). `rors` wraps the `osmextract` package to match, download, and process extract files.
 
 Finally, a compose file is a file that instructs Docker how to create a container. The `ors_instance` function helps adjust this file, e.g. to change allocated memory or ports.
 
 You can initialize a local ORS instance by passing a directory to `ors_instance`. The function then downloads a compose file from the official [ORS Github repository](https://github.com/GIScience/openrouteservice). It then proceeds to "jumpstart" ORS, i.e. it starts a default instance with default configurations and OSM data from Heidelberg, Germany. This is probably not what you want, but worry not, because you can make changes to this setup afterwards. Jumpstarting is deemed good practice by the ORS developer team and simplifies the rest of the setup.
 
-```{asciicast, asciicast_timeout = 180, asciicast_at = 4}
+```{asciicast, asciicast_timeout = 180, asciicast_start_at = 0, asciicast_end_at = 10, asciicast_at = "all"}
 ors <- ors_instance(dir = ".", version = "7c77ae5")
 ```
 
 Immediately after, we can take down the service to make changes to the ORS setup:
 
-```{r}
+```{asciicast, asciicast_at = "all"}
 ors$down()
 ```
 
@@ -104,8 +105,8 @@ ors$extract
 
 As you can see, we are currently running the default OSM file. If we wanted to get a new extract, we can run:
 
-```{asciicast}
-ors$set_extract("Rutland", provider = "geofabrik", asciicast_at = "all")
+```{asciicast, asciicast_at = "all"}
+ors$set_extract("Rutland", provider = "geofabrik")
 ```
 
 This code runs `osmextract::oe_match` and `osmextract::oe_download` to download an extract of the British county Rutland. The extract is automatically added to the compose file, so you don't need to do anything else.
@@ -208,7 +209,7 @@ The final step of the ORS setup is to start the Docker container and, ultimately
 
 The service can be started using the `$up()` method:
 
-```{asciicast, asciicast_timeout = 180, asciicast_at = 4}
+```{asciicast, asciicast_timeout = 180, asciicast_start_at = 0, asciicast_end_at = 10, asciicast_at = "all"}
 ors$up()
 ```
 
@@ -225,7 +226,7 @@ When `ors_ready()` returns `TRUE`, you are officially ready to use the rest of t
 
 # Manual changes
 
-The methods of an ORS instance object cover only some settings and configurations. Many functionalities were deliberately left out to keep the number of methods neat and tidy. If you are missing some important feature, feel free to open a [Github issue](https://github.com/JsLth/ORSRouting/issues).
+The methods of an ORS instance object cover only some settings and configurations. Many functionalities were deliberately left out to keep the number of methods neat and tidy. If you are missing some important feature, feel free to open a [Github issue](https://github.com/JsLth/rors/issues).
 
 Yet, you can always make manual changes yourself. The methods introduced above are merely convenience wrappers that take care of some tedious tasks. Parsed versions of `ors-config.yml` and `docker-compose.yml` are readily accessible in the instance object:
 
@@ -239,7 +240,7 @@ ors$compose$parsed
 
 Both objects are lists, which can simply be modified:
 
-```{r}
+```{r, eval = TRUE}
 ors$compose$parsed$services$`ors-app`$container_name <- "new-name-123"
 ```
 
@@ -270,8 +271,7 @@ ORS instance objects contain some other important functions that didn't make it 
 - `$rm_extract()`: Removes one or several extracts from the ORS directory.
 - `$report()`: Prints a situation report of the ORS instance object.
 
-
-```{asciicast, include=FALSE}
+```{r, include = FALSE}
+stop(paste(ors$compose$name, ors$is_built()))
 ors$purge()
 ```
-
