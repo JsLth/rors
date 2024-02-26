@@ -322,6 +322,10 @@ ORSLocal <- R6::R6Class(
     #' Whether to remove the docker image or keep it for other projects. The
     #' default is \code{FALSE} to prevent accidentally breaking other projects.
     purge = function(image = FALSE) {
+      if (!private$.alive) {
+        return(invisible(NULL))
+      }
+
       if (private$.prompts) {
         ors_cli(info = list(c("i" = paste(
           "Purging the current instance removes the docker container,",
