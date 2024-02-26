@@ -1,4 +1,5 @@
 skip_if_offline("github.com")
+skip_on_cran()
 
 ors <- local_ors_instance(
   verbose = TRUE,
@@ -70,8 +71,14 @@ test_that("$set_name() works", {
 })
 
 test_that("$set_graphbuilding() works", {
+  get_gp <- function(ors) {
+    ors$compose$graph_building
+  }
+  expect_false(get_gp(ors))
   expect_message(ors$set_graphbuilding(TRUE))
+  expect_true(get_gp(ors))
   expect_message(ors$set_graphbuilding(FALSE))
+  expect_false(get_gp(ors))
 })
 
 test_that("$set_extract() works", {
@@ -109,25 +116,26 @@ test_that("$set_extract() works", {
     fixed = TRUE
   )
 
-  unlink(ors$paths$extract)
-  expect_warning(ors$update("self"), "could not be found", fixed = TRUE)
-})
-
-test_that("profiles work", {
-  expect_in(
-    c("hiking", "walking"),
-    names(ors$config$parsed$ors$engine$profiles)
-  )
-
   expect_message(
-    ors$rm_profiles("hiking", "walking"),
-    "hiking and walking",
+    ors$rm_extract(dir(
+      file.path(ors$paths$top, "docker", "data"),
+      pattern = "\.pbf$"
+    )),
+    regexp = "<- active extract",
     fixed = TRUE
   )
 
+  expect_warning(ors$update("self"), "could not be found", fixed = TRUE)
+})
+
+test_that("$add_profiles work", {
+  get_profiles <- function(ors) {
+    ors$config$parsed$ors$engine$profiles
+  }
+
   expect_failure(expect_in(
     c("hiking", "walking"),
-    names(ors$config$parsed$ors$engine$profiles)
+    names(get_profiles(ors))
   ))
 
   expect_message(
@@ -136,10 +144,60 @@ test_that("profiles work", {
     fixed = TRUE
   )
 
+  expect_no_message(ors$add_profiles(ors_profile("hiking"), "walking"))
+
   expect_in(
     c("hiking", "walking"),
-    names(ors$config$parsed$ors$engine$profiles)
+    names(get_profiles(ors))
   )
+
+  expect_message(
+    ors$rm_profiles("hiking", "walking"),
+    "hiking and walking",
+    fixed = TRUE
+  )
+
+  expect_no_message(ors$rm_profiles("hiking", "walking"))
+
+  expect_failure(expect_in(
+    c("hiking", "walking"),
+    names(get_profiles(ors))
+  ))
+})
+
+test_that("$set_endpoints works", {
+  get_endpoints <- function(ors, which = NULL) {
+    ep <- ors$config$parsed$ors$endpoints
+    if (!is.null(which)) {
+      ep[[which]]
+    } else {
+      ep
+    }
+  }
+
+  matrix <- list(maximum_routes = 200, maximum_visited_nodes = 50000)
+  isochr <- list(maximum_intervals = 1)
+
+  expect_message(ors$set_endpoints(matrix = matrix, isochrones = isochr))
+  expect_no_message(ors$set_endpoints(matrix = matrix, isochrones = isochr))
+
+  expect_identical(get_endpoints(ors, "matrix"), matrix)
+  expect_identical(get_endpoints(ors, "isochrone"), isochr)
+
+  ors$set_endpoints(matrix = list(test = 5))
+  expect_identical(get_endpoints(ors, "matrix"), c(matrix, test = 5))
+
+  expect_warning(ors$set_endpoints(invalid = list(test = 5)))
+})
+
+test_that("$set_image works", {
+  expect_identical(ors$compose$image, "nightly")
+
+  expect_message(ors$set_image("7.2.0"))
+  expect_no_message(ors$set_image("7.2.0"))
+  expect_message(ors$set_image("latest"))
+  expect_no_message(ors$set_image("test"))
+  expect_identical(ors$compose$image, "latest")
 })
 
 test_that("ors_profile() works", {
