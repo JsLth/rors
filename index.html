@@ -13,7 +13,7 @@
     limitations. R6 classes support the setup and and management of
     custom OpenRouteService instances. The package functions take a tidy
     and graceful approach in querying and formatting the API output.">
-<title>Routing using OpenRouteService • ORSRouting</title>
+<title>Routing using OpenRouteService • rors</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/Roboto-0.4.8/font.css" rel="stylesheet">
@@ -41,7 +41,7 @@
 
     <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
     
-    <a class="navbar-brand me-2" href="index.html">ORSRouting</a>
+    <a class="navbar-brand me-2" href="index.html">rors</a>
 
     <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.8</small>
 
@@ -56,6 +56,7 @@
   <a class="nav-link" href="index.html">
     <span class="fa fa-home"></span>
      
+    Overview
   </a>
 </li>
 <li class="nav-item dropdown">
@@ -83,7 +84,7 @@
 
       <ul class="navbar-nav">
 <li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/JsLth/ORSRouting/" aria-label="github">
+  <a class="external-link nav-link" href="https://github.com/JsLth/rors/" aria-label="github">
     <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
@@ -96,26 +97,37 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="orsrouting">ORSRouting<a class="anchor" aria-label="anchor" href="#orsrouting"></a>
+<div class="page-header"><h1 id="rors">rors<a class="anchor" aria-label="anchor" href="#rors"></a>
 </h1></div>
-<p><img src="reference/figures/orsrouting_sticker.png" width="150" align="right"></p>
+<p><img src="reference/figures/rors_sticker.png" width="150" align="right"></p>
 <!-- badges: start -->
 
-<p>The purpose of this package is to provide a comprehensive and convenient R interface to local OpenRouteService instances in order to facilitate batch routing. The package functions (so far) enable qualitative and quantitative route computations, distance matrix generation, and accessibility analyses (i.e. isochrones). Also included is a function family to build local customized OpenRouteService instances from scratch. While it is possible to use ORSRouting with the official web API, requests will be very slow due to rate restrictions and therefore not really suitable for larger scale analyses.</p>
+
+<!-- badges: end -->
+<p>The purpose of <code>rors</code> is to provide a tidy, pipeable and comprehensive R interface to local or remote <a href="https://openrouteservice.org/" class="external-link">OpenRouteService</a> (ORS) instances. <code>rors</code> currently enables analyses based on all available endpoints:</p>
+<ul>
+<li>Qualitative and quantitative routing computations</li>
+<li>Distance matrices</li>
+<li>Accessibility analyses</li>
+<li>Street snapping</li>
+<li>Graph network export</li>
+</ul>
+<p>Functions are designed to be pipeable, API calls are performed gracefully and the results are tidied up to digestible (sf) tibbles.</p>
+<p>Another important feature of <code>rors</code> is the setup and management of local OpenRouteService instances from scratch. Local instances facilitate computationally intensive data analyses and allow the definition of custom API configurations. While it is possible to use <code>rors</code> with the official web API, requests will be very slow due to rate restrictions and therefore not really suitable for larger scale analyses.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version of ORSRouting from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<p>You can install the development version of <code>rors</code> from <a href="https://github.com/jslth/rors" class="external-link">GitHub</a> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"JsLth/ORSRouting"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"jslth/rors"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="basic-usage">Basic usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h2>
 <p>To connect to a running OpenRouteService server - or to build a new one, use the workhorse function <code>ors_instance</code>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/JsLth/ORSRouting" class="external-link">ORSRouting</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/JsLth/rors" class="external-link">rors</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; © openrouteservice.org by HeiGIT | Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; Linking to GEOS 3.11.2, GDAL 3.7.2, PROJ 9.3.0; sf_use_s2() is TRUE</span></span>
@@ -124,46 +136,41 @@
 <span><span class="va">ors</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ors_instance.html">ors_instance</a></span><span class="op">(</span>server <span class="op">=</span> <span class="st">"public"</span><span class="op">)</span></span></code></pre></div>
 <p>The ORS instance is then attached to the session and is automatically detected by all other functions. To perform a simple routing request, run <code>ors_inspect</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/ors_inspect.html">ors_inspect</a></span><span class="op">(</span><span class="va">pharma</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, <span class="op">]</span>, profile <span class="op">=</span> <span class="st">"driving-car"</span>, extra_info <span class="op">=</span> <span class="st">"surface"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Simple feature collection with 139 features and 9 fields</span></span>
-<span><span class="co">#&gt; Geometry type: LINESTRING</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ors_inspect.html">ors_inspect</a></span><span class="op">(</span><span class="va">pharma</span>, profile <span class="op">=</span> <span class="st">"driving-car"</span>, level <span class="op">=</span> <span class="st">"segment"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Simple feature collection with 7 features and 5 fields</span></span>
+<span><span class="co">#&gt; Geometry type: MULTILINESTRING</span></span>
 <span><span class="co">#&gt; Dimension:     XY</span></span>
-<span><span class="co">#&gt; Bounding box:  xmin: -0.727928 ymin: 52.5876 xmax: -0.704255 ymax: 52.66963</span></span>
+<span><span class="co">#&gt; Bounding box:  xmin: -0.730349 ymin: 52.5876 xmax: -0.467708 ymax: 52.6747</span></span>
 <span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
-<span><span class="co">#&gt; # A tibble: 139 × 10</span></span>
-<span><span class="co">#&gt;    name       distance duration avgspeed elevation  type instruction exit_number</span></span>
-<span><span class="co">#&gt;  * &lt;chr&gt;           [m]      [s]   [km/h]       [m] &lt;int&gt; &lt;chr&gt;             &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1 Market Pl…    19.5      7        10.0      148     11 Head west …          NA</span></span>
-<span><span class="co">#&gt;  2 Orange St…    25.0      2.06     43.6      148      1 Turn right…          NA</span></span>
-<span><span class="co">#&gt;  3 Orange St…    23.0      1.89     43.8      148      1 Turn right…          NA</span></span>
-<span><span class="co">#&gt;  4 Orange St…     7.92     0.65     43.9      148      1 Turn right…          NA</span></span>
-<span><span class="co">#&gt;  5 Orange St…    16.4      1.35     43.8      148      1 Turn right…          NA</span></span>
-<span><span class="co">#&gt;  6 Orange St…    23.4      1.93     43.6      148      1 Turn right…          NA</span></span>
-<span><span class="co">#&gt;  7 Orange St…    63.8      5.25     43.7      148      1 Turn right…          NA</span></span>
-<span><span class="co">#&gt;  8 Orange St…    81.8      6.73     43.7      148      1 Turn right…          NA</span></span>
-<span><span class="co">#&gt;  9 Orange St…    40.2      3.31     43.7      147.     1 Turn right…          NA</span></span>
-<span><span class="co">#&gt; 10 Orange St…    42.7      3.52     43.7      147.     1 Turn right…          NA</span></span>
-<span><span class="co">#&gt; # ℹ 129 more rows</span></span>
-<span><span class="co">#&gt; # ℹ 2 more variables: surface &lt;fct&gt;, geometry &lt;LINESTRING [°]&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 7 × 6</span></span>
+<span><span class="co">#&gt;   name            distance duration avgspeed elevation                  geometry</span></span>
+<span><span class="co">#&gt; * &lt;chr&gt;                [m]      [s]   [km/h]       [m]     &lt;MULTILINESTRING [°]&gt;</span></span>
+<span><span class="co">#&gt; 1 Uppingham Road…   9983.     618.      69.8     121.  ((-0.722324 52.58762, -0…</span></span>
+<span><span class="co">#&gt; 2 High Street, B…     26.3      2.4     39.4     111.  ((-0.727928 52.66962, -0…</span></span>
+<span><span class="co">#&gt; 3 Uppingham Road…  10059.     628.      68.8     120.  ((-0.728317 52.66962, -0…</span></span>
+<span><span class="co">#&gt; 4 Uppingham Road…  10642.     676.      69.8     123.  ((-0.721097 52.58816, -0…</span></span>
+<span><span class="co">#&gt; 5 Stamford Road,…  19188.    1137.      66.0      77.9 ((-0.730349 52.66991, -0…</span></span>
+<span><span class="co">#&gt; 6 St Mary's Stre…    358.      61.9     25.0      32.5 ((-0.478222 52.65071, -0…</span></span>
+<span><span class="co">#&gt; 7 St George's St…   1094.     140.      27.7      38.9 ((-0.477902 52.65231, -0…</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="local-instances">Local instances<a class="anchor" aria-label="anchor" href="#local-instances"></a>
 </h2>
-<p>While <code>ORSRouting</code> can work with public API requests, it is primarily designed to be used together with local instances. The <code>ors_instance</code> family can be used to manage, control and build local ORS instances. The following code would jumpstart an initial instance, add an OSM extract of Rutland, add three routing profiles, set a random port, 100 MB of RAM and finally start the ORS instance. For more details, refer to <code><a href="articles/ors-installation.html">vignette("ors-installation")</a></code>.</p>
+<p>While <code>rors</code> can work with public API requests, it is primarily designed to be used together with local instances. The <code>ors_instance</code> family can be used to manage, control and build local ORS instances. The following code would jumpstart an initial instance, add an OSM extract of Rutland, add three routing profiles, set a random port, 100 MB of RAM and finally start the ORS instance. For more details, refer to <code><a href="articles/ors-installation.html">vignette("ors-installation")</a></code>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ors_instance.html">ors_instance</a></span><span class="op">(</span>dir <span class="op">=</span> <span class="st">"~"</span><span class="op">)</span></span>
-<span><span class="va">ors</span><span class="op">$</span><span class="fu">set_extract</span><span class="op">(</span><span class="st">"Rutland"</span>, provider <span class="op">=</span> <span class="st">"geofabrik"</span><span class="op">)</span></span>
-<span><span class="va">ors</span><span class="op">$</span><span class="fu">add_profiles</span><span class="op">(</span><span class="st">"car"</span>, <span class="st">"bike-regular"</span>, <span class="st">"walking"</span><span class="op">)</span></span>
-<span><span class="va">ors</span><span class="op">$</span><span class="fu">set_port</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">ors</span><span class="op">$</span><span class="fu">set_ram</span><span class="op">(</span><span class="fl">0.1</span><span class="op">)</span></span>
-<span><span class="va">ors</span><span class="op">$</span><span class="fu">up</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ors</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ors_instance.html">ors_instance</a></span><span class="op">(</span>dir <span class="op">=</span> <span class="st">"~"</span><span class="op">)</span><span class="op">$</span></span>
+<span>  <span class="fu">set_extract</span><span class="op">(</span><span class="st">"Rutland"</span>, provider <span class="op">=</span> <span class="st">"geofabrik"</span><span class="op">)</span><span class="op">$</span></span>
+<span>  <span class="fu">add_profiles</span><span class="op">(</span><span class="st">"car"</span>, <span class="st">"bike-regular"</span>, <span class="st">"walking"</span><span class="op">)</span><span class="op">$</span></span>
+<span>  <span class="fu">set_port</span><span class="op">(</span><span class="op">)</span><span class="op">$</span></span>
+<span>  <span class="fu">set_ram</span><span class="op">(</span><span class="fl">0.1</span><span class="op">)</span><span class="op">$</span></span>
+<span>  <span class="fu">up</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/JsLth/ORSRouting/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/JsLth/ORSRouting/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/JsLth/rors/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/JsLth/rors/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -179,7 +186,7 @@
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing ORSRouting</a></li>
+<li><a href="authors.html#citation">Citing rors</a></li>
 </ul>
 </div>
 
@@ -193,10 +200,10 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/JsLth/ORSRouting/actions/workflows/check-standard.yaml" class="external-link"><img src="https://github.com/JsLth/ORSRouting/actions/workflows/check-standard.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://github.com/JsLth/rors/actions/workflows/check-standard.yaml" class="external-link"><img src="https://github.com/JsLth/rors/actions/workflows/check-standard.yaml/badge.svg" alt="R-CMD-check"></a></li>
 <li><a href="https://lifecycle.r-lib.org/articles/stages.html#maturing" class="external-link"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="Lifecycle: maturing"></a></li>
-<li><a href="https://cran.r-project.org/package=ORSRouting" class="external-link"><img src="https://www.r-pkg.org/badges/version/ORSRouting"></a></li>
-<li><a href="https://app.codecov.io/gh/JsLth/ORSRouting?branch=master" class="external-link"><img src="https://codecov.io/gh/JsLth/ORSRouting/branch/master/graph/badge.svg" alt="Codecov test coverage"></a></li>
+<li><a href="https://cran.r-project.org/package=rors" class="external-link"><img src="https://www.r-pkg.org/badges/version/rors"></a></li>
+<li><a href="https://app.codecov.io/gh/JsLth/rors?branch=master" class="external-link"><img src="https://codecov.io/gh/JsLth/rors/branch/master/graph/badge.svg" alt="Codecov test coverage"></a></li>
 </ul>
 </div>
 

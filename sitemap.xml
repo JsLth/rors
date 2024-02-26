@@ -1,87 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://jslth.github.io/ORSRouting/404.html</loc>
+    <loc>https://jslth.github.io/rors/404.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/LICENSE-text.html</loc>
+    <loc>https://jslth.github.io/rors/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/LICENSE.html</loc>
+    <loc>https://jslth.github.io/rors/LICENSE.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/articles/index.html</loc>
+    <loc>https://jslth.github.io/rors/articles/index.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/articles/ors-installation.html</loc>
+    <loc>https://jslth.github.io/rors/articles/ors-installation.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/authors.html</loc>
+    <loc>https://jslth.github.io/rors/authors.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/index.html</loc>
+    <loc>https://jslth.github.io/rors/index.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ORSInstance.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ORSInstance.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ORSLocal.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ORSLocal.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ORSRemote.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ORSRemote.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ORSRouting-package.html</loc>
+    <loc>https://jslth.github.io/rors/reference/get_closest_pois.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/get_closest_pois.html</loc>
+    <loc>https://jslth.github.io/rors/reference/get_extract_boundaries.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/get_extract_boundaries.html</loc>
+    <loc>https://jslth.github.io/rors/reference/get_instance.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/get_instance.html</loc>
+    <loc>https://jslth.github.io/rors/reference/index.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/index.html</loc>
+    <loc>https://jslth.github.io/rors/reference/last_ors_conditions.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/last_ors_conditions.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ors_accessibility.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ors_accessibility.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ors_export.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ors_export.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ors_guess.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ors_guess.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ors_inspect.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ors_inspect.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ors_instance.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ors_instance.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ors_matrix.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ors_matrix.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ors_pairwise.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ors_pairwise.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ors_profile.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ors_profile.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ors_sample.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ors_sample.html</loc>
+    <loc>https://jslth.github.io/rors/reference/ors_snap.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/ors_snap.html</loc>
+    <loc>https://jslth.github.io/rors/reference/pharma.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/pharma.html</loc>
+    <loc>https://jslth.github.io/rors/reference/plot_section.html</loc>
   </url>
   <url>
-    <loc>https://jslth.github.io/ORSRouting/reference/plot_section.html</loc>
+    <loc>https://jslth.github.io/rors/reference/rors-package.html</loc>
   </url>
 </urlset>

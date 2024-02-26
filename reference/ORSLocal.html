@@ -8,7 +8,7 @@ vignette:
 
 vignette("ors-installation", package = "rors")
 
-'><title>ORS local instance — ORSLocal • ORSRouting</title><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Roboto-0.4.8/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.8/font.css" rel="stylesheet"><link href="../deps/Roboto_Slab-0.4.8/font.css" rel="stylesheet"><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous"><!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="ORS local instance — ORSLocal"><meta property="og:description" content='Creates a new ORS instance object. This R6 class is typically
+'><title>ORS local instance — ORSLocal • rors</title><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Roboto-0.4.8/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.8/font.css" rel="stylesheet"><link href="../deps/Roboto_Slab-0.4.8/font.css" rel="stylesheet"><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous"><!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="ORS local instance — ORSLocal"><meta property="og:description" content='Creates a new ORS instance object. This R6 class is typically
 constructed by ors_instance.
 For technical details on the setup of local ORS instances, refer to the
 official ORS reference.
@@ -26,7 +26,7 @@ vignette("ors-installation", package = "rors")
 
     <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
     
-    <a class="navbar-brand me-2" href="../index.html">ORSRouting</a>
+    <a class="navbar-brand me-2" href="../index.html">rors</a>
 
     <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.8</small>
 
@@ -40,6 +40,7 @@ vignette("ors-installation", package = "rors")
   <a class="nav-link" href="../index.html">
     <span class="fa fa-home"></span>
      
+    Overview
   </a>
 </li>
 <li class="nav-item dropdown">
@@ -64,7 +65,7 @@ vignette("ors-installation", package = "rors")
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off"></form>
 
       <ul class="navbar-nav"><li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/JsLth/ORSRouting/" aria-label="github">
+  <a class="external-link nav-link" href="https://github.com/JsLth/rors/" aria-label="github">
     <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
@@ -77,7 +78,7 @@ vignette("ors-installation", package = "rors")
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>ORS local instance</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JsLth/ORSRouting/blob/HEAD/R/local.R" class="external-link"><code>R/local.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JsLth/rors/blob/HEAD/R/local.R" class="external-link"><code>R/local.R</code></a></small>
       <div class="d-none name"><code>ORSLocal.Rd</code></div>
     </div>
 
@@ -170,7 +171,7 @@ also need to be done manually. To write changes to disk, run
     </div>
     <div class="section level2">
     <h2 id="super-class">Super class<a class="anchor" aria-label="anchor" href="#super-class"></a></h2>
-    <p><code><a href="ORSInstance.html">ORSRouting::ORSInstance</a></code> -&gt; <code>ORSLocal</code></p>
+    <p><code><a href="ORSInstance.html">rors::ORSInstance</a></code> -&gt; <code>ORSLocal</code></p>
     </div>
     <div class="section level2">
     <h2 id="public-fields">Public fields<a class="anchor" aria-label="anchor" href="#public-fields"></a></h2>
@@ -229,6 +230,7 @@ size of the selected extract file.</p></dd>
 <ul><li><p><a href="#method-ORSLocal-new"><code>ORSLocal$new()</code></a></p></li>
 <li><p><a href="#method-ORSLocal-update"><code>ORSLocal$update()</code></a></p></li>
 <li><p><a href="#method-ORSLocal-purge"><code>ORSLocal$purge()</code></a></p></li>
+<li><p><a href="#method-ORSLocal-finalize"><code>ORSLocal$finalize()</code></a></p></li>
 <li><p><a href="#method-ORSLocal-report"><code>ORSLocal$report()</code></a></p></li>
 <li><p><a href="#method-ORSLocal-set_extract"><code>ORSLocal$set_extract()</code></a></p></li>
 <li><p><a href="#method-ORSLocal-rm_extract"><code>ORSLocal$rm_extract()</code></a></p></li>
@@ -250,19 +252,20 @@ size of the selected extract file.</p></dd>
 <li><p><a href="#method-ORSLocal-is_built"><code>ORSLocal$is_built()</code></a></p></li>
 <li><p><a href="#method-ORSLocal-is_running"><code>ORSLocal$is_running()</code></a></p></li>
 <li><p><a href="#method-ORSLocal-clone"><code>ORSLocal$clone()</code></a></p></li>
-</ul></div><p><details open><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="get_status"><a href="ORSInstance.html#method-get_status"><code>ORSRouting::ORSInstance$get_status()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="is_mounted"><a href="ORSInstance.html#method-is_mounted"><code>ORSRouting::ORSInstance$is_mounted()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="ORSRouting" data-topic="ORSInstance" data-id="is_ready"><a href="ORSInstance.html#method-is_ready"><code>ORSRouting::ORSInstance$is_ready()</code></a></span></li>
+</ul></div><p><details open><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="get_status"><a href="ORSInstance.html#method-get_status"><code>rors::ORSInstance$get_status()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_mounted"><a href="ORSInstance.html#method-is_mounted"><code>rors::ORSInstance$is_mounted()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_ready"><a href="ORSInstance.html#method-is_ready"><code>rors::ORSInstance$is_ready()</code></a></span></li>
 </ul></details></p><hr><a id="method-ORSLocal-new"></a><div class="section">
 <h3 id="method-new-">Method <code><a href="https://rdrr.io/r/methods/new.html" class="external-link">new()</a></code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Initialize the ORSInstance object.</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/ORSLocal.html">ORSLocal</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
-<span>  dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dir <span class="op">=</span> <span class="st">"."</span>,</span>
 <span>  version <span class="op">=</span> <span class="st">"7.2.0"</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  dry <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="fl">2L</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  prompts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -295,14 +298,14 @@ if it exists.</p></dd>
 
 <dt><code>verbose</code></dt>
 <dd><p><code>[logical]</code></p>
-<p>Level of verbosity. Must be an integer between 0 and 2. The verbosity
-levels are deconstructed as follows:</p><ul><li><p>0: No messages, progress bars, sounds, and prompts. Only important
-warnings.</p></li>
-<li><p>1: Informative messages and warnings, but no system
-notifications, prompts, or progress bars.</p></li>
-<li><p>2: Messages, warnings, prompts, progress bars, and system
-notifications.</p></li>
-</ul></dd>
+<p>Level of verbosity. If <code>TRUE</code>, shows informative warnings and messages,
+spinners, progress bars and system notifications.</p></dd>
+
+
+<dt><code>prompts</code></dt>
+<dd><p><code>[logical]</code></p>
+<p>Whether to ask for permission throughout the setup. Defaults to
+<code>TRUE</code> in interactive sessions.</p></dd>
 
 
 </dl><p></p></div>
@@ -354,12 +357,21 @@ default is <code>FALSE</code> to prevent accidentally breaking other projects.</
 </dl><p></p></div>
 </div>
 
+</div><p></p><hr><a id="method-ORSLocal-finalize"></a><div class="section">
+<h3 id="method-finalize-">Method <code>finalize()</code><a class="anchor" aria-label="anchor" href="#method-finalize-"></a></h3>
+<p>Finalize and purge an ORS instance. Alias for <code>$purge()</code> that
+automatically executes on garbage collection.</p><div class="section">
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">finalize</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+
 </div><p></p><hr><a id="method-ORSLocal-report"></a><div class="section">
 <h3 id="method-report-">Method <code>report()</code><a class="anchor" aria-label="anchor" href="#method-report-"></a></h3>
 <p>Prints a situation report of the ORS instance. Invokes all relevant
 print methods that summarize the current state of the instance
 object.</p><div class="section">
-<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">report</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -368,7 +380,7 @@ object.</p><div class="section">
 <h3 id="method-set-extract-">Method <code>set_extract()</code><a class="anchor" aria-label="anchor" href="#method-set-extract-"></a></h3>
 <p>Download and set an OpenStreetMap extract for use in ORS. Wrapper for
 <code><a href="https://docs.ropensci.org/osmextract/reference/oe_get.html" class="external-link">oe_get()</a></code>.</p><div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">set_extract</span><span class="op">(</span></span>
 <span>  <span class="va">place</span>,</span>
 <span>  provider <span class="op">=</span> <span class="st">"geofabrik"</span>,</span>
@@ -427,7 +439,7 @@ specified, <code>place</code> and <code>provider</code> are ignored.</p></dd>
 </div><p></p><hr><a id="method-ORSLocal-rm_extract"></a><div class="section">
 <h3 id="method-rm-extract-">Method <code>rm_extract()</code><a class="anchor" aria-label="anchor" href="#method-rm-extract-"></a></h3>
 <p>Removes extract files from the data directory.</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">rm_extract</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -444,7 +456,7 @@ files that exist are removed.</p></dd>
 </div><p></p><hr><a id="method-ORSLocal-set_name"></a><div class="section">
 <h3 id="method-set-name-">Method <code>set_name()</code><a class="anchor" aria-label="anchor" href="#method-set-name-"></a></h3>
 <p>Set a name for the ORS container.</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">set_name</span><span class="op">(</span>name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -461,7 +473,7 @@ a random name (<code>"ors-appXXXX"</code>).</p></dd>
 </div><p></p><hr><a id="method-ORSLocal-set_port"></a><div class="section">
 <h3 id="method-set-port-">Method <code>set_port()</code><a class="anchor" aria-label="anchor" href="#method-set-port-"></a></h3>
 <p>Set a port for the localhost of the ORS container.</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">set_port</span><span class="op">(</span>port <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -479,7 +491,7 @@ random port using
 </div><p></p><hr><a id="method-ORSLocal-set_ram"></a><div class="section">
 <h3 id="method-set-ram-">Method <code>set_ram()</code><a class="anchor" aria-label="anchor" href="#method-set-ram-"></a></h3>
 <p>Set initial and max memory that the ORS container is allowed to use.</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">set_ram</span><span class="op">(</span>init <span class="op">=</span> <span class="cn">NULL</span>, max <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -509,7 +521,7 @@ Turning graph building on enables new profiles to be built or the
 extract to be changed but significantly increases setup time. Turn
 this off if you are changing configuration options that do not alter
 routing graphs.</p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">set_graphbuilding</span><span class="op">(</span><span class="va">mode</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -527,7 +539,7 @@ routing graphs.</p><div class="section">
 <h3 id="method-set-image-">Method <code>set_image()</code><a class="anchor" aria-label="anchor" href="#method-set-image-"></a></h3>
 <p>Set version of the ORS Docker image. This should preferably be compatible
 with the compose version.</p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">set_image</span><span class="op">(</span>version <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -545,7 +557,7 @@ with the compose version.</p><div class="section">
 <h3 id="method-add-profiles-">Method <code>add_profiles()</code><a class="anchor" aria-label="anchor" href="#method-add-profiles-"></a></h3>
 <p>Add routing profiles to the ORS configuration. ORS only builds routing
 graphs for active profiles.</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">add_profiles</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -563,7 +575,7 @@ strings. If a character string is passed, it is interpreted as
 </div><p></p><hr><a id="method-ORSLocal-rm_profiles"></a><div class="section">
 <h3 id="method-rm-profiles-">Method <code>rm_profiles()</code><a class="anchor" aria-label="anchor" href="#method-rm-profiles-"></a></h3>
 <p>Remove routing profiles from the ORS configuration.</p><div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">rm_profiles</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -581,7 +593,7 @@ removes profile defaults.</p></dd>
 <h3 id="method-set-endpoints-">Method <code>set_endpoints()</code><a class="anchor" aria-label="anchor" href="#method-set-endpoints-"></a></h3>
 <p>Change endpoint-specific configurations. Specifies options that are
 relevant for entire API endpoints such as isochrones.</p><div class="section">
-<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">set_endpoints</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -603,7 +615,7 @@ for a list of defaults.</p></dd>
 <h3 id="method-up-">Method <code>up()</code><a class="anchor" aria-label="anchor" href="#method-up-"></a></h3>
 <p>Create the ORS docker container and setup the ORS backend on a local
 host.</p><div class="section">
-<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">up</span><span class="op">(</span>wait <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -647,7 +659,7 @@ status can then be checked using <code>$is_ready()</code> or
 <p>Stop and remove the ORS docker container. Use this if you want to make
 changes to a running ORS setup such as changing the extract or selected
 profiles.</p><div class="section">
-<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">down</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -655,7 +667,7 @@ profiles.</p><div class="section">
 </div><p></p><hr><a id="method-ORSLocal-start"></a><div class="section">
 <h3 id="method-start-">Method <code><a href="https://rdrr.io/r/stats/start.html" class="external-link">start()</a></code><a class="anchor" aria-label="anchor" href="#method-start-"></a></h3>
 <p>Start the ORS docker container.</p><div class="section">
-<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
+<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">start</span><span class="op">(</span>wait <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -675,7 +687,7 @@ container is created. You can then check the service status using
 </div><p></p><hr><a id="method-ORSLocal-stop"></a><div class="section">
 <h3 id="method-stop-">Method <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code><a class="anchor" aria-label="anchor" href="#method-stop-"></a></h3>
 <p>Stop the ORS docker container.</p><div class="section">
-<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
+<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="kw">stop</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -683,7 +695,7 @@ container is created. You can then check the service status using
 </div><p></p><hr><a id="method-ORSLocal-get_image"></a><div class="section">
 <h3 id="method-get-image-">Method <code>get_image()</code><a class="anchor" aria-label="anchor" href="#method-get-image-"></a></h3>
 <p>Retrieve technical information on the docker image used.</p><div class="section">
-<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
+<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">get_image</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -691,7 +703,7 @@ container is created. You can then check the service status using
 </div><p></p><hr><a id="method-ORSLocal-get_container"></a><div class="section">
 <h3 id="method-get-container-">Method <code>get_container()</code><a class="anchor" aria-label="anchor" href="#method-get-container-"></a></h3>
 <p>Retrieve technical information on the docker container used.</p><div class="section">
-<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
+<h4 id="usage-20">Usage<a class="anchor" aria-label="anchor" href="#usage-20"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">get_container</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -700,7 +712,7 @@ container is created. You can then check the service status using
 <h3 id="method-show-logs-">Method <code>show_logs()</code><a class="anchor" aria-label="anchor" href="#method-show-logs-"></a></h3>
 <p>Show container logs as returned by <code>docker logs</code>. Useful for
 debugging docker setups.</p><div class="section">
-<h4 id="usage-20">Usage<a class="anchor" aria-label="anchor" href="#usage-20"></a></h4>
+<h4 id="usage-21">Usage<a class="anchor" aria-label="anchor" href="#usage-21"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">show_logs</span><span class="op">(</span>format <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -720,7 +732,7 @@ can be useful for larger logs.</p></dd>
 <h3 id="method-is-built-">Method <code>is_built()</code><a class="anchor" aria-label="anchor" href="#method-is-built-"></a></h3>
 <p>Checks if the ORS container is built. You can control this state
 using <code>$up()</code> and <code>$down()</code>.</p><div class="section">
-<h4 id="usage-21">Usage<a class="anchor" aria-label="anchor" href="#usage-21"></a></h4>
+<h4 id="usage-22">Usage<a class="anchor" aria-label="anchor" href="#usage-22"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">is_built</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -730,7 +742,7 @@ using <code>$up()</code> and <code>$down()</code>.</p><div class="section">
 <p>Checks if the ORS container is running. You can control this state
 using <code>$start()</code> and <code>$stop()</code>. Check <code>$is_ready()</code> to see
 if the ORS setup succeeded.</p><div class="section">
-<h4 id="usage-22">Usage<a class="anchor" aria-label="anchor" href="#usage-22"></a></h4>
+<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">is_running</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -738,7 +750,7 @@ if the ORS setup succeeded.</p><div class="section">
 </div><p></p><hr><a id="method-ORSLocal-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
+<h4 id="usage-24">Usage<a class="anchor" aria-label="anchor" href="#usage-24"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
