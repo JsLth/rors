@@ -69,9 +69,9 @@ get_id <- function(id = NULL, instance = NULL) {
     } else if (inherits(instance, "ORSRemote")) {
       id <- instance$url
     }
-  } else {
-    id
   }
+
+  id
 }
 
 
