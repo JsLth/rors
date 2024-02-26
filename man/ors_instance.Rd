@@ -4,16 +4,7 @@
 \alias{ors_instance}
 \title{OpenRouteService instance}
 \usage{
-ors_instance(
-  dir = ".",
-  server = NULL,
-  version = "latest",
-  overwrite = FALSE,
-  verbose = TRUE,
-  prompts = interactive(),
-  token = FALSE,
-  ...
-)
+ors_instance(dir = ".", server = NULL, ...)
 }
 \arguments{
 \item{dir}{\code{[character]}
@@ -35,38 +26,8 @@ API is rate-restricted and requests are automatically throttled to 40
 requests per minute. Routing functions \emph{will} be slow for larger
 datasets.}
 
-\item{version}{\code{[character]}
-
-The OpenRouteService version to use. Can either be a version number (e.g.
-7.2.0), a commit hash, or a version description (\code{"master"},
-\code{"latest"} or \code{"nightly"}). Ignored if \code{server} is not
-\code{NULL}. If \code{version} is a numeric version or a version
-description, both compose version and image version are set. If
-\code{version} is a hash, the image version defaults to \code{"nightly"}.
-Ignored if \code{server} is given.}
-
-\item{overwrite}{\code{[logical]}
-
-Whether to overwrite the current OpenRouteService directory
-if it exists. Ignored if \code{server} is given.}
-
-\item{verbose}{\code{[logical]}
-
-Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
-spinners, progress bars and system notifications.
-Ignored if \code{server} is given.}
-
-\item{prompts}{\code{[logical]}
-
-Whether to ask for permission throughout the setup. Defaults to
-\code{TRUE} in interactive sessions. Ignored if \code{server} is given.}
-
-\item{token}{\code{[logical]}
-
-Whether \code{server} requires authorization over a token. ORS tokens
-are stored in the \code{ORS_TOKEN} environment variable. Defaults to
-\code{FALSE}. If \code{server} is the public API, \code{token} is set
-to \code{TRUE}. Ignored if \code{server} is \code{NULL}.}
+\item{...}{Further arguments passed to \code{\link{ORSLocal}} or
+\code{\link{ORSRemote}}.}
 }
 \value{
 R6 object of class \code{ors_instance} as created by
@@ -76,8 +37,8 @@ R6 object of class \code{ors_instance} as created by
 Creates an OpenRouteService instance object. An instance
 represents either a local/remote server or a directory from which
 OpenRouteService can be set up. Running this function or any of the related
-functions listed below stores the instance in an internal environment object
-and enables functions like \code{\link{ors_pairwise}} to
+functions listed below stores the instance in an internal environment
+and enables functions interacting with the OpenRouteService API to
 automatically detect the appropriate server information needed to make a
 successful request. Hence, this function should always be run after
 loading \code{rors} as a means of fixing an instance to the current
@@ -90,8 +51,8 @@ removes any server-side rate limits and allows you to conveniently use the
 package functions on much larger datasets. For setting up a local server,
 it is required to build and start a Docker container.
 To do this, \code{ors_instance}
-starts Docker (if necessary), downloads and unpacks the OpenRouteService
-source code and returns an object of class \code{ors_instance}.
+starts Docker (if necessary), creates an ORS directory, parses all
+important information and jumpstarts a fresh ORS server.
 
 For a full reference of the methods of an ORS instance, refer to
 \code{\link{ORSLocal}} and \code{\link{ORSRemote}}.

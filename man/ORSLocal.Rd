@@ -218,7 +218,6 @@ size of the selected extract file.}
 \item \href{#method-ORSLocal-new}{\code{ORSLocal$new()}}
 \item \href{#method-ORSLocal-update}{\code{ORSLocal$update()}}
 \item \href{#method-ORSLocal-purge}{\code{ORSLocal$purge()}}
-\item \href{#method-ORSLocal-finalize}{\code{ORSLocal$finalize()}}
 \item \href{#method-ORSLocal-report}{\code{ORSLocal$report()}}
 \item \href{#method-ORSLocal-set_extract}{\code{ORSLocal$set_extract()}}
 \item \href{#method-ORSLocal-rm_extract}{\code{ORSLocal$rm_extract()}}
@@ -354,17 +353,6 @@ default is \code{FALSE} to prevent accidentally breaking other projects.}
 }
 \if{html}{\out{</div>}}
 }
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ORSLocal-finalize"></a>}}
-\if{latex}{\out{\hypertarget{method-ORSLocal-finalize}{}}}
-\subsection{Method \code{finalize()}}{
-Finalize and purge an ORS instance. Alias for \code{$purge()} that
-automatically executes on garbage collection.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$finalize()}\if{html}{\out{</div>}}
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ORSLocal-report"></a>}}

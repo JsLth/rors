@@ -365,14 +365,6 @@ ORSLocal <- R6::R6Class(
     },
 
     #' @description
-    #' Finalize and purge an ORS instance. Alias for \code{$purge()} that
-    #' automatically executes on garbage collection.
-    finalize = function() {
-      private$.prompts <- FALSE
-      self$purge(image = FALSE)
-    },
-
-    #' @description
     #' Prints a situation report of the ORS instance. Invokes all relevant
     #' print methods that summarize the current state of the instance
     #' object.
