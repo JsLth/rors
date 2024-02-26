@@ -543,3 +543,8 @@ make_default_profile <- function(profile) {
     cli::cli_abort("No template defined for profile {.val profile}.")
   )
 }
+
+
+check_version <- function(version) {
+  if (is_numver(version) || is_version_desc(version, "dh")) version
+}
