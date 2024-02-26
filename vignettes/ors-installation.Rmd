@@ -1,7 +1,7 @@
 ---
 title: "Installing and setting up OpenRouteService locally"
 author: Jonas Lieth
-date: "2024-02-25"
+date: "2024-02-26"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Installing and setting up OpenRouteService locally}
@@ -13,7 +13,13 @@ vignette: >
 
 # Why do the routing functions not work off the shelf?
 
-`rors` is powered by OpenRouteService (ORS) and as such depends on a running ORS instance. If you did not mount a working ORS instance first, all routing functions will throw an error. An OpenRouteService instance is a server that can be communicated with using a specified REST API. This can either be the [public API](https://api.openrouteservice.org), a local server or any kind of web server that runs ORS. Instances are controlled through the `ors_instance` functions and the ORS setup function family. The resulting `ors_instance` object is automatically attached to the session and detected by all routing functions in the package.
+`rors` is powered by OpenRouteService (ORS) and as such depends on a running ORS instance. If you did not mount a working ORS instance first, all routing functions will throw an error. An OpenRouteService instance is a server that can be communicated with using a specified REST API. This can be
+
+* The [public API](https://api.openrouteservice.org)
+* Any kind of remote server that runs ORS
+* A self-built ORS on a local host
+
+Instances are controlled through the `ors_instance` functions and the ORS setup function family. The resulting `ors_instance` object is automatically attached to the session and detected by all routing functions in the package.
 
 If you have no interest in setting up a local instance and just want to make quick routing requests, you can grab a free API key from the [official website](https://openrouteservice.org/) and chuck it into the `ORS_TOKEN` environment variable. It is best practice to do so without exposing the token to R code, e.g. through an [`.Renviron`](https://rstats.wtf/r-startup.html#renviron) file. After doing so, you can call `ors_instance` to attach the token to your session.
 
@@ -25,7 +31,7 @@ public
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-2.svg" width="100%" />
+<img src="../man/figures/ors-installation/public-api.svg" width="100%" />
 
 
 ```r
@@ -33,9 +39,23 @@ public$token
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-3.svg" width="100%" />
+<img src="../man/figures/ors-installation/token.svg" width="100%" />
 
-After doing this, all functions should be ready to use. Keep in mind though, that firing requests at the public API comes with lots of rate restrictions. For a simple request involving 100 routes you will wait upwards of two minutes as requests are throttled according to their rate restrictions. If you plan on working with larger datasets, if you are limited by server-side restrictions of the public API, or if you're handling sensitive data, it is strongly suggested that you set up a local instance. This vignette will cover the usage of `ors_instance` and family to construct and start a customized ORS instance using R.
+After doing this, all functions should be ready to use. Keep in mind though, that the public API comes with a few caveats:
+
+- It is restricted at a rate limit of 40 requests per minute and 2000 requests per day. `rors` automatically throttles requests to the public API such that queries will inevitably be slow for larger analyses.
+- It is a remote service that handles potentially sensitive address data. If data privacy is a concern, online services are usually not an option.
+- It runs on a relatively strict configuration that severely limits the amount of data or ways to process the data. For example, requests to the isochrone endpoint are only allowed to contain a maximum of five locations:
+
+
+```r
+ors_accessibility(pharma)
+```
+
+
+<img src="../man/figures/ors-installation/error.svg" width="100%" />
+
+Therefore, if you plan on working with larger datasets, if you are limited by server-side restrictions of the public API, or if you're handling sensitive data, it is strongly suggested that you set up a local instance. This vignette will cover the usage of `ors_instance` and family to construct and start a customized ORS instance using R.
 
 
 
@@ -53,15 +73,15 @@ OpenStreetMap (OSM) extracts are regional data files from the OSM project. It co
 
 Finally, a compose file is a file that instructs Docker how to create a container. The `ors_instance` function helps adjust this file, e.g. to change allocated memory or ports.
 
-You can initialize a local ORS instance by passing a directory to `ors_instance`. The function then downloads a compose file from the official [ORS Github repository](https://github.com/GIScience/openrouteservice). It then proceeds to "jumpstart" ORS, i.e. it starts a default instance with default configurations and OSM data from Heidelberg, Germany. This is probably not what you want, but worry not, because you can make changes to this setup afterwards. Jumpstarting is deemed good practice by the ORS developer team and simplifies the rest of the setup.
+You can initialize a local ORS instance by passing a directory to `ors_instance`. The function then creates a sub-directory reserved for ORS and downloads a compose file from the official [ORS Github repository](https://github.com/GIScience/openrouteservice). It then proceeds to "jumpstart" ORS, i.e. it starts a default instance with default configurations and OSM data from Heidelberg, Germany. This is probably not what you want, but worry not, because you can make changes to this setup afterwards. Jumpstarting is deemed good practice by the ORS developer team and simplifies the rest of the setup.
 
 
 ```r
-ors <- ors_instance(dir = ".", version = "7c77ae5")
+ors <- ors_instance(dir = ".", version = "7c77ae5", prompts = FALSE)
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-4.svg" width="100%" />
+<img src="../man/figures/ors-installation/jumpstart.svg" width="100%" />
 
 Immediately after, we can take down the service to make changes to the ORS setup:
 
@@ -71,7 +91,7 @@ ors$down()
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-5.svg" width="100%" />
+<img src="../man/figures/ors-installation/down.svg" width="100%" />
 
 The resulting `ors_instance` object is stored in a cache environment for the entire R session. All API functions automatically detect the currently mounted instance.
 
@@ -81,7 +101,7 @@ get_instance()
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-6.svg" width="100%" />
+<img src="../man/figures/ors-installation/mount.svg" width="100%" />
 
 The instance object already shows some important information when printed. We are dealing with a local instance on a localhost. The instance is "active" in that it is currently mounted to the session and it is "init" in that it was already built for the first time.
 
@@ -103,7 +123,7 @@ ors$extract
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-7.svg" width="100%" />
+<img src="../man/figures/ors-installation/extract.svg" width="100%" />
 
 
 As you can see, we are currently running the default OSM file. If we wanted to get a new extract, we can run:
@@ -114,7 +134,7 @@ ors$set_extract("Rutland", provider = "geofabrik")
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-8.svg" width="100%" />
+<img src="../man/figures/ors-installation/geofabrik.svg" width="100%" />
 
 This code runs `osmextract::oe_match` and `osmextract::oe_download` to download an extract of the British county Rutland. The extract is automatically added to the compose file, so you don't need to do anything else.
 
@@ -122,7 +142,7 @@ This code runs `osmextract::oe_match` and `osmextract::oe_download` to download 
 
 ## Changing the configuration
 
-ORS defines a `ors-config.yml` file inside the ORS directory that holds the configuration for the service. If you have ever used ORS before, chances are you have encountered errors that told you about server-side limits. The config file is the place where these limits are defined and where you can change them for your own setup.
+ORS creates a `ors-config.yml` file inside the ORS directory that holds the configuration for the service. If you have ever used ORS before, chances are you have encountered errors that told you about server-side limits. The config file is the place where these limits are defined and where you can change them for your own setup.
 
 The configuration especially includes the active routing profiles, profile-specific options and endpoint-specific options. Routing profiles are the transport modes used to do the routing with. The default is `driving-car`, but there are several other profiles you can choose from (refer to the [API playground](https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post)).
 
@@ -134,7 +154,7 @@ ors$config
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-9.svg" width="100%" />
+<img src="../man/figures/ors-installation/config.svg" width="100%" />
 
 As you can see, there is currently only one active profile: `driving-car`. To add more profiles, we can use the `$add_profiles` method. The method accepts either character values or objects of class `ors_profile` - or a combination of both. For quickly adding a new profile, you can simply refer to it by name.
 
@@ -144,7 +164,7 @@ ors$add_profiles("walking", ors_profile("hiking"))
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-10.svg" width="100%" />
+<img src="../man/figures/ors-installation/add-profiles.svg" width="100%" />
 
 However, each routing profile comes with its own set of configurations. To have a better control over the configurations in each profile, we can create `ors_profile` objects. The following code creates a walking profile with the same defaults as above, but without taking into account elevation in its routing computations.
 
@@ -154,7 +174,7 @@ ors_profile("walking", elevation = FALSE)
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-11.svg" width="100%" />
+<img src="../man/figures/ors-installation/profile.svg" width="100%" />
 
 To remove a profile, you can refer to it by name:
 
@@ -164,7 +184,7 @@ ors$rm_profiles("hiking")
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-12.svg" width="100%" />
+<img src="../man/figures/ors-installation/rm-profiles.svg" width="100%" />
 
 
 Besides routing profiles, we can also change the configuration of entire endpoints. Endpoints include `directions`, `isochrones` and `matrix`. Each endpoint comes with its own limitations. For example, by default we can only create isochrones for 2 locations. To increase this limit, we can run:
@@ -175,7 +195,7 @@ ors$set_endpoints(isochrone = list(maximum_locations = 100))
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-13.svg" width="100%" />
+<img src="../man/figures/ors-installation/endpoints.svg" width="100%" />
 
 A full list of endpoint defaults set by ORS can be found in the [endpoint reference](https://giscience.github.io/openrouteservice/run-instance/configuration/ors/endpoints/). A full list of profiles and their specific configuration defaults can be found in the [profile reference](https://giscience.github.io/openrouteservice/run-instance/configuration/ors/engine/profiles).
 
@@ -191,7 +211,7 @@ ors$compose
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-14.svg" width="100%" />
+<img src="../man/figures/ors-installation/compose.svg" width="100%" />
 
 By default, ORS uses 1 GB of initial memory and 2 GB of maximum memory. This means that Docker starts allocating 1 GB of memory, but is only allowed to allocate a maximum of 2 GB. You can adjust these defaults to your needs using `$set_ram`. Usually, ORS requires about 2.5 times the size of the extract file for each routing profile as memory. You can either set the memory manually or let `$set_ram` make an educated guess:
 
@@ -202,7 +222,7 @@ ors$set_ram()
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-15.svg" width="100%" />
+<img src="../man/figures/ors-installation/ram1.svg" width="100%" />
 
 
 ```r
@@ -211,15 +231,17 @@ ors$set_ram(init = 0.1, max = 0.2)
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-16.svg" width="100%" />
+<img src="../man/figures/ors-installation/ram2.svg" width="100%" />
 
 
 ```r
 ors$compose$memory
-#> NULL
 ```
 
-Similarly, not passing anything to compose methods, makes them freestyle. `$set_name()` creates a random container name and `$set_port()` assigns a random port.
+
+<img src="../man/figures/ors-installation/ram3.svg" width="100%" />
+
+Similarly, not passing anything to other compose methods, makes them freestyle. `$set_name()` creates a random container name and `$set_port()` assigns a random port.
 
 
 ```r
@@ -227,13 +249,15 @@ ors$set_name()
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-18.svg" width="100%" />
+<img src="../man/figures/ors-installation/name1.svg" width="100%" />
 
 
 ```r
 ors$compose$name
-#> NULL
 ```
+
+
+<img src="../man/figures/ors-installation/name2.svg" width="100%" />
 
 
 ```r
@@ -241,13 +265,15 @@ ors$set_port()
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-20.svg" width="100%" />
+<img src="../man/figures/ors-installation/port1.svg" width="100%" />
 
 
 ```r
 ors$compose$ports
-#> NULL
 ```
+
+
+<img src="../man/figures/ors-installation/port2.svg" width="100%" />
 
 
 ## Docker
@@ -268,7 +294,7 @@ ors$up()
 ```
 
 
-<img src="../man/figures/ors-installation/unnamed-chunk-22.svg" width="100%" />
+<img src="../man/figures/ors-installation/up.svg" width="100%" />
 
 By default, `$up()` blocks the console until the setup is done and gives out a visual and audible notification upon completion. If the setup fails, `$up()` immediately invokes an informative error. This is useful for short to moderately long setup times. However, especially for longer setups, this can be obtrusive. By passing `wait = FALSE`, the entire setup happens in a background process and you can keep using the console. There are two tools that enable you to monitor the setup progress nonetheless:
 
@@ -290,17 +316,18 @@ Yet, you can always make manual changes yourself. The methods introduced above a
 
 ```r
 ors$config$parsed
-#> NULL
 ```
+
+
+<img src="../man/figures/ors-installation/parsed1.svg" width="100%" />
 
 
 ```r
 ors$compose$parsed
-#> $services
-#> $services$`ors-app`
-#> $services$`ors-app`$container_name
-#> [1] "new-name-123"
 ```
+
+
+<img src="../man/figures/ors-installation/parsed2.svg" width="100%" />
 
 Both objects are lists, which can simply be modified:
 
@@ -314,7 +341,6 @@ One caveat is that such simple assignments only change the state of the object, 
 
 ```r
 ors$update()
-#> Error in attr(compose$services$`ors-app`$ports, "quoted") <- TRUE: attempt to set an attribute on NULL
 ```
 
 This command writes the current state of the parsed ORS files to disk. Conversely, if you make manual changes to one of the relevant ORS files, you can update the R instance object using:
@@ -322,7 +348,6 @@ This command writes the current state of the parsed ORS files to disk. Conversel
 
 ```r
 ors$update("self")
-#> Error in file(file, "rt", encoding = fileEncoding): invalid 'description' argument
 ```
 
 This command re-parses all ORS files. Again, it is advisable to make the majority of changes using the convenience wrappers as they automatically update and mount the instance object. Manually updating the instance is prone to errors which can be quite hard to spot and debug.
@@ -340,4 +365,16 @@ ORS instance objects contain some other important functions that didn't make it 
 - `$rm_extract()`: Removes one or several extracts from the ORS directory.
 - `$report()`: Prints a situation report of the ORS instance object.
 
+# Fin
 
+To finalize an ORS instance, you can run `ors$purge()`. Purging an instance takes down any running container, (optionally) deletes the image, unlinks the created sub-directory and cleans up the ORS object. ORS instances also register a finalizer that automatically purges the ORS instance just before garbage collection when it is unbinded using `rm(ors)`.
+
+
+
+
+```r
+ors$purge()
+```
+
+
+<img src="../man/figures/ors-installation/purge.svg" width="100%" />
