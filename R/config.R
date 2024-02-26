@@ -90,27 +90,30 @@ compare_endpoints <- function(x, y) {
   if (!any(names(y) %in% endpoints())) {
     cli::cli_abort(c(
       "{.var ...} must contain a valid endpoint as argument name.",
-      "i" = "Valid endpoints include: {.val {all_endpoints}}"
+      "i" = "Valid endpoints include: {.val {endpoints()}}"
     ))
   }
 
-  compare_config(x, y)
+  changed <- compare_config(x, y)
+  is_valid <- changed %in% endpoints()
+
+  if (any(!is_valid)) {
+    excess <- changed[!is_valid]
+    cli::cli_warn(c("!" = paste(
+      "The following {cli::qty(excess)} endpoints are invalid",
+      "and will be skipped: {.val {excess}}"
+    )))
+  }
+
+  changed[is_valid]
 }
 
 
 change_endpoints <- function(self, ...) {
   config <- self$config$parsed
   dots <- list(...)
-  is_valid_ep <- names(dots) %in% endpoints()
 
-  if (any(!is_valid_ep)) {
-    cli::cli_warn(c("!" = paste(
-      "Argument{?s} {.val {names(dots)[!is_valid_ep]}} {?is/are}",
-      "no valid endpoint{?s} and will be skipped."
-    )))
-  }
-
-  dots <- dots[is_valid_ep]
+  dots <- dots[names(dots) %in% endpoints()]
   dots <- dots[lengths(dots) > 0]
   names(dots)["snap" %in% names(dots)] <- "Snap"
 
@@ -179,7 +182,7 @@ remove_profiles <- function(self, ...) {
   dots <- setdiff(dots, "default")
 
   # remove profiles
-  pnames <- vapply(engine$profiles, "[[", "profile", FUN.VALUE = character(1))
+  pnames <- get_profile_names(engine$profiles)
   del <- pnames %in% dots | names(pnames) %in% dots
   engine$profiles[del] <- NULL
 
@@ -193,6 +196,7 @@ remove_profiles <- function(self, ...) {
 
 
 get_profile_names <- function(profiles) {
+  profiles %||% return()
   nm <- vapply(seq_along(profiles), FUN.VALUE = character(1), function(i) {
     x <- profiles[[i]]
     if (inherits(x, "ors_profile")) {

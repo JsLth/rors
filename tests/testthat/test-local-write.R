@@ -5,7 +5,8 @@ ors <- local_ors_instance(
   verbose = TRUE,
   dry = TRUE,
   complete = TRUE,
-  version = "7c77ae5"
+  version = "7c77ae5",
+  prompts = FALSE
 )
 
 test_that("$set_ram() works", {
@@ -119,13 +120,14 @@ test_that("$set_extract() works", {
   expect_message(
     ors$rm_extract(dir(
       file.path(ors$paths$top, "docker", "data"),
-      pattern = "\.pbf$"
+      pattern = "\\.pbf$"
     )),
     regexp = "<- active extract",
     fixed = TRUE
   )
 
-  expect_warning(ors$update("self"), "could not be found", fixed = TRUE)
+  # test if extract is actually unset or if it is still in compose
+  expect_no_warning(ors$update("self"))
 })
 
 test_that("$add_profiles work", {
@@ -178,8 +180,8 @@ test_that("$set_endpoints works", {
   matrix <- list(maximum_routes = 200, maximum_visited_nodes = 50000)
   isochr <- list(maximum_intervals = 1)
 
-  expect_message(ors$set_endpoints(matrix = matrix, isochrones = isochr))
-  expect_no_message(ors$set_endpoints(matrix = matrix, isochrones = isochr))
+  expect_message(ors$set_endpoints(matrix = matrix, isochrone = isochr))
+  expect_no_message(ors$set_endpoints(matrix = matrix, isochrone = isochr))
 
   expect_identical(get_endpoints(ors, "matrix"), matrix)
   expect_identical(get_endpoints(ors, "isochrone"), isochr)
@@ -187,7 +189,17 @@ test_that("$set_endpoints works", {
   ors$set_endpoints(matrix = list(test = 5))
   expect_identical(get_endpoints(ors, "matrix"), c(matrix, test = 5))
 
-  expect_warning(ors$set_endpoints(invalid = list(test = 5)))
+  expect_warning(
+    ors$set_endpoints(invalid = list(test = 5), matrix = list(test = 5)),
+    regexp = "will be skipped",
+    fixed = TRUE
+  )
+
+  expect_error(
+    ors$set_endpoints(invalid = list(test = 5)),
+    regexp = "must contain",
+    fixed = TRUE
+  )
 })
 
 test_that("$set_image works", {
