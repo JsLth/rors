@@ -116,19 +116,19 @@ call_ors_matrix <- function(src,
   req <- httr2::req_headers(
     req,
     Accept = "application/json; charset=utf-8",
-    Authorization = token,
+    Authorization = if (isTRUE(token)) get_ors_token(),
     `Content-Type` = "application/json; charset=utf-8"
   )
 
   # Create http body of the request
-  body_list <- list(
+  body <- list(
     locations = locations,
     destinations = dest_index,
     sources = src_index,
     metrics = box(metrics),
     units = units
   )
-  req <- httr2::req_body_json(req, body_list, digits = NA)
+  req <- httr2::req_body_json(req, body, digits = NA)
   req$parse <- TRUE
 
   perform_call(req)
@@ -165,11 +165,11 @@ call_ors_isochrones <- function(src,
   req <- httr2::req_headers(
     req,
     Accept = "application/geo+json; charset=utf-8",
-    Authorization = token,
+    Authorization = if (isTRUE(token)) get_ors_token(),
     `Content-Type` = "application/json; charset=utf-8"
   )
 
-  body_list <- list(
+  body <- list(
     locations = locations,
     range = box(range),
     attributes = box(attributes),
@@ -182,7 +182,8 @@ call_ors_isochrones <- function(src,
     area_units = area_units,
     units = units
   )
-  req <- httr2::req_body_json(req, body_list, digits = NA)
+  body <- body[lengths(body) > 0L]
+  req <- httr2::req_body_json(req, body, digits = NA)
   req$parse <- TRUE
 
   perform_call(req)
@@ -201,8 +202,8 @@ call_ors_snap <- function(src, profile, radius, url, ...) {
     `Content-Type` = "application/json"
   )
 
-  body_list <- list(locations = locations, radius = radius, ...)
-  req <- httr2::req_body_json(req, body_list, digits = NA)
+  body <- list(locations = locations, radius = radius, ...)
+  req <- httr2::req_body_json(req, body, digits = NA)
   req$parse <- TRUE
 
   perform_call(req)
@@ -220,8 +221,8 @@ call_ors_export <- function(bbox, profile, url, ...) {
     `Content-Type` = "application/json"
   )
 
-  body_list <- list(bbox = bbox, ...)
-  req <- httr2::req_body_json(req, body_list, digits = NA)
+  body <- list(bbox = bbox, ...)
+  req <- httr2::req_body_json(req, body, digits = NA)
   req$parse <- TRUE
 
   perform_call(req)
