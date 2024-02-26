@@ -465,9 +465,7 @@ instance object.</li>
 <p>To finalize an ORS instance, you can run <code>ors$purge()</code>.
 Purging an instance takes down any running container, (optionally)
 deletes the image, unlinks the created sub-directory and cleans up the
-ORS object. ORS instances also register a finalizer that automatically
-purges the ORS instance just before garbage collection when it is
-unbinded using <code>rm(ors)</code>.</p>
+ORS object.</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ors</span><span class="op">$</span><span class="fu">purge</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="../reference/figures/ors-installation/purge.svg" width="100%"></p>
