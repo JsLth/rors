@@ -218,7 +218,11 @@ format.ors_token <- function(x, ...) {
     msg2 <- NULL
   }
 
-  paste0(c("", " ", " "), c("<ors_token>", msg1, msg2))
+  if (is.null(msg2)) {
+    paste0(c("", " "), c("<ors_token>", msg1))
+  } else {
+    paste0(c("", " ", " "), c("<ors_token>", msg1, msg2))
+  }
 }
 
 
