@@ -611,7 +611,7 @@ ORSLocal <- R6::R6Class(
     #'
     #' Version specification of the ORS image.
     set_image = function(version = NULL) {
-      old <- self$compose$version
+      old <- self$compose$image
       new <- check_version(version) %||% old
 
       if (!identical(old, new)) {
@@ -619,7 +619,7 @@ ORSLocal <- R6::R6Class(
         self$compose$parsed$services$`ors-app`$image <- paste0(
           "openrouteservice/openrouteservice:", new
         )
-        self$compose$version <- new
+        self$compose$image <- new
         self$update()
       }
     },
