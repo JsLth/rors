@@ -435,7 +435,8 @@ Removes extract files from the data directory.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{...}}{File names of extract files in the data directory. All
-files that exist are removed.}
+files that exist are removed. Can also be a single vector of file
+names.}
 }
 \if{html}{\out{</div>}}
 }
@@ -580,7 +581,7 @@ Remove routing profiles from the ORS configuration.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{...}}{Names of routing profiles to remove. \code{"default"}
-removes profile defaults.}
+removes profile defaults. Can also be a single character vector.}
 }
 \if{html}{\out{</div>}}
 }

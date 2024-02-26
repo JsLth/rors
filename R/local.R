@@ -460,7 +460,8 @@ ORSLocal <- R6::R6Class(
     #' Removes extract files from the data directory.
     #'
     #' @param ... File names of extract files in the data directory. All
-    #' files that exist are removed.
+    #' files that exist are removed. Can also be a single vector of file
+    #' names.
     rm_extract = function(...) {
       old <- c(...)
 
@@ -662,7 +663,7 @@ ORSLocal <- R6::R6Class(
     #' Remove routing profiles from the ORS configuration.
     #'
     #' @param ... Names of routing profiles to remove. \code{"default"}
-    #' removes profile defaults.
+    #' removes profile defaults. Can also be a single character vector.
     rm_profiles = function(...) {
       old <- self$config$profiles
       new <- c(...)

@@ -99,11 +99,18 @@ compare_endpoints <- function(x, y) {
 
 
 change_endpoints <- function(self, ...) {
-  valid_ep <- c("routing", "matrix", "isochrone", "snap")
   config <- self$config$parsed
   dots <- list(...)
+  is_valid_ep <- names(dots) %in% endpoints()
 
-  dots <- dots[names(dots) %in% endpoints()]
+  if (any(!is_valid_ep)) {
+    cli::cli_warn(c("!" = paste(
+      "Argument{?s} {.val {names(dots)[!is_valid_ep]}} {?is/are}",
+      "no valid endpoint{?s} and will be skipped."
+    )))
+  }
+
+  dots <- dots[is_valid_ep]
   dots <- dots[lengths(dots) > 0]
   names(dots)["snap" %in% names(dots)] <- "Snap"
 
