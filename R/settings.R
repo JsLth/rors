@@ -251,8 +251,3 @@ change_extract <- function(compose, path) {
 
   compose
 }
-
-
-check_version <- function(version) {
-  if (is_numver(version)) version
-}

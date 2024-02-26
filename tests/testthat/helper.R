@@ -67,9 +67,15 @@ create_dry_files <- function(ors) {
   conf_dir <- file.path(ors$paths$top, "docker", "conf")
   if (dir.exists(conf_dir)) stop("Conf dir somehow already exists")
   dir.create(conf_dir, recursive = TRUE)
-  file.copy(
-    system.file("setup/ors-config.yml", package = "rors"),
-    file.path(conf_dir, "ors-config.yml"),
-    overwrite = TRUE
+  yaml::write_yaml(
+    list(
+      ors = list(
+        engine = list(
+          source_file = "ors-api/src/test/files/heidelberg.osm.gz",
+          profiles = list(car = list(enabled = TRUE))
+        )
+      )
+    ),
+    file = file.path(conf_dir, "ors-config.yml")
   )
 }
