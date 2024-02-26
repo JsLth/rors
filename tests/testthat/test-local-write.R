@@ -132,7 +132,7 @@ test_that("profiles work", {
 
   expect_message(
     ors$add_profiles(ors_profile("hiking"), "walking"),
-    "foot-hiking and foot-walking",
+    "hiking and walking",
     fixed = TRUE
   )
 

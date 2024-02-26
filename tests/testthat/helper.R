@@ -35,11 +35,11 @@ local_ors_instance <- function(dir = tempdir(),
 with_ors_instance <- function(code,
                               dir = tempdir(),
                               ...,
-                              verbose = 1L,
+                              verbose = TRUE,
                               dry = TRUE,
                               complete = FALSE,
                               .local_envir = parent.frame()) {
-  ors <- ORSLocal$new(dir = dir, dry = dry, verbose = verbose, ...)
+  ors <- ORSLocal$new(dir = dir, dry = dry, verbose = verbose, prompts = FALSE, ...)
 
   if (isTRUE(dry) && complete) {
     create_dry_files(ors)
