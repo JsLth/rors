@@ -17,7 +17,7 @@ detect_config <- function(dir) {
       text = "Running with Docker",
       url = paste0(
         "https://giscience.github.io/openrouteservice/run-instance/",
-        "installation/running-with-docker#customization",
+        "installation/running-with-docker#customization"
       )
     )
     cli::cli_warn(c(

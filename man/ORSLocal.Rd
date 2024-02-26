@@ -218,6 +218,7 @@ size of the selected extract file.}
 \item \href{#method-ORSLocal-new}{\code{ORSLocal$new()}}
 \item \href{#method-ORSLocal-update}{\code{ORSLocal$update()}}
 \item \href{#method-ORSLocal-purge}{\code{ORSLocal$purge()}}
+\item \href{#method-ORSLocal-finalize}{\code{ORSLocal$finalize()}}
 \item \href{#method-ORSLocal-report}{\code{ORSLocal$report()}}
 \item \href{#method-ORSLocal-set_extract}{\code{ORSLocal$set_extract()}}
 \item \href{#method-ORSLocal-rm_extract}{\code{ORSLocal$rm_extract()}}
@@ -257,11 +258,12 @@ size of the selected extract file.}
 Initialize the ORSInstance object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSLocal$new(
-  dir = NULL,
+  dir = ".",
   version = "7.2.0",
   overwrite = FALSE,
   dry = FALSE,
-  verbose = 2L
+  verbose = TRUE,
+  prompts = interactive()
 )}\if{html}{\out{</div>}}
 }
 
@@ -291,16 +293,13 @@ Whether to start a dry run, i.e. run an instance without jumpstarting.}
 
 \item{\code{verbose}}{\code{[logical]}
 
-Level of verbosity. Must be an integer between 0 and 2. The verbosity
-levels are deconstructed as follows:
-\itemize{
-\item{0: No messages, progress bars, sounds, and prompts. Only important
-warnings.}
-\item{1: Informative messages and warnings, but no system
-notifications, prompts, or progress bars.}
-\item{2: Messages, warnings, prompts, progress bars, and system
-notifications.}
-}}
+Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
+spinners, progress bars and system notifications.}
+
+\item{\code{prompts}}{\code{[logical]}
+
+Whether to ask for permission throughout the setup. Defaults to
+\code{TRUE} in interactive sessions.}
 }
 \if{html}{\out{</div>}}
 }
@@ -355,6 +354,17 @@ default is \code{FALSE} to prevent accidentally breaking other projects.}
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSLocal-finalize"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSLocal-finalize}{}}}
+\subsection{Method \code{finalize()}}{
+Finalize and purge an ORS instance. Alias for \code{$purge()} that
+automatically executes on garbage collection.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$finalize()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ORSLocal-report"></a>}}

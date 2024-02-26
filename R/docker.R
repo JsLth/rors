@@ -48,18 +48,19 @@ ors_up <- function(self, private, wait = TRUE, ...) {
 
 
 ors_down <- function(self, private) {
+  name <- self$compose$name
+
   if (!docker_running()) {
     cli::cli_abort("Docker is not running.")
   }
 
   ors_cli(progress = list(
     "step",
-    msg = "Taking down container {self$compose$name}...",
-    msg_failed = "Cannot take down container {self$compose$name}.",
-    msg_done = "Successfully took down container {self$compose$name}."
+    msg = "Taking down container {name}...",
+    msg_failed = "Cannot take down container {name}.",
+    msg_done = "Successfully took down container {name}.",
+    spinner = private$.verbose
   ))
-
-  name <- self$compose$name
 
   cmd <- c(
     "compose",
@@ -150,7 +151,8 @@ ors_stop <- function(self, private) {
       "step",
       msg = "Stopping container...",
       msg_done = "Container stopped.",
-      msg_failed = "Cannot stop container."
+      msg_failed = "Cannot stop container.",
+      spinner = private$.verbose
     ))
 
     cmd <- c("stop", name)
@@ -196,7 +198,7 @@ pull_ors <- function(self, private) {
       stdout = if (verbose) "|",
       stderr = if (verbose) "2>&1",
       error_on_status = FALSE,
-      spinner = verbose > 1 && interactive(),
+      spinner = verbose && interactive(),
       encoding = "UTF-8",
       stdout_line_callback = if (verbose) pull_callback,
     )
@@ -368,16 +370,13 @@ docker_logs <- function(name) {
 
 container_built <- function(name) {
   if (!docker_installed()) return(FALSE)
-  cmd <- c(
-    "ps", "-a", "--format",
-    "{{ .Names }}"
-  )
+  cmd <- c("ps", "-a", "--format", "{{ .Names }}")
 
   container_names <- callr::run(
     "docker",
     args = cmd,
     stdout = "|",
-    stderr = NULL,
+    stderr = "|",
     error_on_status = TRUE
   )
 
@@ -396,7 +395,7 @@ container_running <- function(name) {
     command = "docker",
     args = cmd,
     stdout = "|",
-    stderr = NULL,
+    stderr = "|",
     error_on_status = TRUE
   )
 
@@ -448,7 +447,7 @@ notify_when_ready <- function(ors_name, interval, verbose) {
     msg = "Starting service",
     msg_done = "Service setup done.",
     msg_failed = "Service setup failed.",
-    spinner = verbose > 1
+    spinner = verbose
   ))
 
   proc <- callr::r_bg(
@@ -474,10 +473,10 @@ notify_when_ready <- function(ors_name, interval, verbose) {
     cli::cli_abort(c(
       "The service ran into the following errors:",
       cli::cli_vec(errors, style = list(vec_sep = "\n"))
-    ))
+    ), call = NULL)
   }
 
-  if (verbose > 1) {
+  if (verbose) {
     notify("ORS Service is ready!")
   }
 

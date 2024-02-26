@@ -55,7 +55,10 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
       ifelse(!is.null(code), "Error code ", ""), code, ": ", msg
     )
     if (abort_on_error) {
-      cli::cli_abort(c("ORS encountered the following exception:", error))
+      cli::cli_abort(
+        c("ORS encountered the following exception:", error),
+        call = NULL
+      )
     } else {
       structure(error, error = TRUE)
     }

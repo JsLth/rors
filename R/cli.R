@@ -1,16 +1,19 @@
 #' cli_* distributor function that looks for a verbose variable in the parent
 #' environment and terminates if the variable is FALSE
-#' @param info,warn,progress,rule first argument passed to these cli functions
-#' @param line logical indicating whether an empty line should be printed
-#' @param ... further arguments passed to the respective functions
+#' @param ... Key-value pairs where the key is the name to a cli_* function
+#' and the values are the arguments. In case the key is "cat", invokes
+#' \code{cli::cat_line}. If \code{cat = "line"}, calls \code{cli::cat_line()}.
+#' If key is "progress", first value needs to be the name of the progress
+#' type (bar, step, update, done). "info" is short-hand for cli::cli_inform.
+#' @param .envir Environment from which to collect the "verbose" symbol and
+#' in which to call cli_* functions that require an .envir argument.
 #' @noRd
-ors_cli <- function(..., .envir = NULL) {
-  .envir <- .envir %||% parent.frame()
-  verbose <- get0("verbose", envir = .envir, ifnotfound = 0L)
+ors_cli <- function(..., .envir = parent.frame()) {
+  verbose <- get0("verbose", envir = .envir, ifnotfound = FALSE)
 
   if (!verbose) {
     private <- get0("private", envir = .envir, ifnotfound = list())
-    verbose <- private$.verbose %||% 0L
+    verbose <- private$.verbose %||% FALSE
   }
 
   if (!verbose) {
@@ -33,7 +36,6 @@ ors_cli <- function(..., .envir = NULL) {
 
     # handle progress bars
     if (identical(cfun, "progress")) {
-      if (verbose < 2 || !interactive()) next
       cfun <- sprintf("%s_%s", cfun, args[[1]])
       args[[1]] <- NULL
     }

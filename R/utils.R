@@ -8,6 +8,11 @@
 }
 
 
+"%default%" <- function(x, y) {
+  if (identical(x, y)) NULL else x
+}
+
+
 #' Checks if a URL is local (i.e. localhost or 127.0.0.1)
 #' @noRd
 is_local <- function(url) {

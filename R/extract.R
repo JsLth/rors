@@ -1,5 +1,12 @@
-get_extract <- function(self, place, provider, timeout, verbose, ...) {
+get_extract <- function(self,
+                        private,
+                        place,
+                        provider,
+                        timeout,
+                        ...) {
   data_dir <- file.path(self$paths$top, "docker/data")
+  verbose <- private$.verbose
+  prompts <- private$.prompts
   ok <- TRUE
   i <- 0L
 
@@ -9,9 +16,9 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
     providers <- provider
   }
 
-  if ((!interactive() || verbose <= 1) && length(providers) > 1L) {
+  if ((!interactive() || !prompts) && length(providers) > 1L) {
     cli::cli_abort(paste( # nocov start
-      "In batch or non-verbose mode, explicitly pass",
+      "In batch or non-prompt mode, explicitly pass",
       "a single provider name to {.fun ors_extract}."
     )) # nocov end
   }
@@ -86,7 +93,7 @@ get_extract <- function(self, place, provider, timeout, verbose, ...) {
       msg = "Downloading OSM extract...",
       msg_done = "The extract was successfully downloaded to the following path: {rel_path}",
       msg_failed = "Extract could not be downloaded.",
-      spinner = verbose > 1
+      spinner = verbose
     ))
 
     timeout <- max(timeout, getOption("timeout"))

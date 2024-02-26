@@ -230,21 +230,18 @@ ORSLocal <- R6::R6Class(
     #' Whether to start a dry run, i.e. run an instance without jumpstarting.
     #' @param verbose \code{[logical]}
     #'
-    #' Level of verbosity. Must be an integer between 0 and 2. The verbosity
-    #' levels are deconstructed as follows:
-    #' \itemize{
-    #'  \item{0: No messages, progress bars, sounds, and prompts. Only important
-    #'   warnings.}
-    #'  \item{1: Informative messages and warnings, but no system
-    #'   notifications, prompts, or progress bars.}
-    #'  \item{2: Messages, warnings, prompts, progress bars, and system
-    #'   notifications.}
-    #' }
-    initialize = function(dir = NULL,
+    #' Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
+    #' spinners, progress bars and system notifications.
+    #' @param prompts \code{[logical]}
+    #'
+    #' Whether to ask for permission throughout the setup. Defaults to
+    #' \code{TRUE} in interactive sessions.
+    initialize = function(dir = ".",
                           version = "7.2.0",
                           overwrite = FALSE,
                           dry = FALSE,
-                          verbose = 2L) {
+                          verbose = TRUE,
+                          prompts = interactive()) {
       assert_that(assertthat::is.dir(dir), add = paste(
         "The {.var dir} argument is expected to be a valid path to store",
         "the OpenRouteService source code in."
@@ -254,7 +251,8 @@ ORSLocal <- R6::R6Class(
         assertthat::is.string(version),
         is_true_or_false(overwrite),
         is_true_or_false(dry),
-        is_integerish(verbose)
+        is_true_or_false(verbose),
+        is_true_or_false(prompts)
       )
 
       if (!dry) {
@@ -266,6 +264,7 @@ ORSLocal <- R6::R6Class(
       dir <- get_ors_release(dir, version, overwrite)
 
       private$.verbose <- verbose
+      private$.prompts <- prompts
       private$.overwrite <- overwrite
       private$.dry <- dry
       self$version <- version
@@ -323,9 +322,7 @@ ORSLocal <- R6::R6Class(
     #' Whether to remove the docker image or keep it for other projects. The
     #' default is \code{FALSE} to prevent accidentally breaking other projects.
     purge = function(image = FALSE) {
-      ors_cli(h2 = "Purging ORS")
-
-      if (private$.verbose > 1) {
+      if (private$.prompts) {
         ors_cli(info = list(c("i" = paste(
           "Purging the current instance removes the docker container,",
           "ORS directory and cleans up the R6 object."
@@ -333,6 +330,8 @@ ORSLocal <- R6::R6Class(
 
         yes_no("Do you want to proceed?", no = cancel())
       }
+
+      ors_cli(h2 = "Purging ORS")
 
       if (self$is_built()) self$down()
       if (image) rm_image(self, private)
@@ -359,6 +358,14 @@ ORSLocal <- R6::R6Class(
       self$paths <- NULL
       private$.alive <- FALSE
       invisible(NULL)
+    },
+
+    #' @description
+    #' Finalize and purge an ORS instance. Alias for \code{$purge()} that
+    #' automatically executes on garbage collection.
+    finalize = function() {
+      private$.prompts <- FALSE
+      self$purge(image = FALSE)
     },
 
     #' @description
@@ -429,10 +436,10 @@ ORSLocal <- R6::R6Class(
       if (is.null(file)) {
         file <- get_extract(
           self,
+          private,
           place = place,
           provider = provider,
           timeout = timeout,
-          verbose = private$.verbose,
           ...
         )
       } else {
@@ -484,7 +491,7 @@ ORSLocal <- R6::R6Class(
         yes_no(
           "Do you want to proceed?",
           no = cancel(),
-          ask = private$.verbose > 1
+          ask = private$.prompts
         )
 
         for (extract in to_rm) {
@@ -845,6 +852,7 @@ ORSLocal <- R6::R6Class(
   private = list(
     .overwrite = FALSE,
     .verbose = TRUE,
+    .prompts = TRUE,
     .dry = FALSE,
     .alive = TRUE,
     .mount = function() {
@@ -899,7 +907,7 @@ ORSLocal <- R6::R6Class(
 
       proceed <- yes_no(
         "Do you want to proceed?",
-        ask = private$.verbose > 1,
+        ask = private$.prompts,
         dflt = TRUE
       )
       if (isFALSE(proceed)) return()
@@ -1089,7 +1097,7 @@ start_docker <- function(verbose = TRUE) {
       ors_cli(progress = list(
         "step",
         msg = "Starting Docker...",
-        spinner = verbose > 1,
+        spinner = verbose,
         msg_done = "Docker Desktop is now running.",
         msg_failed = "The Docker startup has timed out."
       ))

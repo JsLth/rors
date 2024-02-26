@@ -129,8 +129,7 @@ get_status <- function(id = NULL) {
     )
     res <- httr2::req_perform(req, verbosity = 0L)
     res <- httr2::resp_body_json(res, simplifyVector = TRUE, flatten = TRUE)
-    class(res$profiles) <- "stprof"
-    res
+    structure(res, class = "ors_status")
   } else {
     unlist(base_profiles(), use.names = FALSE)
   }
@@ -184,7 +183,10 @@ ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
               tip <- NULL
             }
 
-            cli::cli_abort(c("Cannot reach the OpenRouteService server.", tip))
+            cli::cli_abort(
+              c("Cannot reach the OpenRouteService server.", tip),
+              call = NULL
+            )
           } else {
             ready <<- FALSE
           }

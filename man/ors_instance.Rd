@@ -5,11 +5,13 @@
 \title{OpenRouteService instance}
 \usage{
 ors_instance(
-  dir = "~",
+  dir = ".",
   server = NULL,
   version = "latest",
   overwrite = FALSE,
-  verbose = 2L,
+  verbose = TRUE,
+  prompts = interactive(),
+  token = FALSE,
   ...
 )
 }
@@ -50,17 +52,14 @@ if it exists. Ignored if \code{server} is given.}
 
 \item{verbose}{\code{[logical]}
 
-Level of verbosity. Must be an integer between 0 and 2. The verbosity
-levels are deconstructed as follows:
-\itemize{
-\item{0: No messages, progress bars, sounds, and prompts. Only important
-warnings.}
-\item{1: Informative messages and warnings, but no system
-notifications, prompts, or progress bars.}
-\item{2: Messages, warnings, prompts, progress bars, and system
-notifications.}
-}
+Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
+spinners, progress bars and system notifications.
 Ignored if \code{server} is given.}
+
+\item{prompts}{\code{[logical]}
+
+Whether to ask for permission throughout the setup. Defaults to
+\code{TRUE} in interactive sessions. Ignored if \code{server} is given.}
 
 \item{token}{\code{[logical]}
 

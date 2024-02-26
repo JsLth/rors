@@ -116,17 +116,13 @@ ORSInstance <- R6::R6Class(
 #' if it exists. Ignored if \code{server} is given.
 #' @param verbose \code{[logical]}
 #'
-#' Level of verbosity. Must be an integer between 0 and 2. The verbosity
-#' levels are deconstructed as follows:
-#' \itemize{
-#'  \item{0: No messages, progress bars, sounds, and prompts. Only important
-#'   warnings.}
-#'  \item{1: Informative messages and warnings, but no system
-#'   notifications, prompts, or progress bars.}
-#'  \item{2: Messages, warnings, prompts, progress bars, and system
-#'   notifications.}
-#' }
+#' Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
+#' spinners, progress bars and system notifications.
 #' Ignored if \code{server} is given.
+#' @param prompts \code{[logical]}
+#'
+#' Whether to ask for permission throughout the setup. Defaults to
+#' \code{TRUE} in interactive sessions. Ignored if \code{server} is given.
 #' @param token \code{[logical]}
 #'
 #' Whether \code{server} requires authorization over a token. ORS tokens
@@ -167,20 +163,23 @@ ORSInstance <- R6::R6Class(
 #' }
 #'
 #' @export
-ors_instance <- function(dir = "~",
+ors_instance <- function(dir = ".",
                          server = NULL,
                          version = "latest",
                          overwrite = FALSE,
-                         verbose = 2L,
+                         verbose = TRUE,
+                         prompts = interactive(),
+                         token = FALSE,
                          ...) {
   if (!is.null(server)) {
-    ORSRemote$new(server = server, ...)
+    ORSRemote$new(server = server, token, ...)
   } else {
     ORSLocal$new(
       dir = dir,
       version = version,
       overwrite = overwrite,
       verbose = verbose,
+      prompts = prompts,
       ...
     )
   }

@@ -6,7 +6,7 @@
 \usage{
 ors_accessibility(
   src,
-  profile = get_profiles(force = TRUE),
+  profile = get_profiles(),
   range = c(200L, 300L),
   attributes = "area",
   intersections = FALSE,
