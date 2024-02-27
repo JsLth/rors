@@ -11,6 +11,7 @@ maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lif
 [![](https://www.r-pkg.org/badges/version/rors)](https://cran.r-project.org/package=rors)
 [![Codecov test
 coverage](https://codecov.io/gh/JsLth/rors/branch/master/graph/badge.svg)](https://app.codecov.io/gh/JsLth/rors?branch=master)
+[![CodeFactor](https://www.codefactor.io/repository/github/jslth/rors/badge/master)](https://www.codefactor.io/repository/github/jslth/rors/overview/master)
 
 <!-- badges: end -->
 
@@ -54,6 +55,7 @@ use the workhorse function `ors_instance`:
 library(rors)
 #> © openrouteservice.org by HeiGIT | Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright
 library(sf)
+#> Warning: Paket 'sf' wurde unter R Version 4.3.2 erstellt
 #> Linking to GEOS 3.11.2, GDAL 3.7.2, PROJ 9.3.0; sf_use_s2() is TRUE
 
 # API keys are stored in the ORS_TOKEN environment variable
@@ -73,7 +75,7 @@ ors_inspect(pharma, profile = "driving-car", level = "segment")
 #> Geodetic CRS:  WGS 84
 #> # A tibble: 7 × 6
 #>   name            distance duration avgspeed elevation                  geometry
-#> * <chr>                [m]      [s]   [km/h]       [m]     <MULTILINESTRING [°]>
+#>   <chr>                [m]      [s]   [km/h]       [m]     <MULTILINESTRING [°]>
 #> 1 Uppingham Road…   9983.     618.      69.8     121.  ((-0.722324 52.58762, -0…
 #> 2 High Street, B…     26.3      2.4     39.4     111.  ((-0.727928 52.66962, -0…
 #> 3 Uppingham Road…  10059.     628.      68.8     120.  ((-0.728317 52.66962, -0…

@@ -260,12 +260,9 @@ ors_pairwise <- function(src,
     route_df <- as_data_frame(route_df)
   }
 
-  structure( # TODO: metadata in attributes
-    route_df,
-    call = match.call(),
-    data = locations,
-    class = c("ors_dist", class(route_df))
-  )
+  attr(route_df, "data") <- locations
+  class(route_df, c("ors_dist", class(route_df)))
+  route_df
 }
 # TODO: _raw and _single functions to increase performance
 
@@ -357,11 +354,8 @@ ors_shortest_distances <- function(src,
   handle_missing_directions_batch(route_df$has_error)
   route_df$has_error <- NULL
 
-  structure(
-    route_df,
-    call = match.call(),
-    src = src,
-    dest = dst,
-    class = c("ors_sdist", class(route_df))
-  )
+  attr(route_df, "src") <- src
+  attr(route_df, "dst") <- dst
+  class(route_df) <- c("ors_sdist", class(route_df))
+  route_df
 }

@@ -36,7 +36,9 @@ detect_config <- function(dir) {
 write_config <- function(config, file = NULL) {
   handlers <- list(
     logical = function(x) {
-      structure(ifelse(x, "true", "false"), class = "verbatim")
+      x <- ifelse(x, "true", "false")
+      class(x) <- "verbatim"
+      x
     },
     numeric = function(x) {
       intx <- as.integer(x)
@@ -45,7 +47,8 @@ write_config <- function(config, file = NULL) {
       x
     },
     "NULL" = function(x) {
-      structure("", class = "verbatim")
+      x <- ""
+      class(x) <- "verbatim"
     }
   )
 
@@ -354,13 +357,14 @@ ors_profile <- function(name = NULL, ..., template = TRUE) {
 
     profile <- list(args)
     names(profile) <- title
-    structure(profile, class = "ors_profile")
+    class(profile) <- "ors_profile"
   } else {
     profile <- make_default_profile(name)
     dots <- list(...)
     for (opt in names(dots)) profile[[1]][[opt]] <- dots[[opt]]
-    profile
   }
+
+  profile
 }
 
 

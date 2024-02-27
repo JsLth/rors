@@ -250,12 +250,10 @@ box <- function(x) {
 #' their argument in `...`.
 #' @noRd
 df_nest <- function(...) {
-  data <- list(...)
-  structure(
-    data,
-    row.names = seq_len(nrow(data[[1]])),
-    class = "data.frame"
-  )
+  x <- list(...)
+  class(x) <- "data.frame"
+  attr(x, "row.names") <- seq_len(nrow(x[[1]]))
+  x
 }
 
 

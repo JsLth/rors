@@ -538,7 +538,7 @@ ORSLocal <- R6::R6Class(
     #' \code{\link[httpuv:randomPort]{randomPort()}}.
     set_port = function(port = NULL) {
       new <- as.character(port %||% random_port(2))
-      old <- self$compose$ports[1, seq(length(new))]
+      old <- self$compose$ports[1, seq_along(new)]
 
 
       if (!identical(old, new)) {
@@ -547,7 +547,7 @@ ORSLocal <- R6::R6Class(
         )))
         compose <- self$compose$parsed
         self$compose$parsed$services$`ors-app`$ports <- format_ports(self, new)
-        self$compose$ports[1, seq(length(new))] <- new
+        self$compose$ports[1, seq_along(new)] <- new
         self$update()
       }
 
@@ -973,15 +973,15 @@ ORSLocal <- R6::R6Class(
   extract_path <- get_current_extract(compose, dir)
 
   # construct R representation
-  structure(
-    list(
-      top = dir,
-      extract = extract_path,
-      config = config_path,
-      compose = compose_path
-    ),
-    class = "ors_paths"
+  out <- list(
+    top = dir,
+    extract = extract_path,
+    config = config_path,
+    compose = compose_path
   )
+
+  class(out) <- "ors_paths"
+  out
 }
 
 .construct_compose <- function(self, private, ...) {
@@ -1002,18 +1002,18 @@ ORSLocal <- R6::R6Class(
   graph_building <- graphbuilding_enabled(compose)
 
   # construct R representation
-  structure(
-    list(
-      name = name,
-      ports = ports,
-      memory = memory,
-      image = image,
-      graph_building = graph_building,
-      parsed = structure(compose, class = c("ors_compose_parsed", "list"))
-    ),
-    class = "ors_settings",
-    update_compose = NULL
+  class(compose) <- "ors_compose_parsed"
+  out <- list(
+    name = name,
+    ports = ports,
+    memory = memory,
+    image = image,
+    graph_building = graph_building,
+    parsed = compose
   )
+
+  class(out) <- "ors_settings"
+  out
 }
 
 
@@ -1029,13 +1029,13 @@ ORSLocal <- R6::R6Class(
   profiles <- get_profile_names(config$ors$engine$profiles)
 
   # construct R representation
-  structure(
-    list(
-      profiles = profiles,
-      parsed = structure(config, class = c("ors_config_parsed", "list"))
-    ),
-    class = "ors_config"
+  class(config) <- "ors_config_parsed"
+  out <- list(
+    profiles = profiles,
+    parsed = config
   )
+  class(config) <- "ors_config"
+  config
 }
 
 
@@ -1054,7 +1054,9 @@ ORSLocal <- R6::R6Class(
   }
 
   # construct R representation
-  structure(list(name = name, size = size), class = "ors_extract")
+  out <- list(name = name, size = size)
+  class(out) <- "ors_extract"
+  out
 }
 
 

@@ -235,7 +235,8 @@ ors_inspect <- function(src,
     }
   }
 
-  structure(res, class = c("ors_route", class(res)))
+  class(res) <- c("ors_route", class(res))
+  res
 }
 
 

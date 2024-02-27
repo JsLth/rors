@@ -228,7 +228,8 @@ format.ors_token <- function(x, ...) {
 
 #' @export
 print.ors_matrix <- function(x, ...) {
-  print(structure(x, class = NULL))
+  class(x) <- NULL
+  print(x)
 }
 
 

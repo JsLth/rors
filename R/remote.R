@@ -83,7 +83,10 @@ get_ors_token <- function() {
 
 
 ors_token <- function(active = FALSE) {
-  structure(nzchar(get_ors_token()), class = "ors_token", active = active)
+  has_token <- nzchar(get_ors_token())
+  attr(has_token, "active") <- active
+  class(has_token) <- "ors_token"
+  has_token
 }
 
 

@@ -57,12 +57,9 @@ ors_snap <- function(src,
   meta <- res$metadata
   snap <- tidy_snap(res)
 
-  structure(
-    snap,
-    call = match.call(),
-    metadata = meta,
-    class = c("ors_snap", class(snap))
-  )
+  attr(snap, "meta") <- meta
+  class(snap) <- c("ors_snap", class(snap))
+  snap
 }
 
 

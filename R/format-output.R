@@ -195,6 +195,7 @@ aggregate_route <- function(route_section, level, attrib) {
 #' @param info_type Type of information to be replaced
 #' @noRd
 fill_extra_info <- function(codes, info_type, profile) {
+  fill_table <- fill_table()
   tab <- fill_table[fill_table$name %in% info_type, ]
 
   # convert 0/1 to logical
@@ -277,8 +278,8 @@ country_info <- c(
 )
 
 
-fill_table <- structure(
-  list(
+fill_table <- function() {
+  tab <- list(
     name = c(
       "steepness", "surface", "waycategory", "waytypes", "traildifficulty",
       "roadaccessrestrictions", "countryinfo"
@@ -319,10 +320,12 @@ fill_table <- structure(
     profile = rep(c(NA, "profile", NA), c(4L, 1L, 2L)),
     ordinal = c(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE),
     base2 = c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE)
-  ),
-  class = "data.frame",
-  row.names = 1:7
-)
+  )
+
+  class(tab, "data.frame")
+  attr(tab, "row.names") <- 1:7
+  tab
+}
 
 
 calculate_distances <- function(waypoints) {

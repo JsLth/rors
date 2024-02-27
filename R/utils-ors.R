@@ -129,7 +129,8 @@ get_status <- function(id = NULL) {
     )
     res <- httr2::req_perform(req, verbosity = 0L)
     res <- httr2::resp_body_json(res, simplifyVector = TRUE, flatten = TRUE)
-    structure(res, class = "ors_status")
+    class(res) <- "ors_status"
+    res
   } else {
     unlist(base_profiles(), use.names = FALSE)
   }

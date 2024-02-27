@@ -46,6 +46,7 @@ format_ors_params <- function(opts, profile) {
 
   validate_ors_dots(opts)
 
+  known_params <- known_params()
   for (opt in names(opts)) {
     params <- as.list(known_params[known_params$name == opt, ])
     params$profile <- eval(str2lang(as.character(params$profile)))
@@ -115,7 +116,8 @@ format_ors_list <- function(x, matches, which, profile, scalar, ...) {
     opts_check <- FALSE
   }
 
-  structure(x, opts_check = opts_check)
+  attr(x, "opts_check") <- opts_check
+  x
 }
 
 
@@ -148,7 +150,8 @@ format_ors_vector <- function(x, type, profile, box, scalar, ...) {
 
   opts_check <- profile_check && length_check && fun_check(x)
 
-  structure(x, opts_check = opts_check)
+  attr(x, "opts_check") <- opts_check
+  x
 }
 
 
@@ -166,7 +169,8 @@ format_ors_poly <- function(x, ...) {
     opts_check <- FALSE
   }
 
-  structure(poly, opts_check = opts_check)
+  attr(poly, "opts_check") <- opts_check
+  poly
 }
 
 
@@ -186,11 +190,12 @@ format_ors_nlist <- function(x, which, profile, ...) {
     opts_check <- FALSE
   }
 
-  structure(x, opts_check = opts_check)
+  attr(x, "opts_check") <- opts_check
+  x
 }
 
 validate_ors_dots <- function(opts) {
-  opts_ok <- names(opts) %in% known_params$name
+  opts_ok <- names(opts) %in% known_params()$name
   if (!all(opts_ok)) {
     cli::cli_abort(c(
       "x" = "Unknown ORS option{?s} {.var {names(opts[!opts_ok])}}."
@@ -278,8 +283,8 @@ extra_info_profiles <- data.frame(
 #'
 #' NA means that the formatting parameter is not relevant for a given option.
 #' @noRd
-known_params <- structure(
-  list(
+known_params <- function() {
+  prm <-   list(
     name = c(
       "alternative_routes", "geometry_simplify", "continue_straight",
       "avoid_borders", "avoid_countries", "avoid_features", "avoid_polygons",
@@ -330,10 +335,12 @@ known_params <- structure(
       "c(\"driving-hgv\" = profile)", NA, NA, NA, NA, "profile", NA
     ),
     box = rep(c(FALSE, TRUE, FALSE, TRUE, FALSE), c(4L, 2L, 6L, 1L, 6L))
-  ),
-  class = "data.frame",
-  row.names = 1:19
-)
+  )
+
+  class(prm) <- "data.frame"
+  attr(prm, "row.names") <- 1:19
+  prm
+}
 
 
 nlist_params <- list(
