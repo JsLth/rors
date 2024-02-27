@@ -133,7 +133,7 @@ ors_accessibility <- function(src,
                               smoothing = 25L,
                               area_units = c("m", "km", "mi"),
                               units = c("m", "km", "mi"),
-                              rasterize = FALSE, # TODO: revise rasterize
+                              rasterize = FALSE, # todo: revise rasterize
                               raster_resolution = c(100L, 100L),
                               instance = NULL,
                               ...) {

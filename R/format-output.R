@@ -172,7 +172,7 @@ aggregate_route <- function(route_section, level, attrib) {
     if (inherits(route_section[[x]], "sfc")) {
       return(sf::st_combine(route_section[x]))
     }
-    if (x %in% c("elevation")) {
+    if (x %in% "elevation") {
       return(mean(route_section[[x]]))
     }
     if (level == "segment" && x %in% names(attrib)) {
@@ -375,12 +375,11 @@ format_extra_info <- function(res, info_type, alt = 1L) {
       V2 = seq(1L, last_waypoint) + 1L
     )
 
-    indices <- mapply(
+    indices <- Map(
       FUN = get_waypoint_index,
       start,
       end,
-      MoreArgs = list(waypoints = iterator, by_waypoint = FALSE),
-      SIMPLIFY = FALSE
+      MoreArgs = list(waypoints = iterator, by_waypoint = FALSE)
     )
 
     values <- lapply(

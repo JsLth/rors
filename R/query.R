@@ -30,7 +30,7 @@ call_ors_directions <- function(src,
   if (!missing(dst)) {
     locations <- list(as.numeric(src), as.numeric(dst))
   } else {
-    locations <- mapply(c, src[, 1], src[, 2], SIMPLIFY = FALSE)
+    locations <- Map(c, src[, 1], src[, 2])
   }
 
   # Prepare the url

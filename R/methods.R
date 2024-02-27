@@ -5,7 +5,7 @@ format.ORSInstance <- function(x, ...) {
   is_local <- identical(type, "local")
 
   if (is.null(x$paths) && is_local) {
-    return(c("<ORSInstance>"))
+    return("<ORSInstance>")
   }
 
   # check if instance is mounted to the session
@@ -237,7 +237,7 @@ print.ors_matrix <- function(x, ...) {
 print.ors_condition <- function(x, ...) {
   timestamps <- names(x)
 
-  calls <- sapply(timestamps, function(time) {
+  calls <- lapply(timestamps, function(time) {
     if (length(x[[time]]$conditions)) {
       indices <- attr(x[[time]], "row.names")
       messages <- x[[time]]$conditions

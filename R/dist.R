@@ -264,7 +264,7 @@ ors_pairwise <- function(src,
   class(route_df) <- c("ors_dist", class(route_df))
   route_df
 }
-# TODO: _raw and _single functions to increase performance
+# todo: _raw and _single functions to increase performance
 
 #' Calculate shortest routes to nearby points of interest
 #' @param group \code{[character/numeric]}
