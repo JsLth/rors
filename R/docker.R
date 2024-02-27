@@ -369,7 +369,7 @@ docker_logs <- function(name) {
 
 
 container_built <- function(name) {
-  if (!docker_installed()) return(FALSE)
+  if (!docker_running()) return(NA)
   cmd <- c("ps", "-a", "--format", "{{ .Names }}")
 
   container_names <- callr::run(
@@ -385,7 +385,7 @@ container_built <- function(name) {
 
 
 container_running <- function(name) {
-  if (!docker_installed()) return(FALSE)
+  if (!docker_running()) return(FALSE)
   cmd <- c(
     "container", "ls", "-a", "--format", "\"{{.State}}\"",
     "--filter", sprintf("name=^/%s$", name)
@@ -399,7 +399,7 @@ container_running <- function(name) {
     error_on_status = TRUE
   )
 
-  grepl("running", container_check$stdout)
+  grepl("running", container_check$stdout, fixed = TRUE)
 }
 
 
