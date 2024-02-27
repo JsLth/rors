@@ -1034,8 +1034,8 @@ ORSLocal <- R6::R6Class(
     profiles = profiles,
     parsed = config
   )
-  class(config) <- "ors_config"
-  config
+  class(out) <- "ors_config"
+  out
 }
 
 
