@@ -80,7 +80,7 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
         )
         cli::cli_warn(c("ORS returned {length(w_vec)} warning{?s}:", w_vec))
       } else {
-        attr(warnings, error = FALSE)
+        attr(warnings, "error") <- FALSE
         warnings
       }
     }

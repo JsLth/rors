@@ -322,7 +322,7 @@ fill_table <- function() {
     base2 = c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE)
   )
 
-  class(tab, "data.frame")
+  class(tab) <- "data.frame"
   attr(tab, "row.names") <- 1:7
   tab
 }

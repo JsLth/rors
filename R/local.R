@@ -337,7 +337,7 @@ ORSLocal <- R6::R6Class(
 
       ors_cli(h2 = "Purging ORS")
 
-      if (self$is_built()) self$down()
+      if (isTRUE(self$is_built())) self$down()
       if (image) rm_image(self, private)
 
       ors_cli(progress = list(
@@ -409,9 +409,7 @@ ORSLocal <- R6::R6Class(
     #'
     #' @param timeout \code{[numeric]}
     #'
-    #' Timeout for extract downloads. Defaults to 30 minutes to enable
-    #' longer extract downloads. The adopted timeout is the maximum of
-    #' this argument and \code{getOption("timeout")}.
+    #' Timeout for extract downloads. Defaults to \code{getOption("timeout")}.
     #' @param file \code{[character/NULL]}
     #'
     #' Path to a local OSM extract. Can either be a full path to any OSM file
@@ -425,7 +423,7 @@ ORSLocal <- R6::R6Class(
     #' \code{\link[osmextract:oe_get]{oe_get()}}.
     set_extract = function(place,
                            provider = "geofabrik",
-                           timeout = 1800,
+                           timeout = NULL,
                            file = NULL,
                            do_use = TRUE,
                            ...) {
