@@ -126,14 +126,14 @@ ors_accessibility <- function(src,
                               profile = get_profiles(),
                               range = c(200L, 300L),
                               attributes = "area",
-                              intersections = FALSE, # FIXME: check intersections
+                              intersections = FALSE, # to-do: check intersections
                               interval = 30L,
                               location_type = c("start", "destination"),
                               range_type = c("time", "distance"),
                               smoothing = 25L,
                               area_units = c("m", "km", "mi"),
                               units = c("m", "km", "mi"),
-                              rasterize = FALSE, # todo: revise rasterize
+                              rasterize = FALSE, # to-do: revise rasterize
                               raster_resolution = c(100L, 100L),
                               instance = NULL,
                               ...) {
@@ -151,7 +151,7 @@ ors_accessibility <- function(src,
 
   src <- prepare_input(src)
 
-  options <- format_ors_params(list(...), profile)
+  opts <- format_ors_params(list(...), profile)
 
   url <- get_ors_url(id = iid)
 
@@ -163,7 +163,7 @@ ors_accessibility <- function(src,
     intersections = intersections,
     interval = interval,
     location_type = location_type,
-    params = options,
+    params = opts,
     range_type = range_type,
     smoothing = smoothing,
     area_units = area_units,

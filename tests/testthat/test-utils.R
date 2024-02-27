@@ -195,6 +195,6 @@ test_that("is_geometry_type works", {
   expect_false(is_geometry_type(sf1, c("POINT", "POLYGON")))
   expect_true(is_geometry_type(sf1, c("POINT", "POLYGON"), exclusive = FALSE))
   expect_true(is_geometry_type(sf2, c("POINT", "POLYGON"), exclusive = FALSE))
-  expect_false(is_geometry_type(sf2, c("POINT")))
-  expect_true(is_geometry_type(sf2, c("POINT"), strict = FALSE))
+  expect_false(is_geometry_type(sf2, "POINT"))
+  expect_true(is_geometry_type(sf2, "POINT", strict = FALSE))
 })

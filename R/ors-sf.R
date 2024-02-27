@@ -44,7 +44,7 @@ ors_polygon <- function(res) {
   poly <- tapply(
     seq_len(nrow(poly)),
     INDEX = as.factor(poly$group_index),
-    FUN = function(i) poly[i, ][dim(poly[i, ])[1]:1, ],
+    FUN = function(i) poly[i, ][rev(seq_len(dim(poly[i, ])[1])), ],
     simplify = FALSE
   )
   poly <- do.call(rbind.data.frame, poly)

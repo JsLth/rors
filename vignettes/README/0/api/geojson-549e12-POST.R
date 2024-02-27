@@ -1,4 +1,4 @@
-structure(list(method = "POST", url = "api/geojson", status_code = 200L, # nocov start
+structure(list(method = "POST", url = "api/geojson", status_code = 200L, # nolint start
     headers = structure(list(Server = "nginx/1.23.1", Date = "Sat, 24 Feb 2024 21:05:30 GMT",
         `Content-Type` = "application/geo+json;charset=UTF-8",
         `Content-Length` = "7024", Connection = "keep-alive",
@@ -2826,4 +2826,4 @@ structure(list(method = "POST", url = "api/geojson", status_code = 200L, # nocov
     0x32, 0x37, 0x36, 0x2c, 0x33, 0x37, 0x2e, 0x39, 0x5d, 0x5d,
     0x2c, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22, 0x3a, 0x22, 0x4c,
     0x69, 0x6e, 0x65, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x22,
-    0x7d, 0x7d, 0x5d, 0x7d)), cache = new.env(parent = emptyenv())), class = "httr2_response") # nocov end
+    0x7d, 0x7d, 0x5d, 0x7d)), cache = new.env(parent = emptyenv())), class = "httr2_response") # nolint end

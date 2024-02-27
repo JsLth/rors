@@ -79,15 +79,14 @@ tidy_export <- function(res, network) {
   edges <- res$edges
   from <- match(edges$fromId, res$nodes$nodeId)
   to <- match(edges$toId, res$nodes$nodeId)
-  geom <- mapply(
-    from = from,
-    to = to,
-    SIMPLIFY = FALSE,
+  geom <- Map(
     FUN = function(from, to) {
       geom <- sf::st_geometry(nodes[c(from, to), ])
       geom <- sf::st_combine(geom)
       sf::st_cast(geom, "LINESTRING")
-    }
+    },
+    from = from,
+    to = to
   )
 
   geom <- do.call(c, geom)
