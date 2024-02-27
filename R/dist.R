@@ -261,7 +261,7 @@ ors_pairwise <- function(src,
   }
 
   attr(route_df, "data") <- locations
-  class(route_df, c("ors_dist", class(route_df)))
+  class(route_df) <- c("ors_dist", class(route_df))
   route_df
 }
 # TODO: _raw and _single functions to increase performance
