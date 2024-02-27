@@ -375,7 +375,7 @@ object.</p><div class="section">
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">set_extract</span><span class="op">(</span></span>
 <span>  <span class="va">place</span>,</span>
 <span>  provider <span class="op">=</span> <span class="st">"geofabrik"</span>,</span>
-<span>  timeout <span class="op">=</span> <span class="fl">1800</span>,</span>
+<span>  timeout <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  file <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  do_use <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -401,9 +401,7 @@ tries all providers.</p></dd>
 
 <dt><code>timeout</code></dt>
 <dd><p><code>[numeric]</code></p>
-<p>Timeout for extract downloads. Defaults to 30 minutes to enable
-longer extract downloads. The adopted timeout is the maximum of
-this argument and <code>getOption("timeout")</code>.</p></dd>
+<p>Timeout for extract downloads. Defaults to <code>getOption("timeout")</code>.</p></dd>
 
 
 <dt><code>file</code></dt>
