@@ -250,6 +250,7 @@ size of the selected extract file.</p></dd>
 <li><p><a href="#method-ORSLocal-show_logs"><code>ORSLocal$show_logs()</code></a></p></li>
 <li><p><a href="#method-ORSLocal-is_built"><code>ORSLocal$is_built()</code></a></p></li>
 <li><p><a href="#method-ORSLocal-is_running"><code>ORSLocal$is_running()</code></a></p></li>
+<li><p><a href="#method-ORSLocal-is_init"><code>ORSLocal$is_init()</code></a></p></li>
 <li><p><a href="#method-ORSLocal-clone"><code>ORSLocal$clone()</code></a></p></li>
 </ul></div><p><details open><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="get_status"><a href="ORSInstance.html#method-get_status"><code>rors::ORSInstance$get_status()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_mounted"><a href="ORSInstance.html#method-is_mounted"><code>rors::ORSInstance$is_mounted()</code></a></span></li>
@@ -738,10 +739,22 @@ if the ORS setup succeeded.</p><div class="section">
 </div>
 
 
+</div><p></p><hr><a id="method-ORSLocal-is_init"></a><div class="section">
+<h3 id="method-is-init-">Method <code>is_init()</code><a class="anchor" aria-label="anchor" href="#method-is-init-"></a></h3>
+<p>Checks if ORS is initialized. ORS is initialized if it was built
+for the first time. An initialized ORS instance has a subdirectory
+called <code>"graphs"</code> that contains built graphs for at least one
+routing profile. <code>$is_init()</code> therefore checks for the
+existence of at least one sub-directory of <code>"graphs"</code>.</p><div class="section">
+<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">is_init</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+
 </div><p></p><hr><a id="method-ORSLocal-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
+<h4 id="usage-24">Usage<a class="anchor" aria-label="anchor" href="#usage-24"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSLocal</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
