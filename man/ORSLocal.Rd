@@ -238,6 +238,7 @@ size of the selected extract file.}
 \item \href{#method-ORSLocal-show_logs}{\code{ORSLocal$show_logs()}}
 \item \href{#method-ORSLocal-is_built}{\code{ORSLocal$is_built()}}
 \item \href{#method-ORSLocal-is_running}{\code{ORSLocal$is_running()}}
+\item \href{#method-ORSLocal-is_init}{\code{ORSLocal$is_init()}}
 \item \href{#method-ORSLocal-clone}{\code{ORSLocal$clone()}}
 }
 }
@@ -762,6 +763,20 @@ using \code{$start()} and \code{$stop()}. Check \code{$is_ready()} to see
 if the ORS setup succeeded.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSLocal$is_running()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSLocal-is_init"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSLocal-is_init}{}}}
+\subsection{Method \code{is_init()}}{
+Checks if ORS is initialized. ORS is initialized if it was built
+for the first time. An initialized ORS instance has a subdirectory
+called \code{"graphs"} that contains built graphs for at least one
+routing profile. \code{$is_init()} therefore checks for the
+existence of at least one sub-directory of \code{"graphs"}.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSLocal$is_init()}\if{html}{\out{</div>}}
 }
 
 }

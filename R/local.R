@@ -281,7 +281,7 @@ ORSLocal <- R6::R6Class(
         private$.write()
       }
 
-      if (private$.is_initial() && !dry) {
+      if (!self$is_init() && !dry) {
         private$.jumpstart()
       }
 
@@ -861,6 +861,19 @@ ORSLocal <- R6::R6Class(
     #' if the ORS setup succeeded.
     is_running = function() {
       container_running(self$compose$name)
+    },
+
+    #' @description
+    #' Checks if ORS is initialized. ORS is initialized if it was built
+    #' for the first time. An initialized ORS instance has a subdirectory
+    #' called \code{"graphs"} that contains built graphs for at least one
+    #' routing profile. \code{$is_init()} therefore checks for the
+    #' existence of at least one sub-directory of \code{"graphs"}.
+    is_init = function() {
+      length(list.dirs(
+        file.path(self$paths$top, "docker", "graphs"),
+        recursive = FALSE
+      )) > 0
     }
   ),
 
@@ -893,11 +906,6 @@ ORSLocal <- R6::R6Class(
       if (is.function(construct)) {
         construct(self, private, ...)
       }
-    },
-    .is_initial = function() {
-      # Assume existence of graphs dir as indicator for initialization
-      # TODO: Could there be a better indicator?
-      !dir.exists(file.path(self$paths$top, "docker", "graphs"))
     },
     .jumpstart = function() {
       ors_cli(h1 = "Jumpstarting container")
