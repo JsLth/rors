@@ -454,6 +454,7 @@ ORSLocal <- R6::R6Class(
       }
 
       self$update()
+      invisible(self)
     },
 
     #' @description
@@ -504,6 +505,8 @@ ORSLocal <- R6::R6Class(
           self$update()
         }
       }
+
+      invisible(self)
     },
 
 
@@ -523,6 +526,8 @@ ORSLocal <- R6::R6Class(
         self$compose$name <- new
         self$update()
       }
+
+      invisible(self)
     },
 
     #' @description
@@ -545,6 +550,8 @@ ORSLocal <- R6::R6Class(
         self$compose$ports[1, seq(length(new))] <- new
         self$update()
       }
+
+      invisible(self)
     },
 
     #' @description
@@ -578,6 +585,8 @@ ORSLocal <- R6::R6Class(
         self$compose$memory$max <- new[2] / 1000
         self$update()
       }
+
+      invisible(self)
     },
 
     #' @description
@@ -601,6 +610,8 @@ ORSLocal <- R6::R6Class(
         self$compose$graph_building <- mode
         self$update()
       }
+
+      invisible(self)
     },
 
     #' @description
@@ -622,6 +633,8 @@ ORSLocal <- R6::R6Class(
         self$compose$image <- new
         self$update()
       }
+
+      invisible(self)
     },
 
 
@@ -657,6 +670,8 @@ ORSLocal <- R6::R6Class(
         self$config$profiles <- names(new$profiles)
         self$update()
       }
+
+      invisible(self)
     },
 
     #' @description
@@ -689,6 +704,8 @@ ORSLocal <- R6::R6Class(
         )
         self$update()
       }
+
+      invisible(self)
     },
 
     #' @description
@@ -717,6 +734,8 @@ ORSLocal <- R6::R6Class(
         self$config$parsed$ors$endpoints <- change_endpoints(self, ...)
         self$update()
       }
+
+      invisible(self)
     },
 
 
