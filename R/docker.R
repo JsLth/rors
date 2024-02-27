@@ -26,7 +26,7 @@ ors_up <- function(self, private, wait = TRUE, ...) {
     args = cmd,
     stdout = if (verbose) "|" else NULL,
     stderr = "2>&1",
-    stdout_line_callback = cat_callback,
+    stdout_line_callback = cat_callback(verbose),
     error_on_status = FALSE
   )
 
@@ -191,7 +191,6 @@ pull_ors <- function(self, private) {
   if (!image_exists()) {
     cmd <- c("pull", self$compose$parsed$services$`ors-app`$image)
 
-    Sys.setenv(ORS_VERBOSE = verbose)
     proc <- callr::run(
       command = "docker",
       args = cmd,
@@ -200,9 +199,8 @@ pull_ors <- function(self, private) {
       error_on_status = FALSE,
       spinner = verbose && interactive(),
       encoding = "UTF-8",
-      stdout_line_callback = if (verbose) pull_callback,
+      stdout_line_callback = pull_callback(verbose),
     )
-    Sys.unsetenv("ORS_VERBOSE")
 
     status <- proc$status
 
@@ -403,25 +401,28 @@ container_running <- function(name) {
 }
 
 
-cat_callback <- function(newout, proc) {
-  cat(newout, "\n")
+cat_callback <- function(verbose) {
+  function(newout, proc) {
+    ors_cli(cat = newout)
+  }
 }
 
 
-pull_callback <- function(newout, proc) {
-  verbose <- as.numeric(Sys.getenv("ORS_VERBOSE"))
-  exc_list <- c(
-    "Download complete", "Downloading", "Extracting", "Waiting",
-    "Pulling fs layer", "Verifying Checksum"
-  )
-  exc_list <- paste(exc_list, collapse = "|")
-  exc <- grepl(sprintf(": (%s)", exc_list), newout)
-  if (!exc) {
-    prc <- grepl("Pull complete", newout)
-    if (prc) {
-      ors_cli(info = list(c("v" = newout)))
-    } else {
-      ors_cli(info = list(c("i" = newout)))
+pull_callback <- function(verbose) {
+  function(newout, proc) {
+    exc_list <- c(
+      "Download complete", "Downloading", "Extracting", "Waiting",
+      "Pulling fs layer", "Verifying Checksum"
+    )
+    exc_list <- paste(exc_list, collapse = "|")
+    exc <- grepl(sprintf(": (%s)", exc_list), newout)
+    if (!exc) {
+      prc <- grepl("Pull complete", newout)
+      if (prc) {
+        ors_cli(info = list(c("v" = newout)))
+      } else {
+        ors_cli(info = list(c("i" = newout)))
+      }
     }
   }
 }

@@ -96,27 +96,13 @@ get_extract <- function(self,
       spinner = verbose
     ))
 
-    timeout <- max(timeout, getOption("timeout"))
-
-    proc <- callr::r_bg(
-      function(place_match, providers, data_dir, timeout) {
-        options(timeout = timeout)
-        osmextract::oe_download(
-          place_match$url,
-          provider = providers[i],
-          download_directory = data_dir,
-          quiet = TRUE,
-          # maximum of 50 GB; above that, you probably need something else
-          max_file_size = 5e+10
-        )
-      },
-      args = list(place_match, providers, data_dir, timeout),
-      package = TRUE
-    )
-
-    while (proc$is_alive()) {
-      ors_cli(progress = "update")
-    }
+    req <- httr2::request(place_match$url)
+    req <- httr2::req_method(req, "GET")
+    req <- httr2::req_timeout(req, timeout %||% getOption("timeout"))
+    if (verbose) req <- httr2::req_progress(req)
+    httr2::req_perform(req, path = file.path(
+      data_dir, paste0("geofabrik_", basename(place_match$url))
+    ))
   }
 
   # If the size is over 6 GB in size, give out a warning

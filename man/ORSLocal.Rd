@@ -377,7 +377,7 @@ Download and set an OpenStreetMap extract for use in ORS. Wrapper for
 \if{html}{\out{<div class="r">}}\preformatted{ORSLocal$set_extract(
   place,
   provider = "geofabrik",
-  timeout = 1800,
+  timeout = NULL,
   file = NULL,
   do_use = TRUE,
   ...
@@ -402,9 +402,7 @@ tries all providers.}
 
 \item{\code{timeout}}{\code{[numeric]}
 
-Timeout for extract downloads. Defaults to 30 minutes to enable
-longer extract downloads. The adopted timeout is the maximum of
-this argument and \code{getOption("timeout")}.}
+Timeout for extract downloads. Defaults to \code{getOption("timeout")}.}
 
 \item{\code{file}}{\code{[character/NULL]}
 
