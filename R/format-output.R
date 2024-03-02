@@ -1,34 +1,3 @@
-#' Gets and extracts distance and durations values from a Directions request.
-#' @param index Row index of input dataset
-#' @param env Environment containing all parameters necessary to query ORS
-#' @noRd
-apply_directions <- function(index,
-                             locations,
-                             profile,
-                             units,
-                             geometry,
-                             params,
-                             url,
-                             instance,
-                             call_index) {
-  res <- call_ors_directions(
-    src = locations[index, "src"],
-    dst = locations[index, "dest"],
-    profile = profile,
-    units = units,
-    geometry = geometry,
-    params = params,
-    url = url,
-    token = needs_token(instance$token)
-  )
-
-  cond <- handle_ors_conditions(res)
-  store_condition(cond, call_index, index)
-  get_ors_summary(res, geometry = geometry)
-}
-
-
-
 apply_shortest_routes <- function(index,
                                   src,
                                   dst,

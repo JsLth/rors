@@ -266,6 +266,35 @@ ors_pairwise <- function(src,
 }
 # TODO: _raw and _single functions to increase performance
 
+#' Gets and extracts distance and durations values from a Directions request.
+#' @param index Row index of input dataset
+#' @param env Environment containing all parameters necessary to query ORS
+#' @noRd
+ors_dist_single <- function(index,
+                            locations,
+                            profile,
+                            units,
+                            geometry,
+                            params,
+                            url,
+                            instance,
+                            call_index) {
+  res <- call_ors_directions(
+    src = locations[index, "src"],
+    dst = locations[index, "dest"],
+    profile = profile,
+    units = units,
+    geometry = geometry,
+    params = params,
+    url = url,
+    token = needs_token(instance$token)
+  )
+
+  cond <- handle_ors_conditions(res)
+  store_condition(cond, call_index, index)
+  get_ors_summary(res, geometry = geometry)
+}
+
 #' Calculate shortest routes to nearby points of interest
 #' @param group \code{[character/numeric]}
 #'
