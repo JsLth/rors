@@ -104,7 +104,7 @@ get_ors_waypoints <- function(res, alt = 1L) {
     steps$duration <- as.numeric(steps$duration)
 
     # expand dataframe
-    steps <- steps[rep(1:nrow(steps), reps),]
+    steps <- steps[rep(seq_len(nrow(steps)), reps),]
 
     steps$name <- gsub(pattern = "^-$", replacement = NA, steps$name)
     row.names(steps) <- NULL

@@ -178,7 +178,7 @@ ors_inspect <- function(src,
                         navigation = FALSE,
                         alternative_routes = NULL,
                         round_trip = NULL,
-                        as = c("tidy", "list", "string"), # TODO: revise tidy approach
+                        as = c("tidy", "list", "string"), # to-do: revise tidy approach
                         elev_as_z = FALSE,
                         instance = NULL,
                         ...) {
@@ -363,22 +363,20 @@ plot_section <- function(x,
   y_range[1] <- y_range[1] * scale_elevation
 
   ids <- seq(1, n)
-  zip_x <- unlist(mapply(
+  zip_x <- unlist(Map(
     FUN = c,
     xmin1 = seg$xstart,
     xmax1 = seg$xend,
     xmax2 = seg$xend,
-    xmin2 = seg$xstart,
-    SIMPLIFY = FALSE
+    xmin2 = seg$xstart
   ))
 
-  zip_y <- unlist(mapply(
+  zip_y <- unlist(Map(
     FUN = c,
     ymin1 = rep(y_range[1], n),
     ymin2 = rep(y_range[1], n),
     ymax1 = seg$yend,
-    ymay2 = seg$ystart,
-    SIMPLIFY = FALSE
+    ymay2 = seg$ystart
   ))
 
   poly <- data.frame(x = zip_x, y = zip_y, id = rep(ids, each = 4))

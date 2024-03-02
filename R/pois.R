@@ -105,12 +105,11 @@ n_nearest_pois <- function(src, pois, n, group_index = NULL) {
 
   # For each source point, select the n pois with the lowest distance
   iter <- expand.grid(n = seq_len(n), m = seq_len(nrow(src)))
-  output <- mapply(
-    FUN = select_lowest_distance,
+  output <- Map(
+    select_lowest_distance,
     iter[["n"]],
     iter[["m"]],
-    MoreArgs = list(dmat = dist_matrix, smat = sorted_matrix),
-    SIMPLIFY = FALSE
+    MoreArgs = list(dmat = dist_matrix, smat = sorted_matrix)
   )
 
   sf::st_as_sf(as_data_frame(do.call(rbind.data.frame, output)))

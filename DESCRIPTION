@@ -30,7 +30,7 @@ Imports:
     yaml,
     osmextract (>= 0.2.0),
     jsonlite,
-    httr2 (>= 0.2.0),
+    httr2 (>= 1.0.0),
     sf
 Suggests:
     covr,

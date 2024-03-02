@@ -264,7 +264,7 @@ ors_pairwise <- function(src,
   class(route_df) <- c("ors_dist", class(route_df))
   route_df
 }
-# TODO: _raw and _single functions to increase performance
+# to-do: _raw and _single functions to increase performance
 
 #' Gets and extracts distance and durations values from a Directions request.
 #' @param index Row index of input dataset
