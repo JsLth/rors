@@ -3,7 +3,7 @@
 \name{ors_pairwise}
 \alias{ors_pairwise}
 \alias{ors_shortest_distances}
-\title{Routing distance computations}
+\title{Pairwise routing}
 \usage{
 ors_pairwise(
   src,
@@ -11,6 +11,7 @@ ors_pairwise(
   profile = get_profiles(),
   units = c("m", "km", "mi"),
   geometry = FALSE,
+  progress = FALSE,
   instance = NULL,
   ...
 )
@@ -62,6 +63,11 @@ Distance unit for distance calculations (\code{"m"}, \code{"km"} or
 If \code{TRUE}, returns a \code{sf} object containing route geometries. If
 \code{FALSE}, returns route distance measures. Defaults to \code{FALSE}, to
 increase performance.}
+
+\item{progress}{\code{[logical]}
+
+If \code{TRUE}, displays a progress bar if the process is taking a bit
+longer.}
 
 \item{instance}{\code{[ors_instance]}
 
@@ -162,11 +168,6 @@ datasets.}
 Type of proximity that the calculations should be
 based on. If \code{distance}, the shortest physical distance will be calculated
 and if \code{duration}, the shortest temporal distance will be calculated.}
-
-\item{progress}{\code{[logical]}
-
-If \code{TRUE}, displays a progress bar if the process is taking a bit
-longer.}
 }
 \value{
 \code{ors_pairwise} returns a dataframe with distances and

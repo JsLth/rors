@@ -191,6 +191,55 @@ format.ors_paths <- function(x, ...) {
 
 
 #' @export
+format.ors_condition <- function(x, ...) {
+  msg <- x$msg
+  code <- x$code
+
+  msg <- vapply(
+    seq_along(msg),
+    FUN.VALUE = character(1),
+    function(i) {
+      if (!is.null(code[i])) {
+        sprintf(
+          "%s code %s: %s",
+          ifelse(x$error, "Error", "Warning"),
+          code[i], msg[i]
+        )
+      } else {
+        msg[i]
+      }
+    }
+  )
+
+  index <- seq_along(msg)
+  max_nc <- nchar(max(index))
+  msg <- lapply(index, function(i) {
+    nc <- nchar(i)
+    fmsg <- strwrap(
+      msg[i],
+      width = cli::console_width(),
+      exdent = nc + 3,
+      initial = paste0(i, strrep(" ", max_nc - nc), " - "),
+      simplify = TRUE
+    )
+    if (length(fmsg) > 1) {
+      paste(fmsg, collapse = "\n")
+    } else {
+      fmsg
+    }
+  })
+
+  title <- sprintf("Function: %s, timestamp: %s", x$call, x$ts)
+
+  paste(
+    cli::cli_format_method(cli::cli_h3(cli::style_bold(title)))[2],
+    paste(msg, collapse = "\n"),
+    sep = "\n"
+  )
+}
+
+
+#' @export
 format.ors_token <- function(x, ...) {
   active <- attr(x, "active")
 
@@ -235,42 +284,16 @@ print.ors_matrix <- function(x, ...) {
 
 #' @export
 print.ors_condition <- function(x, ...) {
-  cond_fmt <- lapply(x, function(cond) {
-    if (length(cond$msg)) {
-      messages <- cond$msg
-      index <- seq_along(messages)
-      max_nc <- nchar(max(index))
-      messages <- lapply(index, function(i) {
-        nc <- nchar(i)
-        fmsg <- strwrap(
-          messages[[i]],
-          width = cli::console_width(),
-          exdent = nc + 3,
-          initial = paste0(i, strrep(" ", max_nc - nc), " - "),
-          simplify = TRUE
-        )
-        if (length(fmsg) > 1) {
-          paste(fmsg, collapse = "\n")
-        } else {
-          fmsg
-        }
-      })
+  cat(format(x, ...), sep = "\n")
+  invisible(x)
+}
 
-      title <- sprintf("Function: %s, timestamp: %s", cond$call, cond$ts)
 
-      paste(
-        cli::cli_format_method(cli::cli_h3(cli::style_bold(title)))[2],
-        paste(messages, collapse = "\n"),
-        sep = "\n"
-      )
-    }
-  })
-
-  if (!is.null(cond_fmt)) {
-    cond_fmt <- Filter(is.character, cond_fmt)
-    cat(paste0(paste(cond_fmt, collapse = "\n\n"), "\n"))
+#' @export
+print.ors_condition_list <- function(x, ...) {
+  for (cond in x) {
+    print(cond, ...)
   }
-
   invisible(x)
 }
 

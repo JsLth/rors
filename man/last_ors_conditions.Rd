@@ -13,7 +13,14 @@ Number of error lists that should be returned. \code{last = 2L},
 for example, returns errors from the last two function calls.}
 }
 \description{
-Return the error and warning messages that ORS returned in the
-last \code{\link{ors_pairwise}} function call. Also works for
-\code{\link{ors_shortest_distances}}.
+List errors and warnings that were produced in the last
+call to one of the ORS endpoints.
+}
+\examples{
+\dontrun{
+library(sf)
+
+ors_pairwise(pharma, st_geometry(pharma) + 100)
+last_ors_conditions()
+}
 }

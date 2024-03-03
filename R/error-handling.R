@@ -1,21 +1,27 @@
 #' Return ORS conditions
-#' @description Return the error and warning messages that ORS returned in the
-#' last \code{\link{ors_pairwise}} function call. Also works for
-#' \code{\link{ors_shortest_distances}}.
+#' @description List errors and warnings that were produced in the last
+#' call to one of the ORS endpoints.
 #' @param last \code{[integer]}
 #'
 #' Number of error lists that should be returned. \code{last = 2L},
 #' for example, returns errors from the last two function calls.
 #'
+#' @examples
+#' \dontrun{
+#' library(sf)
+#'
+#' ors_pairwise(pharma, st_geometry(pharma) + 100)
+#' last_ors_conditions()
+#' }
 #' @export
 last_ors_conditions <- function(last = 1L) {
-  conditions <- get("cond", envir = ors_cache)
+  conditions <- get0("cond", envir = ors_cache)
 
   if (length(conditions)) {
     assert_that(is.numeric(last), last >= 1)
     last <- min(last, length(conditions))
     conditions <- conditions[seq_len(last)]
-    class(conditions) <- "ors_condition"
+    class(conditions) <- "ors_condition_list"
     conditions
   }
 }
@@ -44,11 +50,7 @@ handle_ors_conditions <- function(res,
       message <- fill_empty_error_message(code)
     }
 
-    cond <- paste0(
-      ifelse(!is.null(code), "Error code ", ""), code, ": ", msg
-    )
-    attr(cond, "error") <- TRUE
-    store_condition(cond, ts = timestamp, call = call)
+    store_condition(code, msg, ts = timestamp, call = call, error = TRUE)
 
     if (abort_on_error) {
       cli::cli_abort(
@@ -58,17 +60,11 @@ handle_ors_conditions <- function(res,
     }
   } else {
     warnings <- get_ors_warnings(res)
-    message <- warnings$message
+    msg <- warnings$message
     code <- warnings$code
 
     if (length(code) && length(message)) {
-      cond <- vapply(
-        seq_along(code),
-        FUN.VALUE = character(1),
-        function(w) paste0("Warning code ", code[w], ": ", message[w])
-      )
-      attr(cond, "error") <- FALSE
-      store_condition(cond, ts = timestamp, call = call)
+      store_condition(code, msg, ts = timestamp, call = call, error = FALSE)
 
       if (warn_on_warning) {
         w_vec <- cli::cli_vec(
@@ -83,17 +79,22 @@ handle_ors_conditions <- function(res,
 }
 
 
-store_condition <- function(msg, ts, call) {
-  if (is.null(attr(msg, "error"))) msg <- NA
-
+store_condition <- function(code, msg, ts, call, error) {
   conds <- ors_cache$cond
   last_cond <- conds[[1]]
 
   if (identical(last_cond$ts, ts)) {
     last_cond$msg <- c(last_cond$msg, msg)
+    last_cond$code <- c(last_cond$code, code)
     conds[[1]] <- last_cond
   } else {
-    new_cond <- list(msg = msg, ts = ts, call = call)
+    new_cond <- ors_condition(
+      code = code,
+      msg = msg,
+      ts = ts,
+      call = call,
+      error = error
+    )
     conds <- c(list(new_cond), conds)
   }
 
@@ -101,18 +102,37 @@ store_condition <- function(msg, ts, call) {
 }
 
 
+ors_condition <- function(code, msg, ts, call, error) {
+  cond <- list(
+    code = code,
+    msg = msg,
+    ts = ts,
+    call = call,
+    error = error
+  )
+
+  class(cond) <- "ors_condition"
+  cond
+}
+
+
 handle_missing_directions <- function(.data) {
   route_missing <- is.na(.data)
-  conds <- get("cond", envir = ors_cache)[[1]]
-  warn_indices <- which(grepl("Warning", conds))
+  conds <- get0("cond", envir = ors_cache)
+  if (is.null(conds)) return()
+  has_warnings <- conds[[1]]$warn
+
+  # all routes missing
   if (all(route_missing)) {
     cli::cli_warn(c(
       "No routes could be calculated. Is the service correctly configured?",
       cond_tip()
     ))
+
+  # some routes missing
   } else if (any(route_missing)) {
     cond_indices <- cli::cli_vec(
-      which(grepl("Error", conds)),
+      which(startsWith("Error", conds)),
       style = list(vec_sep = ", ", vec_last = ", ")
     )
     cli::cli_warn(c(
@@ -122,7 +142,9 @@ handle_missing_directions <- function(.data) {
       ),
       cond_tip()
     ))
-  } else if (length(warn_indices)) {
+
+  # routes associated with warnings
+  } else if (has_warnings) {
     warn_indices <- cli::cli_vec(
       warn_indices,
       style = list(vec_sep = ", ", vec_last = ", ")
@@ -161,7 +183,7 @@ cond_tip <- function(last = NULL) {
   )
   callstr <- cli::style_hyperlink(callstr, paste0("rstudio:run:", callstr))
   cli::col_grey(sprintf(
-    "For a list of conditions, call {.code %s}.", callstr
+    "Run {.code %s} for a full list of conditions.", callstr
   ))
 }
 
