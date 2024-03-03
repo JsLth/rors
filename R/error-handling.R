@@ -9,25 +9,14 @@
 #'
 #' @export
 last_ors_conditions <- function(last = 1L) {
-  conditions <- ors_cache$routing_conditions
+  conditions <- get("cond", envir = ors_cache)
 
   if (length(conditions)) {
     assert_that(is.numeric(last), last >= 1)
     last <- min(last, length(conditions))
-
-    time <- names(conditions)
-
-    cond_df <- lapply(conditions, function(x) {
-      stats::na.omit(data.frame(conditions = unlist(x)))
-    })
-    names(cond_df) <- time
-
-    end <- length(names(cond_df))
-    start <- length(names(cond_df)) + 1L - last
-    selected_conditions <- cond_df[seq(start, end)]
-
-    class(selected_conditions) <- "ors_condition"
-    selected_conditions
+    conditions <- conditions[seq_len(last)]
+    class(conditions) <- "ors_condition"
+    conditions
   }
 }
 
@@ -37,7 +26,11 @@ last_ors_conditions <- function(last = 1L) {
 #' @param abort_on_error Whether to abort when an error code is returned
 #' @param warn_on_warning Whether to warn when a warning code is returned
 #' @noRd
-handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning = FALSE) {
+handle_ors_conditions <- function(res,
+                                  timestamp,
+                                  call,
+                                  abort_on_error = FALSE,
+                                  warn_on_warning = FALSE) {
   if (is_ors_error(res)) {
     msg <- res$error
     code <- NULL
@@ -51,17 +44,17 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
       message <- fill_empty_error_message(code)
     }
 
-    error <- paste0(
+    cond <- paste0(
       ifelse(!is.null(code), "Error code ", ""), code, ": ", msg
     )
+    attr(cond, "error") <- TRUE
+    store_condition(cond, ts = timestamp, call = call)
+
     if (abort_on_error) {
       cli::cli_abort(
         c("ORS encountered the following exception:", error),
         call = NULL
       )
-    } else {
-      attr(error, "error") <- TRUE
-      error
     }
   } else {
     warnings <- get_ors_warnings(res)
@@ -69,43 +62,48 @@ handle_ors_conditions <- function(res, abort_on_error = FALSE, warn_on_warning =
     code <- warnings$code
 
     if (length(code) && length(message)) {
-      warnings <- lapply(seq_along(code), function(w) {
-        paste0("Warning code ", code[w], ": ", message[w])
-      })
+      cond <- vapply(
+        seq_along(code),
+        FUN.VALUE = character(1),
+        function(w) paste0("Warning code ", code[w], ": ", message[w])
+      )
+      attr(cond, "error") <- FALSE
+      store_condition(cond, ts = timestamp, call = call)
 
       if (warn_on_warning) {
         w_vec <- cli::cli_vec(
-          warnings,
+          cond,
           style = list(vec_sep = "\f", vec_last = "\f")
         )
         cli::cli_warn(c("ORS returned {length(w_vec)} warning{?s}:", w_vec))
-      } else {
-        attr(warnings, "error") <- FALSE
-        warnings
       }
     }
   }
+  NULL
 }
 
 
-store_condition <- function(what, when, which) {
-  has_error <- attr(what, "error")
+store_condition <- function(msg, ts, call) {
+  if (is.null(attr(msg, "error"))) msg <- NA
 
-  if (is.null(has_error)) {
-    what <- NA
+  conds <- ors_cache$cond
+  last_cond <- conds[[1]]
+
+  if (identical(last_cond$ts, ts)) {
+    last_cond$msg <- c(last_cond$msg, msg)
+    conds[[1]] <- last_cond
+  } else {
+    new_cond <- list(msg = msg, ts = ts, call = call)
+    conds <- c(list(new_cond), conds)
   }
 
-  if (isFALSE(has_error)) {
-    what <- unlist(what)
-  }
-
-  ors_cache$routing_conditions[[when]][which] <- what
+  assign("cond", conds, envir = ors_cache)
 }
 
 
-handle_missing_directions <- function(.data, call_index) {
+handle_missing_directions <- function(.data) {
   route_missing <- is.na(.data)
-  conds <- ors_cache$routing_conditions[[call_index]]
+  conds <- get("cond", envir = ors_cache)[[1]]
   warn_indices <- which(grepl("Warning", conds))
   if (all(route_missing)) {
     cli::cli_warn(c(

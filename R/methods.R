@@ -235,19 +235,18 @@ print.ors_matrix <- function(x, ...) {
 
 #' @export
 print.ors_condition <- function(x, ...) {
-  timestamps <- names(x)
-
-  calls <- lapply(timestamps, function(time) {
-    if (length(x[[time]]$conditions)) {
-      indices <- attr(x[[time]], "row.names")
-      messages <- x[[time]]$conditions
-      max_nc <- nchar(max(indices))
-      messages <- lapply(seq(1, length(messages)), function(mi) {
-        nc <- nchar(indices[mi])
+  cond_fmt <- lapply(x, function(cond) {
+    if (length(cond$msg)) {
+      messages <- cond$msg
+      index <- seq_along(messages)
+      max_nc <- nchar(max(index))
+      messages <- lapply(index, function(i) {
+        nc <- nchar(i)
         fmsg <- strwrap(
-          messages[[mi]],
+          messages[[i]],
+          width = cli::console_width(),
           exdent = nc + 3,
-          initial = paste0(indices[mi], strrep(" ", max_nc - nc), " - "),
+          initial = paste0(i, strrep(" ", max_nc - nc), " - "),
           simplify = TRUE
         )
         if (length(fmsg) > 1) {
@@ -257,14 +256,19 @@ print.ors_condition <- function(x, ...) {
         }
       })
 
-      printed_time <- paste0("Function call from ", time, ":")
-      paste(printed_time, paste(messages, collapse = "\n"), sep = "\n")
+      title <- sprintf("Function: %s, timestamp: %s", cond$call, cond$ts)
+
+      paste(
+        cli::cli_format_method(cli::cli_h3(cli::style_bold(title)))[2],
+        paste(messages, collapse = "\n"),
+        sep = "\n"
+      )
     }
   })
 
-  if (!is.null(calls)) {
-    calls <- Filter(is.character, calls)
-    cat(paste0(paste(calls, collapse = "\n\n"), "\n"))
+  if (!is.null(cond_fmt)) {
+    cond_fmt <- Filter(is.character, cond_fmt)
+    cat(paste0(paste(cond_fmt, collapse = "\n\n"), "\n"))
   }
 
   invisible(x)

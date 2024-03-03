@@ -1,4 +1,4 @@
-#' Routing distance computations
+#' Pairwise routing
 #' @description
 #' \code{ors_pairwise} calculates the routing distance between two
 #' datasets using the Directions service from ORS. \code{ors_shortest_distances}
@@ -35,6 +35,9 @@
 #' If \code{TRUE}, returns a \code{sf} object containing route geometries. If
 #' \code{FALSE}, returns route distance measures. Defaults to \code{FALSE}, to
 #' increase performance.
+#' @param progress \code{[logical]}
+#'
+#' Whether to show a progress bar for longer operations.
 #' @param instance \code{[ors_instance]}
 #'
 #' Object of an OpenRouteService instance that should be used for route
@@ -211,6 +214,7 @@ ors_pairwise <- function(src,
                          profile = get_profiles(),
                          units = c("m", "km", "mi"),
                          geometry = FALSE,
+                         progress = FALSE,
                          instance = NULL,
                          ...) {
   # Validate arguments
@@ -222,21 +226,60 @@ ors_pairwise <- function(src,
 
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, id = iid)
+  url <- get_ors_url(id = iid)
 
   # Bring input data into shape
   src <- prepare_input(src, len = nrow(dst))
   dst <- prepare_input(dst, len = nrow(src))
-
-  locations <- df_nest(src = src, dest = dst)
-  url <- get_ors_url(id = iid)
   params <- format_ors_params(list(...), profile)
+
+  ors_pairwise_raw(
+    src = src,
+    dst = dst,
+    profile = profile,
+    units = units,
+    geometry = geometry,
+    progress = progress,
+    instance = instance,
+    url = url,
+    params = params
+  )
+}
+
+
+#' Raw pairwise routing
+#' @description
+#' Similar to \code{ors_pairwise} but does not make any effort to pre-process
+#' its arguments.
+#'
+#' @param src,dst Dataframe or matrix of WGS84 coordinates
+#' @param profile Profile to be used for routing
+#' @param units Distance unit
+#' @param geometry Whether to return geometries
+#' @param instance ORS instance
+#' @param params List of additional parameters to the Directions endpoint
+#' @noRd
+ors_pairwise_raw <- function(src,
+                             dst,
+                             profile,
+                             units,
+                             geometry,
+                             progress,
+                             instance,
+                             url,
+                             params) {
   call_index <- format(Sys.time(), format = "%H:%M:%OS6")
+  iter <- seq_len(nrow(src))
+  if (progress) {
+    iter <- cli::cli_progress_along(iter)
+  }
 
   # Apply a directions query to each row
-  route_df <- lapply(
-    seq_len(nrow(locations)),
-    FUN = apply_directions,
-    locations = locations,
+  res <- lapply(
+    iter,
+    ors_pairwise_single,
+    src = src,
+    dst = dst,
     profile = profile,
     units = units,
     geometry = geometry,
@@ -245,43 +288,41 @@ ors_pairwise <- function(src,
     instance = instance,
     call_index = call_index
   )
-  route_df <- do.call(rbind, route_df)
+  res <- do.call(rbind, res)
 
-  handle_missing_directions(route_df, call_index)
+  handle_missing_directions(res)
 
   if (loadable("units")) {
-    units(route_df$distance) <- units
-    units(route_df$duration) <- "s"
+    units(res$distance) <- units
+    units(res$duration) <- "s"
   }
 
-  if (is_sf(route_df)) {
-    route_df <- sf::st_as_sf(data_frame(route_df))
+  if (is_sf(res)) {
+    res <- sf::st_as_sf(data_frame(res))
   } else {
-    route_df <- as_data_frame(route_df)
+    res <- as_data_frame(res)
   }
 
-  attr(route_df, "data") <- locations
-  class(route_df) <- c("ors_dist", class(route_df))
-  route_df
+  attr(res, "locations") <- list(src = src, dst = dst)
+  class(res) <- c("ors_dist", class(res))
+  res
 }
-# to-do: _raw and _single functions to increase performance
 
 #' Gets and extracts distance and durations values from a Directions request.
-#' @param index Row index of input dataset
-#' @param env Environment containing all parameters necessary to query ORS
 #' @noRd
-ors_dist_single <- function(index,
-                            locations,
-                            profile,
-                            units,
-                            geometry,
-                            params,
-                            url,
-                            instance,
-                            call_index) {
+ors_pairwise_single <- function(index,
+                                src,
+                                dst,
+                                profile,
+                                units,
+                                geometry,
+                                params,
+                                url,
+                                instance,
+                                call_index) {
   res <- call_ors_directions(
-    src = locations[index, "src"],
-    dst = locations[index, "dest"],
+    src = src[index, ],
+    dst = dst[index, ],
     profile = profile,
     units = units,
     geometry = geometry,
@@ -290,8 +331,7 @@ ors_dist_single <- function(index,
     token = needs_token(instance$token)
   )
 
-  cond <- handle_ors_conditions(res)
-  store_condition(cond, call_index, index)
+  cond <- handle_ors_conditions(res, call_index, "ors_pairwise")
   get_ors_summary(res, geometry = geometry)
 }
 
