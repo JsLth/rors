@@ -231,7 +231,7 @@ ors_pairwise <- function(src,
   # Bring input data into shape
   src <- prepare_input(src, len = nrow(dst))
   dst <- prepare_input(dst, len = nrow(src))
-  params <- format_ors_params(list(...), profile)
+  params <- prepare_ors_params(list(...), profile)
 
   ors_pairwise_raw(
     src = src,

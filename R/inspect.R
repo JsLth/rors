@@ -207,7 +207,7 @@ ors_inspect <- function(src,
     round_trip = round_trip
   )
   features <- features[lengths(features) > 0]
-  params <- format_ors_params(c(features, list(...)), profile)
+  params <- prepare_ors_params(c(features, list(...)), profile)
 
   res <- call_ors_directions(
     src = src,
@@ -467,7 +467,7 @@ plot_section <- function(x,
 #   url <- get_ors_url(id = iid)
 #
 #   features <- list(attributes = TRUE, elevation = TRUE, extra_info = TRUE)
-#   options <- format_ors_params(append(features, list(...)), profile)
+#   options <- prepare_ors_params(append(features, list(...)), profile)
 #
 #   res <- call_ors_directions(
 #     src = src,

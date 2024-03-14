@@ -8,8 +8,18 @@
 }
 
 
-"%default%" <- function(x, y) {
-  if (identical(x, y)) NULL else x
+last <- function(x) {
+  x[[length(x)]]
+}
+
+
+drop_null <- function(x) {
+  x[lengths(x) > 0]
+}
+
+
+vswitch <- function(object, ..., FUN.VALUE = character(1), USE.NAMES = FALSE) {
+  vapply(object, switch, FUN.VALUE = FUN.VALUE, USE.NAMES = USE.NAMES, ...)
 }
 
 
@@ -101,16 +111,6 @@ capitalize_char <- function(string) {
 }
 
 
-#' Given an ORS profile name, returns the first part of the profile, e.g.,
-#' driving-car -> driving
-#' @noRd
-base_profile <- function(profile) {
-  if (!is.na(profile)) {
-    strsplit(profile, "-")[[1L]][1L]
-  }
-}
-
-
 #' Simple wrapper around regexec and regmatches to find a regex pattern in a text
 #' @noRd
 regex_match <- function(text, pattern, ...) {
@@ -168,6 +168,25 @@ modify_list <- function(x, y) {
     } else {
       x[[i]] <- y_i
     }
+  }
+  x
+}
+
+
+#' Flattens a nested list and keeps the list structure
+#' @param x nested list
+#' @returns list containing each nested list at the top level
+#' @noRd
+flatten_list <- function(x) {
+  # https://stackoverflow.com/a/8142955
+  while (any(vapply(x, is.list, logical(1)))) {
+    x <- lapply(x, function(x) if (is.list(x)) x else list(x))
+    x <- unlist(x, recursive = FALSE)
+    names(x) <- vapply(
+      strsplit(names(x), ".", fixed = TRUE),
+      last,
+      character(1)
+    )
   }
   x
 }
@@ -231,10 +250,10 @@ decode_base2 <- function(code) {
 }
 
 
-#' Turns a length-1 vector to a single-element list
+#' Turns a vector to a single-element list
 #' @noRd
 box <- function(x) {
-  if (length(x) == 1L && is.atomic(x)) {
+  if (isTRUE(length(x) == 1) && is.atomic(x)) {
     x <- list(x)
   }
   x

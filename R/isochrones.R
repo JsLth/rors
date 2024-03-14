@@ -151,7 +151,7 @@ ors_accessibility <- function(src,
 
   src <- prepare_input(src)
 
-  opts <- format_ors_params(list(...), profile)
+  opts <- prepare_ors_params(list(...), profile)
 
   url <- get_ors_url(id = iid)
 
