@@ -1,7 +1,7 @@
 Package: rors
 Type: Package
 Title: Routing using OpenRouteService
-Version: 0.12.8
+Version: 0.12.9.9000
 Authors@R: person("Lieth", "Jonas", email = "jonas.lieth@gesis.org",
                   role = c("aut", "cre"))
 Maintainer: Jonas Lieth <jonas.lieth@gesis.org>
