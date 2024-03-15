@@ -130,6 +130,14 @@ test_that("list tools work", {
   lst3 <- lst1
   lst3["d"] <- list(NULL)
 
+  lst4 <- lst1
+  lst4$b$x <- c("a", "b", "c")
+
+  lst5 <- lst4
+  names(lst5) <- c("", "b")
+
+  lst6 <- list("a", "b")
+
   mod <- modify_list(lst1, lst2)
 
   expect_equal(mod$c, 10)
@@ -144,6 +152,14 @@ test_that("list tools work", {
 
   expect_equal(box(1), list(1))
   expect_equal(box(list(1)), list(1))
+
+  flst4 <- flatten_list(lst4)
+  expect_named(flst4, c("a", "x", "y"))
+  expect_length(flst4$x, 3)
+  expect_type(flst4$x, "character")
+
+  expect_named(flatten_list(lst5), c("", "x", "y"))
+  expect_identical(flatten_list(lst6), lst6)
 })
 
 test_that("decode_base2 works", {

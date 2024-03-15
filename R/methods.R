@@ -364,3 +364,10 @@ print.ors_token <- function(x, ...) {
   cat(format(x, ...), sep = "\n")
   invisible(x)
 }
+
+
+#' @export
+print.ors_geojson <- function(x, ...) {
+  x$features <- "<truncated>"
+  cat(jsonlite::toJSON(unclass(x), pretty = TRUE, auto_unbox = TRUE), ...)
+}

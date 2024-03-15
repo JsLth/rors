@@ -194,59 +194,6 @@ fill_extra_info <- function(codes, info_type, profile) {
 }
 
 
-country_info <- c(
-  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla",
-  "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
-  "Azerbaijan", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium",
-  "Belize", "Benin", "Bermuda", "Bhutan", "Bolivia", "Bosnia and Herzegovina",
-  "Botswana", "Brazil", "British Indian Ocean Territory",
-  "British Sovereign Base Areas", "British Virgin Islands", "Brunei",
-  "Bulgaria", "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Canada",
-  "Cape Verde", "Cayman Islands", "Central African Republic", "Chad", "Chile",
-  "China", "Colombia", "Comoros", "Congo-Brazzaville", "Congo-Kinshasa",
-  "Cook Islands", "Costa Rica", r"[C\u00f4te d\u2019Ivoire]", "Croatia", "Cuba",
-  "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica",
-  "Dominican Republic", "East Timor", "Ecuador", "Egypt", "El Salvador",
-  "Equatorial Guinea", "Eritrea", "Estonia", "Ethiopia", "Falkland Islands",
-  "Faroe Islands", "Federated States of Micronesia", "Fiji", "Finland",
-  "France", "Gabon", "Gambia", "Georgia", "Germany", "Germany - Belgium",
-  "Ghana", "Gibraltar", "Greece", "Greenland", "Grenada", "Guatemala",
-  "Guernsey", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras",
-  "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland",
-  "Isle of Man", "Israel", "Italy", "Jamaica", "Jangy-ayyl", "Japan", "Jersey",
-  "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", "Kuwait", "Kyrgyzstan",
-  "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein",
-  "Lithuania", "Luxembourg", "Macedonia", "Madagascar", "Malawi", "Malaysia",
-  "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius",
-  "Mexico", "Moldova", "Monaco", "Mongolia", "Montenegro", "Montserrat",
-  "Morocco", "Mozambique", "Myanmar", "name:en", "Namibia", "Nauru", "Nepal",
-  "Netherlands - Belgium", "New Zealand", "Nicaragua", "Niger", "Nigeria",
-  "Niue", "North Korea", "Norway", "Oman", "Pakistan", "Palau",
-  "Palestinian Territories", "Panama", "Papua New Guinea", "Paraguay", "Peru",
-  "Philippines", "Pitcairn Islands", "Poland", "Portugal", "Qatar", "Romania",
-  "Russian Federation", "Rwanda", "Sahrawi Arab Democratic Republic",
-  "Saint Helena - Ascension and Tristan da Cunha", "Saint Kitts and Nevis",
-  "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino",
-  r"[S\u00e3o Tom\u00e9 and Pr\u00edncipe]", "Saudi Arabia", "Senegal",
-  "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia",
-  "Solomon Islands", "Somalia", "South Africa",
-  "South Georgia and the South Sandwich Islands", "South Korea", "South Sudan",
-  "Spain", "Sri Lanka", "Sudan", "Suriname", "Swaziland", "Sweden",
-  "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand",
-  "The Bahamas", "The Netherlands", "Togo", "Tokelau", "Tonga",
-  "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan",
-  "Turks and Caicos Islands", "Tuvalu", "Uganda", "Ukraine",
-  "United Arab Emirates", "United Kingdom", "United States of America",
-  "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam",
-  "Yemen", "Zambia", "Zimbabwe", "Border India - Bangladesh",
-  r"[\u00cele Verte]", "Border Azerbaijan - Armenia (Enclave AZE)",
-  "Freezland Rock", "Border SI-HR", "Willis Island", "Chong-Kara",
-  r"[\u0395\u03bb\u03bb\u03ac\u03b4\u03b1 - \u03a0\u03b1\u03b3\u03b3\u03b1\u03af\u03bf]",
-  "Bristol Island", "Dist. Judges Court", "Border Kyrgyzstan - Uzbekistan",
-  r"[Border Malawi - Mozambique\t]", r"[\u4e2d\u83ef\u6c11\u570b]"
-)
-
-
 fill_table <- function() {
   tab <- list(
     name = c(

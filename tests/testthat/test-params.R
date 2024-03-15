@@ -1,63 +1,94 @@
 test_that("verifying works", {
-  expect_message(
-    param_verify(c(type = FALSE), "avoid_polygons"),
-    regexp = "avoid_polygons skipped",
-    fixed = TRUE
-  )
-
-  expect_message(
-    param_verify(c(type = FALSE), "avoid_polygons"),
-    regexp = "invalid type",
-    fixed = TRUE
-  )
-
-  expect_message(
-    param_verify(c(type = FALSE, match = FALSE), "avoid_polygons"),
-    regexp = "value is not defined",
-    fixed = TRUE
-  )
-
-  expect_true(
-    param_verify(c(type = TRUE), "avoid_polygons")
-  )
+  expect_identical(param_verify(c(type = FALSE), "avoid_polygons"), "invalid type")
+  expect_length(param_verify(c(type = FALSE, match = FALSE), "avoid_polygons"), 2)
+  expect_null(param_verify(c(type = TRUE), "avoid_polygons"))
 })
 
-test_that("alternative_routes", {
-  p1 <- list(alternative_routes = list(target_count = 2))
-  p2 <- list(alternative_routes = list(test = 2))
-  p3 <- list(alternative_routes = list(test = 2, share_factor = 2))
+test_that("fails early", {
+  p1 <- list(radiuses = 1, radiuses = 1)
+  p2 <- list(test = 1)
+  p3 <- list(alternative_routes = list(test = 2))
 
-  # defined params should work
-  expect_equal(prepare_ors_params(p1, "driving-car"), p1, ignore_attr = TRUE)
-
-  # profile shouldnt matter
-  expect_equal(prepare_ors_params(p1, "wheelchair"), p1, ignore_attr = TRUE)
+  # duplicated params shouldnt work
+  expect_error(prepare_ors_params(p1, "driving-car"), class = "param_duplicated_error")
 
   # undefined params shouldnt work
-  expect_warning(
-    prepare_ors_params(p2, "driving-car"),
-    "formatted incorrectly",
-    fixed = TRUE
-  )
+  expect_error(prepare_ors_params(p2, "driving-car"), class = "param_unknown_error")
 
-  # undefined params combined with params should throw a different warning
-  expect_warning(
-    prepare_ors_params(p3, "driving-car"),
-    "are not known",
-    fixed = TRUE
-  )
+  # undefined nested params shouldnt work
+  expect_error(prepare_ors_params(p3, "driving-car"), class =  "param_unknown_error")
 })
 
-test_that("vector params work", {
+test_that("param checking works", {
   v1 <- list(geometry_simplify = TRUE)
   v2 <- list(geometry_simplify = c(TRUE, TRUE))
   v3 <- list(geometry_simplify = "true")
-  v4 <- list(continue_straight = TRUE)
-  v5 <- list(avoid_countries = 34)
+  v4 <- list(avoid_countries = 34)
+  v5 <- list(preference = "test")
+  v6 <- list(avoid_polygons = withr::with_package("sf", sf::st_sfc(sf::st_cast(
+    sf::st_linestring(matrix(c(0, 0, 1, 1, 0, 0, 1, 1, 0, 0), ncol = 2)),
+    "POLYGON"
+  ), crs = 4326)))
+  v7 <- list(extra_info = c("osmid", "roadaccessrestrictions"))
+  v8 <- list(extra_info = "osmid")
 
+  # check if param checking can run successfully
   expect_equal(prepare_ors_params(v1, profile = "driving-car"), v1, ignore_attr = TRUE)
-  expect_equal(prepare_ors_params(v4, profile = "driving-car"), v4, ignore_attr = TRUE)
-  expect_equal(prepare_ors_params(v5, profile = "driving-car"), v5, ignore_attr = TRUE)
-  expect_warning(prepare_ors_params(v2, profile = "driving-car"))
-  expect_warning(prepare_ors_params(v3, profile = "driving-car"))
+
+  # check if length checks work
+  expect_error(prepare_ors_params(v2, profile = "driving-car"), "invalid length")
+
+  # check if type checks work
+  expect_error(prepare_ors_params(v3, profile = "driving-car"), "invalid type")
+
+  # check if profile checks work
+  expect_error(prepare_ors_params(v4, profile = "foot-walking"), "different profile")
+
+  # check if match checks work
+  expect_error(prepare_ors_params(v5, profile = "driving-car"), "undefined values")
+
+  # check if sf checks work
+  expect_equal(prepare_ors_params(v6, profile = "driving-car")$avoid_polygons$type, "FeatureCollection")
+
+  # check if extra_info checks work
+  expect_error(prepare_ors_params(v7, profile = "wheelchair"), "possibly wrong profile")
+  expect_equal(prepare_ors_params(v8, profile = "wheelchair"), v8)
+})
+
+
+test_that("nested params recurse properly", {
+  p1 <- list(alternative_routes = list(target_count = 2))
+  p2 <- list(restrictions = list(green = 3, shadow = TRUE), radiuses = "1")
+
+  # recursion should work
+  expect_equal(prepare_ors_params(p1, "driving-car"), p1, ignore_attr = TRUE)
+
+  # all nested params should throw an error
+  expect_length(expect_equal(prepare_ors_params(p2, "driving-car"))$body, 3)
+})
+
+
+test_that("bearings are formatted correctly", {
+  m1 <- matrix(c(360, NA, 90, 10, 10, 10), ncol = 2)
+  m2 <- c(360, 180, 90)
+  m3 <- matrix(rep(NA_real_, 6), ncol = 2)
+  m4 <- matrix(letters[1:6], ncol = 2)
+  m5 <- m1
+  colnames(m5) <- c("a", "b")
+  rownames(m5) <- 1:3
+
+  # check if bearings can be of mixed length
+  expect_length(r <- prepare_ors_params(list(bearings = m1), "cycling-regular", n = 3)$bearings[[2]], 1)
+
+  # check if bearings can be a vector
+  expect_length(prepare_ors_params(list(bearings = m2), "cycling-regular", n = 3)$bearings, 3)
+
+  # check if bearings can be all NA
+  expect_length(prepare_ors_params(list(bearings = m3), "cycling-regular", n = 3)$bearings[[1]], 0)
+
+  # check bearing type check
+  expect_error(prepare_ors_params(list(bearings = m4), "cycling-regular", n = 3), class = "invalid_param_error")
+
+  # check if bearings are name-resistant
+  expect_identical(prepare_ors_params(list(bearings = m5), "cycling-regular", n = 3), r)
 })

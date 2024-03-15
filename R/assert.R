@@ -5,8 +5,12 @@ assert_that <- function(..., env = parent.frame(), msg = NULL, add = NULL) {
   )
 }
 
-is_true_or_false <- function(x) {
-  is.logical(x) && length(x) == 1L && !is.na(x)
+is_true_or_false <- function(x, flag = TRUE) {
+  if (flag) {
+    isTRUE(x) || isFALSE(x)
+  } else {
+    is.logical(x) & !is.na(x)
+  }
 }
 
 is_integerish <- function(x) {

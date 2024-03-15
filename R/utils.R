@@ -18,6 +18,11 @@ drop_null <- function(x) {
 }
 
 
+drop_na <- function(x) {
+  x[!is.na(x)]
+}
+
+
 vswitch <- function(object, ..., FUN.VALUE = character(1), USE.NAMES = FALSE) {
   vapply(object, switch, FUN.VALUE = FUN.VALUE, USE.NAMES = USE.NAMES, ...)
 }
@@ -182,11 +187,6 @@ flatten_list <- function(x) {
   while (any(vapply(x, is.list, logical(1)))) {
     x <- lapply(x, function(x) if (is.list(x)) x else list(x))
     x <- unlist(x, recursive = FALSE)
-    names(x) <- vapply(
-      strsplit(names(x), ".", fixed = TRUE),
-      last,
-      character(1)
-    )
   }
   x
 }

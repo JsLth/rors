@@ -48,6 +48,12 @@ reference:
       - ors_export
       - ors_guess
 
+  - title: Parameters
+    contents:
+      - ors_params
+      - param_info
+      - country_info
+
   - title: Utility functions
     contents:
       - ors_sample
