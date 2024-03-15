@@ -1081,10 +1081,13 @@ get_ors_release <- function(dir, version, overwrite) {
       warning = function(w) {
         if (grepl("404 Not Found", w$message, fixed = TRUE)) {
           unlink(dir, recursive = TRUE)
-          cli::cli_abort("ORS version/commit {.val {version}} does not exist.")
-        } else {
-          cli::cli_warn(w$message)
-        }
+          cli::cli_abort(
+            "ORS version/commit {.val {version}} does not exist.",
+            class = "ors_version_error"
+          )
+        } else { # ncov
+          cli::cli_warn(w$message, class = "ors_version_warn") # ncov
+        } # ncov
       }
     )
 
@@ -1141,11 +1144,15 @@ start_docker <- function(verbose = TRUE) {
         ors_cli(progress = "update")
         Sys.sleep(0.01)
         difft <- difftime(Sys.time(), proc$get_start_time(), units = "secs")
-        if (difft > 180L) cli::cli_abort("Docker startup timed out.")
+        if (difft > 180L) cli::cli_abort(
+          "Docker startup timed out.",
+          class = "ors_docker_timeout"
+        )
       }
     } else {
       cli::cli_abort(
-        "Something went wrong while starting Docker. Is it installed?"
+        "Something went wrong while starting Docker. Is it installed?",
+        class = "ors_docker_corrupt_installation_error"
       )
     }
   } else if (is_linux()) {
@@ -1161,10 +1168,13 @@ start_docker <- function(verbose = TRUE) {
 
 read_ors_yaml <- function(path, ...) {
   if (is.null(path)) {
-    cli::cli_abort(c(
-      "!" = "Could not find {basename(path)}.",
-      "i" = "Is your ORS directory properly initialized?"
-    ))
+    cli::cli_abort(
+      c(
+        "!" = "Could not find {basename(path)}.",
+        "i" = "Is your ORS directory properly initialized?"
+      ),
+      class = "ors_directory_error"
+    )
   }
 
   yaml::read_yaml(path, ..., readLines.warn = FALSE)

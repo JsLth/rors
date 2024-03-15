@@ -95,9 +95,12 @@ ors_guess <- function(poly = NULL,
     expr = ors_snap(samp, radius = radius, instance = instance, ...),
     error = function(e) {
       if (startsWith(e$body, "Error code 8010")) {
-        cli::cli_abort("Cannot guess the extract area based on the bbox.")
+        cli::cli_abort(
+          "Cannot guess the extract area based on the bbox.",
+          class = "ors_guess_error"
+        )
       } else {
-        cli::cli_abort(e)
+        stop(e)
       }
     }
   )

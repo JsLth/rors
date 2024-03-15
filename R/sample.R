@@ -104,7 +104,10 @@ get_extract_boundaries <- function(instance = NULL,
         instance$paths$top
       )
       if (is.null(extract_path)) {
-        cli::cli_abort("Cannot identify current extract file. Pass it explicitly.")
+        cli::cli_abort(
+          "Cannot identify current extract file. Pass it explicitly.",
+          class = "ors_extract_not_found_error"
+        )
       }
 
       ors_cli(progress = list(
@@ -149,14 +152,17 @@ get_extract_boundaries <- function(instance = NULL,
 
       poly <- proc$get_result()
     } else {
-      cli::cli_abort(c(
-        "Cannot get extract from a server URL.",
-        "i" = paste(
-          "{.code get_extract_boundaries} is not usable for unkown remote",
-          "servers as the extract boundaries cannot easily be determined.",
-          "Consider using {.fn ors_guess}."
-        )
-      ))
+      cli::cli_abort(
+        c(
+          "Cannot get extract from a server URL.",
+          "i" = paste(
+            "{.code get_extract_boundaries} is not usable for unkown remote",
+            "servers as the extract boundaries cannot easily be determined.",
+            "Consider using {.fn ors_guess}."
+          )
+        ),
+        class = "ors_remote_sample_error"
+      )
     }
 
     assign("extract_boundaries", poly, envir = ors_cache)

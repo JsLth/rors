@@ -44,10 +44,7 @@ ors_snap <- function(src,
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, id = iid)
   url <- get_ors_url(id = iid)
-
-  if (is_ors_api(url)) {
-    cli::cli_abort("{.fn ors_snap} is not available on the public API.")
-  }
+  assert_endpoint_available(url)
 
   src <- prepare_input(src)
 

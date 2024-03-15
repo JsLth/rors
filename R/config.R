@@ -88,10 +88,13 @@ compare_config <- function(x, y) {
 
 compare_endpoints <- function(x, y) {
   if (!any(names(y) %in% endpoints())) {
-    cli::cli_abort(c(
-      "{.var ...} must contain a valid endpoint as argument name.",
-      "i" = "Valid endpoints include: {.val {endpoints()}}"
-    ))
+    cli::cli_abort(
+      c(
+        "{.var ...} must contain a valid endpoint as argument name.",
+        "i" = "Valid endpoints include: {.val {endpoints()}}"
+      ),
+      class = "ors_invalid_endpoint_error"
+    )
   }
 
   changed <- compare_config(x, y)
@@ -99,10 +102,13 @@ compare_endpoints <- function(x, y) {
 
   if (any(!is_valid)) {
     excess <- changed[!is_valid]
-    cli::cli_warn(c("!" = paste(
-      "The following {cli::qty(excess)} endpoints are invalid",
-      "and will be skipped: {.val {excess}}"
-    )))
+    cli::cli_warn(
+      c("!" = paste(
+        "The following {cli::qty(excess)} endpoints are invalid",
+        "and will be skipped: {.val {excess}}"
+      )),
+      class = "ors_excess_endpoint_warn"
+    )
   }
 
   changed[is_valid]
@@ -544,7 +550,10 @@ make_default_profile <- function(profile) {
       elevation = TRUE,
       encoder_options = list(block_fords = FALSE)
     ),
-    cli::cli_abort("No template defined for profile {.val profile}.")
+    cli::cli_abort(
+      "No template defined for profile {.val profile}.",
+      class = "ors_profile_template_error"
+    )
   )
 }
 

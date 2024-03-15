@@ -21,7 +21,10 @@ container_image <- function(name) {
   )
 
   if (!nzchar(info$stdout)) {
-    cli::cli_abort("Container {.val {name}} does not exist.")
+    cli::cli_abort(
+      "Container {.val {name}} does not exist.",
+      class = "ors_container_unavailable_error"
+    )
   }
 
   info <- jsonlite::fromJSON(info$stdout)
@@ -54,7 +57,10 @@ container_info <- function(name) {
   )
 
   if (!nzchar(info$stdout)) {
-    cli::cli_abort("Container {.val {name}} does not exist.")
+    cli::cli_abort(
+      "Container {.val {name}} does not exist.",
+      class = "ors_container_unavailable_error"
+    )
   }
 
   info <- jsonlite::fromJSON(info$stdout)
@@ -165,13 +171,16 @@ check_docker_installation <- function() {
       text = "Docker",
       link = "https://docs.docker.com/get-docker/"
     )
-    cli::cli_abort(c(
-      "!" = "No Docker installation could be detected.",
-      "i" = paste(
-        "A", link, "installation is needed before setting up a local ORS",
-        "instance"
-      )
-    ))
+    cli::cli_abort(
+      c(
+        "!" = "No Docker installation could be detected.",
+        "i" = paste(
+          "A", link, "installation is needed before setting up a local ORS",
+          "instance"
+        )
+      ),
+      class = "ors_docker_installation_error"
+    )
   }
 }
 
@@ -184,12 +193,38 @@ check_docker_access <- function() {
       text = "Linux post-installation guide",
       url = "https://docs.docker.com/engine/install/linux-postinstall/"
     )
-    cli::cli_abort(c(
-      "!" = "Cannot access Docker as a non-root user: permission denied.",
-      "i" = paste(
-        "You may want to run R as root or follow Docker's", link, "to set up",
-        "Docker access for non-root users."
-      )
-    ))
+    cli::cli_abort(
+      c(
+        "!" = "Cannot access Docker as a non-root user: permission denied.",
+        "i" = paste(
+          "You may want to run R as root or follow Docker's", link, "to set up",
+          "Docker access for non-root users."
+        )
+      ),
+      class = "ors_docker_access_error"
+    )
+  }
+}
+
+
+assert_docker_running <- function() {
+  if (!docker_running()) {
+    cli::cli_abort(
+      "Docker is not running",
+      class = "ors_docker_not_running_error"
+    )
+  }
+}
+
+
+assert_process <- function(proc) {
+  if (!is.na(proc$status) && !identical(proc$status, 0L)) {
+    cli::cli_abort(
+      c(
+        "The docker command encountered an error",
+        "Error code {proc$status}: {proc$stderr}"
+      ),
+      class = "ors_cmd_error"
+    )
   }
 }

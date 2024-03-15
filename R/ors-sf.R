@@ -57,7 +57,10 @@ ors_polygon <- function(res) {
 #' @noRd
 rasterize_isochrones <- function(isochrones, resolution) {
   if (!loadable("terra")) {
-    cli::cli_abort("The {.pkg raster} package is needed to rasterize isochrones.")
+    cli::cli_abort(
+      "The {.pkg raster} package is needed to rasterize isochrones.",
+      class = "ors_loadable_error"
+    )
   }
 
   # Transform to projected CRS with global coverage (world mercator)

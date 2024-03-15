@@ -39,10 +39,13 @@ get_instance <- function() {
     get("instance", envir = ors_cache)
   } else {
     code <- cli::code_highlight("ors_instance()")
-    cli::cli_abort(c(
-      "No OpenRouteService instance initialized.",
-      "i" = "You can initialize an instance using {code}"
-    ))
+    cli::cli_abort(
+      c(
+        "No OpenRouteService instance initialized.",
+        "i" = "You can initialize an instance using {code}"
+      ),
+      class = "ors_init_error"
+    )
   }
 }
 
@@ -83,10 +86,7 @@ inspect_container <- function(id = NULL) {
       return()
     }
 
-    if (!docker_running()) {
-      cli::cli_abort("Docker is not running. Cannot inspect container.")
-    }
-
+    assert_docker_running()
     cmd <- c("container", "inspect", id)
 
     container_info <- callr::run(
@@ -99,7 +99,10 @@ inspect_container <- function(id = NULL) {
 
     if (length(container_info$stderr)) {
       container_info$stderr <- gsub("Error: ", "", container_info$stderr)
-      cli::cli_abort("Cannot access container {.val {name}}: {container_info$stderr}")
+      cli::cli_abort(
+        "Cannot access container {.val {name}}: {container_info$stderr}",
+        "ors_container_inaccessible_error"
+      )
     }
 
     container_info <- jsonlite::fromJSON(container_info$stdout)
@@ -186,7 +189,8 @@ ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
 
             cli::cli_abort(
               c("Cannot reach the OpenRouteService server.", tip),
-              call = NULL
+              call = NULL,
+              class = "ors_unavailable_error"
             )
           } else {
             ready <<- FALSE
@@ -281,4 +285,14 @@ any_mounted <- function() {
 
 ors_is_local <- function(instance) {
   inherits(instance, "ORSLocal")
+}
+
+
+assert_endpoint_available <- function(url) {
+  if (is_ors_api(url)) {
+    cli::cli_abort(
+      "{.fn ors_snap} is not available on the public API.",
+      class = "ors_endpoint_unavailable_error"
+    )
+  }
 }

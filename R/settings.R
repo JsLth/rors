@@ -51,7 +51,10 @@ random_port <- function(n = 1) {
   if (loadable("httpuv")) {
     replicate(n, httpuv::randomPort())
   } else {
-    cli::cli_abort("To assign a random port, install the {.pkg httpuv} package.")
+    cli::cli_abort(
+      "To assign a random port, install the {.pkg httpuv} package.",
+      class = "ors_loadable_error"
+    )
   }
 }
 

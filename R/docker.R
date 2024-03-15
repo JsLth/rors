@@ -1,11 +1,7 @@
 ors_up <- function(self, private, wait = TRUE, ...) {
   verbose <- private$.verbose
-
-  if (!docker_running()) {
-    cli::cli_abort("Docker is not running.")
-  }
-
   name <- self$compose$name
+  assert_docker_running()
 
   ors_cli(h2 = "Pulling image")
   pull_ors(self, private)
@@ -30,14 +26,7 @@ ors_up <- function(self, private, wait = TRUE, ...) {
     error_on_status = FALSE
   )
 
-  status <- proc$status
-
-  if (!is.na(status) && !identical(status, 0L)) {
-    cli::cli_abort(c(
-      "The container setup encountered an error.",
-      "Error code {proc$status}: {proc$stderr}"
-    ))
-  }
+  assert_process(proc)
 
   if (wait) {
     ors_cli(cat = "line", h2 = "Setting up service")
@@ -49,10 +38,7 @@ ors_up <- function(self, private, wait = TRUE, ...) {
 
 ors_down <- function(self, private) {
   name <- self$compose$name
-
-  if (!docker_running()) {
-    cli::cli_abort("Docker is not running.")
-  }
+  assert_docker_running()
 
   ors_cli(progress = list(
     "step",
@@ -77,12 +63,9 @@ ors_down <- function(self, private) {
     error_on_status = FALSE
   )
 
-  if (!identical(proc$status, 0L)) {
-    cli::cli_abort(c( # nocov start
-      "The docker command encountered an error",
-      "Error code {proc$status}: {proc$stderr}"
-    ))
-  } else if (grepl("Warning", proc$stderr)) {
+  assert_process(proc)
+
+  if (grepl("Warning", proc$stderr)) { # nocov start
     cli::cli_warn(strsplit(proc$stderr, ": ")[[1]][2])
     ors_cli(progress = c("done", result = "failed")) # nocov end
   } else {
@@ -97,15 +80,15 @@ ors_down <- function(self, private) {
 
 ors_start <- function(self, private, wait = TRUE) {
   verbose <- private$.verbose
-
-  if (!docker_running()) {
-    cli::cli_abort("Docker is not running.")
-  }
+  assert_docker_running()
 
   name <- self$compose$name
 
   if (isFALSE(self$is_built())) {
-    cli::cli_abort("Container called {.val {name}} does not exist.")
+    cli::cli_abort(
+      "Container called {.val {name}} does not exist.",
+      class = "ors_container_error"
+    )
   }
 
   if (isFALSE(self$is_running())) {
@@ -119,12 +102,7 @@ ors_start <- function(self, private, wait = TRUE) {
       error_on_status = FALSE
     )
 
-    if (!identical(proc$status, 0L)) {
-      cli::cli_abort(c(
-        "The docker command encountered an error",
-        "Error code {proc$status}: {proc$stderr}"
-      ))
-    }
+    assert_process(proc)
 
     if (isTRUE(wait)) {
       notify_when_ready(name, interval = 2L, verbose = verbose)
@@ -140,11 +118,8 @@ ors_start <- function(self, private, wait = TRUE) {
 
 
 ors_stop <- function(self, private) {
-  if (!docker_running()) {
-    cli::cli_abort("Docker is not running.")
-  }
-
   name <- self$compose$name
+  assert_docker_running()
 
   if (isTRUE(self$is_running())) {
     ors_cli(progress = list(
@@ -165,12 +140,7 @@ ors_stop <- function(self, private) {
       error_on_status = FALSE
     )
 
-    if (!identical(proc$status, 0L)) {
-      cli::cli_abort(c(
-        "The docker command encountered an error",
-        "Error code {proc$status}: {proc$stderr}"
-      ))
-    }
+    assert_process(proc)
   } else {
     ors_cli(info = list(c("i" = "Container {name} is already stopped.")))
   }
@@ -183,10 +153,7 @@ ors_stop <- function(self, private) {
 
 pull_ors <- function(self, private) {
   verbose <- private$.verbose
-
-  if (!docker_running()) {
-    cli::cli_abort("Docker is not running.")
-  }
+  assert_docker_running()
 
   if (!image_exists()) {
     cmd <- c("pull", self$compose$parsed$services$`ors-app`$image)
@@ -202,14 +169,7 @@ pull_ors <- function(self, private) {
       stdout_line_callback = pull_callback(verbose),
     )
 
-    status <- proc$status
-
-    if (!is.na(status) && !identical(status, 0L)) {
-      cli::cli_abort(c(
-        "The docker command encountered an error.",
-        "Error code {.val {proc$status}}"
-      ))
-    }
+    assert_process(proc)
   } else {
     ors_cli(info = list(c("i" = "ORS image already exists.")))
   }
@@ -219,9 +179,7 @@ pull_ors <- function(self, private) {
 
 
 rm_image <- function(self, private) {
-  if (!docker_running()) {
-    cli::cli_abort("Docker is not running.")
-  }
+  assert_docker_running()
 
   if (!container_built(self$compose$name)) {
     cmd1 <- c("images", self$compose$parsed$services$`ors-app`$image, "-q")
@@ -245,7 +203,7 @@ rm_image <- function(self, private) {
       for (id in image_ids) {
         cmd2 <- c("rmi", id)
 
-        rmvd <- callr::run(
+        proc <- callr::run(
           command = "docker",
           args = cmd2,
           stdout = "",
@@ -253,18 +211,16 @@ rm_image <- function(self, private) {
           error_on_status = FALSE
         )
 
-        if (!identical(rmvd$status, 0L)) {
-          cli::cli_abort(c(
-            "The docker command encountered an error",
-            "Error code {.val {rmvd$status}}"
-          ))
-        }
+        assert_process(proc)
       }
     } else {
       ors_cli(info = list(c("i" = "No images to remove.")))
     }
   } else {
-    cli::cli_abort("Remove the container before removing the image")
+    cli::cli_abort(
+      "Remove the container before removing the image",
+      class = "ors_image_container_error"
+    )
   }
 
   invisible(self)
@@ -360,10 +316,14 @@ notify_when_ready <- function(ors_name, interval, verbose) {
 
   errors <- proc$get_result()
   if (!is.null(errors)) {
-    cli::cli_abort(c(
-      "The service ran into the following errors:",
-      cli::cli_vec(errors, style = list(vec_sep = "\n"))
-    ), call = NULL)
+    cli::cli_abort(
+      c(
+        "The service ran into the following errors:",
+        cli::cli_vec(errors, style = list(vec_sep = "\n"))
+      ),
+      call = NULL,
+      class = "ors_setup_error"
+    )
   }
 
   if (verbose) {

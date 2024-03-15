@@ -49,13 +49,16 @@ ORSRemote <- R6::R6Class(
       if (!nzchar(get_ors_token()) && token) {
         link <- "https://openrouteservice.org/"
         link <- cli::style_hyperlink(link, link)
-        cli::cli_abort(c(
-          "!" = "The public API requires an API token!",
-          "i" = paste(
-            "Request one under {.url {link}} and store it",
-            "in the {.code ORS_TOKEN} environment variable."
-          )
-        ))
+        cli::cli_abort(
+          c(
+            "!" = "The public API requires an API token!",
+            "i" = paste(
+              "Request one under {.url {link}} and store it",
+              "in the {.code ORS_TOKEN} environment variable."
+            )
+          ),
+          class = "ors_token_missing_error"
+        )
       }
 
       if (nzchar(get_ors_token())) {
@@ -64,7 +67,8 @@ ORSRemote <- R6::R6Class(
 
       if (!is_url(server)) {
         cli::cli_abort(
-          "{.path {server}} is not a valid URL to an OpenRouteService server"
+          "{.path {server}} is not a valid URL to an OpenRouteService server",
+          class = "ors_invalid_server_error"
         )
       }
 

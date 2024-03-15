@@ -1,7 +1,11 @@
 assert_that <- function(..., env = parent.frame(), msg = NULL, add = NULL) {
   tryCatch(
     expr = assertthat::assert_that(..., env = env, msg = msg),
-    error = function(e) cli::cli_abort(c(e$message, "i" = add), call = e$call)
+    error = function(e) cli::cli_abort(
+      c(e$message, "i" = add),
+      call = e$call,
+      class = "ors_assert_error"
+    )
   )
 }
 

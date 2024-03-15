@@ -57,10 +57,7 @@ ors_export <- function(bbox,
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, id = iid)
   url <- get_ors_url(id = iid)
-
-  if (is_ors_api(url)) {
-    cli::cli_abort("{.fn ors_snap} is not available on the public API.")
-  }
+  assert_endpoint_available(url)
 
   res <- call_ors_export(bbox, profile, url, ...)
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)

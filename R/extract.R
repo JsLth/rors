@@ -125,7 +125,10 @@ set_extract <- function(self, file) {
     file <- normalizePath(file, "/")
 
     if (!file.exists(file)) {
-      cli::cli_abort("Extract file does not exist.")
+      cli::cli_abort(
+        "Extract file does not exist.",
+        class = "ors_extract_not_found_error"
+      )
     }
 
     copied <- suppressWarnings(
@@ -133,17 +136,23 @@ set_extract <- function(self, file) {
     )
 
     if (!copied) {
-      cli::cli_abort(c(
-        "!" = "Extract file was not set.",
-        "i" = "Is the ORS directory properly initialized?"
-      ))
+      cli::cli_abort(
+        c(
+          "!" = "Extract file was not set.",
+          "i" = "Is the ORS directory properly initialized?"
+        ),
+        class = "ors_extract_copy_error"
+      )
     }
   } else {
     if (!filename %in% list.files(data_dir)) {
-      cli::cli_abort(c(
-        "!" = "Extract file does not exist in the data directory.",
-        "i" = "Did you mean to pass an absolute file path?"
-      ))
+      cli::cli_abort(
+        c(
+          "!" = "Extract file does not exist in the data directory.",
+          "i" = "Did you mean to pass an absolute file path?"
+        ),
+        class = "ors_extract_relative_error"
+      )
     }
   }
   file.path(data_dir, filename)

@@ -55,7 +55,8 @@ handle_ors_conditions <- function(res,
     if (abort_on_error) {
       cli::cli_abort(
         c("ORS encountered the following exception:", error),
-        call = NULL
+        call = NULL,
+        class = "ors_api_error"
       )
     }
   } else {
@@ -71,7 +72,10 @@ handle_ors_conditions <- function(res,
           cond,
           style = list(vec_sep = "\f", vec_last = "\f")
         )
-        cli::cli_warn(c("ORS returned {length(w_vec)} warning{?s}:", w_vec))
+        cli::cli_warn(
+          c("ORS returned {length(w_vec)} warning{?s}:", w_vec),
+          class = "ors_api_warn"
+        )
       }
     }
   }

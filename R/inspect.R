@@ -319,7 +319,10 @@ plot_section <- function(x,
                          caption = NULL,
                          ...) {
   if (!loadable("ggplot2")) {
-    cli::cli_abort("The {.pkg ggplot2} package is necessary to create cross-sections.")
+    cli::cli_abort(
+      "The {.pkg ggplot2} package is necessary to create cross-sections.",
+      class = "ors_loadable_error"
+    )
   }
 
   distance <- if (dist %in% names(x)) {
