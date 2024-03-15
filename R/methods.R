@@ -367,6 +367,22 @@ print.ors_token <- function(x, ...) {
 
 
 #' @export
+print.ors_params <- function(x, ...) {
+  params <- cli::col_green(paste(cli::symbol$bullet, names(x)))
+  names(params) <- rep(" ", length(params))
+
+  msg <- cli::format_message(c(
+    paste(
+      "Object of class {.cls ors_params}",
+      "with the following parameters:"
+    ),
+    params
+  ))
+  cat(msg, "\n", ...)
+}
+
+
+#' @export
 print.ors_geojson <- function(x, ...) {
   x$features <- "<truncated>"
   cat(jsonlite::toJSON(unclass(x), pretty = TRUE, auto_unbox = TRUE), ...)
