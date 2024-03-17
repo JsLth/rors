@@ -1,4 +1,4 @@
-ors_up <- function(self, private, wait = TRUE, ...) {
+ors_up <- function(self, private, wait = TRUE, warn = TRUE, ...) {
   verbose <- private$.verbose
   name <- self$compose$name
   assert_docker_running()
@@ -31,7 +31,7 @@ ors_up <- function(self, private, wait = TRUE, ...) {
   if (wait) {
     ors_cli(cat = "line", h2 = "Setting up service")
     setup_info(verbose)
-    notify_when_ready(name, interval = 10L, verbose = verbose)
+    notify_when_ready(name, interval = 10L, verbose = verbose, warn = warn)
   }
 }
 
@@ -287,7 +287,7 @@ setup_info <- function(verbose) {
 # Checks the service status and gives out a visual and audible
 # notification when the server is ready. Also watches out for errors
 # in the log files.
-notify_when_ready <- function(ors_name, interval, verbose) {
+notify_when_ready <- function(ors_name, interval, warn, verbose) {
   ors_cli(progress = list(
     "step",
     msg = "Starting service",
@@ -297,16 +297,18 @@ notify_when_ready <- function(ors_name, interval, verbose) {
   ))
 
   proc <- callr::r_bg(
-    function(ors_name, watch_for_error) {
+    function(ors_name, watch_for_condition) {
+      cond <- NULL
       while (!rors::ors_ready(force = TRUE, id = ors_name)) {
-        errors <- watch_for_error(ors_name)
-        if (length(errors)) {
-          return(errors)
+        cond <- watch_for_condition(ors_name)
+        if (length(cond$errors)) {
+          return(cond)
         }
         Sys.sleep(1L)
       }
+      cond
     },
-    args = list(ors_name, watch_for_error),
+    args = list(ors_name, watch_for_condition),
     package = TRUE
   )
 
@@ -314,12 +316,16 @@ notify_when_ready <- function(ors_name, interval, verbose) {
     ors_cli(progress = "update")
   }
 
-  errors <- proc$get_result()
-  if (!is.null(errors)) {
+  cond <- proc$get_result()
+  if (warn && !is.null(cond$warn)) {
+    cli::cli_warn(cond$warn, class = "ors_setup_warn")
+  }
+
+  if (!is.null(cond$errors)) {
     cli::cli_abort(
       c(
         "The service ran into the following errors:",
-        cli::cli_vec(errors, style = list(vec_sep = "\n"))
+        cli::cli_vec(cond$errors, style = list(vec_sep = "\n"))
       ),
       call = NULL,
       class = "ors_setup_error"
@@ -334,30 +340,21 @@ notify_when_ready <- function(ors_name, interval, verbose) {
 }
 
 
-watch_for_error <- function(ors_name) {
-  # Searches the OpenRouteService logs for the keyword 'error' and returns
-  # their error messages. If it turns out that tomcat and the local host can
-  # raise errors, too, this will have to be overhauled from the get-go.
+#' Searches the OpenRouteService logs for the keyword 'error' and returns
+#' their error messages.
+#' @noRd
+watch_for_condition <- function(ors_name) {
   logs <- docker_logs(ors_name)
-
-  errors <- grep(
-    "error|exception",
-    logs,
-    value = TRUE,
-    ignore.case = TRUE
+  list(
+    error = extract_setup_condition(logs, "ERROR"),
+    warn = extract_setup_condition(logs, "WARN")
   )
-  error_msgs <- do.call(rbind, strsplit(unlist(errors), " - "))
+}
 
-  if (is.null(error_msgs)) {
-    return()
-  }
 
-  # CLI logs are formatted differently and are therefore not split
-  # by strsplit. If this is the case, just return the whole thing,
-  # else return only the messages.
-  if (ncol(error_msgs) > 1L) {
-    error_msgs <- error_msgs[, 2L]
-  }
-
-  unique(error_msgs)
+extract_setup_condition <- function(logs, type = "ERROR") {
+  cond <- grep(type, logs, value = TRUE, fixed = TRUE)
+  cond <- regex_match(cli::ansi_strip(cond), "\\[.+\\](.+$)")
+  cond <- vapply(cond, "[", 2, FUN.VALUE = character(1))
+  if (length(cond)) unique(trimws(cond))
 }
