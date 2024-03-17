@@ -116,7 +116,7 @@ adjust_memory <- function(self, private, init, max) {
     }
   }
 
-  if (self$compose$memory$free * 0.8 - max / 1024 <= 0) {
+  if (self$compose$memory$total * 0.8 - max / 1024 <= 0) {
     msg <- paste(
       "You are allocating more than your available memory.",
       "Consider lowering the allocated RAM."
