@@ -383,7 +383,7 @@ param_check_type <- function(x, type) {
     type,
     logical = all(is_true_or_false(x, flag = FALSE)),
     double = is.double(x),
-    integer = is.numeric(x) && all(as.integer(x) == x),
+    integer = is_integerish(x),
     character = is.character(x),
     TRUE
   )

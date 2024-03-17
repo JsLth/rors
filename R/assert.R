@@ -17,8 +17,19 @@ is_true_or_false <- function(x, flag = TRUE) {
   }
 }
 
-is_integerish <- function(x) {
-  identical(x %% 1, 0)
+is_integerish <- function(x, null = FALSE) {
+  is.numeric(x) && all(as.integer(x) == x) ||
+    ifelse(null, is.null(x), FALSE)
+}
+
+is_number <- function(x, null = FALSE) {
+  is.numeric(x) && !is.na(x) && length(x) == 1 ||
+    ifelse(null, is.null(x), FALSE)
+}
+
+is_string <- function(x, null = FALSE) {
+  is.character(x) && !is.na(x) && length(x) == 1 ||
+    ifelse(null, is.null(x), FALSE)
 }
 
 is_sf <- function(x, sfc = TRUE) {
@@ -65,13 +76,13 @@ assertthat::on_failure(is_true_or_false) <- function(call, env) {
   if (is.logical(eval(call$x, env))) {
     sprintf("%s is NA, expected {.var TRUE} or {.var FALSE}.", x)
   } else {
-    sprintf("%s is of type %s, expected TRUE or FALSE", x, typeof(x))
+    sprintf("%s is of type %s, expected TRUE or FALSE.", x, typeof(x))
   }
 }
 
 assertthat::on_failure(is_integerish) <- function(call, env) {
   x <- sprintf("{.var %s}", deparse(call$x))
-  sprintf("%s is of type %s, expected an integer-like", x, typeof(x))
+  sprintf("%s is of type %s, expected an integer-like.", x, typeof(x))
 }
 
 assertthat::on_failure(is_geometry_type) <- function(call, env) {
@@ -90,5 +101,15 @@ assertthat::on_failure(is_geometry_type) <- function(call, env) {
     )
   }
 
-  sprintf("%s must consist of only %s, not %s", x, types, given)
+  sprintf("%s must consist of only %s, not %s.", x, types, given)
+}
+
+assertthat::on_failure(is_number) <- function(call, env) {
+  x <- sprintf("{.var %s}", deparse(call$x))
+  sprintf("%s must be a single number.", x)
+}
+
+assertthat::on_failure(is_string) <- function(call, env) {
+  x <- sprintf("{.var %s}", deparse(call$x))
+  sprintf("%s must be a single character string.", x)
 }

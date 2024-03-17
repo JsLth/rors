@@ -516,6 +516,8 @@ ORSLocal <- R6::R6Class(
     #' @param name Name for the ORS container. If \code{NULL}, generates
     #' a random name (\code{"ors-appXXXX"}).
     set_name = function(name = NULL) {
+      assert_that(is_string(name, null = TRUE))
+
       old <- self$compose$parsed$services$`ors-app`$container_name
       new <- name %||% random_ors_name(private, name)
 
@@ -536,6 +538,11 @@ ORSLocal <- R6::R6Class(
     #' random port using
     #' \code{\link[httpuv:randomPort]{randomPort()}}.
     set_port = function(port = NULL) {
+      assert_that(
+        is_number(port[1], null = TRUE),
+        is_number(port[2], null = TRUE)
+      )
+
       new <- as.character(port %||% random_port(2))
       old <- self$compose$ports[1, seq_along(new)]
 
@@ -567,6 +574,8 @@ ORSLocal <- R6::R6Class(
     #' memory than this value. If not specified, uses \code{init}. If both are
     #' \code{NULL}, estimates memory.
     set_ram = function(init = NULL, max = NULL) {
+      assert_that(is_number(init, null = TRUE), is_number(max, null = TRUE))
+
       old <- unlist(self$compose$memory[3:4], use.names = FALSE) * 1000
       new <- adjust_memory(self, private, init, max)
 
@@ -599,6 +608,8 @@ ORSLocal <- R6::R6Class(
     #'
     #' Whether to turn graph building on or off.
     set_graphbuilding = function(mode) {
+      assert_that(is_true_or_false(mode))
+
       old <- self$compose$graph_building
       new <- mode
 
@@ -621,6 +632,8 @@ ORSLocal <- R6::R6Class(
     #'
     #' Version specification of the ORS image.
     set_image = function(version = NULL) {
+      assert_that(is_string(version, null = TRUE))
+
       old <- self$compose$image
       new <- check_version(version) %||% old
 
