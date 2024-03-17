@@ -216,7 +216,8 @@ ors_pairwise <- function(src,
                          geometry = FALSE,
                          progress = FALSE,
                          instance = NULL,
-                         ...) {
+                         ...,
+                         params = NULL) {
   # Validate arguments
   assert_that(is_sf(src), is_sf(dst), is_true_or_false(geometry))
   profile <- match.arg(profile)
@@ -231,7 +232,7 @@ ors_pairwise <- function(src,
   # Bring input data into shape
   src <- prepare_input(src, len = nrow(dst))
   dst <- prepare_input(dst, len = nrow(src))
-  params <- prepare_ors_params(list(...), profile)
+  params <- prepare_ors_params(params %||% list(...), profile, nrow(src))
 
   ors_pairwise_raw(
     src = src,

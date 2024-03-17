@@ -298,7 +298,7 @@ prepare_ors_params <- function(params, profile, n = NULL) {
 
 
 format_ors_params <- function(params, profile, n) {
-  validate_ors_dots(params)
+  validate_param_names(params)
   info <- param_info()
   pnames <- names(params)
 
@@ -492,7 +492,7 @@ param_verify <- function(check, name) {
 }
 
 
-validate_ors_dots <- function(params) {
+validate_param_names <- function(params) {
   params_ok <- names(params) %in% param_info()$name
   if (!all(params_ok)) {
     cli::cli_abort(

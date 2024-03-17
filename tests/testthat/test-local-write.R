@@ -83,10 +83,12 @@ test_that("$set_graphbuilding() works", {
 })
 
 test_that("$set_extract() works", {
+  expect_s3_class(ors$extract, "ors_extract")
   expect_message(ors$set_extract(file = system.file(
     "setup/monaco.pbf",
     package = "rors"
   )))
+  expect_s3_class(ors$extract, "ors_extract")
 
   expect_match(
     ors$compose$parsed$services$`ors-app`$volumes,
@@ -113,8 +115,7 @@ test_that("$set_extract() works", {
 
   expect_error(
     ors$set_extract(file = "test.pbf"),
-    "file does not exist",
-    fixed = TRUE
+    class = "ors_extract_not_found_error"
   )
 
   expect_message(
@@ -191,14 +192,12 @@ test_that("$set_endpoints works", {
 
   expect_warning(
     ors$set_endpoints(invalid = list(test = 5), matrix = list(test = 5)),
-    regexp = "will be skipped",
-    fixed = TRUE
+    class = "ors_excess_endpoint_warn"
   )
 
   expect_error(
     ors$set_endpoints(invalid = list(test = 5)),
-    regexp = "must contain",
-    fixed = TRUE
+    class = "ors_invalid_endpoint_error"
   )
 })
 
@@ -216,7 +215,7 @@ test_that("ors_profile() works", {
   expect_named(ors_profile(), "profile_default")
   expect_identical(ors_profile("walking"), ors_profile("foot-walking"))
 
-  expect_error(ors_profile("test"))
+  expect_error(ors_profile("test"), class = "ors_profile_template_error")
   expect_named(ors_profile("test", template = FALSE)$test, c("profile", "enabled"))
   cstm <- ors_profile(c("name", "title"), template = FALSE)
   expect_named(cstm, "title")

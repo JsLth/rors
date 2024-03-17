@@ -124,19 +124,20 @@
 #' @export
 ors_accessibility <- function(src,
                               profile = get_profiles(),
-                              range = c(200L, 300L),
+                              range = c(200, 300),
                               attributes = "area",
                               intersections = FALSE, # to-do: check intersections
-                              interval = 30L,
+                              interval = 30,
                               location_type = c("start", "destination"),
                               range_type = c("time", "distance"),
-                              smoothing = 25L,
+                              smoothing = 25,
                               area_units = c("m", "km", "mi"),
                               units = c("m", "km", "mi"),
                               rasterize = FALSE, # to-do: revise rasterize
-                              raster_resolution = c(100L, 100L),
+                              raster_resolution = c(100, 100),
                               instance = NULL,
-                              ...) {
+                              ...,
+                              params = NULL) {
   instance <- instance %||% get_instance()
   iid <- get_id(instance = instance)
 
@@ -146,12 +147,12 @@ ors_accessibility <- function(src,
   profile <- match.arg(profile)
   location_type <- match.arg(location_type)
   range_type <- match.arg(range_type)
-  area_units <- match.arg(area_units)
-  units <- match.arg(units)
+  area_units <- if ("area" %in% attributes) match.arg(area_units) else NULL
+  units <- if ("distance" %in% range_type) match.arg(units) else NULL
 
   src <- prepare_input(src)
 
-  opts <- prepare_ors_params(list(...), profile)
+  params <- params %||% prepare_ors_params(list(...), profile)
 
   url <- get_ors_url(id = iid)
 
@@ -160,10 +161,10 @@ ors_accessibility <- function(src,
     profile = profile,
     range = range,
     attributes = attributes,
-    intersections = intersections,
+    intersections = FALSE,
     interval = interval,
     location_type = location_type,
-    params = opts,
+    params = params,
     range_type = range_type,
     smoothing = smoothing,
     area_units = area_units,
@@ -177,7 +178,7 @@ ors_accessibility <- function(src,
   isochrones <- ors_polygon(res)
 
   if (isTRUE(rasterize)) {
-    isochrones <- rasterize_isochrones(isochrones, resolution = raster_resolution)
+    isochrones <- rasterize_isochrones(isochrones, raster_resolution)
   }
 
   isochrones

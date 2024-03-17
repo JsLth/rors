@@ -82,6 +82,7 @@ call_ors_matrix <- function(src,
                             profile,
                             metrics,
                             units,
+                            resolve_locations,
                             url,
                             token) {
   # Format src and dst
@@ -91,18 +92,18 @@ call_ors_matrix <- function(src,
   dsts_list <- lapply(dsts_list, as.numeric)
 
   # Coerce dsts and src
-  locations <- append(dsts_list, src_list, after = 0L)
+  locations <- append(dsts_list, src_list, after = 0)
 
-  dest_index <- if (nrow(dst) > 1L) {
-    seq(nrow(src), length(locations) - 1L)
+  dest_index <- if (nrow(dst) > 1) {
+    seq(nrow(src), length(locations) - 1)
   } else {
     list(nrow(src))
   }
 
-  src_index <- if (nrow(src) > 1L) {
-    seq(0L, nrow(src) - 1L)
+  src_index <- if (nrow(src) > 1) {
+    seq(0, nrow(src) - 1)
   } else {
-    list(0L)
+    list(0)
   }
 
   req <- httr2::request(url)
@@ -126,7 +127,8 @@ call_ors_matrix <- function(src,
     destinations = dest_index,
     sources = src_index,
     metrics = box(metrics),
-    units = units
+    units = units,
+    resolve_locations = resolve_locations
   )
   req <- httr2::req_body_json(req, body, digits = NA)
   req$parse <- TRUE

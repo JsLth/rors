@@ -447,6 +447,7 @@ ORSLocal <- R6::R6Class(
           name = basename(file),
           size = round(file.size(file) / 1024 / 1024, 2)
         )
+        class(self$extract) <- "ors_extract"
         self$set_graphbuilding(TRUE)
         self$compose$parsed <- change_extract(self$compose$parsed, file)
       }

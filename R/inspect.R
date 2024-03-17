@@ -182,10 +182,7 @@ ors_inspect <- function(src,
                         elev_as_z = FALSE,
                         instance = NULL,
                         ...) {
-  assert_that(
-    is_sf(src),
-    is_true_or_false(elev_as_z)
-  )
+  assert_that(is_sf(src), is_true_or_false(elev_as_z))
   profile <- match.arg(profile)
   level <- match.arg(level)
   as <- match.arg(as)

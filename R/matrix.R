@@ -42,6 +42,7 @@ ors_matrix <- function(src,
     profile = profile,
     metrics = proximity_type,
     units = units,
+    resolve_locations = FALSE,
     url = url,
     token = needs_token(instance$token)
   )

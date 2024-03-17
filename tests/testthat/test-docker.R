@@ -1,7 +1,9 @@
 skip_if_offline("github.com")
 skip_on_cran()
-skip_on_ci()
-skip_on_os(c("mac", "solaris"))
+if (identical(tolower(Sys.info()[["sysname"]]), "darwin")) {
+  skip_on_ci()
+}
+skip_on_os("solaris")
 skip_if_not(docker_installed() && has_docker_access(), "docker unavailable")
 skip_docker()
 
