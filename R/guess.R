@@ -67,7 +67,6 @@ ors_guess <- function(poly = NULL,
                       radius = 1000,
                       type = "regular",
                       poly_fun = sf::st_convex_hull,
-                      progress = FALSE,
                       instance = NULL,
                       ...) {
   if (is.null(poly)) {
@@ -85,19 +84,14 @@ ors_guess <- function(poly = NULL,
 
   samp <- sf::st_sample(poly, size = n, type = type)
 
-  if (progress) {
-    iter <- cli::cli_progress_along(samp)
-  } else {
-    iter <- seq_along(samp)
-  }
-
   res <- tryCatch(
     expr = ors_snap(samp, radius = radius, instance = instance, ...),
     error = function(e) {
-      if (startsWith(e$body, "Error code 8010")) {
+      if (startsWith(e$body %||% "", "Error code 8010")) {
         cli::cli_abort(
           "Cannot guess the extract area based on the bbox.",
-          class = "ors_guess_error"
+          class = "ors_guess_error",
+          call = parent.frame(4)
         )
       } else {
         stop(e)

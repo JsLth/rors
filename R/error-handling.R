@@ -34,7 +34,6 @@ last_ors_conditions <- function(last = 1L) {
 #' @noRd
 handle_ors_conditions <- function(res,
                                   timestamp,
-                                  call,
                                   abort_on_error = FALSE,
                                   warn_on_warning = FALSE) {
   if (is_ors_error(res)) {
@@ -47,14 +46,18 @@ handle_ors_conditions <- function(res,
     }
 
     if (is.null(msg) && !is.null(code)) {
-      message <- fill_empty_error_message(code)
+      msg <- fill_empty_error_message(code)
     }
 
+    call <- get_main_caller()
     store_condition(code, msg, ts = timestamp, call = call, error = TRUE)
 
     if (abort_on_error) {
       cli::cli_abort(
-        c("ORS encountered the following exception:", error),
+        c(
+          "!" = "ORS encountered the following exception:",
+          sprintf("Error code %s: %s", code, msg)
+        ),
         call = NULL,
         class = "ors_api_error"
       )
@@ -189,6 +192,18 @@ cond_tip <- function(last = NULL) {
   cli::col_grey(sprintf(
     "Run {.code %s} for a full list of conditions.", callstr
   ))
+}
+
+
+get_main_caller <- function() {
+  calls <- sys.calls()
+  cand <- vapply(calls, function(x) deparse(x[[1]]), FUN.VALUE = character(1))
+  main_funs <- c(
+    "ors_dist", "ors_inspect", "ors_matrix",
+    "ors_accessibility", "ors_snap", "ors_export"
+  )
+  cand <- intersect(cand, main_funs)
+  last(cand)
 }
 
 

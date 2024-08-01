@@ -9,7 +9,9 @@
 
 
 last <- function(x) {
-  x[[length(x)]]
+  if (length(x)) {
+    x[[length(x)]]
+  }
 }
 
 
@@ -38,7 +40,11 @@ is_local <- function(url) {
 #' Checks if a character string is a valid URL
 #' @noRd
 is_url <- function(url) {
-  grepl("^(https?:\\/\\/)?[[:alnum:]\\.]+(\\.[[:lower:]]+)|(:[[:digit:]])\\/?", url, perl = TRUE)
+  grepl(
+    "^(https?:\\/\\/)?[[:alnum:]\\.]+(\\.[[:lower:]]+)|(:[[:digit:]])\\/?",
+    url,
+    perl = TRUE
+  )
 }
 
 
@@ -70,6 +76,18 @@ is_version_desc <- function(x, platform = NULL) {
 }
 
 
+minimum_version <- function(v1, v2) {
+  if (is_numver(v1) && is_numver(v2)) {
+    numeric_version(v1) >= numeric_version(v2)
+  }
+}
+
+
+timestamp <- function() {
+  format(Sys.time(), format = "%H:%M:%OS6")
+}
+
+
 loadable <- function(pkg) {
   suppressPackageStartupMessages(requireNamespace(pkg, quietly = TRUE))
 }
@@ -98,12 +116,13 @@ relative_path <- function(targetdir, basedir, pretty = FALSE) {
 
 
 #' Given a path, returns the parent path
-#' @param times_back Number of times to up a folder
+#' @param ndir Number of times to up a folder
 #' @noRd
-file_path_up <- function(path, times_back = 1L) {
-  path <- normalizePath(path, winslash = "/", mustWork = FALSE)
-  new_path <- utils::head(unlist(strsplit(path, "/")), -times_back)
-  do.call(file.path, as.list(new_path))
+file_path_up <- function(path, ndir = 1L) {
+  for (i in seq_len(ndir)) {
+    path <- dirname(path)
+  }
+  path
 }
 
 
@@ -253,7 +272,7 @@ decode_base2 <- function(code) {
 #' Turns a vector to a single-element list
 #' @noRd
 box <- function(x) {
-  if (isTRUE(length(x) == 1) && is.atomic(x)) {
+  if (length(x) == 1 && is.atomic(x)) {
     x <- list(x)
   }
   x
@@ -309,19 +328,19 @@ yes_no <- function(msg, yes = TRUE, no = FALSE, dflt = NULL, ask = TRUE) { # noc
 
   input <- readline(paste0(msg, " (y/N/Cancel) "))
 
-  # If neither yes or no is given as input, cancel the function
-  if (!input %in% c("y", "N")) {
-    cancel("Selection")
+  # If neither yes or no is given as input, try again
+  if (!input %in% c("y", "N", "Cancel")) {
+    Recall(msg, yes = yes, no = no)
   }
 
-  switch(input, y = yes, N = no)
+  switch(input, y = yes, N = no, Cancel = cancel())
 }
 
 
 #' Safely cancel a function without invoking an error
-#' @param what What to cancel, e.g. a function or a selection
+#' @param msg What to cancel, e.g. a function or a selection
 #' @noRd
-cancel <- function(what = "Function") {
-  cli::cli_inform(c("x" = "{what} cancelled."))
+cancel <- function(msg = "Input interrupted.") {
+  cli::cli_inform(c("x" = msg))
   invokeRestart("abort")
 } # nocov end

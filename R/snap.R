@@ -48,8 +48,14 @@ ors_snap <- function(src,
 
   src <- prepare_input(src)
 
+  ts <- timestamp()
   res <- call_ors_snap(src, profile, radius, url, ...)
-  handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
+  handle_ors_conditions(
+    res,
+    timestamp = ts,
+    abort_on_error = TRUE,
+    warn_on_warning = TRUE
+  )
 
   meta <- res$metadata
   snap <- tidy_snap(res)
@@ -62,6 +68,12 @@ ors_snap <- function(src,
 
 tidy_snap <- function(res) {
   loc <- res$locations
+  if (all(is.na(loc))) {
+    cli::cli_abort(
+      "All output locations are missing. Cannot tidy snap data.",
+      class = "ors_snap_na_error"
+    )
+  }
   coords <- loc$location
 
   # repair and convert geometry

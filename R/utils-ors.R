@@ -211,35 +211,40 @@ ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
 
 #' Searches for a (mention of) an OSM extract inside the ORS directory.
 #' Looks in three places:
-#'  - Build argument in docker compose
-#'  - Data volume in docker compose
-#'  - Data directory
+#'  - source_file field of ors-config.yml
+#'  - source_file field in combination with files directory
+#'  - Any pbf file in files directory
 #' If no extract file is found, NULL is returned
 #' @noRd
-identify_extract <- function(compose, dir) {
-  # Read extract file location from compose file
-  extract_path <- compose$services$`ors-app`$build$args$OSM_FILE
-  extract_path <- gsub("\\./", "", extract_path)
-  extract_path <- file.path(dir, extract_path)
+identify_extract <- function(dir) {
+  compose_path <- file.path(dir, "docker-compose.yml")
+  config_path <- file.path(dir, "ors-config.yml")
+  extract_path <- ""
 
-  # Check if build argument is set
-  if (!length(extract_path) || !is_pbf(extract_path)) {
-    volume <- utils::tail(compose$services$`ors-app`$volumes, 1)
-    extract_path <- gsub("\\./", "", strsplit(volume, ":")[[1L]][1L])
-    extract_path <- file.path(dir, extract_path, fsep = "/")
-    if (is.na(extract_path) || !is_pbf(extract_path)) extract_path <- NULL
+  if (file.exists(compose_path) && file.exists(config_path)) {
+    config <- read_ors_yaml(config_path)
+    extract_file <- basename(config$ors$engine$source_file)
+    extract_path <- file.path(dir, "ors-docker", "files", extract_file)
+  }
 
-    # If not, check if change volume is set
-    if (is.null(extract_path)) {
-      data_dir <- file.path(dir, "docker/data")
-      data_files <- list.files(data_dir, full.names = TRUE)
-      is_pbf <- is_pbf(data_files)
+  if (!file.exists(extract_path) && file.exists(config_path)) {
+    config <- read_ors_yaml(config_path)
+    extract_path <- config$ors$engine$source_file %||% ""
+    extract_path <- file.path(dir, extract_path)
+  }
 
-      # As a last resort, check if we can just pick it up from the data folder
-      if (sum(is_pbf) == 1L) {
-        extract_path <- data_files[is_pbf]
-      }
+  if (!file.exists(extract_path)) {
+    data_dir <- file.path(dir, "ors-docker/files")
+    data_files <- list.files(data_dir, full.names = TRUE)
+    is_pbf <- is_pbf(data_files)
+
+    if (sum(is_pbf) == 1L) {
+      extract_path <- data_files[is_pbf]
     }
+  }
+
+  if (!file.exists(extract_path)) {
+    extract_path <- NULL
   }
 
   extract_path

@@ -89,6 +89,28 @@ docker_logs <- function(name) {
 }
 
 
+#' Checks if the ORS image exists
+#' @param tag Image tag
+#' @noRd
+image_exists <- function(tag) {
+  cmd <- c(
+    "images", paste0("openrouteservice/openrouteservice:", tag),
+    "--format", "{{.Repository}}"
+  )
+
+  image_id <- callr::run(
+    command = "docker",
+    args = cmd,
+    stdout = "|",
+    stderr = NULL,
+    error_on_status = FALSE
+  )
+  image_id <- unlist(strsplit(image_id$stdout, "\n"))
+
+  as.logical(length(image_id))
+}
+
+
 #' Checks if a container is built
 #' @param name Container name
 #' @noRd
@@ -212,19 +234,6 @@ assert_docker_running <- function() {
     cli::cli_abort(
       "Docker is not running",
       class = "ors_docker_not_running_error"
-    )
-  }
-}
-
-
-assert_process <- function(proc) {
-  if (!is.na(proc$status) && !identical(proc$status, 0L)) {
-    cli::cli_abort(
-      c(
-        "The docker command encountered an error",
-        "Error code {proc$status}: {proc$stderr}"
-      ),
-      class = "ors_cmd_error"
     )
   }
 }

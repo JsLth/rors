@@ -2,22 +2,22 @@ detect_config <- function(dir) {
   configs <- c(
     conf_dir_json = file.path(dir, "docker", "conf", "ors-config.json"),
     etc_dir = "/etc/openrouteservice/ors-config.yml",
-    home_dir = "~/.openrouteservice/ors-config.yml",
-    runtime_dir = file.path(dir, "docker", "ors-config.yml"),
+    home_dir = "~/.config/openrouteservice/ors-config.yml",
+    runtime_dir = file.path(dir, "ors-config.yml"),
+    working_dir = "ors-config.yml",
     conf_dir = file.path(dir, "docker", "conf", "ors-config.yml")
   )
 
   config_found <- vapply(configs, file.exists, FUN.VALUE = logical(1))
   configs <- configs[config_found]
-
-  config_path <- utils::tail(configs, 1)
+  config_path <- last(configs)
 
   if (identical(names(config_path), "conf_dir_json")) {
     link <- cli::style_hyperlink(
-      text = "Running with Docker",
+      text = "Configuration via ors-config.json",
       url = paste0(
-        "https://giscience.github.io/openrouteservice/run-instance/",
-        "installation/running-with-docker#customization"
+        "https://giscience.github.io/openrouteservice/",
+        "run-instance/configuration/json"
       )
     )
     cli::cli_warn(c(
@@ -33,10 +33,28 @@ detect_config <- function(dir) {
 }
 
 
-write_config <- function(config, file = NULL) {
-  handlers <- list(
+make_config <- function(dir) {
+  config <- list(
+    ors = list(
+      engine = list(
+        source_file = "ors-api/src/test/files/heidelberg.osm.gz",
+        profiles = list(car = list(enabled = TRUE))
+      )
+    )
+  )
+
+  path <- file.path(dir, "ors-config.yml")
+  write_config(config, file = path)
+  path
+}
+
+
+yaml_handlers <- function() {
+  list(
     logical = function(x) {
-      structure(ifelse(x, "true", "false"), class = "verbatim")
+      x <- ifelse(x, "true", "false")
+      class(x) <- "verbatim"
+      x
     },
     numeric = function(x) {
       intx <- as.integer(x)
@@ -45,14 +63,19 @@ write_config <- function(config, file = NULL) {
       x
     },
     "NULL" = function(x) {
-      structure("", class = "verbatim")
+      x <- ""
+      class(x) <- "verbatim"
+      x
     }
   )
+}
 
+
+write_config <- function(config, file = NULL) {
   config <- yaml::as.yaml(
     config,
     precision = 22,
-    handlers = handlers,
+    handlers = yaml_handlers(),
     indent.mapping.sequence = TRUE
   )
 
@@ -61,6 +84,12 @@ write_config <- function(config, file = NULL) {
   } else {
     config
   }
+}
+
+
+write_envfile <- function(config, file = NULL) {
+  config <- unlist(config, use.names = TRUE)
+  cat(paste0(names(config), "=", config), sep = "\n", file = file)
 }
 
 
@@ -555,9 +584,4 @@ make_default_profile <- function(profile) {
       class = "ors_profile_template_error"
     )
   )
-}
-
-
-check_version <- function(version) {
-  if (is_numver(version) || is_version_desc(version, "dh")) version
 }

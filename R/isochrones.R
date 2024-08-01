@@ -147,11 +147,10 @@ ors_accessibility <- function(src,
   profile <- match.arg(profile)
   location_type <- match.arg(location_type)
   range_type <- match.arg(range_type)
-  area_units <- if ("area" %in% attributes) match.arg(area_units) else NULL
-  units <- if ("distance" %in% range_type) match.arg(units) else NULL
+  area_units <- if ("area" %in% attributes) match.arg(area_units)
+  units <- if ("distance" %in% range_type) match.arg(units)
 
   src <- prepare_input(src)
-
   params <- params %||% prepare_ors_params(list(...), profile)
 
   url <- get_ors_url(id = iid)
@@ -161,7 +160,7 @@ ors_accessibility <- function(src,
     profile = profile,
     range = range,
     attributes = attributes,
-    intersections = FALSE,
+    intersections = intersections,
     interval = interval,
     location_type = location_type,
     params = params,

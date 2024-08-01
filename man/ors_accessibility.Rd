@@ -7,19 +7,20 @@
 ors_accessibility(
   src,
   profile = get_profiles(),
-  range = c(200L, 300L),
+  range = c(200, 300),
   attributes = "area",
   intersections = FALSE,
-  interval = 30L,
+  interval = 30,
   location_type = c("start", "destination"),
   range_type = c("time", "distance"),
-  smoothing = 25L,
+  smoothing = 25,
   area_units = c("m", "km", "mi"),
   units = c("m", "km", "mi"),
   rasterize = FALSE,
-  raster_resolution = c(100L, 100L),
+  raster_resolution = c(100, 100),
   instance = NULL,
-  ...
+  ...,
+  params = NULL
 )
 }
 \arguments{
@@ -128,6 +129,9 @@ weightings for \code{driving-hgv},
 of heavy goods vehicle. Needed to set
 restrictions for \code{driving-hgv}.}
 }}
+
+\item{params}{List of additional arguments passed to the ORS API. See
+\code{\link{ors_params}} for details.}
 }
 \value{
 If \code{rasterize = FALSE}, returns an \code{sf} object containing

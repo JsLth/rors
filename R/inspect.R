@@ -181,13 +181,15 @@ ors_inspect <- function(src,
                         as = c("tidy", "list", "string"), # to-do: revise tidy approach
                         elev_as_z = FALSE,
                         instance = NULL,
-                        ...) {
+                        ...,
+                        params = NULL) {
   assert_that(is_sf(src), is_true_or_false(elev_as_z))
   profile <- match.arg(profile)
   level <- match.arg(level)
   as <- match.arg(as)
   instance <- check_instance(instance)
   iid <- get_id(instance = instance)
+  timestamp <- timestamp()
 
   # Check if ORS is ready to use
   ors_ready(force = TRUE, error = TRUE, id = iid)
@@ -204,7 +206,7 @@ ors_inspect <- function(src,
     round_trip = round_trip
   )
   features <- features[lengths(features) > 0]
-  params <- prepare_ors_params(c(features, list(...)), profile)
+  params <- params %||% prepare_ors_params(c(features, list(...)), profile)
 
   res <- call_ors_directions(
     src = src,
@@ -218,7 +220,12 @@ ors_inspect <- function(src,
   )
 
   if (as %in% c("list", "tidy")) {
-    handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
+    handle_ors_conditions(
+      res,
+      timestamp = timestamp,
+      abort_on_error = TRUE,
+      warn_on_warning = TRUE
+    )
 
     if (as == "tidy") {
       res <- route_to_df(

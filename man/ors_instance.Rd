@@ -4,18 +4,16 @@
 \alias{ors_instance}
 \title{OpenRouteService instance}
 \usage{
-ors_instance(dir = ".", server = NULL, ...)
+ors_instance(dir = ".", server = NULL, type = c("docker", "jar", "war"), ...)
 }
 \arguments{
 \item{dir}{\code{[character]}
 
 Custom OpenRouteService directory. If not specified, the directory
-will be downloaded to the system's home directory. If a directory called
+will be downloaded to the working direcotry. If a directory called
 \code{"openrouteservice-{version}"} is present, the download will be skipped
-\itemize{
-\item unless overwrite is \code{TRUE}.
-Ignored if \code{server} is given.
-}}
+unless overwrite is \code{TRUE}.
+Ignored if \code{server} is given.}
 
 \item{server}{\code{[character]}
 
@@ -25,6 +23,20 @@ the shortcuts \code{"public"} or \code{"pub"}. Keep in mind that the public
 API is rate-restricted and requests are automatically throttled to 40
 requests per minute. Routing functions \emph{will} be slow for larger
 datasets.}
+
+\item{type}{\code{[character]}
+
+The type of application to set up. Can be one of \code{"docker"} (default),
+\code{"jar"}, or \code{"war"}. Docker instances are the most versatile but
+also the most complex. Docker instances require Docker to be installed and
+accessible (relevant for Linux users). JAR instances require JDK >= 17 to
+be installed. WAR instances require Tomcat 10 to be installed. Both JAR
+and WAR instances are controlled using an external process and are thus
+bound to the R session. If the session dies, so do the OpenRouteService
+servers. Docker containers, conversely, are not bound to the R session.
+When using Docker Desktop (on Windows) and starting the Docker daemon from
+R, the software closes when R dies. This stops ORS containers but does not
+kill them.}
 
 \item{...}{Further arguments passed to \code{\link{ORSLocal}} or
 \code{\link{ORSRemote}}.}
@@ -84,6 +96,11 @@ ors_instance(dir = dir, version = "7.2.0")
 ors_instance(server = "public")
 
 # Connect to a local server
+# Initializing an instance by passing the URL to a local server
+# does not allow for control of the underlying data and
+# configurations. If finer control over such things is needed,
+# it is necessary to set up the instance from scratch using the
+# `dir` argument.
 ors_instance(server = "https://127.0.0.1:8001/")
 }
 

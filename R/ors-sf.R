@@ -35,11 +35,9 @@ ors_polygon <- function(res) {
   props$center <- NULL
 
   # convert coordinates to polygon geometry
-  if (!is.list(coords)) coords <- list(coords)
-  coords <- lapply(coords, function(x) sf::st_polygon(list(x[1, , ])))
-  poly <- do.call(sf::st_sfc, coords)
-  poly <- sf::st_sf(props, geometry = poly, crs = 4326)
-
+  poly <- coords_to_polygon(coords)
+  poly <- sf::st_sf(props, geometry = poly)
+browser()
   # reverse order of isochrones within each group for proper plotting
   poly <- tapply(
     seq_len(nrow(poly)),
@@ -50,6 +48,30 @@ ors_polygon <- function(res) {
   poly <- do.call(rbind.data.frame, poly)
   row.names(poly) <- NULL
   poly
+}
+
+
+ors_contours <- function(res, df = FALSE) {
+  contours <- res$features$properties$contours
+  is_intersection <- !vapply(contours, is.null, logical(1))
+  contours <- drop_null(contours)
+  coords <- get_ors_geometry(res, alt = NA, as_coords = TRUE)
+  poly <- coords_to_polygon(coords[is_intersection])
+
+  contours <- lapply(contours, function(x) {
+    colnames(x) <- c("index", "range")
+    rownames(x) <- c("from", "to")
+    x
+  })
+  contours <- simplify2array(contours)
+
+  sf::st_as_sf(data_frame(
+    from_index = contours["from", "index", ],
+    to_index = contours["to", "index", ],
+    from_range = contours["from", "range", ],
+    to_range = contours["to", "range", ],
+    geometry = poly
+  ))
 }
 
 
@@ -81,4 +103,11 @@ rasterize_isochrones <- function(isochrones, resolution) {
 #' @noRd
 has_crs <- function(x) {
   !is.na(sf::st_crs(x))
+}
+
+
+coords_to_polygon <- function(coords) {
+  if (!is.list(coords)) coords <- list(coords)
+  poly <- lapply(coords, function(x) sf::st_polygon(list(x[1, , ])))
+  do.call(sf::st_sfc, c(poly, crs = 4326))
 }

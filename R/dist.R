@@ -44,84 +44,10 @@
 #' computations. It is recommended to use \code{\link{ors_instance}}
 #' to set an instance globally. This argument should only be used if activating
 #' an instance globally is not feasible.
-#' @param ... Additional arguments passed to the ORS API. This includes all
-#' options that modify the routing results. For details on each argument,
-#' refer to the
-#' \href{https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post}{API playground}
-#' and
-#' \href{https://giscience.github.io/openrouteservice/documentation/routing-options/Routing-Options.html}{documentation}
-#' \describe{
-#'  \item{\strong{geometry_simplify}}{Whether geometry should be simplified.
-#'                                    Defaults to \code{FALSE}.}
-#'  \item{\strong{continue_straight}}{Whether to avoid u-turns and continue
-#'                                    straight if possible. If \code{FALSE},
-#'                                    allows the route to take u-turns.
-#'                                    Defaults to \code{FALSE}.}
-#'  \item{\strong{avoid_borders}}{Character vector specifying whether
-#'                                to avoid, \code{all} borders, only
-#'                                \code{controlled} ones or \code{none}. Only
-#'                                available for \code{driving-*}.}
-#'  \item{\strong{avoid_countries}}{Numeric vector listing countries to avoid.
-#'                                  Each country is assigned a numeric value.
-#'                                  Refer to the \href{https://giscience.github.io/openrouteservice/documentation/routing-options/Country-List}{ORS country list}.
-#'                                  Only available for \code{driving-*}.}
-#'  \item{\strong{avoid_features}}{Character vector containing traffic features
-#'                                 to avoid. One or several of \code{highways},
-#'                                 \code{tollways}, \code{ferries}, \code{fords},
-#'                                 and \code{steps}.}
-#'  \item{\strong{avoid_polygons}}{\code{sf} or \code{sfc} object describing
-#'                                 areas to avoid.}
-#'  \item{\strong{restrictions}}{Restrictions to be applied for routing.
-#'                              Routes that do not conform to these restrictions
-#'                              are not considered. Can either be specifications
-#'                              for heavy-goods vehicles (\code{axleload},
-#'                              \code{hazmat}, \code{height}, \code{length},
-#'                              \code{weight}, \code{width}), indicators
-#'                              of wheelchair accessibility
-#'                              (\code{maximum_incline},
-#'                              \code{maximum_sloped_kerb}, \code{minimum_width},
-#'                              \code{smoothness_type}, \code{surface_type},
-#'                              \code{track_type}), or the maximum allowed
-#'                              route steepness (\code{gradient}). Not
-#'                              applicable for any other profile. Refer to the
-#'                              \href{https://giscience.github.io/openrouteservice/documentation/routing-options/Routing-Options.html}{documentation}
-#'                              for details on each parameter.}
-#'  \item{\strong{weightings}}{Weightings for route selection. Can be
-#'                             preference multiplicators for walking profiles
-#'                             (\code{green}, \code{quiet}) or
-#'                             \code{steepness_difficulty} for cycling profiles.
-#'                             Not applicable for any other profile.
-#'                             Refer to the
-#'                             \href{https://giscience.github.io/openrouteservice/documentation/routing-options/Routing-Options.html}{documentation}
-#'                             for details on each parameter.}
-#'  \item{\strong{allow_unsuitable}}{Whether possibly unsuitable surfaces
-#'                                   should be included for wheelchair routing.
-#'                                   If \code{TRUE}, includes routes, even
-#'                                   if their surface quality might not be
-#'                                   suitable for wheelchair driving. Defaults
-#'                                   to \code{FALSE}.}
-#'  \item{\strong{surface_quality_known}}{Whether to enforce that the surface
-#'                                        quality of routes is considered.
-#'                                        If \code{FALSE}, routes of all surface
-#'                                        qualities are taken into account.
-#'                                        Defaults to \code{FALSE}}
-#'  \item{\strong{vehicle_type}}{The type of heavy-goods vehicle that is to be
-#'                               assumed for profile \code{driving-hgv}. One of
-#'                               \code{hgv}, \code{agricultural},
-#'                               \code{delivery}, \code{forestry}, and
-#'                               \code{goods}. Needed to set restrictions for
-#'                               \code{driving-hgv}. Defaults to \code{hgv}.}
-#'  \item{\strong{preference}}{Specifies the route preference mode. One of
-#'                             \code{recommended}, \code{fastest} or
-#'                             \code{shortest}. Defaults to \code{recommended}.}
-#'  \item{\strong{radiuses}}{Maximum distance (in m) that road segments can be
-#'                           snapped to. \code{radiuses = -1} represents an
-#'                           unlimited radius. Defaults to the
-#'                           \code{maximum_snapping_radius} in the configuration
-#'                           file (350m if not changed).}
-#'  \item{\strong{maximum_speed}}{Maximum speed that routing vehicles are
-#'                                allowed to drive. Not applied by default.}
-#' }
+#' @param ... Additional arguments passed to the ORS API. Convenience way to
+#' directly pass arguments of \code{\link{ors_params}}.
+#' @param params List of additional arguments passed to the ORS API. See
+#' \code{\link{ors_params}} for details.
 #' @returns \code{ors_pairwise} returns a dataframe with distances and
 #' travel durations between source and destination.
 #' \code{ors_shortest_distances} returns a dataframe containing distances,
@@ -269,7 +195,7 @@ ors_pairwise_raw <- function(src,
                              instance,
                              url,
                              params) {
-  call_index <- format(Sys.time(), format = "%H:%M:%OS6")
+  ts <- timestamp()
   iter <- seq_len(nrow(src))
   if (progress) {
     iter <- cli::cli_progress_along(iter)
@@ -287,7 +213,7 @@ ors_pairwise_raw <- function(src,
     params = params,
     url = url,
     instance = instance,
-    call_index = call_index
+    timestamp = ts
   )
   res <- do.call(rbind, res)
 
@@ -320,7 +246,7 @@ ors_pairwise_single <- function(index,
                                 params,
                                 url,
                                 instance,
-                                call_index) {
+                                timestamp) {
   res <- call_ors_directions(
     src = src[index, ],
     dst = dst[index, ],
@@ -332,7 +258,7 @@ ors_pairwise_single <- function(index,
     token = needs_token(instance$token)
   )
 
-  cond <- handle_ors_conditions(res, call_index, "ors_pairwise")
+  cond <- handle_ors_conditions(res, timestamp)
   get_ors_summary(res, geometry = geometry)
 }
 

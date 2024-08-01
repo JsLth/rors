@@ -89,8 +89,8 @@ format.ors_settings <- function(x, ...) {
   names(memory) <- c("Total", "Free", "Init", "Max")
   port_chr <- sprintf(
     paste(
-      "{.field %s} {cli::symbol$arrow_right} %s,",
-      "{.field %s} {cli::symbol$arrow_right} %s"
+      "{.field %s} {cli::symbol$arrow_right} %s (API),",
+      "{.field %s} {cli::symbol$arrow_right} %s (Monitor)"
     ),
     x$ports[1L, 1L],
     x$ports[1L, 2L],
@@ -99,13 +99,14 @@ format.ors_settings <- function(x, ...) {
   )
 
   fmt <- c(
-    Build = "{.field {x$graph_building}}",
+    Rebuild = "{.field {x$rebuild_graphs}}",
     Name = "{.field {x$name}}",
     Ports = port_chr,
-    Image = "{.field {x$image}}",
+    Version = "{.field {x$image}}",
     Memory = ""
   )
-  names(fmt) <- paste0(names(fmt), strrep("\u00a0", 7 - nchar(names(fmt))))
+  wlen <- nchar(names(fmt))
+  names(fmt) <- paste0(names(fmt), strrep("\u00a0", max(wlen) - wlen + 1))
 
   memory <- sprintf(
     "%s%s: %s",
@@ -335,7 +336,7 @@ print.ors_settings <- function(x, ...) {
 
 #' @export
 print.ors_compose_parsed <- function(x, ...) {
-  cat(yaml::as.yaml(x, indent.mapping.sequence = TRUE), "\n")
+  write_dockercompose(x, ...)
   invisible(x)
 }
 

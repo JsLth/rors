@@ -1,8 +1,12 @@
 perform_call <- function(req) {
   req <- httr2::req_method(req, "POST")
-  req <- httr2::req_error(req, is_error = \(r) FALSE)
+  req <- httr2::req_user_agent(req, "https://github.com/jslth/rors")
+  req <- httr2::req_error(req, is_error = function(resp) {
+    resp$status_code %in% "404"
+  })
 
   if (is_ors_api(req$url)) {
+    req <- httr2::req_retry(req, max_tries = 3)
     req <- httr2::req_throttle(req, rate = 40 / 60)
   }
 
@@ -40,7 +44,7 @@ call_ors_directions <- function(src,
     ifelse(!is_ors_api(url), "ors", ""),
     "v2/directions",
     profile,
-    ifelse(geometry, "geojson", "")
+    ifelse(geometry, "geojson", "json")
   )
 
   req <- httr2::req_headers(
@@ -70,6 +74,7 @@ call_ors_directions <- function(src,
     maximum_speed      = params$maximum_speed
   )
   body <- body[lengths(body) > 0L]
+
   req <- httr2::req_body_json(req, body, digits = NA)
   req$parse <- parse
   perform_call(req)

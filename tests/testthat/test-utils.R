@@ -18,8 +18,8 @@ test_that("file_path_up works", {
 
   expect_equal(file_path_up(path1), home)
   expect_equal(file_path_up(path2, 2), home)
-  expect_equal(file_path_up(path1, 0), character())
-  expect_equal(file_path_up(path1, 10), character())
+  expect_equal(file_path_up(path1, 0), path1)
+  expect_equal(file_path_up(path1, 10), path.expand("~/"))
 })
 
 test_that("url tools work", {

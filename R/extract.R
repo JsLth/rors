@@ -4,7 +4,10 @@ get_extract <- function(self,
                         provider,
                         timeout,
                         ...) {
-  data_dir <- file.path(self$paths$top, "docker/data")
+  data_dir <- self$paths$top
+  if (private$.is_type("docker")) {
+    data_dir <- file.path(data_dir, "ors-docker/files")
+  }
   verbose <- private$.verbose
   prompts <- private$.prompts
   ok <- TRUE
@@ -159,8 +162,8 @@ set_extract <- function(self, file) {
 }
 
 
-get_current_extract <- function(compose, dir) {
-  cur_extract <- identify_extract(compose, dir)
+get_current_extract <- function(dir) {
+  cur_extract <- identify_extract(dir)
 
   if (!is.null(cur_extract) && !file.exists(cur_extract)) {
     cli::cli_warn(c(
@@ -176,4 +179,9 @@ get_current_extract <- function(compose, dir) {
 is_pbf <- function(x) {
   exts <- c(".pbf", ".osm.gz", ".osm.zip", ".osm")
   vapply(x, \(x) any(endsWith(x, exts)), FUN.VALUE = logical(1))
+}
+
+
+default_extract <- function() {
+  "ors-api/src/test/files/heidelberg.osm.gz"
 }
