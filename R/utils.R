@@ -8,6 +8,11 @@
 }
 
 
+"%empty%" <- function(x, y) {
+  if (length(x) == 0) x else y
+}
+
+
 last <- function(x) {
   if (length(x)) {
     x[[length(x)]]
@@ -344,3 +349,11 @@ cancel <- function(msg = "Input interrupted.") {
   cli::cli_inform(c("x" = msg))
   invokeRestart("abort")
 } # nocov end
+
+
+#' Wrapper around cli::cli_abort()
+#' @noRd
+abort <- function(msg, class = NULL, ...) {
+  class <- paste0("ors_", class %||% "error")
+  cli::cli_abort(msg, class = class, ...)
+}

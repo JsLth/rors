@@ -61,17 +61,16 @@ check_instance <- function(instance = NULL) {
 }
 
 
-#' Returns the name of an ORS instance
+#' Returns the ID of an ORS instance. This is usually a URL (for remote,
+#' jar, and war), but can also be the name of a container (for docker).
 #' @noRd
 get_id <- function(id = NULL, instance = NULL) {
   if (is.null(id)) {
     instance <- instance %||% get_instance()
 
-    if (inherits(instance, "ORSLocal")) {
+    if (inherits(instance, "ORSDocker")) {
       id <- instance$compose$name
-    } else if (inherits(instance, "ORSRemote")) {
-      id <- instance$url
-    } else if (inherits(instance, c("ORSJar", "ORSWar"))) {
+    } else {
       id <- instance$get_url()
     }
   }
@@ -221,23 +220,21 @@ ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
 identify_extract <- function(dir) {
   compose_path <- file.path(dir, "docker-compose.yml")
   config_path <- file.path(dir, "ors-config.yml")
+  is_docker <- file.exists(compose_path)
+  file_path <- ifelse(is_docker, "ors-docker/files", "")
+  file_path <- file.path(dir, file_path)
   extract_path <- ""
-
-  if (file.exists(compose_path) && file.exists(config_path)) {
-    config <- read_ors_yaml(config_path)
-    extract_file <- basename(config$ors$engine$source_file)
-    extract_path <- file.path(dir, "ors-docker", "files", extract_file)
-  }
 
   if (!file.exists(extract_path) && file.exists(config_path)) {
     config <- read_ors_yaml(config_path)
-    extract_path <- config$ors$engine$source_file %||% ""
-    extract_path <- file.path(dir, extract_path)
+    src_file <- config$ors$engine$source_file
+    if (!is.null(src_file)) {
+      extract_path <- file.path(file_path, extract_path)
+    }
   }
 
   if (!file.exists(extract_path)) {
-    data_dir <- file.path(dir, "ors-docker/files")
-    data_files <- list.files(data_dir, full.names = TRUE)
+    data_files <- list.files(file_path, full.names = TRUE)
     is_pbf <- is_pbf(data_files)
 
     if (sum(is_pbf) == 1L) {

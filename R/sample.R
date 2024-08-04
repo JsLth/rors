@@ -99,14 +99,11 @@ get_extract_boundaries <- function(instance = NULL,
     instance <- instance %||% get_instance()
 
     if (is.null(instance$url)) {
-      extract_path <- identify_extract(
-        instance$compose$parsed,
-        instance$paths$top
-      )
+      extract_path <- identify_extract(instance$paths$top)
       if (is.null(extract_path)) {
-        cli::cli_abort(
-          "Cannot identify current extract file. Pass it explicitly.",
-          class = "ors_extract_not_found_error"
+        abort(
+          "Cannot identify current extract file.",
+          class = "extract_not_found_error"
         )
       }
 
@@ -118,28 +115,7 @@ get_extract_boundaries <- function(instance = NULL,
         spinner = TRUE
       ))
 
-      proc <- callr::r_bg(
-        function(extract_path) {
-          extract_data <- suppressWarnings(
-            osmextract::oe_read(
-              extract_path,
-              layer = "multipolygons",
-              query = paste(
-                "SELECT geometry FROM \"multipolygons\"",
-                "WHERE boundary = \"administrative\"",
-                "AND admin_level IS NOT NULL"
-              ),
-              quiet = TRUE
-            )
-          )
-          # handle weird OSM files
-          extract_data <- extract_data[sf::st_is_valid(extract_data), ]
-
-          # extract only outer boundaries
-          sf::st_union(sf::st_geometry(extract_data))
-        },
-        args = list(extract_path)
-      )
+      proc <- callr::r_bg(admin_from_osm, args = list(extract_path))
 
       while (proc$is_alive()) {
         ors_cli(progress = "update")
@@ -152,16 +128,14 @@ get_extract_boundaries <- function(instance = NULL,
 
       poly <- proc$get_result()
     } else {
-      cli::cli_abort(
-        c(
-          "Cannot get extract from a server URL.",
-          "i" = paste(
-            "{.code get_extract_boundaries} is not usable for unkown remote",
-            "servers as the extract boundaries cannot easily be determined.",
-            "Consider using {.fn ors_guess}."
-          )
-        ),
-        class = "ors_remote_sample_error"
+      tip <- paste(
+        "{.code get_extract_boundaries} is not usable for unkown remote",
+        "servers as the extract boundaries cannot easily be determined.",
+        "Consider using {.fn ors_guess}."
+      )
+      abort(
+        c("Cannot get extract from a server URL.", "i" = tip),
+        class = "remote_sample_error"
       )
     }
 
@@ -170,4 +144,26 @@ get_extract_boundaries <- function(instance = NULL,
   } else {
     ors_cache$extract_boundaries
   }
+}
+
+
+admin_from_osm <- function(path) {
+  sql <- paste(
+    "SELECT geometry FROM \"multipolygons\"",
+    "WHERE boundary = \"administrative\"",
+    "AND admin_level IS NOT NULL"
+  )
+  admin <- suppressWarnings(
+    osmextract::oe_read(
+      path,
+      layer = "multipolygons",
+      query = sql,
+      quiet = TRUE
+    )
+  )
+  # handle weird OSM files
+  admin <- admin[sf::st_is_valid(admin), ]
+
+  # extract only outer boundaries
+  sf::st_union(sf::st_geometry(admin))
 }

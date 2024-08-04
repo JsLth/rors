@@ -43,7 +43,7 @@ ORSInstance <- R6::R6Class(
     #' only works after a successful setup.
     get_url = function() {
       cls <- class(self)
-      if (c("ORSJar", "ORSWar") %in% cls) {
+      if (any(c("ORSJar", "ORSWar") %in% cls)) {
         port <- self$config$parsed$server$port %||% 8082
         host <- "localhost"
         sprintf("http://%s:%s/", host, port)
@@ -60,8 +60,8 @@ ORSInstance <- R6::R6Class(
     .get_id = function() {
       if (inherits(self, "ORSLocal")) {
         self$compose$name
-      } else if (inherits(self, "ORSRemote")) {
-        self$url
+      } else {
+        self$get_url()
       }
     },
 
