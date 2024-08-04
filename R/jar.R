@@ -216,7 +216,9 @@ ORSJar <- R6::R6Class(
     .verbose = NULL,
 
     finalize = function() {
-      self$proc$kill_tree()
+      if (inherits(self$proc, "process")) {
+        self$proc$kill_tree()
+      }
     }
   )
 )
@@ -291,8 +293,7 @@ run_ors_jar <- function(self, private, wait = TRUE, ...) {
         warn = TRUE,
         log_dir = self$paths$top
       ),
-      error = emergency_stop,
-      interrupt = emergency_stop
+      error = emergency_stop
     )
   }
 }
