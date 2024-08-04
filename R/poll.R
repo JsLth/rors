@@ -95,16 +95,20 @@ extract_setup_condition <- function(logs, type = "ERROR") {
 #' @noRd
 read_logfile <- function(path, last = NULL) {
   log_path <- file.path(path, "logs", "ors.log")
-  if (file.exists(log_path)) {
-    logs <- readChar(log_path, nchars = file.info(log_path)$size)
-    rgx <- "(?<=\n)(?=[0-9]{4}-[0-9]{1,2}-[0-9]{1,2})"
-    logs <- strsplit(logs, rgx, perl = TRUE)[[1]]
+  if (!file.exists(log_path)) {
+    return(NULL)
   }
+
+  logs <- readChar(log_path, nchars = file.info(log_path)$size)
+  rgx <- "(?<=\n)(?=[0-9]{4}-[0-9]{1,2}-[0-9]{1,2})"
+  logs <- strsplit(logs, rgx, perl = TRUE)[[1]]
 
   if (!is.null(last)) {
     idx <- last(grep("Started Application", logs, fixed = TRUE))
-    logs[seq(idx, length(logs))]
+    logs <- logs[seq(idx, length(logs))]
   }
+
+  logs
 }
 
 
