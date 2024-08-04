@@ -35,6 +35,23 @@ ORSInstance <- R6::R6Class(
     #' mounted.
     is_mounted = function() {
       identical(private$.get_hash(), cli::hash_obj_md5(get_instance()))
+    },
+
+    #' @description
+    #' Constructs the URL that is used to communicate with OpenRouteService.
+    #' Except for \code{ORSRemote}, the output is an aspirational URL, i.e. it
+    #' only works after a successful setup.
+    get_url = function() {
+      cls <- class(self)
+      if (c("ORSJar", "ORSWar") %in% cls) {
+        port <- self$config$parsed$server$port %||% 8082
+        host <- "localhost"
+        sprintf("http://%s:%s/", host, port)
+      } else if ("ORSDocker" %in% cls) {
+        sprintf("https://localhost:%s/", self$compose$ports[1, 1])
+      } else if ("ORSRemote" %in% cls) {
+        self$url
+      }
     }
   ),
 

@@ -206,7 +206,7 @@ ors$start()
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{paths}}{List of relevant file paths for the ORS setup. Includes
-the top directory, compose file, config file and extract file.}
+the top directory, compose file, config file, and extract file.}
 
 \item{\code{version}}{Version of the local ORS backend}
 
@@ -288,7 +288,7 @@ size of the selected extract file.}
 \if{html}{\out{<a id="method-ORSDocker-new"></a>}}
 \if{latex}{\out{\hypertarget{method-ORSDocker-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize the ORSInstance object.
+Initialize the ORSDocker object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDocker$new(
   dir = ".",
@@ -305,20 +305,19 @@ Initialize the ORSInstance object.
 \describe{
 \item{\code{dir}}{\code{[character]}
 
-Custom OpenRouteService directory. If not specified, the directory
-will be downloaded to the system's home directory. If a directory called
+Custom OpenRouteService directory. If not specified, the compose file
+will be downloaded to the current working directory. If a directory called
 \code{"openrouteservice-{version}"} is present, the download will be skipped.
 Ignored if \code{server} is not \code{NULL}.}
 
 \item{\code{version}}{\code{[character]}
 
 The OpenRouteService version to use. Can either be a version number (e.g.
-7.2.0) or \code{"master"}. Ignored if \code{server} is not \code{NULL}.}
+8.1.1) or \code{"master"}.}
 
 \item{\code{overwrite}}{\code{[logical]}
 
-Whether to overwrite the current OpenRouteService directory
-if it exists.}
+Whether to overwrite the current OpenRouteService directory if it exists.}
 
 \item{\code{dry}}{\code{[logical]}
 

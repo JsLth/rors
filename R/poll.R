@@ -46,14 +46,9 @@ notify_when_ready <- function(src,
   }
 
   if (!is.null(cond$error)) {
-    cli::cli_abort(
-      c(
-        "The service ran into the following errors:",
-        cli::cli_vec(cond$error, style = list(vec_sep = "\n"))
-      ),
-      call = NULL,
-      class = "ors_setup_error"
-    )
+    cond_fmt <- cli::cli_vec(cond$error, style = list(vec_sep = "\n\n"))
+    msg <- c("The service ran into the following errors:", cond_fmt)
+    cli::cli_abort(msg, call = NULL, class = "ors_setup_error")
   }
 
   if (verbose) {
@@ -70,7 +65,7 @@ watch_for_condition <- function(src, type = "docker") {
   logs <- switch(
     type,
     docker = docker_logs(src),
-    jar = read_logs(src)
+    jar = read_logfile(src, last = 1)
   )
   list(
     error = extract_setup_condition(logs, "ERROR"),
@@ -88,17 +83,27 @@ extract_setup_condition <- function(logs, type = "ERROR") {
   if (length(cond)) {
     cond <- unique(trimws(cond))
     cond <- trimws(gsub("^\\-", "", cond))
+    cond <- gsub("\r", "", cond)
     cond[nzchar(cond)]
   }
 }
 
 
 #' Reads log file from an ORS directory
+#' @param path Path to the top directory
+#' @param last Last n application starts to return
 #' @noRd
-read_logs <- function(path) {
+read_logfile <- function(path, last = NULL) {
   log_path <- file.path(path, "logs", "ors.log")
   if (file.exists(log_path)) {
-    readLines(log_path, encoding = "UTF-8")
+    logs <- readChar(log_path, nchars = file.info(log_path)$size)
+    rgx <- "(?<=\n)(?=[0-9]{4}-[0-9]{1,2}-[0-9]{1,2})"
+    logs <- strsplit(logs, rgx, perl = TRUE)[[1]]
+  }
+
+  if (!is.null(last)) {
+    idx <- last(grep("Started Application", logs, fixed = TRUE))
+    logs[seq(idx, length(logs))]
   }
 }
 

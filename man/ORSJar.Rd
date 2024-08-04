@@ -48,6 +48,17 @@ ors$stop()
 \section{Super classes}{
 \code{\link[rors:ORSInstance]{rors::ORSInstance}} -> \code{\link[rors:ORSLocal]{rors::ORSLocal}} -> \code{ORSJar}
 }
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{paths}}{List of relevant file paths for the ORS setup. Includes
+the top directory, config file, and extract file.
+\code{processx} process that is used to control the external process
+running the OpenRouteService instance. Refer to
+\code{\link[processx]{process}} for a reference of methods.}
+}
+\if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
@@ -56,6 +67,8 @@ ors$stop()
 \item \href{#method-ORSJar-stop}{\code{ORSJar$stop()}}
 \item \href{#method-ORSJar-set_port}{\code{ORSJar$set_port()}}
 \item \href{#method-ORSJar-show_logs}{\code{ORSJar$show_logs()}}
+\item \href{#method-ORSJar-is_init}{\code{ORSJar$is_init()}}
+\item \href{#method-ORSJar-is_running}{\code{ORSJar$is_running()}}
 \item \href{#method-ORSJar-clone}{\code{ORSJar$clone()}}
 }
 }
@@ -79,10 +92,42 @@ ors$stop()
 \if{html}{\out{<a id="method-ORSJar-new"></a>}}
 \if{latex}{\out{\hypertarget{method-ORSJar-new}{}}}
 \subsection{Method \code{new()}}{
+Initialize the ORSJar object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSJar$new(dir, version = "8.1.1", overwrite = FALSE, verbose = TRUE, ...)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{dir}}{\code{[character]}
+
+Custom OpenRouteService directory. If not specified, the jar file will
+be downloaded to the current working directory. If a directory called
+\code{"openrouteservice-{version}"} is present, the download will be skipped.
+Ignored if \code{server} is not \code{NULL}.}
+
+\item{\code{version}}{\code{[character]}
+
+The OpenRouteService version to use. Can either be a version number (e.g.
+8.1.1) or \code{"master"}.}
+
+\item{\code{overwrite}}{\code{[logical]}
+
+Whether to overwrite the current OpenRouteService directory if it exists.}
+
+\item{\code{verbose}}{\code{[logical]}
+
+Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
+spinners, progress bars and system notifications.}
+
+\item{\code{prompts}}{\code{[logical]}
+
+Whether to ask for permission throughout the setup. Defaults to
+\code{TRUE} in interactive sessions.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ORSJar-run"></a>}}
@@ -161,6 +206,29 @@ previous runs. The process logs are reset with every run.}
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSJar-is_init"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSJar-is_init}{}}}
+\subsection{Method \code{is_init()}}{
+Checks if ORS is initialized. ORS is initialized if it was built
+for the first time. An initialized ORS instance has a subdirectory
+called \code{"graphs"} that contains built graphs for at least one
+routing profile. \code{$is_init()} therefore checks for the
+existence of at least one sub-directory of \code{"graphs"}.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSJar$is_init()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSJar-is_running"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSJar-is_running}{}}}
+\subsection{Method \code{is_running()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSJar$is_running()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ORSJar-clone"></a>}}

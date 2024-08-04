@@ -71,6 +71,8 @@ get_id <- function(id = NULL, instance = NULL) {
       id <- instance$compose$name
     } else if (inherits(instance, "ORSRemote")) {
       id <- instance$url
+    } else if (inherits(instance, c("ORSJar", "ORSWar"))) {
+      id <- instance$get_url()
     }
   }
 
@@ -168,11 +170,11 @@ get_profiles <- function(id = NULL, force = TRUE) {
 ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
   if (is.null(ors_cache$ors_ready) || isFALSE(ors_cache$ors_ready) || force) {
     id <- get_id(id)
-    url <- paste0(get_ors_url(id), "ors/v2/health")
+    url <- get_ors_url(id)
 
     if (!is_ors_api(url)) {
       req <- httr2::request(url)
-      req <- httr2::req_method(req, "GET")
+      req <- httr2::req_template(req, "GET ors/v2/health")
       tryCatch(
         expr = {
           res <- httr2::req_perform(req)

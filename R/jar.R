@@ -45,11 +45,42 @@ ORSJar <- R6::R6Class(
   classname = "ORSJar",
   inherit = ORSLocal,
 
+  # Public ----
   public = list(
+    #' @field paths List of relevant file paths for the ORS setup. Includes
+    #' the top directory, config file, and extract file.
     paths = NULL,
 
+    #' \code{processx} process that is used to control the external process
+    #' running the OpenRouteService instance. Refer to
+    #' \code{\link[processx]{process}} for a reference of methods.
     proc = NULL,
 
+    ## Initialize ----
+    #' @description
+    #' Initialize the ORSJar object.
+    #'
+    #' @param dir \code{[character]}
+    #'
+    #' Custom OpenRouteService directory. If not specified, the jar file will
+    #' be downloaded to the current working directory. If a directory called
+    #' \code{"openrouteservice-{version}"} is present, the download will be skipped.
+    #' Ignored if \code{server} is not \code{NULL}.
+    #' @param version \code{[character]}
+    #'
+    #' The OpenRouteService version to use. Can either be a version number (e.g.
+    #' 8.1.1) or \code{"master"}.
+    #' @param overwrite \code{[logical]}
+    #'
+    #' Whether to overwrite the current OpenRouteService directory if it exists.
+    #' @param verbose \code{[logical]}
+    #'
+    #' Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
+    #' spinners, progress bars and system notifications.
+    #' @param prompts \code{[logical]}
+    #'
+    #' Whether to ask for permission throughout the setup. Defaults to
+    #' \code{TRUE} in interactive sessions.
     initialize = function(dir,
                           version = "8.1.1",
                           overwrite = FALSE,
@@ -71,61 +102,13 @@ ORSJar <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description
-    #' Run ors.jar to start a local OpenRouteService server. Creates an
-    #' attribute of \code{ORSJar} called \code{proc} which stores the external
-    #' process used to run the server. A running server can (and should) be
-    #' stopped using the \code{$stop()} method.
-    #'
-    #' @param wait \code{[wait]}
-    #'
-    #' Whether to wait for the server to start and then give out a visual
-    #' and audible notification. If \code{FALSE}, returns control of the
-    #' console back to the user. The status of the OpenRouteService server
-    #' can then be polled using the \code{proc} attribute.
-    run = function(wait = TRUE, ...) {
-      verbose <- private$.verbose
-      proc <- callr::process$new(
-        "java",
-        args = c("-jar", "ors.jar"),
-        stdout = "|",
-        stderr = "|",
-        wd = self$paths$top,
-      )
-
-      error <- proc$read_error()
-      if (nzchar(error)) {
-        cli::cli_abort("ors.jar setup error: {error}")
-      }
-
-      self$proc <- proc
-
-      if (wait) {
-        ors_cli(cat = "line", h2 = "Setting up service")
-        setup_info(verbose)
-        notify_when_ready(
-          private$.get_url(),
-          type = "jar",
-          interval = 10L,
-          verbose = verbose,
-          warn = TRUE,
-          log_dir = self$paths$top
-        )
-      }
-    },
-
-    #' @description
-    #' Stops a running OpenRouteService instance by killing the external
-    #' process.
-    stop = function() {
-      self$proc$kill()
-    },
-
+    ## Config ----
     #' @description
     #' Set a HTTP port for the spring server.
     #'
-    #' @param port Port to use. If \code{NULL}, assigns a
-    #' random port using
+    #' @param port \code{[numeric]/\code{NULL}}
+    #'
+    #' Port to use. If \code{NULL}, assigns a random port using
     #' \code{\link[httpuv:randomPort]{randomPort()}}.
     set_port = function(port = NULL) {
       assert_that(is_number(port, null = TRUE))
@@ -155,20 +138,85 @@ ORSJar <- R6::R6Class(
     #' the log file provides less information, but stores the logs from
     #' previous runs. The process logs are reset with every run.
     show_logs = function(source = c("process", "logfile")) {
-      read_logs(self$paths$top)
+      source <- match.arg(source)
+      switch(
+        source,
+        process = self$proc$read_output(),
+        logfile = read_logfile(self$paths$top)
+      )
+    },
+
+    ## Control ----
+    #' @description
+    #' Run ors.jar to start a local OpenRouteService server. Creates an
+    #' attribute of \code{ORSJar} called \code{proc} which stores the external
+    #' process used to run the server. A running server can (and should) be
+    #' stopped using the \code{$stop()} method.
+    #'
+    #' @param wait \code{[wait]}
+    #'
+    #' Whether to wait for the server to start and then give out a visual
+    #' and audible notification. If \code{FALSE}, returns control of the
+    #' console back to the user. The status of the OpenRouteService server
+    #' can then be polled using the \code{proc} attribute.
+    #' @param init \code{[numeric/NULL]}
+    #'
+    #' Initial memory. This can change if more memory is needed. If not
+    #' specified, uses \code{max}. If both are \code{NULL}, estimates
+    #' memory.
+    #' @param max \code{[numeric/NULL]}
+    #'
+    #' Maximum memory. The container is not allowed to use more
+    #' memory than this value. If not specified, uses \code{init}. If both are
+    #' \code{NULL}, estimates memory.
+    #' @param ... Further options passed to the
+    #' \href{https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html}{\code{java}} command.
+    run = function(wait = TRUE, init = NULL, max = NULL, ...) {
+      run_ors_jar(self, private, wait = wait, ...)
+    },
+
+    #' @description
+    #' Stops a running OpenRouteService instance by killing the external
+    #' process.
+    stop = function() {
+      if (self$is_running()) {
+        ors_cli(info = list(c("i" = "Killing OpenRouteService process.")))
+        self$proc$kill_tree()
+      }
+    },
+
+    #' @description
+    #' Checks if ORS is initialized. ORS is initialized if it was built
+    #' for the first time. An initialized ORS instance has a subdirectory
+    #' called \code{"graphs"} that contains built graphs for at least one
+    #' routing profile. \code{$is_init()} therefore checks for the
+    #' existence of at least one sub-directory of \code{"graphs"}.
+    is_init = function() {
+      graphs <- file.path(self$paths$top, "graphs")
+      length(list.dirs(graphs, recursive = FALSE)) > 0
+    },
+
+    #' @description
+    #' Checks if the ORS process is running. You can control this state using
+    #' \code{$run()} and \code{$stop()}. Check \code{$is_ready()} to see
+    #' if the ORS setup succeeded.
+    is_running = function() {
+      if (is.null(self$proc)) {
+        return(FALSE)
+      }
+      self$proc$is_alive()
     }
   ),
 
+  # Private ----
   private = list(
     .dir = NULL,
     .version = NULL,
     .overwrite = NULL,
     .verbose = NULL,
 
-    .get_url = function() {
-      port <- self$config$server$port %||% 8082
-      host <- "localhost"
-      sprintf("https://%s:%s/", host, port)
+    finalize = function() {
+      self$proc$kill_tree()
     }
   )
 )
@@ -185,7 +233,7 @@ get_java_version <- function(verbose) {
     ))
   }
 
-  ors_cli(cat = version$stderr)
+  ors_cli(verbatim = version$stderr, cat = "line")
   version$stderr
 }
 
@@ -202,5 +250,49 @@ check_jdk_version <- function(verbose) {
       "!" = "JDK version {version} detected but version 17 required.",
       "i" = "Download JDK from {.url {url}}"
     ))
+  }
+}
+
+
+run_ors_jar <- function(self, private, wait = TRUE, ...) {
+  verbose <- private$.verbose
+
+  if (self$is_running()) {
+    cli::cli_abort(c(
+      "!" = "Another OpenRouteService is still running.",
+      "i" = "You may stop it using `$stop()`."
+    ))
+  }
+
+  proc <- callr::process$new(
+    "java",
+    args = c("-jar", "ors.jar", ...),
+    stdout = "|",
+    stderr = "|",
+    wd = self$paths$top,
+  )
+
+  error <- proc$read_error()
+  if (nzchar(error)) {
+    cli::cli_abort("ors.jar setup error: {error}")
+  }
+
+  self$proc <- proc
+
+  if (wait) {
+    setup_info(verbose)
+    emergency_stop <- function(e) self$stop()
+    withCallingHandlers(
+      notify_when_ready(
+        self$get_url(),
+        type = "jar",
+        interval = 10L,
+        verbose = verbose,
+        warn = TRUE,
+        log_dir = self$paths$top
+      ),
+      error = emergency_stop,
+      interrupt = emergency_stop
+    )
   }
 }

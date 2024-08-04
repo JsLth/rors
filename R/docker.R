@@ -195,7 +195,7 @@ ORSDocker <- R6::R6Class(
   # Public ----
   public = list(
     #' @field paths List of relevant file paths for the ORS setup. Includes
-    #' the top directory, compose file, config file and extract file.
+    #' the top directory, compose file, config file, and extract file.
     paths = list(),
 
     #' @field version Version of the local ORS backend
@@ -239,22 +239,21 @@ ORSDocker <- R6::R6Class(
 
     ## Meta ----
     #' @description
-    #' Initialize the ORSInstance object.
+    #' Initialize the ORSDocker object.
     #'
     #' @param dir \code{[character]}
     #'
-    #' Custom OpenRouteService directory. If not specified, the directory
-    #' will be downloaded to the system's home directory. If a directory called
+    #' Custom OpenRouteService directory. If not specified, the compose file
+    #' will be downloaded to the current working directory. If a directory called
     #' \code{"openrouteservice-{version}"} is present, the download will be skipped.
     #' Ignored if \code{server} is not \code{NULL}.
     #' @param version \code{[character]}
     #'
     #' The OpenRouteService version to use. Can either be a version number (e.g.
-    #' 7.2.0) or \code{"master"}. Ignored if \code{server} is not \code{NULL}.
+    #' 8.1.1) or \code{"master"}.
     #' @param overwrite \code{[logical]}
     #'
-    #' Whether to overwrite the current OpenRouteService directory
-    #' if it exists.
+    #' Whether to overwrite the current OpenRouteService directory if it exists.
     #' @param dry \code{[logical]}
     #'
     #' Whether to start a dry run, i.e. run an instance without jumpstarting.
@@ -400,8 +399,11 @@ ORSDocker <- R6::R6Class(
     #' @description
     #' Set a port for the localhost of the ORS container.
     #'
-    #' @param port Port to use for the container. If \code{NULL}, assigns a
-    #' random port using
+    #' @param port \code{[numeric]/\code{NULL}}
+    #'
+    #' Port to use for the container. Can be a vector of length 1 or 2.
+    #' The first port is for the API, the second port is optionally for
+    #' additional monitoring. If \code{NULL}, assigns a random port using
     #' \code{\link[httpuv:randomPort]{randomPort()}}.
     set_port = function(port = NULL) {
       assert_that(
@@ -646,10 +648,8 @@ ORSDocker <- R6::R6Class(
     #' routing profile. \code{$is_init()} therefore checks for the
     #' existence of at least one sub-directory of \code{"graphs"}.
     is_init = function() {
-      length(list.dirs(
-        file.path(self$paths$top, "docker", "graphs"),
-        recursive = FALSE
-      )) > 0
+      graphs <- file.path(self$paths$top, "graphs")
+      length(list.dirs(graphs, recursive = FALSE)) > 0
     }
   ),
 

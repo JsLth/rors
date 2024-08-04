@@ -31,7 +31,6 @@ ors_up <- function(self, private, wait = TRUE, warn = TRUE, ...) {
   assert_process(proc)
 
   if (wait) {
-    ors_cli(cat = "line", h2 = "Setting up service")
     setup_info(verbose)
     notify_when_ready(
       name,
@@ -256,7 +255,7 @@ rm_image <- function(self, private) {
 #' @noRd
 cat_callback <- function(verbose) {
   function(newout, proc) {
-    ors_cli(cat = newout)
+    ors_cli(verbatim = newout)
   }
 }
 
@@ -288,6 +287,8 @@ pull_callback <- function(verbose) {
 #' @noRd
 setup_info <- function(verbose) {
   ors_cli(
+    cat = "line",
+    h2 = "Setting up service",
     info = list(c("i" = paste(
       "The container is being set up and started now.",
       "You can stop the process now or let it run",

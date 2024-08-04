@@ -71,6 +71,6 @@ check_tomcat <- function(path, verbose) {
     cli::cli_abort(c("Tomcat failed with the following error:", err))
   }
 
-  ors_cli(cat = version$stdout)
+  ors_cli(verbatim = version$stdout)
   invisible(NULL)
 }

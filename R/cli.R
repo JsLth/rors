@@ -29,8 +29,8 @@ ors_cli <- function(..., .envir = parent.frame()) {
     if (identical(cfun, "cat")) {
       # replace "line" with line breaks
       line <- which(args %in% "line")
-      args[line] <- list(NULL)
-      do.call(cli::cat_line, args)
+      args[line] <- rep("\n", length(line))
+      do.call(cli::cli_verbatim, args)
       next
     }
 

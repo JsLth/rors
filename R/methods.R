@@ -26,7 +26,7 @@ format.ORSInstance <- function(x, ...) {
   )
 
   c(
-    "<ORSIntance>",
+    "<ORSInstance>",
     paste(" server :", server),
     paste(" type   :", type),
     paste(" active :", active),
