@@ -99,12 +99,15 @@ read_logfile <- function(path, last = NULL) {
     return(NULL)
   }
 
+  # split log entries not by line but by timestamp
+  # this is useful to capture entire error or warning messages
   logs <- readChar(log_path, nchars = file.info(log_path)$size)
   rgx <- "(?<=\n)(?=[0-9]{4}-[0-9]{1,2}-[0-9]{1,2})"
   logs <- strsplit(logs, rgx, perl = TRUE)[[1]]
 
   if (!is.null(last)) {
-    idx <- last(grep("Started Application", logs, fixed = TRUE))
+    # an application start occurs when the log signals "Starting Application"
+    idx <- last(grep("Starting Application", logs, fixed = TRUE))
     logs <- logs[seq(idx, length(logs))]
   }
 
@@ -117,12 +120,10 @@ read_logfile <- function(path, last = NULL) {
 assert_process <- function(proc) {
   status <- proc$status
   if (!is.na(status) && !identical(status, 0L)) {
-    cli::cli_abort(
-      c(
-        "The docker command encountered an error",
-        "Error code {proc$status}: {proc$stderr}"
-      ),
-      class = "ors_cmd_error"
+    msg <- c(
+      "The docker command encountered an error",
+      "Error code {proc$status}: {proc$stderr}"
     )
+    abort(msg, class = "cmd_error")
   }
 }
