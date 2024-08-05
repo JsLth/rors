@@ -15,6 +15,7 @@ the R session.
 \item \href{#method-ORSInstance-is_ready}{\code{ORSInstance$is_ready()}}
 \item \href{#method-ORSInstance-get_status}{\code{ORSInstance$get_status()}}
 \item \href{#method-ORSInstance-is_mounted}{\code{ORSInstance$is_mounted()}}
+\item \href{#method-ORSInstance-get_url}{\code{ORSInstance$get_url()}}
 \item \href{#method-ORSInstance-clone}{\code{ORSInstance$clone()}}
 }
 }
@@ -52,6 +53,18 @@ not been updated with \code{$update()} thus is not considered
 mounted.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSInstance$is_mounted()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSInstance-get_url"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSInstance-get_url}{}}}
+\subsection{Method \code{get_url()}}{
+Constructs the URL that is used to communicate with OpenRouteService.
+Except for \code{ORSRemote}, the output is an aspirational URL, i.e. it
+only works after a successful setup.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSInstance$get_url()}\if{html}{\out{</div>}}
 }
 
 }

@@ -52,9 +52,10 @@ ors$stop()
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{paths}}{List of relevant file paths for the ORS setup. Includes
-the top directory, config file, and extract file.
-\code{processx} process that is used to control the external process
-running the OpenRouteService instance. Refer to
+the top directory, config file, and extract file.}
+
+\item{\code{proc}}{\code{processx} process that is used to control the external
+process running the OpenRouteService instance. Refer to
 \code{\link[processx]{process}} for a reference of methods.}
 }
 \if{html}{\out{</div>}}
@@ -63,10 +64,10 @@ running the OpenRouteService instance. Refer to
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-ORSJar-new}{\code{ORSJar$new()}}
-\item \href{#method-ORSJar-run}{\code{ORSJar$run()}}
-\item \href{#method-ORSJar-stop}{\code{ORSJar$stop()}}
 \item \href{#method-ORSJar-set_port}{\code{ORSJar$set_port()}}
 \item \href{#method-ORSJar-show_logs}{\code{ORSJar$show_logs()}}
+\item \href{#method-ORSJar-run}{\code{ORSJar$run()}}
+\item \href{#method-ORSJar-stop}{\code{ORSJar$stop()}}
 \item \href{#method-ORSJar-is_init}{\code{ORSJar$is_init()}}
 \item \href{#method-ORSJar-is_running}{\code{ORSJar$is_running()}}
 \item \href{#method-ORSJar-clone}{\code{ORSJar$clone()}}
@@ -76,6 +77,7 @@ running the OpenRouteService instance. Refer to
 <details><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="get_status"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-get_status'><code>rors::ORSInstance$get_status()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="get_url"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-get_url'><code>rors::ORSInstance$get_url()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_mounted"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-is_mounted'><code>rors::ORSInstance$is_mounted()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_ready"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-is_ready'><code>rors::ORSInstance$is_ready()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSLocal" data-id="add_profiles"><a href='../../rors/html/ORSLocal.html#method-ORSLocal-add_profiles'><code>rors::ORSLocal$add_profiles()</code></a></span></li>
@@ -121,49 +123,10 @@ Whether to overwrite the current OpenRouteService directory if it exists.}
 Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
 spinners, progress bars and system notifications.}
 
-\item{\code{prompts}}{\code{[logical]}
-
-Whether to ask for permission throughout the setup. Defaults to
-\code{TRUE} in interactive sessions.}
+\item{\code{...}}{Not used.}
 }
 \if{html}{\out{</div>}}
 }
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ORSJar-run"></a>}}
-\if{latex}{\out{\hypertarget{method-ORSJar-run}{}}}
-\subsection{Method \code{run()}}{
-Run ors.jar to start a local OpenRouteService server. Creates an
-attribute of \code{ORSJar} called \code{proc} which stores the external
-process used to run the server. A running server can (and should) be
-stopped using the \code{$stop()} method.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSJar$run(wait = TRUE, ...)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{wait}}{\code{[wait]}
-
-Whether to wait for the server to start and then give out a visual
-and audible notification. If \code{FALSE}, returns control of the
-console back to the user. The status of the OpenRouteService server
-can then be polled using the \code{proc} attribute.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ORSJar-stop"></a>}}
-\if{latex}{\out{\hypertarget{method-ORSJar-stop}{}}}
-\subsection{Method \code{stop()}}{
-Stops a running OpenRouteService instance by killing the external
-process.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSJar$stop()}\if{html}{\out{</div>}}
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ORSJar-set_port"></a>}}
@@ -177,8 +140,9 @@ Set a HTTP port for the spring server.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{port}}{Port to use. If \code{NULL}, assigns a
-random port using
+\item{\code{port}}{\code{[numeric]/\code{NULL}}
+
+Port to use. If \code{NULL}, assigns a random port using
 \code{\link[httpuv:randomPort]{randomPort()}}.}
 }
 \if{html}{\out{</div>}}
@@ -208,6 +172,57 @@ previous runs. The process logs are reset with every run.}
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSJar-run"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSJar-run}{}}}
+\subsection{Method \code{run()}}{
+Run ors.jar to start a local OpenRouteService server. Creates an
+attribute of \code{ORSJar} called \code{proc} which stores the external
+process used to run the server. A running server can (and should) be
+stopped using the \code{$stop()} method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSJar$run(wait = TRUE, init = NULL, max = NULL, ...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{wait}}{\code{[wait]}
+
+Whether to wait for the server to start and then give out a visual
+and audible notification. If \code{FALSE}, returns control of the
+console back to the user. The status of the OpenRouteService server
+can then be polled using the \code{proc} attribute.}
+
+\item{\code{init}}{\code{[numeric/NULL]}
+
+Initial memory. This can change if more memory is needed. If not
+specified, uses \code{max}. If both are \code{NULL}, estimates
+memory.}
+
+\item{\code{max}}{\code{[numeric/NULL]}
+
+Maximum memory. The container is not allowed to use more
+memory than this value. If not specified, uses \code{init}. If both are
+\code{NULL}, estimates memory.}
+
+\item{\code{...}}{Further options passed to the
+\href{https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html}{\code{java}} command.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSJar-stop"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSJar-stop}{}}}
+\subsection{Method \code{stop()}}{
+Stops a running OpenRouteService instance by killing the external
+process.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSJar$stop()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ORSJar-is_init"></a>}}
 \if{latex}{\out{\hypertarget{method-ORSJar-is_init}{}}}
 \subsection{Method \code{is_init()}}{
@@ -225,6 +240,9 @@ existence of at least one sub-directory of \code{"graphs"}.
 \if{html}{\out{<a id="method-ORSJar-is_running"></a>}}
 \if{latex}{\out{\hypertarget{method-ORSJar-is_running}{}}}
 \subsection{Method \code{is_running()}}{
+Checks if the ORS process is running. You can control this state using
+\code{$run()} and \code{$stop()}. Check \code{$is_ready()} to see
+if the ORS setup succeeded.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSJar$is_running()}\if{html}{\out{</div>}}
 }

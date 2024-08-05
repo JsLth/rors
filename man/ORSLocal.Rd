@@ -61,6 +61,7 @@ size of the selected extract file.}
 <details open><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="get_status"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-get_status'><code>rors::ORSInstance$get_status()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="get_url"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-get_url'><code>rors::ORSInstance$get_url()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_mounted"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-is_mounted'><code>rors::ORSInstance$is_mounted()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_ready"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-is_ready'><code>rors::ORSInstance$is_ready()</code></a></span></li>
 </ul>

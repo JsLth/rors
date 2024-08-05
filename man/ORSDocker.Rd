@@ -272,6 +272,7 @@ size of the selected extract file.}
 <details><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="get_status"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-get_status'><code>rors::ORSInstance$get_status()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="get_url"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-get_url'><code>rors::ORSInstance$get_url()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_mounted"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-is_mounted'><code>rors::ORSInstance$is_mounted()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_ready"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-is_ready'><code>rors::ORSInstance$is_ready()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSLocal" data-id="add_profiles"><a href='../../rors/html/ORSLocal.html#method-ORSLocal-add_profiles'><code>rors::ORSLocal$add_profiles()</code></a></span></li>
@@ -296,7 +297,8 @@ Initialize the ORSDocker object.
   overwrite = FALSE,
   dry = FALSE,
   verbose = TRUE,
-  prompts = interactive()
+  prompts = interactive(),
+  ...
 )}\if{html}{\out{</div>}}
 }
 
@@ -332,6 +334,8 @@ spinners, progress bars and system notifications.}
 
 Whether to ask for permission throughout the setup. Defaults to
 \code{TRUE} in interactive sessions.}
+
+\item{\code{...}}{Not used.}
 }
 \if{html}{\out{</div>}}
 }
@@ -390,8 +394,11 @@ Set a port for the localhost of the ORS container.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{port}}{Port to use for the container. If \code{NULL}, assigns a
-random port using
+\item{\code{port}}{\code{[numeric]/\code{NULL}}
+
+Port to use for the container. Can be a vector of length 1 or 2.
+The first port is for the API, the second port is optionally for
+additional monitoring. If \code{NULL}, assigns a random port using
 \code{\link[httpuv:randomPort]{randomPort()}}.}
 }
 \if{html}{\out{</div>}}

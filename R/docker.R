@@ -265,12 +265,14 @@ ORSDocker <- R6::R6Class(
     #'
     #' Whether to ask for permission throughout the setup. Defaults to
     #' \code{TRUE} in interactive sessions.
+    #' @param ... Not used.
     initialize = function(dir = ".",
                           version = "8.1.1",
                           overwrite = FALSE,
                           dry = FALSE,
                           verbose = TRUE,
-                          prompts = interactive()) {
+                          prompts = interactive(),
+                          ...) {
       assert_that(assertthat::is.dir(dir), add = paste(
         "The {.var dir} argument is expected to be a valid path to store",
         "the OpenRouteService source code in."

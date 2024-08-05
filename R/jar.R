@@ -9,7 +9,7 @@
 #'
 #' For technical details on the setup of local ORS instances, refer to the
 #' \href{https://giscience.github.io/openrouteservice/run-instance/running-jar}{Running JAR documentation}.
-#' For details on how to use \code{ORSDocker} objects, refer to the installation
+#' For details on how to use \code{ORSJar} objects, refer to the installation
 #' vignette:
 #'
 #' \preformatted{
@@ -51,8 +51,8 @@ ORSJar <- R6::R6Class(
     #' the top directory, config file, and extract file.
     paths = NULL,
 
-    #' \code{processx} process that is used to control the external process
-    #' running the OpenRouteService instance. Refer to
+    #' @field proc \code{processx} process that is used to control the external
+    #' process running the OpenRouteService instance. Refer to
     #' \code{\link[processx]{process}} for a reference of methods.
     proc = NULL,
 
@@ -77,10 +77,7 @@ ORSJar <- R6::R6Class(
     #'
     #' Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
     #' spinners, progress bars and system notifications.
-    #' @param prompts \code{[logical]}
-    #'
-    #' Whether to ask for permission throughout the setup. Defaults to
-    #' \code{TRUE} in interactive sessions.
+    #' @param ... Not used.
     initialize = function(dir,
                           version = "8.1.1",
                           overwrite = FALSE,
@@ -136,8 +133,9 @@ ORSJar <- R6::R6Class(
     #' output from the external process running OpenRouteService. If
     #' \code{"logfile"}, reads the log file in the top directory. Generally,
     #' the log file provides less information, but stores the logs from
-    #' previous runs. The process logs are reset with every run.
-    show_logs = function(source = c("process", "logfile")) {
+    #' previous runs. The process logs are reset with every run. Process logs
+    #' are also much more error-prone.
+    show_logs = function(source = c("logfile", "process")) {
       source <- match.arg(source)
       switch(
         source,
