@@ -1,5 +1,10 @@
 #' ORS WAR instance
 #' @description
+#' \strong{This R6 class is currently non-functional.} I am currently not
+#' aware of any reliable way to assert that Tomcat and JRE are up and running.
+#' If you can help, please consider opening a pull request here:
+#' \url{https://github.com/jslth/rors}.
+#'
 #' Creates a new ORS instance object that operates on a WAR instance of
 #' OpenRouteservice, i.e. an instance that is started using a .war file.
 #' This R6 class is typically constructed by \code{\link{ors_instance}}.
@@ -23,11 +28,39 @@ ORSWar <- R6::R6Class(
   inherit = ORSLocal,
 
   public = list(
+
+    ## Initialize ----
+    #' @description
+    #' Initialize the ORSWar object.
+    #'
+    #' @param dir \code{[character]}
+    #'
+    #' Custom OpenRouteService directory. If not specified, the war file will
+    #' be downloaded to the current working directory. If a directory called
+    #' \code{"openrouteservice-{version}"} is present, the download will be skipped.
+    #' Ignored if \code{server} is not \code{NULL}.
+    #' @param version \code{[character]}
+    #'
+    #' The OpenRouteService version to use. Can either be a version number (e.g.
+    #' 8.1.1) or \code{"master"}.
+    #' @param overwrite \code{[logical]}
+    #'
+    #' Whether to overwrite the current OpenRouteService directory if it exists.
+    #' @param verbose \code{[logical]}
+    #'
+    #' Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
+    #' spinners, progress bars and system notifications.
+    #' @param ... Not used.
     initialize = function(dir,
-                          version = "8.0.0",
+                          version = "8.1.1",
                           overwrite = FALSE,
                           verbose = TRUE,
                           ...) {
+      abort(c(
+        "Setup using WAR files is not supported by the rors package as of now.",
+        "If you want to contribute, consider creating a pull request here: https://github.com/jslth/rors"
+      ), class = "war_defunct_error")
+
       check_tomcat(verbose)
       get_ors_release(dir, version, file = "war", overwrite, verbose)
 

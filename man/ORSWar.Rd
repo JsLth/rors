@@ -4,6 +4,11 @@
 \alias{ORSWar}
 \title{ORS WAR instance}
 \description{
+\strong{This R6 class is currently non-functional.} I am currently not
+aware of any reliable way to assert that Tomcat and JRE are up and running.
+If you can help, please consider opening a pull request here:
+\url{https://github.com/jslth/rors}.
+
 Creates a new ORS instance object that operates on a WAR instance of
 OpenRouteservice, i.e. an instance that is started using a .war file.
 This R6 class is typically constructed by \code{\link{ors_instance}}.
@@ -36,6 +41,7 @@ vignette("ors-installation", package = "rors")
 <details><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="get_status"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-get_status'><code>rors::ORSInstance$get_status()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="get_url"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-get_url'><code>rors::ORSInstance$get_url()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_mounted"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-is_mounted'><code>rors::ORSInstance$is_mounted()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSInstance" data-id="is_ready"><a href='../../rors/html/ORSInstance.html#method-ORSInstance-is_ready'><code>rors::ORSInstance$is_ready()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="rors" data-topic="ORSLocal" data-id="add_profiles"><a href='../../rors/html/ORSLocal.html#method-ORSLocal-add_profiles'><code>rors::ORSLocal$add_profiles()</code></a></span></li>
@@ -52,10 +58,39 @@ vignette("ors-installation", package = "rors")
 \if{html}{\out{<a id="method-ORSWar-new"></a>}}
 \if{latex}{\out{\hypertarget{method-ORSWar-new}{}}}
 \subsection{Method \code{new()}}{
+Initialize the ORSWar object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSWar$new(dir, version = "8.0.0", overwrite = FALSE, verbose = TRUE, ...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSWar$new(dir, version = "8.1.1", overwrite = FALSE, verbose = TRUE, ...)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{dir}}{\code{[character]}
+
+Custom OpenRouteService directory. If not specified, the war file will
+be downloaded to the current working directory. If a directory called
+\code{"openrouteservice-{version}"} is present, the download will be skipped.
+Ignored if \code{server} is not \code{NULL}.}
+
+\item{\code{version}}{\code{[character]}
+
+The OpenRouteService version to use. Can either be a version number (e.g.
+8.1.1) or \code{"master"}.}
+
+\item{\code{overwrite}}{\code{[logical]}
+
+Whether to overwrite the current OpenRouteService directory if it exists.}
+
+\item{\code{verbose}}{\code{[logical]}
+
+Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
+spinners, progress bars and system notifications.}
+
+\item{\code{...}}{Not used.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ORSWar-clone"></a>}}
