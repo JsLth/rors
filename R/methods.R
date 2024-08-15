@@ -201,11 +201,8 @@ format.ors_condition <- function(x, ...) {
     FUN.VALUE = character(1),
     function(i) {
       if (!is.null(code[i])) {
-        sprintf(
-          "%s code %s: %s",
-          ifelse(x$error, "Error", "Warning"),
-          code[i], msg[i]
-        )
+        type <- ifelse(x$error[i], "Error", "Warning")
+        sprintf("%s code %s: %s", type, code[i], msg[i],code[i], msg[i])
       } else {
         msg[i]
       }
@@ -215,12 +212,12 @@ format.ors_condition <- function(x, ...) {
   index <- seq_along(msg)
   max_nc <- nchar(max(index))
   msg <- lapply(index, function(i) {
-    nc <- nchar(i)
+    nc <- nchar(x$index[i])
     fmsg <- strwrap(
       msg[i],
       width = cli::console_width(),
-      exdent = nc + 3,
-      initial = paste0(i, strrep(" ", max_nc - nc), " - "),
+      exdent = max_nc + 3,
+      initial = paste0(x$index[i], strrep(" ", max_nc - nc), " - "),
       simplify = TRUE
     )
     if (length(fmsg) > 1) {

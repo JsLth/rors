@@ -258,6 +258,7 @@ ors_pairwise_single <- function(index,
     token = needs_token(instance$token)
   )
 
+  res$index <- index
   cond <- handle_ors_conditions(res, timestamp)
   get_ors_summary(res, geometry = geometry)
 }

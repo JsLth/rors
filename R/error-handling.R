@@ -50,17 +50,21 @@ handle_ors_conditions <- function(res,
     }
 
     call <- get_main_caller()
-    store_condition(code, msg, ts = timestamp, call = call, error = TRUE)
+    store_condition(
+      code,
+      msg,
+      index = res$index,
+      ts = timestamp,
+      call = call,
+      error = TRUE
+    )
 
     if (abort_on_error) {
-      cli::cli_abort(
-        c(
-          "!" = "ORS encountered the following exception:",
-          sprintf("Error code %s: %s", code, msg)
-        ),
-        call = NULL,
-        class = "ors_api_error"
+      msg <- c(
+        "!" = "ORS encountered the following exception:",
+        sprintf("Error code %s: %s", code, msg)
       )
+      abort(msg, call = NULL, class = "api_error")
     }
   } else {
     warnings <- get_ors_warnings(res)
@@ -68,13 +72,18 @@ handle_ors_conditions <- function(res,
     code <- warnings$code
 
     if (length(code) && length(message)) {
-      store_condition(code, msg, ts = timestamp, call = call, error = FALSE)
+      store_condition(
+        code,
+        msg,
+        index = res$index,
+        ts = timestamp,
+        call = call,
+        error = FALSE
+      )
 
       if (warn_on_warning) {
-        w_vec <- cli::cli_vec(
-          cond,
-          style = list(vec_sep = "\f", vec_last = "\f")
-        )
+        style <- list(vec_sep = "\f", vec_last = "\f")
+        w_vec <- cli::cli_vec(cond, style = style)
         cli::cli_warn(
           c("ORS returned {length(w_vec)} warning{?s}:", w_vec),
           class = "ors_api_warn"
@@ -86,18 +95,21 @@ handle_ors_conditions <- function(res,
 }
 
 
-store_condition <- function(code, msg, ts, call, error) {
+store_condition <- function(code, msg, index, ts, call, error) {
   conds <- ors_cache$cond
   last_cond <- conds[[1]]
 
   if (identical(last_cond$ts, ts)) {
     last_cond$msg <- c(last_cond$msg, msg)
     last_cond$code <- c(last_cond$code, code)
+    last_cond$error <- c(last_cond$error, error)
+    last_cond$index <- c(last_cond$index, index)
     conds[[1]] <- last_cond
   } else {
     new_cond <- ors_condition(
       code = code,
       msg = msg,
+      index = index,
       ts = ts,
       call = call,
       error = error
@@ -109,10 +121,11 @@ store_condition <- function(code, msg, ts, call, error) {
 }
 
 
-ors_condition <- function(code, msg, ts, call, error) {
+ors_condition <- function(code, msg, index, ts, call, error) {
   cond <- list(
     code = code,
     msg = msg,
+    index = index,
     ts = ts,
     call = call,
     error = error
@@ -125,9 +138,10 @@ ors_condition <- function(code, msg, ts, call, error) {
 
 handle_missing_directions <- function(.data) {
   route_missing <- is.na(.data)
-  conds <- get0("cond", envir = ors_cache)
+  conds <- get0("cond", envir = ors_cache)[[1]]
   if (is.null(conds)) return()
-  has_warnings <- conds[[1]]$warn
+  has_warnings <- any(!conds$error)
+  style <- list(vec_sep = ", ", vec_last = ", ")
 
   # all routes missing
   if (all(route_missing)) {
@@ -138,10 +152,8 @@ handle_missing_directions <- function(.data) {
 
   # some routes missing
   } else if (any(route_missing)) {
-    cond_indices <- cli::cli_vec(
-      which(startsWith("Error", conds)),
-      style = list(vec_sep = ", ", vec_last = ", ")
-    )
+    idx <- conds$index[conds$error]
+    cond_indices <- cli::cli_vec(idx, style = style)
     cli::cli_warn(c(
       paste(
         "{length(cond_indices)} route{?s} could not be",
@@ -149,16 +161,15 @@ handle_missing_directions <- function(.data) {
       ),
       cond_tip()
     ))
+  }
 
   # routes associated with warnings
-  } else if (has_warnings) {
-    warn_indices <- cli::cli_vec(
-      warn_indices,
-      style = list(vec_sep = ", ", vec_last = ", ")
-    )
+  if (has_warnings) {
+    idx <- conds$index[!conds$error]
+    warn_indices <- cli::cli_vec(idx, style = style)
     cli::cli_warn(c(
       paste(
-        "ORS returned a warning for {length(warn_indices)}",
+        "A warning was emitted for {length(warn_indices)}",
         "route{?s}: {warn_indices}"
       ),
       cond_tip()
