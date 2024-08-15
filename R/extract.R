@@ -121,9 +121,12 @@ get_extract <- function(self,
 }
 
 
-set_extract <- function(self, file) {
+set_extract <- function(self, private, file) {
+  data_dir <- self$paths$top
+  if (private$.is_type("docker")) {
+    data_dir <- file.path(data_dir, "ors-docker/files")
+  }
   filename <- basename(file)
-  data_dir <- file.path(self$paths$top, "docker", "data")
   if (!identical(filename, file) || file.exists(filename)) {
     file <- normalizePath(file, "/")
 

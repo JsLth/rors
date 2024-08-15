@@ -1,0 +1,31 @@
+skip_on_cran()
+skip_if(!has_valid_java())
+
+ors <- local_ors_instance(
+  type = "jar",
+  verbose = FALSE,
+  version = "8.0.0"
+)
+
+test_that("jar setup works", {
+  # service not started - should return false
+  expect_false(ors$is_init())
+  expect_false(ors$is_running())
+  expect_false(ors$is_ready())
+  expect_true(ors$is_mounted())
+
+  # check if service is startable
+  ors$set_extract(file = system.file("setup/monaco.pbf", package = "rors"))
+  ors$set_port()
+  ors$run()
+
+  # service is started - should return true
+  expect_true(ors$is_init())
+  expect_true(ors$is_running())
+  expect_true(ors$is_ready())
+
+  # stop
+  ors$stop()
+  expect_false(ors$is_running())
+  expect_true(ors$is_init())
+})

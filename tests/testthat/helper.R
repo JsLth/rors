@@ -21,7 +21,7 @@ local_ors_instance <- function(dir = tempdir(),
                                dry = TRUE,
                                complete = FALSE,
                                .local_envir = parent.frame()) {
-  ors <- ORSLocal$new(dir = dir, dry = dry, ...)
+  ors <- ors_instance(dir = dir, dry = dry, ...)
 
   if (isTRUE(dry) && complete) {
     create_dry_files(ors)
@@ -39,7 +39,13 @@ with_ors_instance <- function(code,
                               dry = TRUE,
                               complete = FALSE,
                               .local_envir = parent.frame()) {
-  ors <- ORSLocal$new(dir = dir, dry = dry, verbose = verbose, prompts = FALSE, ...)
+  ors <- ors_instance(
+    dir = dir,
+    dry = dry,
+    verbose = verbose,
+    prompts = FALSE,
+    ...
+  )
 
   if (isTRUE(dry) && complete) {
     create_dry_files(ors)
@@ -78,4 +84,20 @@ create_dry_files <- function(ors) {
     ),
     file = file.path(conf_dir, "ors-config.yml")
   )
+}
+
+
+on_os <- function(os) {
+  os <- switch(
+    windows = "windows",
+    mac = "darwin",
+    linux = "linux",
+    solaris = "sunos"
+  )
+  identical(tolower(Sys.info()[["sysname"]]), os)
+}
+
+
+has_valid_java <- function() {
+  !inherits(try(check_jdk_version(FALSE)), "try-error")
 }

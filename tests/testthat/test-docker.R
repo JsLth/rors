@@ -1,6 +1,6 @@
 skip_if_offline("github.com")
 skip_on_cran()
-if (identical(tolower(Sys.info()[["sysname"]]), "darwin")) {
+if (on_os("darwin")) {
   skip_on_ci()
 }
 skip_on_os("solaris")
@@ -10,7 +10,7 @@ skip_docker()
 ors <- local_ors_instance(
   verbose = FALSE,
   dry = FALSE,
-  version = "7c77ae5"
+  version = "8.0.0"
 )
 
 test_that("docker setup works", {

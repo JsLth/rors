@@ -221,10 +221,9 @@ format.ors_condition <- function(x, ...) {
       simplify = TRUE
     )
     if (length(fmsg) > 1) {
-      paste(fmsg, collapse = "\n")
-    } else {
-      fmsg
+      fmsg <- paste(fmsg, collapse = "\n")
     }
+    fmsg
   })
 
   title <- sprintf("Function: %s, timestamp: %s", x$call, x$ts)

@@ -126,7 +126,7 @@ ORSLocal <- R6::R6Class(
           ...
         )
       } else {
-        file <- set_extract(self, file)
+        file <- set_extract(self, private, file)
       }
 
       if (do_use && !is.null(file)) {

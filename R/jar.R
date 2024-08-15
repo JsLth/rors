@@ -99,6 +99,52 @@ ORSJar <- R6::R6Class(
       invisible(self)
     },
 
+    #' @description
+    #' Purge ORS instance, i.e. take down container, (optionally) delete
+    #' image, delete ORS directory, and clean up R6 class.
+    #'
+    #' This method can be useful for testing and writing reproducible
+    #' examples and can easily be used together with \code{\link{on.exit}}.
+    purge = function() {
+      if (!private$.alive) {
+        return(invisible(NULL))
+      }
+
+      if (private$.prompts) {
+        ors_cli(info = list(c("i" = paste(
+          "Purging the current instance removes the docker container,",
+          "ORS directory and cleans up the R6 object."
+        ))))
+
+        yes_no("Do you want to proceed?", no = cancel())
+      }
+
+      ors_cli(h2 = "Purging ORS")
+      self$stop()
+
+      ors_cli(progress = list(
+        "step",
+        msg = "Removing ORS directory",
+        msg_done = "Removed ORS directory",
+        msg_failed = "Could not remove ORS directory"
+      ))
+
+      unlink(self$paths$top, recursive = TRUE, force = TRUE)
+
+      ors_cli(progress = list(
+        "step",
+        msg = "Cleaning up R6 object",
+        msg_done = "Cleaned up R6 object",
+        msg_failed = "Could not clean up R6 object"
+      ))
+
+      self$extract <- NULL
+      self$config <- NULL
+      self$paths <- NULL
+      private$.alive <- FALSE
+      invisible(NULL)
+    },
+
     ## Config ----
     #' @description
     #' Set a HTTP port for the spring server.
@@ -208,6 +254,7 @@ ORSJar <- R6::R6Class(
 
   # Private ----
   private = list(
+    .alive = TRUE,
     .dir = NULL,
     .version = NULL,
     .overwrite = NULL,
