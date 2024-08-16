@@ -214,12 +214,11 @@ calculate_distances <- function(waypoints) {
 calculate_avgspeed <- function(distances, durations) {
   speeds <- distances / durations
   units(speeds) <- "m/s"
-  round(units::set_units(speeds, "km/h"), 2L)
+  round(speeds * 3.6, 2L)
 }
 
 
 calculate_durations <- function(waypoints, distances) {
-  distances <- units::drop_units(distances)
   wp_distances <- waypoints$distance
   wp_durations <- waypoints$duration
   wp <- as.numeric(row.names(waypoints))

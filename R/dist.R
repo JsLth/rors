@@ -1,9 +1,12 @@
 #' Pairwise routing
 #' @description
-#' \code{ors_pairwise} calculates the routing distance between two
-#' datasets using the Directions service from ORS. \code{ors_shortest_distances}
-#' is a wrapper around \code{ors_pairwise} that matches each point of the
-#' source dataset to a dataset of points of interest from the destination dataset
+#' \code{ors_pairwise} calculates the pairwise routing distance between two
+#' datasets using the Directions service from ORS. In other words, routes
+#' are computed between the \emph{i}th row of \code{src} and \code{dst},
+#' respectively.
+#'
+#' \code{ors_shortest_distances} is a wrapper around \code{ors_pairwise} that
+#' matches each point of the source dataset to a destination dataset
 #' and then extracts the route with the shortest distance.
 #'
 #' @param src \code{[sf/sfc]}
@@ -218,11 +221,6 @@ ors_pairwise_raw <- function(src,
   res <- do.call(rbind, res)
 
   handle_missing_directions(res)
-
-  if (loadable("units")) {
-    units(res$distance) <- units
-    units(res$duration) <- "s"
-  }
 
   if (is_sf(res)) {
     res <- sf::st_as_sf(data_frame(res))

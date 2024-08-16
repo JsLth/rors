@@ -43,7 +43,6 @@ Suggests:
     leaflet,
     ggplot2,
     terra,
-    units,
     tibble,
     sfnetworks
 SystemRequirements: Docker (>= 20.10.6)

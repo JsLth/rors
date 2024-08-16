@@ -333,9 +333,6 @@ plot_section <- function(x,
   } else {
     cli::cli_abort("No distance data found in {.var x}.")
   }
-  if (inherits(distance, "units")) {
-    distance <- units::drop_units(units::set_units(distance, "km"))
-  }
 
   elevation <- if (elev %in% names(x)) {
     x[[elev]]
@@ -344,17 +341,11 @@ plot_section <- function(x,
   } else {
     cli::cli_abort("No elevation data found in {.var x}.")
   }
-  if (inherits(elevation, "units")) {
-    elevation <- units::drop_units(units::set_units(elevation, "m"))
-  }
 
   val <- if (feat %in% names(x)) {
     x[[feat]]
   } else {
     cli::cli_abort("No feature data found in {.var x}.")
-  }
-  if (inherits(val, "units")) {
-    val <- units::drop_units(val)
   }
 
   n <- nrow(x)
@@ -414,8 +405,8 @@ plot_section <- function(x,
       ),
       na.rm = TRUE
     ) +
-    units::scale_x_units(unit = "km", expand = c(0, 0)) +
-    units::scale_y_units(unit = "m", expand = c(0, 0), limits = y_range) +
+    ggplot2::scale_x_continuous(expand = c(0, 0)) +
+    ggplot2::scale_y_continuous(expand = c(0, 0), limits = y_range) +
     ggplot2::labs(
       x = xlab,
       y = ylab,

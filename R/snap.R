@@ -76,9 +76,5 @@ tidy_snap <- function(res) {
   geom <- sf::st_as_sfc(lapply(coords, sf::st_point))
   loc$location <- NULL
 
-  if (loadable("units")) {
-    units(loc$snapped_distance) <- "m"
-  }
-
   sf::st_sf(as_data_frame(loc), geometry = geom, crs = 4326)
 }
