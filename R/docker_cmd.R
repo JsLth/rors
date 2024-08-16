@@ -1,6 +1,6 @@
 #' Takes a docker container up
 #' @noRd
-ors_up <- function(self, private, wait = TRUE, warn = TRUE, ...) {
+ors_up <- function(self, private, wait = TRUE, ...) {
   verbose <- private$.verbose
   name <- self$compose$name
   assert_docker_running()
@@ -32,13 +32,7 @@ ors_up <- function(self, private, wait = TRUE, warn = TRUE, ...) {
 
   if (wait) {
     setup_info(verbose)
-    notify_when_ready(
-      name,
-      type = "docker",
-      interval = 10L,
-      verbose = verbose,
-      warn = warn
-    )
+    notify_when_ready(self, private, interval = 10L, verbose = verbose)
   }
 }
 

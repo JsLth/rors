@@ -2,12 +2,15 @@
 #' notification when the server is ready. Also watches out for errors
 #' in the log files.
 #' @noRd
-notify_when_ready <- function(src,
-                              type,
+notify_when_ready <- function(self,
+                              private,
                               interval = 10L,
                               warn = TRUE,
-                              verbose = TRUE,
-                              log_dir = NULL) {
+                              verbose = TRUE) {
+  type <- private$.get_type()
+  url <- self$get_url()
+  src <- self$compose$name %||% self$paths$top
+
   ors_cli(progress = list(
     "step",
     msg = "Starting service",
@@ -16,35 +19,18 @@ notify_when_ready <- function(src,
     spinner = verbose
   ))
 
-  proc <- callr::r_bg(
-    function(src, type, log_dir = NULL, watch_for_condition) {
-      cond <- NULL
-      if (is.null(log_dir)) {
-        log_dir <- src
-      }
-      # while ors service is not ready, keep watching for errors
-      while (!rors::ors_ready(force = TRUE, id = src)) {
-        cond <- watch_for_condition(log_dir, type = type)
-        if (length(cond$error)) {
-          return(cond)
-        }
-        Sys.sleep(1L)
-      }
-      cond
-    },
-    args = list(src, type, log_dir, watch_for_condition),
-    package = TRUE
-  )
+  # start poll function in the background
+  args <- list(src = src, url = url)
+  proc <- callr::r_bg(poll_setup_status, args = args, package = "rors")
+  while (proc$is_alive()) ors_cli(progress = "update")
 
-  while (proc$is_alive()) {
-    ors_cli(progress = "update")
-  }
-
+  # when the poll function finishes, unwrap the warnings
   cond <- proc$get_result()
   if (warn && !is.null(cond$warn)) {
     cli::cli_warn(cond$warn, class = "ors_setup_warn")
   }
 
+  # ... and errors
   if (!is.null(cond$error)) {
     cond_fmt <- cli::cli_vec(cond$error, style = list(vec_sep = "\n\n"))
     msg <- c("The service ran into the following errors:", cond_fmt)
@@ -59,14 +45,30 @@ notify_when_ready <- function(src,
 }
 
 
+#' Background function to continuously poll the log status
+#' @noRd
+poll_setup_status <- function(src, url) {
+  # while ors service is not ready, keep watching for errors
+  while (!ors_ready(force = TRUE, url = url)) {
+    cond <- watch_for_condition(src)
+    if (length(cond$error)) {
+      return(cond)
+    }
+    Sys.sleep(1L)
+  }
+  cond
+}
+
+
 #' Takes ORS logs and returns all warnings and errors
 #' @noRd
-watch_for_condition <- function(src, type = "docker") {
-  logs <- switch(
-    type,
-    docker = docker_logs(src),
-    jar = read_logfile(src, last = 1)
-  )
+watch_for_condition <- function(src) {
+  if (file.exists(src)) {
+    logs <- read_logfile(src, last = 1)
+  } else {
+    logs <- docker_logs(src)
+  }
+
   list(
     error = extract_setup_condition(logs, "ERROR"),
     warn = extract_setup_condition(logs, "WARN")

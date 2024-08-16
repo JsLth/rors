@@ -149,11 +149,11 @@ ors_pairwise <- function(src,
   profile <- match.arg(profile)
   units <- match.arg(units)
   instance <- check_instance(instance)
-  iid <- get_id(instance = instance)
+  url <- get_ors_url(instance)
+  assert_endpoint_available(url, "directions")
 
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, id = iid)
-  url <- get_ors_url(id = iid)
 
   # Bring input data into shape
   src <- prepare_input(src, len = nrow(dst))
@@ -300,12 +300,10 @@ ors_shortest_distances <- function(src,
                                    proximity_type = c("duration", "distance"),
                                    progress = TRUE) {
   # Validate arguments
-  assert_that(
-    is_sf(src),
-    is_sf(dst),
-    is_true_or_false(geometry)
-  )
+  assert_that(is_sf(src), is_sf(dst), is_true_or_false(geometry))
   instance <- check_instance(instance)
+  url <- get_ors_url(instance)
+  assert_endpoint_available(url, "directions")
   proximity_type <- match.arg(proximity_type)
   profile <- match.arg(profile, several.ok = TRUE)
 
@@ -355,4 +353,41 @@ ors_shortest_distances <- function(src,
   attr(route_df, "dst") <- dst
   class(route_df) <- c("ors_sdist", class(route_df))
   route_df
+}
+
+
+apply_shortest_routes <- function(index,
+                                  src,
+                                  dst,
+                                  iter,
+                                  units,
+                                  geometry,
+                                  instance,
+                                  type,
+                                  ...) {
+  routes <- suppressWarnings(
+    ors_pairwise(
+      src = src[iter[index, "point_number"], ],
+      dst = if (is.data.frame(dst)) {
+        dst
+      } else if (is.list(dst)) {
+        dst[[iter[index, "point_number"]]]
+      },
+      profile = iter[index, "profile"],
+      units = units,
+      geometry = geometry,
+      instance = instance,
+      ...
+    )
+  )
+
+  best_index <- suppressWarnings(
+    match(min(routes[[type]], na.rm = TRUE), routes[[type]])
+  )
+
+  cbind(
+    dest = best_index,
+    routes[best_index, ],
+    has_error = anyNA(routes)
+  )
 }

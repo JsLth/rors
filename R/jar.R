@@ -328,17 +328,9 @@ run_ors_jar <- function(self, private, wait = TRUE, ...) {
 
   if (wait) {
     setup_info(verbose)
-    emergency_stop <- function(e) self$stop()
     withCallingHandlers(
-      notify_when_ready(
-        self$get_url(),
-        type = "jar",
-        interval = 10L,
-        verbose = verbose,
-        warn = TRUE,
-        log_dir = self$paths$top
-      ),
-      error = emergency_stop
+      notify_when_ready(self, private, interval = 10L, verbose = verbose),
+      error = function(e) self$stop()
     )
   }
 }

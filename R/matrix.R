@@ -17,7 +17,8 @@ ors_matrix <- function(src,
                        proximity_type = c("distance", "duration"),
                        instance = NULL) {
   instance <- instance %||% get_instance()
-  iid <- get_id(instance = instance)
+  url <- get_ors_url(instance)
+  assert_endpoint_available(url, "matrix")
 
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, id = iid)
@@ -33,8 +34,6 @@ ors_matrix <- function(src,
   } else {
     dst <- prepare_input(dst, len = nrow(src))
   }
-
-  url <- get_ors_url(id = iid)
 
   res <- call_ors_matrix(
     src = src,

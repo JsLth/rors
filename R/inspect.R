@@ -188,7 +188,7 @@ ors_inspect <- function(src,
   level <- match.arg(level)
   as <- match.arg(as)
   instance <- check_instance(instance)
-  iid <- get_id(instance = instance)
+  url <- get_ors_url(instance)
   timestamp <- timestamp()
 
   # Check if ORS is ready to use
@@ -196,7 +196,6 @@ ors_inspect <- function(src,
 
   # Bring input data into shape
   src <- prepare_input(src)
-  url <- get_ors_url(id = iid)
 
   features <- list(
     attributes = attributes,

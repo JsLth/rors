@@ -139,7 +139,8 @@ ors_accessibility <- function(src,
                               ...,
                               params = NULL) {
   instance <- instance %||% get_instance()
-  iid <- get_id(instance = instance)
+  url <- get_ors_url(instance)
+  assert_endpoint_available(url, "isochrones")
 
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, id = iid)
@@ -152,8 +153,6 @@ ors_accessibility <- function(src,
 
   src <- prepare_input(src)
   params <- params %||% prepare_ors_params(list(...), profile)
-
-  url <- get_ors_url(id = iid)
 
   res <- call_ors_isochrones(
     src = src,

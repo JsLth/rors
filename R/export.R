@@ -52,12 +52,13 @@ ors_export <- function(bbox,
   bbox <- sf::st_bbox(bbox)
   profile <- match.arg(profile)
   instance <- check_instance(instance)
-  iid <- get_id(instance = instance)
+  url <- get_ors_url(instance)
+  assert_endpoint_available(url, "export")
 
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, id = iid)
-  url <- get_ors_url(id = iid)
-  assert_endpoint_available(url)
+
+
 
   res <- call_ors_export(bbox, profile, url, ...)
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)

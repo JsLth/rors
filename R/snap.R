@@ -39,23 +39,17 @@ ors_snap <- function(src,
   assert_that(is_sf(src), is.numeric(radius))
   profile <- match.arg(profile)
   instance <- check_instance(instance)
-  iid <- get_id(instance = instance)
+  url <- get_ors_url(instance)
+  assert_endpoint_available(url, "snap")
 
   # Check if ORS is ready to use
-  ors_ready(force = FALSE, error = TRUE, id = iid)
-  url <- get_ors_url(id = iid)
-  assert_endpoint_available(url)
+  ors_ready(force = FALSE, error = TRUE, url = url)
 
   src <- prepare_input(src)
 
   ts <- timestamp()
   res <- call_ors_snap(src, profile, radius, url, ...)
-  handle_ors_conditions(
-    res,
-    timestamp = ts,
-    abort_on_error = TRUE,
-    warn_on_warning = TRUE
-  )
+  handle_ors_conditions(res, ts, abort_on_error = TRUE, warn_on_warning = TRUE)
 
   meta <- res$metadata
   snap <- tidy_snap(res)

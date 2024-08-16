@@ -13,7 +13,6 @@ test_that("setup is created properly", {
 test_that("instance is mounted", {
   expect_true(any_mounted())
   expect_no_error(check_instance())
-  expect_identical(get_id(), "ors-app")
 })
 
 test_that("compose is parsed correctly", {

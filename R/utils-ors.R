@@ -1,6 +1,15 @@
 ors_cache <- new.env(parent = emptyenv())
 
 
+recover_from_cache <- function(obj, force = FALSE) {
+  obj <- deparse(substitute(obj))
+  obj <- get0(obj, envir = ors_cache)
+  if (!is.null(obj) && !force) {
+    return_from_parent(obj, .envir = parent.frame())
+  }
+}
+
+
 #' Utility functions
 #'
 #' Utility functions to aid the setup of local instances.
@@ -13,15 +22,18 @@ ors_cache <- new.env(parent = emptyenv())
 #'  the active profiles of the mounted service.
 #' }
 #'
-#' @param id \code{[character]}
+#' @param url \code{[character]}
 #'
-#' ID or name of a container or URL of a server that is to be checked. If
-#' \code{NULL}, retrieves the ID from the current instance set by
-#' \code{\link{ors_instance}}
+#' URL of an ORS server. Defaults to the the URL of the currently mounted
+#' ORS instance. This argument exists as a way to explicitly specify the URL
+#' to query in case the instance cannot easily be determined. For normal use,
+#' this argument should not need to be specfied.
 #' @param force \code{[logical]}
 #'
 #' If \code{TRUE}, function must query server. If \code{FALSE}, the information
-#' will be read from the cache if possible.
+#' will be read from the cache if possible. This argument is specially useful
+#' automated workflows where it is inconvenient to query the server
+#' unnecessarily often.
 #' @param error \code{[logical]}
 #'
 #' If \code{TRUE}, gives out an error if the service is not ready.
@@ -34,103 +46,89 @@ ors_cache <- new.env(parent = emptyenv())
 #'
 #' @seealso \code{\link{ors_instance}}
 #' @export
+#'
+#' @examples
+#' # initialize an ORS instance
+#' ors <- ors_instance()
+#'
+#' # retrieve the instance object
+#' get_instance()
+#'
+#' # check if the service is ready
+#' ors_ready()
+#'
+#' # assert the ready status
+#' try(ors_ready(error = TRUE))
+#'
+#' \dontrun{
+#' # the following functions require a running service
+#' # retrieve a list of service options from the server
+#' get_status()
+#' }
+#'
 get_instance <- function() {
   if (any_mounted()) {
     get("instance", envir = ors_cache)
   } else {
     code <- cli::code_highlight("ors_instance()")
-    cli::cli_abort(
-      c(
-        "No OpenRouteService instance initialized.",
-        "i" = "You can initialize an instance using {code}"
-      ),
-      class = "ors_init_error"
+    msg <- c(
+      "No OpenRouteService instance initialized.",
+      "i" = "You can initialize an instance using {code}"
     )
+    abort(msg, class = "init_error")
   }
 }
 
 
 check_instance <- function(instance = NULL) {
-  if (is.null(instance)) {
-    instance <- get_instance()
-  } else {
-    assert_that(inherits(instance, "ORSLocal"))
-  }
-
+  instance <- instance %||% get_instance()
+  assert_that(inherits(instance, "ORSLocal"))
   instance
-}
-
-
-#' Returns the ID of an ORS instance. This is usually a URL (for remote,
-#' jar, and war), but can also be the name of a container (for docker).
-#' @noRd
-get_id <- function(id = NULL, instance = NULL) {
-  if (is.null(id)) {
-    instance <- instance %||% get_instance()
-
-    if (inherits(instance, "ORSDocker")) {
-      id <- instance$compose$name
-    } else {
-      id <- instance$get_url()
-    }
-  }
-
-  id
 }
 
 
 #' Returns the output of `docker inspect` as parsed json
 #' @noRd
 inspect_container <- function(id = NULL) {
-  if (is.null(ors_cache$container_info)) {
-    if (is.null(id)) {
-      return()
-    }
+  recover_from_cache(container_info)
 
-    assert_docker_running()
-    cmd <- c("container", "inspect", id)
-
-    container_info <- callr::run(
-      command = "docker",
-      args = cmd,
-      stdout = "|",
-      stderr = NULL,
-      error_on_status = FALSE
-    )
-
-    if (length(container_info$stderr)) {
-      container_info$stderr <- gsub("Error: ", "", container_info$stderr)
-      cli::cli_abort(
-        "Cannot access container {.val {name}}: {container_info$stderr}",
-        "ors_container_inaccessible_error"
-      )
-    }
-
-    container_info <- jsonlite::fromJSON(container_info$stdout)
-
-    assign("container_info", container_info, envir = ors_cache)
-
-    invisible(container_info)
-  } else {
-    invisible(ors_cache$container_info)
+  if (is.null(id)) {
+    return()
   }
+
+  assert_docker_running()
+  cmd <- c("container", "inspect", id)
+
+  container_info <- callr::run(
+    command = "docker",
+    args = cmd,
+    stdout = "|",
+    stderr = NULL,
+    error_on_status = FALSE
+  )
+
+  if (length(container_info$stderr)) {
+    container_info$stderr <- gsub("Error: ", "", container_info$stderr)
+    abort(
+      "Cannot access container {.val {name}}: {container_info$stderr}",
+      "container_inaccessible_error"
+    )
+  }
+
+  container_info <- jsonlite::fromJSON(container_info$stdout)
+  assign("container_info", container_info, envir = ors_cache)
+  container_info
 }
 
 
 #' @rdname get_instance
 #' @export
-get_status <- function(id = NULL) {
-  id <- get_id(id)
-  ors_ready(id = id, force = TRUE, error = TRUE)
-  url <- paste0(get_ors_url(id), "ors/v2/status")
+get_status <- function(url = NULL) {
+  url <- url %||% get_ors_url()
+  ors_ready(url = url, force = TRUE, error = TRUE)
   if (!is_ors_api(url)) {
-    url <- url
     req <- httr2::request(url)
-    req <- httr2::req_method(req, "GET")
-    req <- httr2::req_error(
-      req,
-      is_error = \(res) if (res$status_code == 200L) FALSE else TRUE
-    )
+    req <- httr2::req_template(req, "GET ors/v2/status")
     res <- httr2::req_perform(req, verbosity = 0L)
     res <- httr2::resp_body_json(res, simplifyVector = TRUE, flatten = TRUE)
     class(res) <- "ors_status"
@@ -143,70 +141,61 @@ get_status <- function(id = NULL) {
 
 #' @rdname get_instance
 #' @export
-get_profiles <- function(id = NULL, force = TRUE) {
-  if (is.null(ors_cache$profiles) || isTRUE(force)) {
-    id <- get_id(id)
-    profiles <- get_status(id)
+get_profiles <- function(url = NULL, force = TRUE) {
+  recover_from_cache(profiles, force = force)
+  profiles <- get_status(url)
 
-    if (is.list(profiles)) {
-      profiles <- lapply(
-        profiles$profiles,
-        function(x) x$profiles
-      )
-      profiles <- unlist(profiles, use.names = FALSE)
-    }
-
-    assign("profiles", profiles, envir = ors_cache)
-    profiles
-  } else {
-    ors_cache$profiles
+  if (is.list(profiles)) {
+    profiles <- lapply(profiles$profiles, function(x) x$profiles)
+    profiles <- unlist(profiles, use.names = FALSE)
   }
+
+  assign("profiles", profiles, envir = ors_cache)
+  profiles
 }
 
 
 #' @rdname get_instance
 #' @export
-ors_ready <- function(id = NULL, force = TRUE, error = FALSE) {
-  if (is.null(ors_cache$ors_ready) || isFALSE(ors_cache$ors_ready) || force) {
-    id <- get_id(id)
-    url <- get_ors_url(id)
-
-    if (!is_ors_api(url)) {
-      req <- httr2::request(url)
-      req <- httr2::req_template(req, "GET ors/v2/health")
-      tryCatch(
-        expr = {
-          res <- httr2::req_perform(req)
-          res <- httr2::resp_body_json(res)
-          stopifnot(ready <- res$status == "ready")
-        },
-        error = function(e) {
-          if (error) {
-            if (is_local(url)) {
-              tip <- c("i" = "Did you start your local instance?")
-            } else {
-              tip <- NULL
-            }
-
-            cli::cli_abort(
-              c("Cannot reach the OpenRouteService server.", tip),
-              call = NULL,
-              class = "ors_unavailable_error"
-            )
-          } else {
-            ready <<- FALSE
-          }
-        }
-      )
-    } else {
-      ready <- TRUE
-    }
-
-    assign("ors_ready", ready, envir = ors_cache)
-    ready
-  } else {
-    ors_cache$ors_ready
+ors_ready <- function(url = NULL, force = TRUE, error = FALSE) {
+  ready <- get0("ready", envir = ors_cache)
+  if (isFALSE(ready)) {
+    recover_from_cache(ready, force = force)
   }
+
+  url <- url %||% get_ors_url()
+  ready <- TRUE
+  if (!is_ors_api(url)) {
+    req <- httr2::request(url)
+    req <- httr2::req_template(req, "GET ors/v2/health")
+    tryCatch(
+      expr = {
+        res <- httr2::req_perform(req)
+        res <- httr2::resp_body_json(res)
+        ready <- res$status == "ready"
+        stopifnot(ready)
+      },
+      error = function(e) {
+        if (!error) {
+          ready <<- FALSE
+          return()
+        }
+
+        tip <- if (is_local(url)) {
+          c("i" = "Did you start your local instance?")
+        }
+
+        abort(
+          c("Cannot reach the OpenRouteService server.", tip),
+          call = NULL,
+          class = "unavailable_error"
+        )
+      }
+    )
+  }
+
+  assign("ready", ready, envir = ors_cache)
+  ready
 }
 
 
@@ -250,33 +239,11 @@ identify_extract <- function(dir) {
 }
 
 
-#' Returns the host port of an ORS instance
-#' @noRd
-get_ors_port <- function(force = FALSE, id = NULL) {
-  if (!is.null(id) || is.null(ors_cache$instance) || force) {
-    container_info <- inspect_container(id)
-
-    port <- container_info$HostConfig$PortBindings[[1]][[1]]$HostPort
-    assign("port", port, envir = ors_cache)
-    port
-  } else {
-    ors_cache$instance$compose$ports[1, 1]
-  }
-}
-
-
 #' Returns the URL of an ORS instance
 #' @noRd
-get_ors_url <- function(id = NULL) {
-  id <- id %||% get_id()
-  if (!is_url(id)) {
-    sprintf("http://localhost:%s/", get_ors_port(id = id))
-  } else {
-    if (!endsWith(id, "/")) {
-      paste0(id, "/")
-    }
-    id
-  }
+get_ors_url <- function(instance = NULL) {
+  instance <- instance %||% get_instance()
+  instance$get_url()
 }
 
 
@@ -292,11 +259,13 @@ ors_is_local <- function(instance) {
 }
 
 
-assert_endpoint_available <- function(url) {
-  if (is_ors_api(url)) {
-    cli::cli_abort(
-      "{.fn ors_snap} is not available on the public API.",
-      class = "ors_endpoint_unavailable_error"
-    )
+assert_endpoint_available <- function(url, endpoint) {
+  status <- get_status(url)
+  available <- endpoint %in% status$services
+
+  if (!available) {
+    fun <- paste0("ors_", endpoint)
+    msg <- "{.fn {fun}} is not available on the mounted API."
+    abort(msg, class = "endpoint_unavailable_error")
   }
 }

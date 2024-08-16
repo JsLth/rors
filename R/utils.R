@@ -357,3 +357,10 @@ abort <- function(msg, class = NULL, ...) {
   class <- paste0("ors_", class %||% "error")
   cli::cli_abort(msg, class = class, ...)
 }
+
+
+#' Returns an object from a specified environment
+#' @noRd
+return_from_parent <- function(obj, .envir = parent.frame()) {
+  do.call(return, args = box(obj), envir = .envir)
+}

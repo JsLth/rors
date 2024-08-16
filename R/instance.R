@@ -14,14 +14,14 @@ ORSInstance <- R6::R6Class(
     #' Checks if ORS is ready to use. If \code{TRUE}, the
     #' routing functions can be used.
     is_ready = function() {
-      ors_ready(id = private$.get_id())
+      ors_ready(self$get_url())
     },
 
     #' @description
     #' Retrieves information about the ORS server.
     get_status = function() {
       if (self$is_ready()) {
-        get_status(id = private$.get_id())
+        get_status(self$get_url())
       }
     },
 
@@ -57,14 +57,6 @@ ORSInstance <- R6::R6Class(
 
   # Private ----
   private = list(
-    .get_id = function() {
-      if (inherits(self, "ORSLocal")) {
-        self$compose$name
-      } else {
-        self$get_url()
-      }
-    },
-
     .get_hash = function() {
       cli::hash_obj_md5(self)
     },

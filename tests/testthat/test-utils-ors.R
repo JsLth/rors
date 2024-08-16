@@ -14,16 +14,23 @@ test_that("ors_ready() works", {
     })
     web <- webfakes::local_app_process(app, start = TRUE)
     server <- web$url()
+
+    ors <- ors_instance(server = server)
+
+    expect_true(ors_ready())
+    expect_true(ors_ready(force = FALSE))
+    expect_error(ors_ready(error = TRUE))
+    expect_false(ors_ready())
   }
+})
 
-  # httr2::request(server) %>% httr2::req_method("GET") %>%
-  # httr2::req_url_path("ors/v2/health") %>% httr2::req_perform() %>%
-  # httr2::resp_body_json()
 
-  ors <- ors_instance(server = server)
-
-  expect_true(ors_ready())
-  expect_true(ors_ready(force = FALSE))
-  expect_error(ors_ready(error = TRUE))
-  expect_false(ors_ready())
+test_that("cache recovery works", {
+  assign("test", "successful", envir = ors_cache)
+  test_recover <- function(force = FALSE) {
+    recover_from_cache(test, force = force)
+    "not successful"
+  }
+  expect_identical(test_recover(), "successful")
+  expect_identical(test_recover(force = TRUE), "not successful")
 })
