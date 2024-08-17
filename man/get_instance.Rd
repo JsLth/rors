@@ -5,27 +5,33 @@
 \alias{get_status}
 \alias{get_profiles}
 \alias{ors_ready}
+\alias{any_mounted}
 \title{Utility functions}
 \usage{
 get_instance()
 
-get_status(id = NULL)
+get_status(url = NULL)
 
-get_profiles(id = NULL, force = TRUE)
+get_profiles(url = NULL, force = TRUE)
 
-ors_ready(id = NULL, force = TRUE, error = FALSE)
+ors_ready(url = NULL, force = TRUE, error = FALSE)
+
+any_mounted()
 }
 \arguments{
-\item{id}{\code{[character]}
+\item{url}{\code{[character]}
 
-ID or name of a container or URL of a server that is to be checked. If
-\code{NULL}, retrieves the ID from the current instance set by
-\code{\link{ors_instance}}}
+URL of an ORS server. Defaults to the the URL of the currently mounted
+ORS instance. This argument exists as a way to explicitly specify the URL
+to query in case the instance cannot easily be determined. For normal use,
+this argument should not need to be specfied.}
 
 \item{force}{\code{[logical]}
 
 If \code{TRUE}, function must query server. If \code{FALSE}, the information
-will be read from the cache if possible.}
+will be read from the cache if possible. This argument is specially useful
+automated workflows where it is inconvenient to query the server
+unnecessarily often.}
 
 \item{error}{\code{[logical]}
 
@@ -36,7 +42,7 @@ If \code{TRUE}, gives out an error if the service is not ready.}
 \code{get_status} returns a list of information on the running service.
 \code{ors_ready} returns a length-1 logical vector specifying if the service
 is running. \code{get_profiles} returns a vector containing the active
-profiles.
+profiles. \code{any_mounted} returns a length-1 logical.
 }
 \description{
 Utility functions to aid the setup of local instances.
@@ -47,6 +53,33 @@ the current session and returns it.
 \item \code{ors_ready} checks if the mounted service is ready to use.
 \item \code{get_profiles} is a wrapper around \code{get_status} that returns
 the active profiles of the mounted service.
+\item \code{any_mounted} checks if an instance is mounted to the current
+session.
+}
+}
+\examples{
+# initialize an ORS instance
+ors <- ors_instance()
+
+# confirm that instance was mounted
+any_mounted() # TRUE
+
+# retrieve the instance object
+get_instance()
+
+# check if the service is ready
+ors_ready()
+
+# assert the ready status
+try(ors_ready(error = TRUE))
+
+\dontrun{
+# the following functions require a running service
+# retrieve a list of service options from the server
+get_status()
+
+# retrieve a list of active profiles that can be used
+get_profiles()
 }
 }
 \seealso{

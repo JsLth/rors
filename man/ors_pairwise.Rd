@@ -99,19 +99,26 @@ and if \code{duration}, the shortest temporal distance will be calculated.}
 }
 \value{
 \code{ors_pairwise} returns a dataframe with distances and
-travel durations between source and destination.
+travel durations between source and destination. Distances are specified
+in the unit given by the \code{units} arguments and durations are specified
+in seconds.
+
 \code{ors_shortest_distances} returns a dataframe containing distances,
 travel durations and the index number of the point of interest with the
 shortest routing distance to the respective place of the source dataset.
-Depending on the \code{geometry} argument, these outputs can either be
-simple dataframes or objects of class \code{sf} containing the linestring
-geometries of the respective routes.
+
+Depending on the \code{geometry} argument, the output of both functions can
+either be simple dataframes or objects of class \code{sf} containing the
+linestring geometries of the respective routes.
 }
 \description{
-\code{ors_pairwise} calculates the routing distance between two
-datasets using the Directions service from ORS. \code{ors_shortest_distances}
-is a wrapper around \code{ors_pairwise} that matches each point of the
-source dataset to a dataset of points of interest from the destination dataset
+\code{ors_pairwise} calculates the pairwise routing distance between two
+datasets using the Directions service from ORS. In other words, routes
+are computed between the \emph{i}th row of \code{src} and \code{dst},
+respectively.
+
+\code{ors_shortest_distances} is a wrapper around \code{ors_pairwise} that
+matches each point of the source dataset to a destination dataset
 and then extracts the route with the shortest distance.
 }
 \details{
@@ -133,66 +140,59 @@ can be examined by inspecting its route attributes using
 }
 
 \examples{
-\dontrun{
-data("pharma")
+if (any_mounted() && ors_ready()) {
+  data("pharma")
 
-set.seed(123)
-dest <- ors_sample(10)
+  set.seed(123)
+  dest <- ors_sample(10)
 
-car <- "driving-car"
-bike <- "cycling-regular"
+  car <- "driving-car"
+  bike <- "cycling-regular"
 
-# Running with sf objects
-route_lengths_sf <- ors_pairwise(pharma, dest, profile = car)
-route_lengths_sf
+  # Running with sf objects
+  ors_pairwise(pharma, dest, profile = car)
 
-# Running with coordinate pairs
-route_lengths_df <- ors_pairwise(pharma, dest, profile = bike)
-route_lengths_df
+  # Running with coordinate pairs
+  ors_pairwise(pharma, dest, profile = bike)
 
-# Returns route geometries
-route_lengths_geom <- ors_pairwise(
-  pharma,
-  dest,
-  profile = car,
-  geometry = TRUE
-)
+  # Returns route geometries
+  ors_pairwise(
+    pharma,
+    dest,
+    profile = car,
+    geometry = TRUE
+  )
 
-# Returns routes in kilometers
-route_lengths_km <- ors_pairwise(
-  pharma,
-  dest,
-  profile = bike,
-  units = "km"
-)
+  # Returns routes in kilometers
+  ors_pairwise(
+    pharma,
+    dest,
+    profile = bike,
+    units = "km"
+  )
 
-# Running with additional arguments
-route_lengths_opts <- ors_pairwise(
-  pharma,
-  dest,
-  profile = car,
-  continue_straight = TRUE,
-  preference = "fastest"
-)
+  # Running with additional arguments
+  ors_pairwise(
+    pharma,
+    dest,
+    profile = car,
+    continue_straight = TRUE,
+    preference = "fastest"
+  )
 
-# Finding shortest routes from each point in sample_a to sample_b
-shortest_routes <- ors_shortest_distances(pharma, dest, units = "km")
-shortest_routes
+  # Finding shortest routes from each point in sample_a to sample_b
+  ors_shortest_distances(pharma, dest, units = "km")
 
-# Pre-filter the nearest 5 destination points by Euclidian distance
-pois <- get_closest_pois(pharma, dest, n = 5)
+  # Pre-filter the nearest 5 destination points by Euclidian distance
+  pois <- get_closest_pois(pharma, dest, n = 5)
 
-# Only route from each pharmacy to one of the closest 5 destination points
-# respectively. For larger datasets, this can increase performance.
-nearest_hospitals <- ors_shortest_distances(
-  pharma,
-  pois,
-  group = ".group",
-  geometry = TRUE
-)
-nearest_hospitals
-}
-\dontrun{
-
+  # Only route from each pharmacy to one of the closest 5 destination points
+  # respectively. For larger datasets, this can increase performance.
+  ors_shortest_distances(
+    pharma,
+    pois,
+    group = ".group",
+    geometry = TRUE
+  )
 }
 }

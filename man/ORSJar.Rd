@@ -13,7 +13,7 @@ requirement cannot be met, consider using \code{\link{ORSDocker}} or
 
 For technical details on the setup of local ORS instances, refer to the
 \href{https://giscience.github.io/openrouteservice/run-instance/running-jar}{Running JAR documentation}.
-For details on how to use \code{ORSDocker} objects, refer to the installation
+For details on how to use \code{ORSJar} objects, refer to the installation
 vignette:
 
 \preformatted{
@@ -64,6 +64,7 @@ process running the OpenRouteService instance. Refer to
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-ORSJar-new}{\code{ORSJar$new()}}
+\item \href{#method-ORSJar-purge}{\code{ORSJar$purge()}}
 \item \href{#method-ORSJar-set_port}{\code{ORSJar$set_port()}}
 \item \href{#method-ORSJar-show_logs}{\code{ORSJar$show_logs()}}
 \item \href{#method-ORSJar-run}{\code{ORSJar$run()}}
@@ -129,6 +130,20 @@ spinners, progress bars and system notifications.}
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ORSJar-purge"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSJar-purge}{}}}
+\subsection{Method \code{purge()}}{
+Purge ORS instance, i.e. take down container, (optionally) delete
+image, delete ORS directory, and clean up R6 class.
+
+This method can be useful for testing and writing reproducible
+examples and can easily be used together with \code{\link{on.exit}}.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ORSJar$purge()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ORSJar-set_port"></a>}}
 \if{latex}{\out{\hypertarget{method-ORSJar-set_port}{}}}
 \subsection{Method \code{set_port()}}{
@@ -154,7 +169,7 @@ Port to use. If \code{NULL}, assigns a random port using
 \subsection{Method \code{show_logs()}}{
 Show logs of OpenRouteService. Useful for debugging docker setups.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSJar$show_logs(source = c("process", "logfile"))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSJar$show_logs(source = c("logfile", "process"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -166,7 +181,8 @@ Where to retrieve logs from. If \code{"process"}, reads the standard
 output from the external process running OpenRouteService. If
 \code{"logfile"}, reads the log file in the top directory. Generally,
 the log file provides less information, but stores the logs from
-previous runs. The process logs are reset with every run.}
+previous runs. The process logs are reset with every run. Process logs
+are also much more error-prone.}
 }
 \if{html}{\out{</div>}}
 }
