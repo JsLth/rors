@@ -48,6 +48,7 @@ notify_when_ready <- function(self,
 #' Background function to continuously poll the log status
 #' @noRd
 poll_setup_status <- function(src, url) {
+  cond <- NULL
   # while ors service is not ready, keep watching for errors
   while (!ors_ready(force = TRUE, url = url)) {
     cond <- watch_for_condition(src)
