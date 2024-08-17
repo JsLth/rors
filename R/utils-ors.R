@@ -20,6 +20,8 @@ recover_from_cache <- function(obj, force = FALSE) {
 #'  \item \code{ors_ready} checks if the mounted service is ready to use.
 #'  \item \code{get_profiles} is a wrapper around \code{get_status} that returns
 #'  the active profiles of the mounted service.
+#'  \item \code{any_mounted} checks if an instance is mounted to the current
+#'  session.
 #' }
 #'
 #' @param url \code{[character]}
@@ -42,7 +44,7 @@ recover_from_cache <- function(obj, force = FALSE) {
 #' \code{get_status} returns a list of information on the running service.
 #' \code{ors_ready} returns a length-1 logical vector specifying if the service
 #' is running. \code{get_profiles} returns a vector containing the active
-#' profiles.
+#' profiles. \code{any_mounted} returns a length-1 logical.
 #'
 #' @seealso \code{\link{ors_instance}}
 #' @export
@@ -50,6 +52,9 @@ recover_from_cache <- function(obj, force = FALSE) {
 #' @examples
 #' # initialize an ORS instance
 #' ors <- ors_instance()
+#'
+#' # confirm that instance was mounted
+#' any_mounted() # TRUE
 #'
 #' # retrieve the instance object
 #' get_instance()
@@ -64,8 +69,10 @@ recover_from_cache <- function(obj, force = FALSE) {
 #' # the following functions require a running service
 #' # retrieve a list of service options from the server
 #' get_status()
-#' }
 #'
+#' # retrieve a list of active profiles that can be used
+#' get_profiles()
+#' }
 get_instance <- function() {
   if (any_mounted()) {
     get("instance", envir = ors_cache)
@@ -247,8 +254,8 @@ get_ors_url <- function(instance = NULL) {
 }
 
 
-#' Checks if an instance is stored in ors_cache
-#' @noRd
+#' @rdname get_instance
+#' @export
 any_mounted <- function() {
   "instance" %in% names(ors_cache)
 }
@@ -264,7 +271,7 @@ assert_endpoint_available <- function(url, endpoint) {
   available <- endpoint %in% status$services
 
   if (!available) {
-    fun <- paste0("ors_", endpoint)
+    fun <- sys.call(sys.parent())
     msg <- "{.fn {fun}} is not available on the mounted API."
     abort(msg, class = "endpoint_unavailable_error")
   }
