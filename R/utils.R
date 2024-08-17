@@ -9,7 +9,7 @@
 
 
 "%empty%" <- function(x, y) {
-  if (length(x) == 0) x else y
+  if (!length(x) == 0) x else y
 }
 
 
@@ -353,9 +353,9 @@ cancel <- function(msg = "Input interrupted.") {
 
 #' Wrapper around cli::cli_abort()
 #' @noRd
-abort <- function(msg, class = NULL, ...) {
+abort <- function(msg, class = NULL, .envir = parent.frame(), ...) {
   class <- paste0("ors_", class %||% "error")
-  cli::cli_abort(msg, class = class, ...)
+  cli::cli_abort(msg, class = class, .envir = .envir, ...)
 }
 
 
