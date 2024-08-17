@@ -208,9 +208,10 @@ cond_tip <- function(last = NULL) {
 
 get_main_caller <- function() {
   calls <- sys.calls()
-  cand <- vapply(calls, function(x) deparse(x[[1]]), FUN.VALUE = character(1))
+  expr_to_string <- function(x) paste(deparse(x[[1]]), collapse = "\n")
+  cand <- vapply(calls, expr_to_string, FUN.VALUE = character(1))
   main_funs <- c(
-    "ors_dist", "ors_inspect", "ors_matrix",
+    "ors_pairwise", "ors_inspect", "ors_matrix",
     "ors_accessibility", "ors_snap", "ors_export"
   )
   cand <- intersect(cand, main_funs)
