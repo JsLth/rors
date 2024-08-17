@@ -22,17 +22,17 @@ prepare_input <- function(input, to_coords = TRUE, len = NULL) {
       input <- do.call(rbind, input)
     }
 
-    if (!nrow(input) == len) {
-      cli::cli_abort(
+    if (nrow(input) != len && len != 1L) {
+      abort(
         c(
           "x" = "Datasets have non-matching number of rows.",
           "!" = paste(
-            "{.var src} and {.var src} must have either one row",
+            "{.var src} and {.var dst} must have either one row",
             "or the number of rows of the other dataset."
           ),
           "i" = "Got datasets with {.val {nrow(input)}} and {.val {len}} rows."
         ),
-        class = "ors_input_match_error"
+        class = "input_match_error"
       )
     }
   }

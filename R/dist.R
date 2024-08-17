@@ -51,14 +51,19 @@
 #' directly pass arguments of \code{\link{ors_params}}.
 #' @param params List of additional arguments passed to the ORS API. See
 #' \code{\link{ors_params}} for details.
+#'
 #' @returns \code{ors_pairwise} returns a dataframe with distances and
-#' travel durations between source and destination.
+#' travel durations between source and destination. Distances are specified
+#' in the unit given by the \code{units} arguments and durations are specified
+#' in seconds.
+#'
 #' \code{ors_shortest_distances} returns a dataframe containing distances,
 #' travel durations and the index number of the point of interest with the
 #' shortest routing distance to the respective place of the source dataset.
-#' Depending on the \code{geometry} argument, these outputs can either be
-#' simple dataframes or objects of class \code{sf} containing the linestring
-#' geometries of the respective routes.
+#'
+#' Depending on the \code{geometry} argument, the output of both functions can
+#' either be simple dataframes or objects of class \code{sf} containing the
+#' linestring geometries of the respective routes.
 #'
 #' @details
 #' For \code{ors_pairwise}, the profile argument supports only length-1
@@ -79,64 +84,60 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' data("pharma")
+#' if (any_mounted() && ors_ready()) {
+#'   data("pharma")
 #'
-#' set.seed(123)
-#' dest <- ors_sample(10)
+#'   set.seed(123)
+#'   dest <- ors_sample(10)
 #'
-#' car <- "driving-car"
-#' bike <- "cycling-regular"
+#'   car <- "driving-car"
+#'   bike <- "cycling-regular"
 #'
-#' # Running with sf objects
-#' route_lengths_sf <- ors_pairwise(pharma, dest, profile = car)
-#' route_lengths_sf
+#'   # Running with sf objects
+#'   ors_pairwise(pharma, dest, profile = car)
 #'
-#' # Running with coordinate pairs
-#' route_lengths_df <- ors_pairwise(pharma, dest, profile = bike)
-#' route_lengths_df
+#'   # Running with coordinate pairs
+#'   ors_pairwise(pharma, dest, profile = bike)
 #'
-#' # Returns route geometries
-#' route_lengths_geom <- ors_pairwise(
-#'   pharma,
-#'   dest,
-#'   profile = car,
-#'   geometry = TRUE
-#' )
+#'   # Returns route geometries
+#'   ors_pairwise(
+#'     pharma,
+#'     dest,
+#'     profile = car,
+#'     geometry = TRUE
+#'   )
 #'
-#' # Returns routes in kilometers
-#' route_lengths_km <- ors_pairwise(
-#'   pharma,
-#'   dest,
-#'   profile = bike,
-#'   units = "km"
-#' )
+#'   # Returns routes in kilometers
+#'   ors_pairwise(
+#'     pharma,
+#'     dest,
+#'     profile = bike,
+#'     units = "km"
+#'   )
 #'
-#' # Running with additional arguments
-#' route_lengths_opts <- ors_pairwise(
-#'   pharma,
-#'   dest,
-#'   profile = car,
-#'   continue_straight = TRUE,
-#'   preference = "fastest"
-#' )
+#'   # Running with additional arguments
+#'   ors_pairwise(
+#'     pharma,
+#'     dest,
+#'     profile = car,
+#'     continue_straight = TRUE,
+#'     preference = "fastest"
+#'   )
 #'
-#' # Finding shortest routes from each point in sample_a to sample_b
-#' shortest_routes <- ors_shortest_distances(pharma, dest, units = "km")
-#' shortest_routes
+#'   # Finding shortest routes from each point in sample_a to sample_b
+#'   ors_shortest_distances(pharma, dest, units = "km")
 #'
-#' # Pre-filter the nearest 5 destination points by Euclidian distance
-#' pois <- get_closest_pois(pharma, dest, n = 5)
+#'   # Pre-filter the nearest 5 destination points by Euclidian distance
+#'   pois <- get_closest_pois(pharma, dest, n = 5)
 #'
-#' # Only route from each pharmacy to one of the closest 5 destination points
-#' # respectively. For larger datasets, this can increase performance.
-#' nearest_hospitals <- ors_shortest_distances(
-#'   pharma,
-#'   pois,
-#'   group = ".group",
-#'   geometry = TRUE
-#' )
-#' nearest_hospitals
+#'   # Only route from each pharmacy to one of the closest 5 destination points
+#'   # respectively. For larger datasets, this can increase performance.
+#'   ors_shortest_distances(
+#'     pharma,
+#'     pois,
+#'     group = ".group",
+#'     geometry = TRUE
+#'   )
 #' }
 ors_pairwise <- function(src,
                          dst,
@@ -153,14 +154,14 @@ ors_pairwise <- function(src,
   units <- match.arg(units)
   instance <- check_instance(instance)
   url <- get_ors_url(instance)
-  assert_endpoint_available(url, "directions")
+  assert_endpoint_available(url, "routing")
 
   # Check if ORS is ready to use
-  ors_ready(force = FALSE, error = TRUE, id = iid)
+  ors_ready(force = FALSE, error = TRUE, url = url)
 
   # Bring input data into shape
-  src <- prepare_input(src, len = nrow(dst))
-  dst <- prepare_input(dst, len = nrow(src))
+  src <- prepare_input(src, len = NROW(dst))
+  dst <- prepare_input(dst, len = NROW(src))
   params <- prepare_ors_params(params %||% list(...), profile, nrow(src))
 
   ors_pairwise_raw(
@@ -280,13 +281,7 @@ ors_pairwise_single <- function(index,
 #' longer.
 #'
 #' @export
-#'
 #' @rdname ors_pairwise
-#'
-#' @examples
-#' \dontrun{
-#'
-#' }
 ors_shortest_distances <- function(src,
                                    dst,
                                    group = NULL,
@@ -299,14 +294,16 @@ ors_shortest_distances <- function(src,
                                    progress = TRUE) {
   # Validate arguments
   assert_that(is_sf(src), is_sf(dst), is_true_or_false(geometry))
-  instance <- check_instance(instance)
-  url <- get_ors_url(instance)
-  assert_endpoint_available(url, "directions")
+  units <- match.arg(units)
   proximity_type <- match.arg(proximity_type)
   profile <- match.arg(profile, several.ok = TRUE)
 
-  src <- prepare_input(src, to_coords = FALSE)
-  dst <- prepare_input(dst, to_coords = FALSE)
+  instance <- check_instance(instance)
+  url <- get_ors_url(instance)
+  assert_endpoint_available(url, "routing")
+
+  src <- prepare_input(src)
+  dst <- prepare_input(dst)
 
   if (!is.null(group)) {
     dst <- split(dst, f = dst[[group]])
@@ -314,78 +311,92 @@ ors_shortest_distances <- function(src,
 
   # Create a nested iterator that iterates through every point number for each
   # profile
-  nested_iterator <- expand.grid(
-    list(profile = profile, point_number = seq_len(nrow(src))),
-    stringsAsFactors = FALSE
+  iter <- list(profile = profile, idx = seq_len(nrow(src)))
+  iter <- expand.grid(iter, stringsAsFactors = FALSE)
+
+  if (progress) {
+    env <- environment()
+    cli::cli_progress_bar(total = nrow(iter))
+  }
+
+  args <- list(
+    src = src,
+    dst = dst,
+    units = units,
+    geometry = geometry,
+    instance = instance,
+    url = url,
+    type = proximity_type,
+    progress = progress,
+    ...
   )
-
-  if (progress) cli::cli_progress_bar(total = nrow(nested_iterator))
-
-  # Find shortest route for each coordinate pair
-  route_df <- lapply(seq_len(nrow(nested_iterator)), function(i) {
-    if (progress) cli::cli_progress_update(.envir = parent.frame(2))
-    apply_shortest_routes(
-      index = i, src = src, dst = dst,
-      iter = nested_iterator, units = units, geometry = geometry,
-      instance = instance, type = proximity_type, ...
-    )
-  })
+  routes <- .mapply(ors_shortest_routes_single, dots = iter, MoreArgs = args)
+  routes <- do.call(rbind, routes)
 
   if (progress) cli::cli_progress_done()
 
-  route_df <- cbind(
-    profile = nested_iterator[["profile"]],
-    src = nested_iterator[["point_number"]],
-    do.call(rbind, route_df)
-  )
-  route_df <- as_data_frame(route_df)
+  routes <- cbind(profile = iter$profile, src = iter$idx, routes)
+  routes <- as_data_frame(routes)
+  row.names(routes) <- NULL
 
-  row.names(route_df) <- NULL
+  if (geometry) routes <- sf::st_as_sf(routes)
 
-  if (geometry) route_df <- sf::st_as_sf(route_df)
+  handle_missing_directions_batch(routes$has_error)
+  routes$has_error <- NULL
 
-  handle_missing_directions_batch(route_df$has_error)
-  route_df$has_error <- NULL
-
-  attr(route_df, "src") <- src
-  attr(route_df, "dst") <- dst
-  class(route_df) <- c("ors_sdist", class(route_df))
-  route_df
+  attr(routes, "src") <- src
+  attr(routes, "dst") <- dst
+  class(routes) <- c("ors_sdist", class(routes))
+  routes
 }
 
+# ors_pairwise:
+# Unit: seconds
+#                         expr      min       lq     mean   median       uq      max neval
+# ors_shortest_distances(a, b) 1.877403 1.939651 1.961651 1.957744 1.974432 2.364335    50
+#
+#
+# ors_pairwise_raw:
+# Unit: seconds
+#                         expr      min       lq     mean   median      uq      max neval
+# ors_shortest_distances(a, b) 1.364241 1.393004 1.437389 1.407082 1.43569 1.931573    50
+ors_shortest_routes_single <- function(profile,
+                                       idx,
+                                       src,
+                                       dst,
+                                       units,
+                                       geometry,
+                                       instance,
+                                       url,
+                                       type,
+                                       progress,
+                                       ...) {
+  if (progress) {
+    cli::cli_progress_update(.envir = parent.frame(2))
+  }
 
-apply_shortest_routes <- function(index,
-                                  src,
-                                  dst,
-                                  iter,
-                                  units,
-                                  geometry,
-                                  instance,
-                                  type,
-                                  ...) {
-  routes <- suppressWarnings(
-    ors_pairwise(
-      src = src[iter[index, "point_number"], ],
-      dst = if (is.data.frame(dst)) {
-        dst
-      } else if (is.list(dst)) {
-        dst[[iter[index, "point_number"]]]
-      },
-      profile = iter[index, "profile"],
+  # if matrix, take the whole thing
+  # if its not a matrix, its a list - cut it by index
+  if (is.null(dim(dst))) {
+    dst <- dst[[idx]]
+  }
+  src <- do.call(rbind, replicate(nrow(dst), src[idx, ], simplify = FALSE))
+
+  # catch warning that will be formatted later
+  suppressWarnings({
+    routes <- ors_pairwise_raw(
+      src = src,
+      dst = dst,
+      profile = profile,
       units = units,
       geometry = geometry,
+      progress = FALSE,
       instance = instance,
-      ...
+      url = url,
+      params = list(...)
     )
-  )
+  })
 
-  best_index <- suppressWarnings(
-    match(min(routes[[type]], na.rm = TRUE), routes[[type]])
-  )
-
-  cbind(
-    dest = best_index,
-    routes[best_index, ],
-    has_error = anyNA(routes)
-  )
+  winner <- which.min(routes[[type]]) %empty% NA_real_
+  cbind(dest = winner, routes[winner, ], has_error = anyNA(routes))
 }
