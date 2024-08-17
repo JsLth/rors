@@ -8,22 +8,9 @@ format.ORSInstance <- function(x, ...) {
     return("<ORSInstance>")
   }
 
-  # check if instance is mounted to the session
   active <- x$is_mounted()
-
-  # check if instance on initial run
-  init <- switch(
-    type,
-    local = dir.exists(file.path(x$paths$top, "docker", "graphs")),
-    remote = NULL
-  )
-
-  # find server for requests
-  server <- switch(
-    type,
-    local = sprintf("https://localhost:%s/", x$compose$ports[1, 1]),
-    remote = get_ors_url(x$server)
-  )
+  init <- if (is_local) x$is_init()
+  server <- x$get_url()
 
   c(
     "<ORSInstance>",
@@ -202,7 +189,7 @@ format.ors_condition <- function(x, ...) {
     function(i) {
       if (!is.null(code[i])) {
         type <- ifelse(x$error[i], "Error", "Warning")
-        sprintf("%s code %s: %s", type, code[i], msg[i],code[i], msg[i])
+        sprintf("%s code %s: %s", type, code[i], msg[i])
       } else {
         msg[i]
       }
@@ -213,6 +200,7 @@ format.ors_condition <- function(x, ...) {
   max_nc <- nchar(max(index))
   msg <- lapply(index, function(i) {
     nc <- nchar(x$index[i])
+    if (inherits(strrep(" ", max_nc - nc), "try-error")) browser()
     fmsg <- strwrap(
       msg[i],
       width = cli::console_width(),
