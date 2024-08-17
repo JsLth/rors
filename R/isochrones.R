@@ -143,7 +143,7 @@ ors_accessibility <- function(src,
   assert_endpoint_available(url, "isochrones")
 
   # Check if ORS is ready to use
-  ors_ready(force = FALSE, error = TRUE, id = iid)
+  ors_ready(force = FALSE, error = TRUE, url = url)
 
   profile <- match.arg(profile)
   location_type <- match.arg(location_type)

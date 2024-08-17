@@ -21,7 +21,7 @@ ors_matrix <- function(src,
   assert_endpoint_available(url, "matrix")
 
   # Check if ORS is ready to use
-  ors_ready(force = FALSE, error = TRUE, id = iid)
+  ors_ready(force = FALSE, error = TRUE, url = url)
 
   profile <- match.arg(profile)
   proximity_type <- match.arg(proximity_type)

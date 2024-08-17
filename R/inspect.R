@@ -192,7 +192,7 @@ ors_inspect <- function(src,
   timestamp <- timestamp()
 
   # Check if ORS is ready to use
-  ors_ready(force = TRUE, error = TRUE, id = iid)
+  ors_ready(force = TRUE, error = TRUE, url = url)
 
   # Bring input data into shape
   src <- prepare_input(src)

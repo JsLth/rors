@@ -56,7 +56,7 @@ ors_export <- function(bbox,
   assert_endpoint_available(url, "export")
 
   # Check if ORS is ready to use
-  ors_ready(force = FALSE, error = TRUE, id = iid)
+  ors_ready(force = FALSE, error = TRUE, url = url)
 
 
 
