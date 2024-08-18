@@ -1,0 +1,77 @@
+#################
+# Container ENV #
+#################
+[32m✓ CONTAINER_LOG_LEVEL: INFO. Set CONTAINER_LOG_LEVEL=DEBUG for more details.[0m
+[34mⓘ Any config file settings can be overwritten by environment variables.[0m
+[34mⓘ Use 'CONTAINER_LOG_LEVEL=DEBUG' to see the full list of active environment variables for this container.[0m
+###########################
+# Container sanity checks #
+###########################
+[34mⓘ Running container as user root with id 0 and group 0[0m
+[32m✓ ORS_HOME: /home/ors exists and is writable.[0m
+[32m✓ The file /home/ors/config/example-ors-config.env is up to date[0m
+[32m✓ The file /home/ors/config/example-ors-config.yml is up to date[0m
+[32m✓ Using the existing ors-config.yml from: /home/ors/config/ors-config.yml[0m
+[34mⓘ Default to graphs folder: /home/ors/graphs[0m
+[34mⓘ Any ENV variables will have precedence over configuration variables from config files.[0m
+[32m✓ All checks passed. For details set CONTAINER_LOG_LEVEL=DEBUG.[0m
+#####################################
+# Container file system preparation #
+#####################################
+[32m✓ The file /home/ors/files/example-heidelberg.osm.gz is up to date[0m
+[32m✓ Container file system preparation complete. For details set CONTAINER_LOG_LEVEL=DEBUG.[0m
+#######################################
+# Prepare CATALINA_OPTS and JAVA_OPTS #
+#######################################
+[32m✓ CATALINA_OPTS and JAVA_OPTS ready. For details set CONTAINER_LOG_LEVEL=DEBUG.[0m
+#####################
+# ORS startup phase #
+#####################
+[32m✓ 🙭 Ready to start the ORS application 🙭[0m
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::               (v3.1.11)
+
+2024-08-18 12:19:45 [32mINFO   [m [36m                                              main[m [1;36m[ o.h.o.a.Application                      ][m   Starting Application v8.1.1 using Java 21.0.3 with PID 1 (/ors.jar started by root in /home/ors)
+2024-08-18 12:19:45 [32mINFO   [m [36m                                              main[m [1;36m[ o.h.o.a.Application                      ][m   The following 1 profile is active: "default"
+2024-08-18 12:19:45 [32mINFO   [m [36m                                              main[m [1;36m[ o.h.o.a.ORSEnvironmentPostProcessor      ][m   
+2024-08-18 12:19:45 [32mINFO   [m [36m                                              main[m [1;36m[ o.h.o.a.ORSEnvironmentPostProcessor      ][m   Configuration lookup started.
+2024-08-18 12:19:45 [32mINFO   [m [36m                                              main[m [1;36m[ o.h.o.a.ORSEnvironmentPostProcessor      ][m   Configuration file set by environment variable.
+2024-08-18 12:19:45 [32mINFO   [m [36m                                              main[m [1;36m[ o.h.o.a.ORSEnvironmentPostProcessor      ][m   Loaded file '/home/ors/config/ors-config.yml'
+2024-08-18 12:19:45 [32mINFO   [m [36m                                              main[m [1;36m[ o.h.o.a.ORSEnvironmentPostProcessor      ][m   Configuration lookup finished.
+2024-08-18 12:19:45 [32mINFO   [m [36m                                              main[m [1;36m[ o.h.o.a.ORSEnvironmentPostProcessor      ][m   
+2024-08-18 12:19:48 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.a.s.l.ORSInitContextListener       ][m   Initializing ORS...
+2024-08-18 12:19:48 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   Total - 1024 MB, Free - 970.13 MB, Max: 2 GB, Used - 53.87 MB
+2024-08-18 12:19:48 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   ====> Initializing profiles from '/home/ors/files/geofabrik_rutland-latest.osm.pbf' (1 threads) ...
+2024-08-18 12:19:48 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   1 profile configurations submitted as tasks.
+2024-08-18 12:19:48 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.RoutingProfile                   ][m   [1] Profiles: 'driving-car', location: '/home/ors/./graphs/car'.
+2024-08-18 12:19:49 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler   ][m   Loaded landmark splitting collection from 
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.g.e.c.CorePreparationHandler     ][m   Creating CH preparations, totalMB:1024, usedMB:314
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler   ][m   Creating LM preparations, totalMB:1024, usedMB:318
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.g.e.c.CoreLandmarkStorage        ][m   Created core node ID map for car_ors_fastest_with_turn_costs_highways of size 561
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.g.e.c.CoreLandmarkStorage        ][m   Created core node ID map for car_ors_fastest_with_turn_costs_allow_all of size 561
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.g.e.c.CoreLandmarkStorage        ][m   Created core node ID map for car_ors_shortest_with_turn_costs_highways of size 561
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.g.e.c.CoreLandmarkStorage        ][m   Created core node ID map for car_ors_shortest_with_turn_costs_allow_all of size 561
+2024-08-18 12:19:50 [32mINFO   [m [36m                                              main[m [1;36m[ o.h.o.a.Application                      ][m   Started Application in 5.888 seconds (process running for 7.852)
+2024-08-18 12:19:50 [32mINFO   [m [36m                                              main[m [1;36m[ o.h.o.a.Application                      ][m   openrouteservice {"build_date":"2024-07-17T08:47:22Z","version":"8.1.1"}
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler   ][m   Finished LM preparation, totalMB:1024, usedMB:358
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.g.e.ORSGraphHopper               ][m   version v4.9.1|2024-01-17T09:08:46Z (7,20,5,4,5,7)
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.g.e.ORSGraphHopper               ][m   graph CH|car_ors|RAM_STORE|3D|turn_cost|7,20,5,4,5, details:edges:8 996(1MB), nodes:8 128(1MB), name:(2MB), geo:47 006(1MB), bounds:-0.8450901,-0.3954141,52.5227859,52.7621971,15.0,199.0, shortcuts:3 684 (1MB), nodesCH:8 128 (1MB), shortcuts:5 370 (1MB), nodesCH:8 128 (1MB), shortcuts:5 562 (1MB), nodesCH:8 128 (1MB)
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.RoutingProfile                   ][m   [1] Edges: 8996 - Nodes: 8128.
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.RoutingProfile                   ][m   [1] Total time: 1.674s.
+2024-08-18 12:19:50 [32mINFO   [m [36m                                        ORS-pl-car[m [1;36m[ o.h.o.r.RoutingProfile                   ][m   [1] Finished at: 2024-08-18 12:19:50.
+2024-08-18 12:19:50 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   Total time: 1.716s.
+2024-08-18 12:19:50 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   ========================================================================
+2024-08-18 12:19:50 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   ====> Recycling garbage...
+2024-08-18 12:19:50 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   Before: Total - 1024 MB, Free - 663.63 MB, Max: 2 GB, Used - 360.37 MB
+2024-08-18 12:19:50 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   After: Total - 1024 MB, Free - 952.38 MB, Max: 2 GB, Used - 71.62 MB
+2024-08-18 12:19:50 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   ========================================================================
+2024-08-18 12:19:50 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   ====> Memory usage by profiles:
+2024-08-18 12:19:50 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   [1] 24.03 MB (33.6%)
+2024-08-18 12:19:50 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   Total: 24.03 MB (33.6%)
+2024-08-18 12:19:50 [32mINFO   [m [36m                                          ORS-Init[m [1;36m[ o.h.o.r.RoutingProfileManager            ][m   ========================================================================

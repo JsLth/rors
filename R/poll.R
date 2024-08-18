@@ -102,11 +102,8 @@ read_logfile <- function(path, last = NULL) {
     return(NULL)
   }
 
-  # split log entries not by line but by timestamp
-  # this is useful to capture entire error or warning messages
   logs <- readChar(log_path, nchars = file.info(log_path)$size)
-  rgx <- "(?<=\n)(?=[0-9]{4}-[0-9]{1,2}-[0-9]{1,2})"
-  logs <- strsplit(logs, rgx, perl = TRUE)[[1]]
+  logs <- split_by_log_entry(logs)
 
   if (!is.null(last)) {
     # an application start occurs when the log signals "Starting Application"
@@ -115,6 +112,18 @@ read_logfile <- function(path, last = NULL) {
   }
 
   logs
+}
+
+
+#' split log entries not by line but by timestamp
+#' this is useful to capture entire error or warning messages
+#' @noRd
+split_by_log_entry <- function(logs) {
+  rgx <- "(?<=\n)(?=[0-9]{4}-[0-9]{1,2}-[0-9]{1,2})"
+  logs <- strsplit(logs, rgx, perl = TRUE)[[1]]
+  preamble <- !grepl("^[0-9]", logs)
+  logs[preamble] <- strsplit(logs[preamble], "\n")
+  unlist(logs)
 }
 
 

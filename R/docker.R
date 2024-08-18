@@ -621,8 +621,8 @@ ORSDocker <- R6::R6Class(
         logs <- cli::ansi_strip(logs)
       }
 
-      cat(logs, sep = "\n")
-      invisible(logs)
+      class(logs) <- "ors_logs"
+      logs
     },
 
     #' @description

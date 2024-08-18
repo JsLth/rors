@@ -183,11 +183,13 @@ ORSJar <- R6::R6Class(
     #' are also much more error-prone.
     show_logs = function(source = c("logfile", "process")) {
       source <- match.arg(source)
-      switch(
+      logs <- switch(
         source,
-        process = self$proc$read_output(),
+        process = split_by_log_entry(self$proc$read_output()),
         logfile = read_logfile(self$paths$top)
       )
+      class(logs) <- "ors_logs"
+      logs
     },
 
     ## Control ----
