@@ -617,7 +617,7 @@ param_info <- function() {
   #     "round_trip", "alternative_routes"
   #   ))
   # ), constructive::opts_atomic(compress = FALSE))
-  tibble::tibble(
+  as_data_frame(data.frame(
     name = c(
       "options", "bearings", "alternative_routes", "geometry_simplify",
       "continue_straight", "preference", "radiuses", "maximum_speed", "attributes",
@@ -713,8 +713,8 @@ param_info <- function() {
       TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
       TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE,
       FALSE, FALSE, FALSE
-    ),
-  )
+    )
+  ))
 }
 
 
