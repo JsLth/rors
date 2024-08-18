@@ -176,11 +176,15 @@ ORSLocal <- R6::R6Class(
 
       if (any(changed)) {
         to_rm <- old[changed]
-        cur_extract <- identify_extract(self$paths$top)
         to_rm_fmt <- basename(to_rm)
-        to_rm_fmt[to_rm %in% cur_extract] <- paste(
-          basename(cur_extract), cli::col_red("<- active extract")
-        )
+        cur_extract <- identify_extract(self$paths$top) %||% ""
+
+        if (nzchar(cur_extract)) {
+          to_rm_fmt[to_rm %in% cur_extract] <- paste(
+            basename(cur_extract), cli::col_red("<- active extract")
+          )
+        }
+
         ors_cli(info = list(c("*" = "Removing extract files:")))
         ors_cli(bullets = list(stats::setNames(
           sprintf("- %s", to_rm_fmt), rep(" ", length(to_rm))
@@ -201,7 +205,7 @@ ORSLocal <- R6::R6Class(
             "*" = "Unsetting active extract file: {.emph {basename(cur_extract)}}"
           )))
           self$extract <- NULL
-          self$config$parsed$ors$engine$source_file <- default_extract()
+          self$config$parsed$ors$engine$source_file <- NULL
           self$compose$parsed <- modify_files_volume(self$compose$parsed, NULL)
           self$update()
         }

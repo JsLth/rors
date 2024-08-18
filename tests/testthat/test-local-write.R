@@ -5,35 +5,38 @@ ors <- local_ors_instance(
   verbose = TRUE,
   dry = TRUE,
   complete = TRUE,
-  version = "7c77ae5",
+  version = "8.0.0",
   prompts = FALSE
 )
 
 test_that("$set_ram() works", {
-  get_memory <- function(ors) {
-    unlist(ors$compose$memory[c("init", "max")])
+  get_memory1 <- function(ors) {
+    unlist(ors$compose$memory[c("init", "max")], use.names = FALSE)
   }
 
-  old <- get_memory(ors)
+  get_memory2 <- function(ors) {
+    unlist(
+      ors$compose$parsed$services$`ors-app`$environment[c("XMS", "XMX")],
+      use.names = FALSE
+    )
+  }
 
-  expect_message(ors$set_ram())
-  expect_type(get_memory(ors), "double")
-  expect_failure(expect_identical(old, get_memory(ors)))
+  old <- get_memory1(ors)
 
-  expect_message(ors$set_ram(init = 0.5))
-  expect_no_message(ors$set_ram(init = 0.5))
-  expect_equal(get_memory(ors), c(init = 0.5, max = 0.5))
+  expect_message(ors$set_memory())
+  expect_type(get_memory1(ors), "double")
+  expect_failure(expect_identical(old, get_memory1(ors)))
 
-  expect_message(ors$set_ram(max = 1))
-  expect_equal(get_memory(ors), c(init = 0.5, max = 1))
+  expect_message(ors$set_memory(init = 0.5))
+  expect_no_message(ors$set_memory(init = 0.5))
+  expect_equal(get_memory1(ors), c(0.5, 0.5))
+  expect_equal(get_memory2(ors), c("500m", "500m"))
 
-  expect_match(
-    ors$compose$parsed$services$`ors-app`$environment[2],
-    "-Xms500m",
-    fixed = TRUE
-  )
+  expect_message(ors$set_memory(max = 1))
+  expect_equal(get_memory1(ors), c(0.5, 1))
+  expect_equal(get_memory2(ors), c("500m", "1000m"))
 
-  expect_warning(ors$set_ram(1000))
+  expect_warning(ors$set_memory(1000))
 })
 
 test_that("$set_port() works", {
@@ -46,10 +49,10 @@ test_that("$set_port() works", {
   expect_message(ors$set_port(8081), regexp = "8081")
   expect_no_message(ors$set_port(8081))
   expect_type(get_ports(ors), "character")
-  expect_equal(get_ports(ors)[1],  "8081")
+  expect_equal(get_ports(ors)[1], "8081")
   expect_equal(get_ports(ors)[2], old[2])
 
-  expect_message(ors$set_port(old))
+  expect_message(ors$set_port(as.numeric(old)))
   expect_type(get_ports(ors), "character")
   expect_equal(get_ports(ors), old)
 
@@ -72,14 +75,20 @@ test_that("$set_name() works", {
 })
 
 test_that("$set_graphbuilding() works", {
-  get_gp <- function(ors) {
-    ors$compose$graph_building
+  get_gp1 <- function(ors) {
+    ors$compose$rebuild_graphs
   }
-  expect_false(get_gp(ors))
+  get_gp2 <- function(ors) {
+    ors$compose$parsed$services$`ors-app`$environment$REBUILD_GRAPHS
+  }
+  expect_false(get_gp1(ors))
+  expect_false(get_gp2(ors))
   expect_message(ors$set_graphbuilding(TRUE))
-  expect_true(get_gp(ors))
+  expect_true(get_gp1(ors))
+  expect_true(get_gp2(ors))
   expect_message(ors$set_graphbuilding(FALSE))
-  expect_false(get_gp(ors))
+  expect_false(get_gp1(ors))
+  expect_false(get_gp2(ors))
 })
 
 test_that("$set_extract() works", {
@@ -89,13 +98,7 @@ test_that("$set_extract() works", {
     package = "rors"
   )))
   expect_s3_class(ors$extract, "ors_extract")
-
-  expect_match(
-    ors$compose$parsed$services$`ors-app`$volumes,
-    regexp = "monaco.pbf",
-    fixed = TRUE,
-    all = FALSE
-  )
+  expect_identical(ors$config$parsed$ors$engine$source_file, "files/monaco.pbf")
 
   skip_if_offline("geofabrik.de")
 
@@ -106,26 +109,31 @@ test_that("$set_extract() works", {
     fixed = TRUE
   )
 
-  expect_match(
-    ors$compose$parsed$services$`ors-app`$volumes,
-    regexp = "rutland-latest",
-    fixed = TRUE,
-    all = FALSE
+  expect_identical(
+    ors$config$parsed$ors$engine$source_file,
+    "files/geofabrik_rutland-latest.osm.pbf"
   )
 
   expect_error(
     ors$set_extract(file = "test.pbf"),
-    class = "ors_extract_not_found_error"
+    class = "ors_extract_relative_error"
   )
+  expect_warning(expect_error(
+    ors$set_extract(file = "test/test.pbf"),
+    class = "ors_extract_not_found_error"
+  ))
 
   expect_message(
     ors$rm_extract(dir(
-      file.path(ors$paths$top, "docker", "data"),
+      file.path(ors$paths$top, "files"),
       pattern = "\\.pbf$"
     )),
     regexp = "<- active extract",
     fixed = TRUE
   )
+
+  expect_null(ors$config$parsed$ors$engine$source_file)
+  expect_null(ors$extract)
 
   # test if extract is actually unset or if it is still in compose
   expect_no_warning(ors$update("self"))
@@ -202,10 +210,10 @@ test_that("$set_endpoints works", {
 })
 
 test_that("$set_image works", {
-  expect_identical(ors$compose$image, "nightly")
+  expect_identical(ors$compose$image, "v8.0.0")
 
-  expect_message(ors$set_image("7.2.0"))
-  expect_no_message(ors$set_image("7.2.0"))
+  expect_message(ors$set_image("8.1.0"))
+  expect_no_message(ors$set_image("8.1.0"))
   expect_message(ors$set_image("latest"))
   expect_no_message(ors$set_image("test"))
   expect_identical(ors$compose$image, "latest")

@@ -20,7 +20,7 @@ get_extract <- function(self,
   }
 
   if ((!interactive() || !prompts) && length(providers) > 1L) {
-    cli::cli_abort(paste( # nocov start
+    abort(paste( # nocov start
       "In batch or non-prompt mode, explicitly pass",
       "a single provider name to {.fun ors_extract}."
     )) # nocov end
@@ -131,10 +131,7 @@ set_extract <- function(self, private, file) {
     file <- normalizePath(file, "/")
 
     if (!file.exists(file)) {
-      cli::cli_abort(
-        "Extract file does not exist.",
-        class = "ors_extract_not_found_error"
-      )
+      abort("Extract file does not exist.", class = "extract_not_found_error")
     }
 
     copied <- suppressWarnings(
@@ -142,23 +139,19 @@ set_extract <- function(self, private, file) {
     )
 
     if (!copied) {
-      cli::cli_abort(
-        c(
-          "!" = "Extract file was not set.",
-          "i" = "Is the ORS directory properly initialized?"
-        ),
-        class = "ors_extract_copy_error"
+      msg <- c(
+        "!" = "Extract file was not set.",
+        "i" = "Is the ORS directory properly initialized?"
       )
+      abort(msg,class = "extract_copy_error")
     }
   } else {
     if (!filename %in% list.files(data_dir)) {
-      cli::cli_abort(
-        c(
-          "!" = "Extract file does not exist in the data directory.",
-          "i" = "Did you mean to pass an absolute file path?"
-        ),
-        class = "ors_extract_relative_error"
+      msg <- c(
+        "!" = "Extract file does not exist in the data directory.",
+        "i" = "Did you mean to pass an absolute file path?"
       )
+      abort(msg, class = "extract_relative_error")
     }
   }
   file.path(data_dir, filename)
@@ -182,9 +175,4 @@ get_current_extract <- function(dir) {
 is_pbf <- function(x) {
   exts <- c(".pbf", ".osm.gz", ".osm.zip", ".osm")
   vapply(x, \(x) any(endsWith(x, exts)), FUN.VALUE = logical(1))
-}
-
-
-default_extract <- function() {
-  "ors-api/src/test/files/heidelberg.osm.gz"
 }

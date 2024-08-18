@@ -408,10 +408,7 @@ ORSDocker <- R6::R6Class(
     #' additional monitoring. If \code{NULL}, assigns a random port using
     #' \code{\link[httpuv:randomPort]{randomPort()}}.
     set_port = function(port = NULL) {
-      assert_that(
-        is_number(port[1], null = TRUE),
-        is_number(port[2], null = TRUE)
-      )
+      assert_that(is_integerish(port, null = TRUE), length(port) <= 2)
 
       new <- as.character(port %||% random_port(2))
       old <- self$compose$ports[1, seq_along(new)]
@@ -505,7 +502,7 @@ ORSDocker <- R6::R6Class(
       assert_that(is_string(version))
 
       old <- self$compose$image
-      new <- check_version(version)
+      new <- check_version(version) %||% old
 
       if (!identical(old, new)) {
         ors_cli(info = list(c("*" = "Setting image version to {.field {new}}")))

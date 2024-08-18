@@ -225,7 +225,7 @@ identify_extract <- function(dir) {
     config <- read_ors_yaml(config_path)
     src_file <- config$ors$engine$source_file
     if (!is.null(src_file)) {
-      extract_path <- file.path(file_path, extract_path)
+      extract_path <- file.path(dir, src_file)
     }
   }
 

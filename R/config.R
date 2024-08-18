@@ -1,11 +1,11 @@
 detect_config <- function(dir) {
   configs <- c(
-    conf_dir_json = file.path(dir, "docker", "conf", "ors-config.json"),
+    conf_dir_json = file.path(dir, "conf", "ors-config.json"),
     etc_dir = "/etc/openrouteservice/ors-config.yml",
     home_dir = "~/.config/openrouteservice/ors-config.yml",
     runtime_dir = file.path(dir, "ors-config.yml"),
     working_dir = "ors-config.yml",
-    conf_dir = file.path(dir, "docker", "conf", "ors-config.yml")
+    conf_dir = file.path(dir, "conf", "ors-config.yml")
   )
 
   config_found <- vapply(configs, file.exists, FUN.VALUE = logical(1))
