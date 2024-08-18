@@ -357,10 +357,7 @@ print.ors_params <- function(x, ...) {
   names(params) <- rep(" ", length(params))
 
   msg <- cli::format_message(c(
-    paste(
-      "Object of class {.cls ors_params}",
-      "with the following parameters:"
-    ),
+    "Object of class {.cls ors_params} with the following parameters:",
     params
   ))
   cat(msg, "\n", ...)
@@ -371,4 +368,10 @@ print.ors_params <- function(x, ...) {
 print.ors_geojson <- function(x, ...) {
   x$features <- "<truncated>"
   cat(jsonlite::toJSON(unclass(x), pretty = TRUE, auto_unbox = TRUE), ...)
+}
+
+
+#' @export
+print.ors_logs <- function(x, ...) {
+  cat(x, sep = "\n")
 }

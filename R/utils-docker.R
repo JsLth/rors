@@ -84,7 +84,7 @@ docker_logs <- function(name) {
   )
 
   if (identical(logs$status, 0L)) {
-    strsplit(logs$stdout, "\n")[[1]]
+    split_by_log_entry(logs$stdout)
   }
 }
 

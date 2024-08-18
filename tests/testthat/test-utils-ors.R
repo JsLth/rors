@@ -34,3 +34,9 @@ test_that("cache recovery works", {
   expect_identical(test_recover(), "successful")
   expect_identical(test_recover(force = TRUE), "not successful")
 })
+
+
+test_that("logs are split correctly", {
+  logs <- readChar(test_path("fixtures/testlog.txt"), 10012)
+  expect_length(split_by_log_entry(logs), 77)
+})
