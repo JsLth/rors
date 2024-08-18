@@ -199,9 +199,7 @@ modify_files_volume <- function(compose, path) {
 
   if (!is.null(path)) {
     # if a path is given, use it
-    if (endsWith(path, "ors-docker/files"))
-      path <- "files"
-    change_node <- paste0(path, ":/home/ors/files")
+    change_node <- paste0("./", path, ":/home/ors/files")
     compose$services$`ors-app`$volumes[idx] <- change_node
   } else {
     # otherwise, remove the files volume
@@ -213,20 +211,20 @@ modify_files_volume <- function(compose, path) {
 
 
 configure_volumes <- function(compose) {
-  compose$volumes <- list(
-    graphs = NULL,
-    elevation_cache = NULL,
-    config = NULL,
-    logs = NULL,
-    files = NULL
-  )
+  # compose$volumes <- list(
+  #   graphs = NULL,
+  #   elevation_cache = NULL,
+  #   config = NULL,
+  #   logs = NULL,
+  #   files = NULL
+  # )
 
   vpaths <- compose$services$`ors-app`$volumes
   vpaths <- vpaths[!endsWith(vpaths, "/home/ors")]
-  for (vname in names(compose$volumes)) {
+  volumes <- c("graphs", "elevation_cache", "config", "logs", "files")
+  for (vname in volumes) {
     if (!any(endsWith(vpaths, vname))) {
-      vpaths[length(vpaths) + 1] <-
-        sprintf("%s:/home/ors/%s", vname, vname)
+      vpaths[length(vpaths) + 1] <- sprintf("./%s:/home/ors/%s", vname, vname)
     }
   }
 

@@ -48,7 +48,7 @@ ORSInstance <- R6::R6Class(
         host <- "localhost"
         sprintf("http://%s:%s/", host, port)
       } else if ("ORSDocker" %in% cls) {
-        sprintf("https://localhost:%s/", self$compose$ports[1, 1])
+        sprintf("http://localhost:%s/", self$compose$ports[1, 1])
       } else if ("ORSRemote" %in% cls) {
         self$url
       }

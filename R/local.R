@@ -137,10 +137,8 @@ ORSLocal <- R6::R6Class(
         self$extract <- new_ors_extract(file)
 
         # set extract path in config
+        docker <- if (private$.is_type("docker")) "files"
         fpath <- self$paths$top
-        if (private$.is_type("docker")) {
-          fpath <- file.path("ors-docker")
-        }
         self$config$parsed$ors$engine$source_file <- relative_path(file, fpath)
 
         if (private$.is_type("docker")) {
@@ -149,7 +147,7 @@ ORSLocal <- R6::R6Class(
           # ensure files volume is mounted
           self$compose$parsed <- modify_files_volume(
             self$compose$parsed,
-            path = volume_path(dirname(file), docker_path)
+            path = "files"
           )
         }
       }
@@ -165,19 +163,20 @@ ORSLocal <- R6::R6Class(
     #' files that exist are removed. Can also be a single vector of file
     #' names.
     rm_extract = function(...) {
+      docker <- if (private$.is_type("docker")) "files"
       old <- c(...)
 
       if (is.null(old)) {
-        all_files <- list.files(file.path(self$paths$top, "docker", "data"))
+        all_files <- list.files(file.path(self$paths$top, docker))
         old <- all_files[is_pbf(all_files)]
       }
 
-      old <- file.path(self$paths$top, "docker", "data", old)
+      old <- file.path(self$paths$top, docker, old)
       changed <- vapply(old, file.exists, logical(1))
 
       if (any(changed)) {
         to_rm <- old[changed]
-        cur_extract <- identify_extract(self$compose$parsed, self$paths$top)
+        cur_extract <- identify_extract(self$paths$top)
         to_rm_fmt <- basename(to_rm)
         to_rm_fmt[to_rm %in% cur_extract] <- paste(
           basename(cur_extract), cli::col_red("<- active extract")
@@ -584,7 +583,7 @@ create_ors_docker_dirs <- function(dir) {
   ddirs <- c("config", "elevation_cache", "files", "graphs", "logs")
   for (d in ddirs) {
     dir.create(
-      file.path(dir, "ors-docker", d),
+      file.path(dir, d),
       recursive = TRUE,
       showWarnings = FALSE
     )

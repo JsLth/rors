@@ -217,7 +217,7 @@ identify_extract <- function(dir) {
   compose_path <- file.path(dir, "docker-compose.yml")
   config_path <- file.path(dir, "ors-config.yml")
   is_docker <- file.exists(compose_path)
-  file_path <- ifelse(is_docker, "ors-docker/files", "")
+  file_path <- ifelse(is_docker, "files", "")
   file_path <- file.path(dir, file_path)
   extract_path <- ""
 

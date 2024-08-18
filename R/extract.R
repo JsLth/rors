@@ -6,7 +6,7 @@ get_extract <- function(self,
                         ...) {
   data_dir <- self$paths$top
   if (private$.is_type("docker")) {
-    data_dir <- file.path(data_dir, "ors-docker/files")
+    data_dir <- file.path(data_dir, "files")
   }
   verbose <- private$.verbose
   prompts <- private$.prompts
@@ -124,7 +124,7 @@ get_extract <- function(self,
 set_extract <- function(self, private, file) {
   data_dir <- self$paths$top
   if (private$.is_type("docker")) {
-    data_dir <- file.path(data_dir, "ors-docker/files")
+    data_dir <- file.path(data_dir, "files")
   }
   filename <- basename(file)
   if (!identical(filename, file) || file.exists(filename)) {
