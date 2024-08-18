@@ -24,7 +24,6 @@ route_to_df <- function(res,
     if (elevation && !elev_as_z) {
       coords <- sf::st_coordinates(route)
       route$elevation <- coords[!duplicated(coords[, "L1"]), "Z"]
-      units(route$elevation) <- "m"
       route <- sf::st_zm(route)
     }
 
@@ -76,11 +75,6 @@ route_to_df <- function(res,
 
     # reorder columns
     route <- reorder_route_columns(route)
-
-    # make sure units are set properly
-    units(route$distance) <- res$metadata$query$units
-    units(route$duration) <- "s"
-    units(route$avgspeed) <- "km/h"
 
     sf::st_as_sf(data_frame(route))
   })
@@ -213,7 +207,6 @@ calculate_distances <- function(waypoints) {
 
 calculate_avgspeed <- function(distances, durations) {
   speeds <- distances / durations
-  units(speeds) <- "m/s"
   round(speeds * 3.6, 2L)
 }
 
@@ -224,7 +217,6 @@ calculate_durations <- function(waypoints, distances) {
   wp <- as.numeric(row.names(waypoints))
   percentages <- distances / wp_distances
   durations <- wp_durations * percentages
-  units(durations) <- "s"
   round(durations, 2L)
 }
 
