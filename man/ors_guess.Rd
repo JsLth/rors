@@ -50,10 +50,6 @@ to set an instance globally. This argument should only be used if activating
 an instance globally is not feasible.}
 
 \item{...}{Further arguments passed to \code{poly_fun}}
-
-\item{progress}{\code{[logical]}
-
-Whether to show a progress bar for longer operations.}
 }
 \value{
 An \code{sfc} polygon that approximately represents the

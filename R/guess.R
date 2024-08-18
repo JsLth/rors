@@ -31,10 +31,6 @@
 #' Defaults to \code{\link[sf]{st_convex_hull}}. Other useful functions are
 #' \code{\link[sf]{st_concave_hull}} and \code{\link[sf]{st_polygonize}}.
 #'
-#' @param progress \code{[logical]}
-#'
-#' Whether to show a progress bar for longer operations.
-#'
 #' @param ... Further arguments passed to \code{poly_fun}
 #' @inheritParams ors_pairwise
 #' @inheritParams ors_snap
