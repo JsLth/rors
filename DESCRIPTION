@@ -1,17 +1,17 @@
 Package: rors
 Type: Package
 Title: Routing using OpenRouteService
-Version: 0.12.9.9000
+Version: 1.0.9.9000
 Authors@R: person("Lieth", "Jonas", email = "jonas.lieth@gesis.org",
                   role = c("aut", "cre"))
 Maintainer: Jonas Lieth <jonas.lieth@gesis.org>
 Description: Flexible and opinionated interface to local and remote
-    OpenRouteService instances. The package enables qualitative and
+    'OpenRouteService' instances. The package enables qualitative and
     quantitative route computations, accessbility analyses, distance matrix
     calculations, street snapping and graph network exports. It is primarily
     aimed at processing larger datasets with controlled server-side
     limitations. R6 classes support the setup and and management of
-    custom OpenRouteService instances. The package functions take a tidy
+    custom 'OpenRouteService' instances. The package functions take a tidy
     and graceful approach in querying and formatting the API output.
 URL: https://github.com/JsLth/rors, https://jslth.github.io/rors/
 BugReports: https://github.com/JsLth/rors/issues
@@ -45,7 +45,6 @@ Suggests:
     terra,
     tibble,
     sfnetworks
-SystemRequirements: Docker (>= 20.10.6)
 RoxygenNote: 7.3.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
