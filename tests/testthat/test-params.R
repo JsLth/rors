@@ -10,13 +10,13 @@ test_that("fails early", {
   p3 <- list(alternative_routes = list(test = 2))
 
   # duplicated params shouldnt work
-  expect_error(prepare_ors_params(p1, "driving-car"), class = "param_duplicated_error")
+  expect_error(prepare_ors_params(p1, "driving-car"), class = "ors_param_duplicated_error")
 
   # undefined params shouldnt work
-  expect_error(prepare_ors_params(p2, "driving-car"), class = "param_unknown_error")
+  expect_error(prepare_ors_params(p2, "driving-car"), class = "ors_param_unknown_error")
 
   # undefined nested params shouldnt work
-  expect_error(prepare_ors_params(p3, "driving-car"), class =  "param_unknown_error")
+  expect_error(prepare_ors_params(p3, "driving-car"), class =  "ors_param_invalid_child_error")
 })
 
 test_that("param checking works", {
@@ -49,22 +49,23 @@ test_that("param checking works", {
 
   # check if sf checks work
   expect_equal(prepare_ors_params(v6, profile = "driving-car")$avoid_polygons$type, "FeatureCollection")
+  expect_error(prepare_ors_params(list(avoid_polygons = 1), profile = "driving-car"), "invalid sf object")
 
   # check if extra_info checks work
   expect_error(prepare_ors_params(v7, profile = "wheelchair"), "possibly wrong profile")
-  expect_equal(prepare_ors_params(v8, profile = "wheelchair"), v8)
+  expect_equal(unclass(prepare_ors_params(v8, profile = "wheelchair")), v8)
 })
 
 
 test_that("nested params recurse properly", {
   p1 <- list(alternative_routes = list(target_count = 2))
-  p2 <- list(restrictions = list(green = 3, shadow = TRUE), radiuses = "1")
+  p2 <- list(weightings = list(green = 3, shadow = TRUE), radiuses = "test")
 
   # recursion should work
   expect_equal(prepare_ors_params(p1, "driving-car"), p1, ignore_attr = TRUE)
 
   # all nested params should throw an error
-  expect_length(expect_equal(prepare_ors_params(p2, "driving-car"))$body, 3)
+  expect_length(expect_error(prepare_ors_params(p2, "foot-walking"))$body, 3)
 })
 
 
@@ -78,7 +79,7 @@ test_that("bearings are formatted correctly", {
   rownames(m5) <- 1:3
 
   # check if bearings can be of mixed length
-  expect_length(r <- prepare_ors_params(list(bearings = m1), "cycling-regular", n = 3)$bearings[[2]], 1)
+  expect_length(r <- prepare_ors_params(list(bearings = m1), "cycling-regular", n = 3)$bearings, 3)
 
   # check if bearings can be a vector
   expect_length(prepare_ors_params(list(bearings = m2), "cycling-regular", n = 3)$bearings, 3)
@@ -87,8 +88,8 @@ test_that("bearings are formatted correctly", {
   expect_length(prepare_ors_params(list(bearings = m3), "cycling-regular", n = 3)$bearings[[1]], 0)
 
   # check bearing type check
-  expect_error(prepare_ors_params(list(bearings = m4), "cycling-regular", n = 3), class = "invalid_param_error")
+  expect_error(prepare_ors_params(list(bearings = m4), "cycling-regular", n = 3), class = "ors_param_invalid_error")
 
   # check if bearings are name-resistant
-  expect_identical(prepare_ors_params(list(bearings = m5), "cycling-regular", n = 3), r)
+  expect_identical(unclass(prepare_ors_params(list(bearings = m5), "cycling-regular", n = 3))$bearings, r)
 })

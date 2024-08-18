@@ -1,27 +1,51 @@
+skip_if(!loadable("webfakes"))
+
 test_that("ors_ready() works", {
   server <- "pub"
-  if (is_mock_test()) {
-    app <- webfakes::new_app()
-    app$get("/ors/v2/health", function(req, res) {
-      counter <- res$app$locals$counter
-      if (is.null(counter)) counter <- 0
-      ready <- ifelse(counter == 0, "ready", "not ready")
-      res$app$locals$counter <- counter + 1
-      res$send_json(
-        list(status = ready),
-        auto_unbox = TRUE
-      )
-    })
-    web <- webfakes::local_app_process(app, start = TRUE)
-    server <- web$url()
+  app <- webfakes::new_app()
+  app$get("/ors/v2/health", function(req, res) {
+    counter <- res$app$locals$counter
+    if (is.null(counter)) counter <- 0
+    ready <- ifelse(counter == 0, "ready", "not ready")
+    res$app$locals$counter <- counter + 1
+    res$send_json(list(status = ready), auto_unbox = TRUE)
+  })
+  web <- webfakes::local_app_process(app, start = TRUE)
+  ors <- ors_instance(server = web$url())
 
-    ors <- ors_instance(server = server)
+  expect_true(ors_ready())
+  expect_true(ors_ready(force = FALSE))
+  expect_error(ors_ready(error = TRUE))
+  expect_false(ors_ready())
+})
 
-    expect_true(ors_ready())
-    expect_true(ors_ready(force = FALSE))
-    expect_error(ors_ready(error = TRUE))
-    expect_false(ors_ready())
-  }
+
+test_that("ors_status() formats correctly", {
+  ors_instance(server = "public")
+  expect_type(ors_status(), "character")
+  expect_identical(
+    unclass(get_profiles()),
+    unlist(base_profiles(), use.names = FALSE)
+  )
+
+  app <- webfakes::new_app()
+  app$get("/ors/v2/health", function(req, res) res$send_json("ready"))
+  app$get("/ors/v2/status", function(req, res) {
+    path <- testthat::test_path("fixtures/status.json")
+    status <- jsonlite::read_json(path, simplifyVector = TRUE)
+    res$send_json(status)
+  })
+  web <- webfakes::local_app_process(app, start = TRUE)
+  ors <- ors_instance(server = web$url())
+
+  status <- ors_status()
+  expect_s3_class(status, "ors_status")
+  expect_type(status, "list")
+  status_mod <- status
+  status_mod$languages <- paste(status$languages, collapse = ", ")
+  prnt <- capture.output(print(status))
+  expect_identical(unclass(status_mod), yaml::yaml.load(prnt))
+  expect_identical(get_profiles(), "driving-car")
 })
 
 

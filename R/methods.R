@@ -335,12 +335,14 @@ print.ors_config_parsed <- function(x, ...) {
 #' @export
 print.ors_profile <- function(x, ...) {
   cat("<ors_profile>\n", write_config(x, ...))
+  invisible(x)
 }
 
 
 #' @export
 print.stprof <- function(x, ...) {
   cat(write_config(x, ...))
+  invisible(x)
 }
 
 
@@ -361,6 +363,7 @@ print.ors_params <- function(x, ...) {
     params
   ))
   cat(msg, "\n", ...)
+  invisible(x)
 }
 
 
@@ -368,10 +371,24 @@ print.ors_params <- function(x, ...) {
 print.ors_geojson <- function(x, ...) {
   x$features <- "<truncated>"
   cat(jsonlite::toJSON(unclass(x), pretty = TRUE, auto_unbox = TRUE), ...)
+  invisible(x)
 }
 
 
 #' @export
 print.ors_logs <- function(x, ...) {
   cat(x, sep = "\n")
+  invisible(x)
+}
+
+
+#' @export
+print.ors_status <- function(x, ...) {
+  if (is.list(x)) {
+    x$languages <- paste(x$languages, collapse = ", ")
+  } else {
+    x <- list(profiles = x)
+  }
+  cat(yaml::as.yaml(drop_null(x)))
+  invisible(x)
 }

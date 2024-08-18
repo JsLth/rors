@@ -16,7 +16,7 @@ recover_from_cache <- function(obj, force = FALSE) {
 #' \itemize{
 #'  \item \code{get_instance} checks for the existence of a mounted instance in
 #'  the current session and returns it.
-#'  \item \code{get_status} returns the status reported by the ORS server.
+#'  \item \code{ors_status} returns the status reported by the ORS server.
 #'  \item \code{ors_ready} checks if the mounted service is ready to use.
 #'  \item \code{get_profiles} is a wrapper around \code{get_status} that returns
 #'  the active profiles of the mounted service.
@@ -41,7 +41,7 @@ recover_from_cache <- function(obj, force = FALSE) {
 #' If \code{TRUE}, gives out an error if the service is not ready.
 #'
 #' @returns \code{get_instance} returns an object of class \code{ors_instance}.
-#' \code{get_status} returns a list of information on the running service.
+#' \code{ors_status} returns a list of information on the running service.
 #' \code{ors_ready} returns a length-1 logical vector specifying if the service
 #' is running. \code{get_profiles} returns a vector containing the active
 #' profiles. \code{any_mounted} returns a length-1 logical.
@@ -68,7 +68,7 @@ recover_from_cache <- function(obj, force = FALSE) {
 #' \dontrun{
 #' # the following functions require a running service
 #' # retrieve a list of service options from the server
-#' get_status()
+#' ors_status()
 #'
 #' # retrieve a list of active profiles that can be used
 #' get_profiles()
@@ -130,7 +130,7 @@ inspect_container <- function(id = NULL) {
 
 #' @rdname get_instance
 #' @export
-get_status <- function(url = NULL) {
+ors_status <- function(url = NULL) {
   url <- url %||% get_ors_url()
   ors_ready(url = url, force = TRUE, error = TRUE)
   if (!is_ors_api(url)) {
@@ -138,11 +138,11 @@ get_status <- function(url = NULL) {
     req <- httr2::req_template(req, "GET ors/v2/status")
     res <- httr2::req_perform(req, verbosity = 0L)
     res <- httr2::resp_body_json(res, simplifyVector = TRUE, flatten = TRUE)
-    class(res) <- "ors_status"
-    res
   } else {
-    unlist(base_profiles(), use.names = FALSE)
+    res <- unlist(base_profiles(), use.names = FALSE)
   }
+  class(res) <- "ors_status"
+  res
 }
 
 
@@ -150,7 +150,7 @@ get_status <- function(url = NULL) {
 #' @export
 get_profiles <- function(url = NULL, force = TRUE) {
   recover_from_cache(profiles, force = force)
-  profiles <- get_status(url)
+  profiles <- ors_status(url)
 
   if (is.list(profiles)) {
     profiles <- lapply(profiles$profiles, function(x) x$profiles)
@@ -166,7 +166,7 @@ get_profiles <- function(url = NULL, force = TRUE) {
 #' @export
 ors_ready <- function(url = NULL, force = TRUE, error = FALSE) {
   ready <- get0("ready", envir = ors_cache)
-  if (isFALSE(ready)) {
+  if (isTRUE(ready)) {
     recover_from_cache(ready, force = force)
   }
 
@@ -267,7 +267,7 @@ ors_is_local <- function(instance) {
 
 
 assert_endpoint_available <- function(url, endpoint) {
-  status <- get_status(url)
+  status <- ors_status(url)
   available <- endpoint %in% status$services
 
   if (!available) {

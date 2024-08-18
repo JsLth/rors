@@ -238,6 +238,11 @@ equivalent_list <- function(x, y) {
 }
 
 
+is_list <- function(x) {
+  inherits(x, "list")
+}
+
+
 #' Converts a decimal to its binary representation, e.g. 3 -> c(2, 1)
 #' @returns Numeric vector of varying length
 #' @noRd
@@ -279,6 +284,14 @@ decode_base2 <- function(code) {
 box <- function(x) {
   if (length(x) == 1 && is.atomic(x)) {
     x <- list(x)
+  }
+  x
+}
+
+
+unbox <- function(x) {
+  if (length(x) == 1 && is_list(x)) {
+    x <- x[[1]]
   }
   x
 }

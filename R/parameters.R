@@ -301,41 +301,43 @@ format_ors_params <- function(params, profile, n) {
   validate_param_names(params)
   info <- param_info()
   pnames <- names(params)
-
   params <- lapply(
     pnames,
     params = params,
     info = info,
-    function(name, params, info) {
-      val <- params[[name]]
-
-      if (inherits(val, "list")) {
-        info <- info[info$parent %in% name, ]
-        param <- list(Recall(names(val), val, info))
-        names(param) <- names(val)
-        param
-      } else {
-        parent <- unique(info$parent)
-        info <- info[info$name %in% name, ]
-
-        if (!nrow(info)) {
-          cli::cli_abort(
-            paste(
-              "Parameter {.val {name}} does not",
-              "belong to {.val {unique(parent)}}."
-            ),
-            class = "param_invalid_child_error"
-          )
-        }
-
-        args <- list(x = val, profile = profile, n = n)
-        do.call(param_prepare, c(args, as.list(info)))
-      }
-    }
+    profile = profile,
+    n = n,
+    param_recurse
   )
-
   names(params) <- pnames
   params
+}
+
+
+param_recurse <- function(name, params, info, profile, n) {
+  val <- params[[name]]
+
+  if (is_list(val)) {
+    info <- info[info$parent %in% name, ]
+    param <- lapply(names(val), param_recurse, val, info, profile, n)
+    #param <- list(Recall(names(val), val, info))
+    names(param) <- names(val)
+    param
+  } else {
+    parent <- unique(info$parent)
+    info <- info[info$name %in% name, ]
+
+    if (!nrow(info)) {
+      msg <- paste(
+        "Parameter {.val {name}} does not",
+        "belong to {.val {unique(parent)}}."
+      )
+      abort(msg, class = "param_invalid_child_error")
+    }
+
+    args <- list(x = val, profile = profile, n = n)
+    do.call(param_prepare, c(args, as.list(info)))
+  }
 }
 
 
@@ -495,7 +497,7 @@ param_verify <- function(check, name) {
 validate_param_names <- function(params) {
   params_ok <- names(params) %in% param_info()$name
   if (!all(params_ok)) {
-    cli::cli_abort(
+    abort(
       "Unknown ORS option{?s} {.var {names(params[!params_ok])}}.",
       class = "param_unknown_error"
     )
@@ -503,7 +505,7 @@ validate_param_names <- function(params) {
 
   params_dup <- duplicated(names(params))
   if (any(params_dup)) {
-    cli::cli_abort(
+    abort(
       "Duplicated ORS option{?s} {.var {names(params[params_dup])}}",
       class = "param_duplicated_error"
     )
@@ -530,16 +532,11 @@ check_ors_params <- function(params) {
     n_bad <- length(bad_params)
     names(bad_params) <- rep(" ", n_bad)
 
-    cli::cli_abort(
-      c(
-        paste(
-          "The following {cli::qty(n_bad)} parameter{?s}",
-          "{?is/are} invalid and need{?s/} to be revised:"
-        ),
-        bad_params
-      ),
-      class = "param_invalid_error"
+    msg <- paste(
+      "The following {cli::qty(n_bad)} parameter{?s}",
+      "{?is/are} invalid and need{?s/} to be revised:"
     )
+    abort(c(msg, bad_params), class = "param_invalid_error")
   }
 }
 
@@ -661,7 +658,7 @@ param_info <- function() {
       TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE
     ),
     type = c(
-      NA, "double", NA, "logical", "logical", "character", "double", "double",
+      NA, "double", NA, "logical", "logical", "character", "integer", "double",
       "character", "character", "logical", "integer", "logical", "logical",
       "logical", "character", "logical", "character", "character", NA, "character",
       "double", "character", NA, NA, "character", NA, NA, "logical", "logical",

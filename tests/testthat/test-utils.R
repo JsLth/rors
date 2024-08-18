@@ -15,11 +15,12 @@ test_that("file_path_up works", {
   home <- normalizePath("~", "/")
   path1 <- file.path(home, "first")
   path2 <- file.path(path1, "second")
+  root <- ifelse(on_os("windows"), "C:/", "/")
 
   expect_equal(file_path_up(path1), home)
   expect_equal(file_path_up(path2, 2), home)
   expect_equal(file_path_up(path1, 0), path1)
-  expect_equal(file_path_up(path1, 10), path.expand("~/"))
+  expect_equal(file_path_up(path1, 10), root)
 })
 
 test_that("url tools work", {
@@ -154,7 +155,7 @@ test_that("list tools work", {
   expect_equal(box(list(1)), list(1))
 
   flst4 <- flatten_list(lst4)
-  expect_named(flst4, c("a", "x", "y"))
+  expect_named(flst4, c("a", "b.x", "b.y"))
   expect_length(flst4$x, 3)
   expect_type(flst4$x, "character")
 

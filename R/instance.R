@@ -21,7 +21,7 @@ ORSInstance <- R6::R6Class(
     #' Retrieves information about the ORS server.
     get_status = function() {
       if (self$is_ready()) {
-        get_status(self$get_url())
+        ors_status(self$get_url())
       }
     },
 

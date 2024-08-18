@@ -17,7 +17,8 @@ is_true_or_false <- function(x, flag = TRUE) {
   }
 }
 
-is_integerish <- function(x, null = FALSE) {
+is_integerish <- function(x, null = FALSE, string = TRUE) {
+  if (string) x <- suppressWarnings(as.numeric(x)) %NA% return(FALSE)
   is.numeric(x) && all(as.integer(x) == x) ||
     ifelse(null, is.null(x), FALSE)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils-ors.R
 \name{get_instance}
 \alias{get_instance}
-\alias{get_status}
+\alias{ors_status}
 \alias{get_profiles}
 \alias{ors_ready}
 \alias{any_mounted}
@@ -10,7 +10,7 @@
 \usage{
 get_instance()
 
-get_status(url = NULL)
+ors_status(url = NULL)
 
 get_profiles(url = NULL, force = TRUE)
 
@@ -39,7 +39,7 @@ If \code{TRUE}, gives out an error if the service is not ready.}
 }
 \value{
 \code{get_instance} returns an object of class \code{ors_instance}.
-\code{get_status} returns a list of information on the running service.
+\code{ors_status} returns a list of information on the running service.
 \code{ors_ready} returns a length-1 logical vector specifying if the service
 is running. \code{get_profiles} returns a vector containing the active
 profiles. \code{any_mounted} returns a length-1 logical.
@@ -49,7 +49,7 @@ Utility functions to aid the setup of local instances.
 \itemize{
 \item \code{get_instance} checks for the existence of a mounted instance in
 the current session and returns it.
-\item \code{get_status} returns the status reported by the ORS server.
+\item \code{ors_status} returns the status reported by the ORS server.
 \item \code{ors_ready} checks if the mounted service is ready to use.
 \item \code{get_profiles} is a wrapper around \code{get_status} that returns
 the active profiles of the mounted service.
@@ -76,7 +76,7 @@ try(ors_ready(error = TRUE))
 \dontrun{
 # the following functions require a running service
 # retrieve a list of service options from the server
-get_status()
+ors_status()
 
 # retrieve a list of active profiles that can be used
 get_profiles()
