@@ -539,10 +539,11 @@ get_ors_release <- function(dir,
 
     if (is_numver(version)) {
       if (!minimum_version(version, "8.0.0")) {
-        cli::cli_abort(c(
+        msg = c(
           "!" = "OpenRouteService version must be at least 8.0.0, not {version}",
           "i" = "Older versions are deprecated."
-        ))
+        )
+        abort(msg, class = "version_unsupported_error")
       }
       version <- paste0("v", version)
     }
@@ -557,7 +558,15 @@ get_ors_release <- function(dir,
     ))
 
     req <- httr2::request(url)
-    httr2::req_perform(req, path = file.path(dir, file))
+    withCallingHandlers(
+      httr2::req_perform(req, path = file.path(dir, file)),
+      httr2_http_404 = function(e) {
+        abort(
+          "ORS version {version} does not exist.",
+          class = "version_404_error"
+        )
+      }
+    )
   }
 
   ors_cli(info = list(message = c(
