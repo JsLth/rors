@@ -89,7 +89,7 @@ get_instance <- function() {
 
 check_instance <- function(instance = NULL) {
   instance <- instance %||% get_instance()
-  assert_that(inherits(instance, "ORSLocal"))
+  assert_that(inherits(instance, "ORSInstance"))
   instance
 }
 
@@ -268,7 +268,7 @@ ors_is_local <- function(instance) {
 
 assert_endpoint_available <- function(url, endpoint) {
   status <- ors_status(url)
-  available <- endpoint %in% status$services
+  available <- endpoint %in% status["services"]
 
   if (!available) {
     fun <- sys.call(sys.parent())
