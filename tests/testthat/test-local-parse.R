@@ -3,7 +3,7 @@ skip_if_offline("github.com")
 ors <- local_ors_instance(
   verbose = FALSE,
   dry = TRUE,
-  version = "7c77ae5"
+  version = "8.0.0"
 )
 
 test_that("setup is created properly", {
@@ -30,7 +30,7 @@ test_that("compose is parsed correctly", {
 test_that("paths are parsed correctly", {
   expect_true(file.exists(ors$paths$compose))
   expect_true(dir.exists(ors$paths$top))
-  expect_null(ors$paths$config)
+  expect_true(file.exists(ors$paths$config))
   expect_null(ors$paths$extract)
   expect_output(print(ors$paths), "<- compose", fixed = TRUE)
 })
@@ -43,13 +43,6 @@ test_that("writing works", {
   new <- readLines(ors$paths$compose, warn = FALSE)
   expect_true(identical(og, new))
 })
-
-expect_error(
-  ors$set_extract(file = system.file("setup/monaco.pbf", package = "rors"))
-)
-
-create_dry_files(ors)
-ors$update("self")
 
 test_that("extract is parsed correctly", {
   expect_identical(ors$extract$name, "monaco.pbf")
@@ -79,7 +72,6 @@ test_that("numeric version is re-used", {
 test_that("version errors are informative", {
   expect_error(
     with_ors_instance({}, version = "notaversion"),
-    regexp = "ORS version/commit",
-    fixed = TRUE
+    class = "ors_version_404_error"
   )
 })

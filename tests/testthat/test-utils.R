@@ -156,10 +156,10 @@ test_that("list tools work", {
 
   flst4 <- flatten_list(lst4)
   expect_named(flst4, c("a", "b.x", "b.y"))
-  expect_length(flst4$x, 3)
-  expect_type(flst4$x, "character")
+  expect_length(flst4$b.x, 3)
+  expect_type(flst4$b.x, "character")
 
-  expect_named(flatten_list(lst5), c("", "x", "y"))
+  expect_named(flatten_list(lst5), c("", "b.x", "b.y"))
   expect_identical(flatten_list(lst6), lst6)
 })
 

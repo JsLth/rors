@@ -1,4 +1,5 @@
 skip_if_offline("openrouteservice.org")
+skip_if(!loadable("withr"))
 
 test_that("public api works", {
   withr::with_envvar(

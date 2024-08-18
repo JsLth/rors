@@ -89,6 +89,7 @@ create_dry_files <- function(ors) {
 
 on_os <- function(os) {
   os <- switch(
+    os,
     windows = "windows",
     mac = "darwin",
     linux = "linux",
