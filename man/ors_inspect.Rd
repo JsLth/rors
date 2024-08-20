@@ -53,7 +53,9 @@ along the route, \code{detourfactor} indicates how much the route deviates
 from a straight line. \code{percentage} shows the share of a segment compared
 to the entire route. If \code{TRUE}, all values are included.}
 
-\item{extra_info}{List of keywords that add extra information regarding each
+\item{extra_info}{\code{[character]}/\code{[TRUE]}
+
+List of keywords that add extra information regarding each
 linestring segment of the output. If \code{TRUE}, all values are included.
 See details for more information.}
 

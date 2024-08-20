@@ -155,7 +155,7 @@ Set a HTTP port for the spring server.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{port}}{\code{[numeric]/\code{NULL}}
+\item{\code{port}}{\code{[numeric]}/\code{NULL}
 
 Port to use. If \code{NULL}, assigns a random port using
 \code{\link[httpuv:randomPort]{randomPort()}}.}

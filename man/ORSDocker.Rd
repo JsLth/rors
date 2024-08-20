@@ -23,10 +23,10 @@ vignette("ors-installation", package = "rors")
 \details{
 \code{ORSDocker} defines methods for all four steps in the ORS setup:
 \itemize{
-\item{\bold{Extract: }}{Download an extract and set it up for graph building.}
-\item{\bold{Compose: }}{Change docker settings that control how the service is set up.}
-\item{\bold{Configuration: }}{Change the way ORS computes routes.}
-\item{\bold{Docker: }}{Send commands to docker to control the ORS container.}
+\item{\bold{Extract:} Download an extract and set it up for graph building.}
+\item{\bold{Compose:} Change docker settings that control how the service is set up.}
+\item{\bold{Configuration:} Change the way ORS computes routes.}
+\item{\bold{Docker:} Send commands to docker to control the ORS container.}
 }
 }
 \section{Docker commands}{
@@ -323,7 +323,9 @@ Whether to overwrite the current OpenRouteService directory if it exists.}
 
 \item{\code{dry}}{\code{[logical]}
 
-Whether to start a dry run, i.e. run an instance without jumpstarting.}
+Whether to start a dry run, i.e. initialize a docker instance without
+requiring docker. This allows you to manipulate config, compose file,
+and extract, but does not allow you to interact with docker.}
 
 \item{\code{verbose}}{\code{[logical]}
 
@@ -394,7 +396,7 @@ Set a port for the localhost of the ORS container.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{port}}{\code{[numeric]/\code{NULL}}
+\item{\code{port}}{\code{[numeric]}/\code{NULL}
 
 Port to use for the container. Can be a vector of length 1 or 2.
 The first port is for the API, the second port is optionally for

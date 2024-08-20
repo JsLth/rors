@@ -7,7 +7,7 @@
 \alias{rors-package}
 \title{rors: Routing using OpenRouteService}
 \description{
-Flexible and opinionated interface to local and remote OpenRouteService instances. The package enables qualitative and quantitative route computations, accessbility analyses, distance matrix calculations, street snapping and graph network exports. It is primarily aimed at processing larger datasets with controlled server-side limitations. R6 classes support the setup and and management of custom OpenRouteService instances. The package functions take a tidy and graceful approach in querying and formatting the API output.
+Flexible and opinionated interface to local and remote 'OpenRouteService' instances. The package enables qualitative and quantitative route computations, accessbility analyses, distance matrix calculations, street snapping and graph network exports. It is primarily aimed at processing larger datasets with controlled server-side limitations. R6 classes support the setup and and management of custom 'OpenRouteService' instances. The package functions take a tidy and graceful approach in querying and formatting the API output.
 }
 \section{Usage}{
 
