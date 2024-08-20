@@ -93,7 +93,7 @@ assertthat::on_failure(is_true_or_false) <- function(call, env) {
 
 assertthat::on_failure(is_integerish) <- function(call, env) {
   type <- get_failure_type(call, env)
-  x <- sprintf("{.var %s}", call$x)
+  x <- sprintf("{.var %s}", deparse(call$x))
   sprintf("%s is of type %s, expected an integer-like.", x, type)
 }
 

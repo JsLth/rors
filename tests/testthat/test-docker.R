@@ -4,7 +4,7 @@ if (on_os("darwin")) {
   skip_on_ci()
 }
 skip_on_os("solaris")
-skip_if_not(docker_installed() && has_docker_access(), "docker unavailable")
+skip_if_not(docker_running(), "docker unavailable")
 
 ors <- local_ors_instance(verbose = FALSE, dry = FALSE, version = "8.0.0")
 ors$set_extract(file = test_pbf())

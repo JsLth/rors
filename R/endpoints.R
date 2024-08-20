@@ -44,7 +44,7 @@ call_ors_directions <- function(src,
     req <- httr2::req_url_path(req, "ors")
   }
   format <- ifelse(geometry, "geojson", "json")
-  req <- httr2::req_template("POST v2/directions/{profile}/{format}")
+  req <- httr2::req_template(req, "POST v2/directions/{profile}/{format}")
 
   req <- httr2::req_headers(
     req,
@@ -115,7 +115,7 @@ call_ors_matrix <- function(src,
   if (!is_ors_api(url)) {
     req <- httr2::req_url_path(req, "ors")
   }
-  req <- httr2::req_template("POST v2/matrix/{profile}")
+  req <- httr2::req_template(req, "POST v2/matrix/{profile}")
 
   req <- httr2::req_headers(
     req,
@@ -163,7 +163,7 @@ call_ors_isochrones <- function(src,
   if (!is_ors_api(url)) {
     req <- httr2::req_url_path(req, "ors")
   }
-  req <- httr2::req_template("POST v2/isochrones/{profile}/geojson")
+  req <- httr2::req_template(req, "POST v2/isochrones/{profile}/geojson")
 
   req <- httr2::req_headers(
     req,
@@ -198,7 +198,7 @@ call_ors_snap <- function(src, profile, radius, url, ...) {
   locations <- lapply(locations, as.numeric)
 
   req <- httr2::request(url)
-  req <- httr2::req_template("POST ors/v2/snap/{profile}/json")
+  req <- httr2::req_template(req, "POST ors/v2/snap/{profile}/json")
   req <- httr2::req_headers(
     req,
     Accept = "application/json",

@@ -121,7 +121,6 @@ sf_to_geojson <- function(x) {
   on.exit(unlink(tempf))
   sf::st_write(sf::st_geometry(x), tempf, quiet = TRUE)
   x <- jsonlite::read_json(tempf)
-  unlink(tempf)
   x$name <- NULL
   class(x) <- "ors_geojson"
   x

@@ -15,15 +15,9 @@ is_mock_test <- function() {
 local_ors_instance <- function(dir = tempdir(),
                                ...,
                                dry = TRUE,
-                               complete = FALSE,
                                .local_envir = parent.frame()) {
   ors <- ors_instance(dir = dir, dry = dry, ...)
   ors$set_port()
-
-  if (isTRUE(dry) && complete) {
-    create_dry_files(ors)
-    ors$update("self")
-  }
 
   if (inherits(ors, "ORSDocker")) {
     ors$set_name(paste0("test-rors-", cli::hash_obj_md5(sample(1:1000, 1))))
@@ -38,7 +32,6 @@ with_ors_instance <- function(code,
                               ...,
                               verbose = TRUE,
                               dry = TRUE,
-                              complete = FALSE,
                               .local_envir = parent.frame()) {
   ors <- ors_instance(
     dir = dir,
@@ -47,11 +40,6 @@ with_ors_instance <- function(code,
     prompts = FALSE,
     ...
   )
-
-  if (isTRUE(dry) && complete) {
-    create_dry_files(ors)
-    ors$update("self")
-  }
 
   if (inherits(ors, "ORSDocker")) {
     ors$set_name(paste0("test-rors-", cli::hash_obj_md5(sample(1:1000, 1))))
@@ -64,28 +52,6 @@ with_ors_instance <- function(code,
   res <- force(eval(substitute(code), envir = env))
   withr::deferred_run(envir = env)
   res
-}
-
-create_dry_files <- function(ors) {
-  data_dir <- file.path(ors$paths$top, "docker", "data")
-  if (dir.exists(data_dir)) stop("Data dir somehow already exists")
-  dir.create(data_dir, recursive = TRUE)
-  ors$set_extract(file = test_pbf(), do_use = FALSE)
-
-  conf_dir <- file.path(ors$paths$top, "docker", "conf")
-  if (dir.exists(conf_dir)) stop("Conf dir somehow already exists")
-  dir.create(conf_dir, recursive = TRUE)
-  yaml::write_yaml(
-    list(
-      ors = list(
-        engine = list(
-          source_file = "ors-api/src/test/files/heidelberg.osm.gz",
-          profiles = list(car = list(enabled = TRUE))
-        )
-      )
-    ),
-    file = file.path(conf_dir, "ors-config.yml")
-  )
 }
 
 

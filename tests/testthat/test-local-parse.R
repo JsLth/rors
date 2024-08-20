@@ -5,6 +5,7 @@ ors <- local_ors_instance(
   dry = TRUE,
   version = "8.0.0"
 )
+ors$set_extract(file = test_pbf())
 
 test_that("setup is created properly", {
   expect_true(file.exists(ors$paths$compose))
@@ -24,14 +25,14 @@ test_that("compose is parsed correctly", {
   expect_type(unlist(ors$compose$memory), "double")
   expect_type(ors$compose$name, "character")
   expect_type(ors$compose$image, "character")
-  expect_true(is_true_or_false(ors$compose$graph_building))
+  expect_true(is_true_or_false(ors$compose$rebuild_graphs))
 })
 
 test_that("paths are parsed correctly", {
   expect_true(file.exists(ors$paths$compose))
   expect_true(dir.exists(ors$paths$top))
   expect_true(file.exists(ors$paths$config))
-  expect_null(ors$paths$extract)
+  expect_true(file.exists(ors$paths$extract))
   expect_output(print(ors$paths), "<- compose", fixed = TRUE)
 })
 
@@ -47,7 +48,7 @@ test_that("writing works", {
 test_that("extract is parsed correctly", {
   expect_identical(ors$extract$name, "monaco.pbf")
   expect_type(ors$extract$size, "double")
-  expect_output(print(ors$paths), "<- extract", fixed = TRUE)
+  expect_output(print(ors$paths), "<- extract", fixed = TRUE) # TODO
 })
 
 test_that("config is parsed correctly", {
@@ -55,18 +56,6 @@ test_that("config is parsed correctly", {
   expect_s3_class(ors$config$parsed, "ors_config_parsed")
   expect_named(ors$config$profiles)
   expect_output(print(ors$paths), "<- config", fixed = TRUE)
-})
-
-test_that("numeric version is re-used", {
-  skip("Skipping until later ORS release")
-
-  with_ors_instance(
-    {
-      expect_identical(ors$version, "8.0.0")
-      expect_identical(ors$compose$version, "8.0.0")
-    },
-    version = "8.0.0"
-  )
 })
 
 test_that("version errors are informative", {

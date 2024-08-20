@@ -43,7 +43,7 @@ get_extract <- function(self,
     file_size <- round(place_match$file_size / 1024L / 1024L)
 
     ors_cli(
-      text = "Provider : {cli::col_green(providers[i])}",
+      text = "Provider : {cli::col_green(provider[i])}",
       text = "Name \u00a0\u00a0\u00a0\u00a0: {cli::col_green(file_name)}",
       text = "Size \u00a0\u00a0\u00a0\u00a0: {cli::col_green(file_size)} MB",
       cat = "line"

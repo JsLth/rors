@@ -445,7 +445,7 @@ param_format_boxed <- function(x, box) {
 
 param_format_poly <- function(x, name) {
   if (identical(name, "avoid_polygons")) {
-    sf_to_geojson(x)
+    x <- sf_to_geojson(x)
   }
   x
 }

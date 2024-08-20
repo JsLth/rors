@@ -51,7 +51,7 @@ recover_from_cache <- function(obj, force = FALSE) {
 #'
 #' @examples
 #' # initialize an ORS instance
-#' ors <- ors_instance()
+#' ors <- ors_instance(dry = TRUE)
 #'
 #' # confirm that instance was mounted
 #' any_mounted() # TRUE
@@ -139,7 +139,10 @@ ors_status <- function(url = NULL) {
     res <- httr2::req_perform(req, verbosity = 0L)
     res <- httr2::resp_body_json(res, simplifyVector = TRUE, flatten = TRUE)
   } else {
-    res <- unlist(base_profiles(), use.names = FALSE)
+    res <- list(
+      profiles = unlist(base_profiles(), use.names = FALSE),
+      services = list("routing", "matrix", "isochrones", "snap")
+    )
   }
   class(res) <- "ors_status"
   res
@@ -150,10 +153,10 @@ ors_status <- function(url = NULL) {
 #' @export
 get_profiles <- function(url = NULL, force = TRUE) {
   recover_from_cache(profiles, force = force)
-  profiles <- ors_status(url)
+  profiles <- ors_status(url)$profiles
 
   if (is.list(profiles)) {
-    profiles <- lapply(profiles$profiles, function(x) x$profiles)
+    profiles <- lapply(profiles, function(x) x$profiles)
     profiles <- unlist(profiles, use.names = FALSE)
   }
 
@@ -268,10 +271,10 @@ ors_is_local <- function(instance) {
 
 assert_endpoint_available <- function(url, endpoint) {
   status <- ors_status(url)
-  available <- endpoint %in% status["services"]
+  available <- endpoint %in% status$services
 
   if (!available) {
-    fun <- sys.call(sys.parent())
+    fun <- sys.call(sys.parent())[[1]]
     msg <- "{.fn {fun}} is not available on the mounted API."
     abort(msg, class = "endpoint_unavailable_error")
   }

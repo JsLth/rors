@@ -4,10 +4,10 @@ skip_on_cran()
 ors <- local_ors_instance(
   verbose = TRUE,
   dry = TRUE,
-  complete = TRUE,
   version = "8.0.0",
   prompts = FALSE
 )
+ors$set_extract(file = test_pbf())
 
 test_that("$set_ram() works", {
   get_memory1 <- function(ors) {
@@ -81,14 +81,15 @@ test_that("$set_graphbuilding() works", {
   get_gp2 <- function(ors) {
     ors$compose$parsed$services$`ors-app`$environment$REBUILD_GRAPHS
   }
-  expect_false(get_gp1(ors))
-  expect_false(get_gp2(ors))
-  expect_message(ors$set_graphbuilding(TRUE))
   expect_true(get_gp1(ors))
   expect_true(get_gp2(ors))
   expect_message(ors$set_graphbuilding(FALSE))
   expect_false(get_gp1(ors))
   expect_false(get_gp2(ors))
+  expect_message(ors$set_graphbuilding(TRUE))
+  expect_true(get_gp1(ors))
+  expect_true(get_gp2(ors))
+  expect_no_message(ors$set_graphbuilding(TRUE))
 })
 
 test_that("$set_extract() works", {

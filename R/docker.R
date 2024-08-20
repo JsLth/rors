@@ -479,7 +479,7 @@ ORSDocker <- R6::R6Class(
     set_graphbuilding = function(mode) {
       assert_that(is_true_or_false(mode))
 
-      old <- self$compose$graph_building
+      old <- self$compose$build_graphs
       new <- mode
 
       if (!identical(old, new)) {
