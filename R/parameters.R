@@ -445,16 +445,7 @@ param_format_boxed <- function(x, box) {
 
 param_format_poly <- function(x, name) {
   if (identical(name, "avoid_polygons")) {
-    tempf <- tempfile(fileext = ".geojson")
-    on.exit(unlink(tempf))
-    capture.output(
-      sf::st_write(sf::st_geometry(x), tempf),
-      type = "output"
-    )
-    x <- jsonlite::read_json(tempf)
-    x$name <- NULL
-    class(x) <- "ors_geojson"
-    x
+    sf_to_geojson(x)
   }
   x
 }

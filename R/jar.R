@@ -149,7 +149,7 @@ ORSJar <- R6::R6Class(
     #' @description
     #' Set a HTTP port for the spring server.
     #'
-    #' @param port \code{[numeric]/\code{NULL}}
+    #' @param port \code{[numeric]}/\code{NULL}
     #'
     #' Port to use. If \code{NULL}, assigns a random port using
     #' \code{\link[httpuv:randomPort]{randomPort()}}.

@@ -20,10 +20,10 @@
 #' @details
 #' \code{ORSDocker} defines methods for all four steps in the ORS setup:
 #' \itemize{
-#'  \item{\bold{Extract: }}{Download an extract and set it up for graph building.}
-#'  \item{\bold{Compose: }}{Change docker settings that control how the service is set up.}
-#'  \item{\bold{Configuration: }}{Change the way ORS computes routes.}
-#'  \item{\bold{Docker: }}{Send commands to docker to control the ORS container.}
+#'  \item{\bold{Extract:} Download an extract and set it up for graph building.}
+#'  \item{\bold{Compose:} Change docker settings that control how the service is set up.}
+#'  \item{\bold{Configuration:} Change the way ORS computes routes.}
+#'  \item{\bold{Docker:} Send commands to docker to control the ORS container.}
 #' }
 #'
 #' @section Docker commands:
@@ -403,7 +403,7 @@ ORSDocker <- R6::R6Class(
     #' @description
     #' Set a port for the localhost of the ORS container.
     #'
-    #' @param port \code{[numeric]/\code{NULL}}
+    #' @param port \code{[numeric]}/\code{NULL}
     #'
     #' Port to use for the container. Can be a vector of length 1 or 2.
     #' The first port is for the API, the second port is optionally for

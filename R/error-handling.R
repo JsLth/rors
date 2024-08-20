@@ -82,6 +82,7 @@ handle_ors_conditions <- function(res,
       )
 
       if (warn_on_warning) {
+        cond <- paste0("Warning code ", code, ": ", msg)
         style <- list(vec_sep = "\f", vec_last = "\f")
         w_vec <- cli::cli_vec(cond, style = style)
         cli::cli_warn(

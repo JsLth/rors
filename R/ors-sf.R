@@ -111,3 +111,18 @@ coords_to_polygon <- function(coords) {
   poly <- lapply(coords, function(x) sf::st_polygon(list(x[1, , ])))
   do.call(sf::st_sfc, c(poly, crs = 4326))
 }
+
+
+#' dirty hack to convert an sf object to a geojson string
+#' uses st_write to write to a tempfile
+#' @noRd
+sf_to_geojson <- function(x) {
+  tempf <- tempfile(fileext = ".geojson")
+  on.exit(unlink(tempf))
+  sf::st_write(sf::st_geometry(x), tempf, quiet = TRUE)
+  x <- jsonlite::read_json(tempf)
+  unlink(tempf)
+  x$name <- NULL
+  class(x) <- "ors_geojson"
+  x
+}
