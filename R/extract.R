@@ -14,29 +14,27 @@ get_extract <- function(self,
   i <- 0L
 
   if (is.null(provider)) {
-    providers <- osmextract::oe_providers(quiet = TRUE)$available_providers # nocov
-  } else {
-    providers <- provider
+    provider <- osmextract::oe_providers(quiet = TRUE)$available_providers # nocov
   }
 
-  if ((!interactive() || !prompts) && length(providers) > 1L) {
+  if ((!interactive() || !prompts) && length(provider) > 1L) {
     abort(paste( # nocov start
       "In batch or non-prompt mode, explicitly pass",
       "a single provider name to {.fun ors_extract}."
     )) # nocov end
   }
 
-  if (length(providers) > 1) {
+  if (length(provider) > 1) {
     ors_cli(info = list(c("i" = "Trying different extract providers...")))
   }
 
   # While there are providers left to try out, keep trying until
   # an extract provider is chosen
-  while (ok && i < length(providers)) {
+  while (ok && i < length(provider)) {
     i <- i + 1L
     place_match <- osmextract::oe_match(
       place = place,
-      provider = providers[i],
+      provider = provider[i],
       quiet = TRUE,
       ...
     )
@@ -51,20 +49,20 @@ get_extract <- function(self,
       cat = "line"
     )
 
-    if (providers[i] == "bbbike") {
+    if (provider[i] == "bbbike") {
       ors_cli(warn = list(c("!" = paste( # nocov start
         "bbbike extracts are known to cause issues with",
         "memory allocation. Use with caution."
       )))) # nocov end
     }
 
-    if (length(providers) > 1) {
+    if (length(provider) > 1) {
       ok <- yes_no("Do you want to try another provider?")
     }
   }
 
   # If the while loop exits and the last answer given is yes, exit
-  if (ok && length(providers) > 1) {
+  if (ok && length(provider) > 1) {
     ors_cli(info = list(c( # nocov start
       "!" = "All providers have been searched. Please download the extract manually."
     )))
@@ -88,7 +86,7 @@ get_extract <- function(self,
     ors_cli(info = list(c("i" = "Download path: {rel_path}")))
     # If no file exists, remove all download a new one
   } else {
-    path <- file.path(data_dir, paste0(providers[i], "_", file_name))
+    path <- file.path(data_dir, paste0(provider[i], "_", file_name))
     rel_path <- relative_path(path, self$paths$top, pretty = TRUE)
 
     ors_cli(progress = list(
