@@ -2,11 +2,8 @@
 #' notification when the server is ready. Also watches out for errors
 #' in the log files.
 #' @noRd
-notify_when_ready <- function(self,
-                              private,
-                              interval = 10L,
-                              warn = TRUE,
-                              verbose = TRUE) {
+notify_when_ready <- function(self, private, interval = 10L, verbose = TRUE) {
+  warn <- getOption("rors_setup_warn", FALSE)
   type <- private$.get_type()
   url <- self$get_url()
   src <- self$compose$name %||% self$paths$top

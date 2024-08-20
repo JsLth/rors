@@ -54,7 +54,9 @@
 #' of the route direction. If specified, \code{src} must contain a single
 #' coordinate pair from which a round trip is to be generated. If \code{NULL},
 #' no round trip is computed.
-#' @param extra_info List of keywords that add extra information regarding each
+#' @param extra_info \code{[character]}/\code{[TRUE]}
+#'
+#' List of keywords that add extra information regarding each
 #' linestring segment of the output. If \code{TRUE}, all values are included.
 #' See details for more information.
 #' @param as \code{[character]}
@@ -225,17 +227,17 @@ ors_inspect <- function(src,
       abort_on_error = TRUE,
       warn_on_warning = TRUE
     )
+  }
 
-    if (as == "tidy") {
-      res <- route_to_df(
-        res,
-        level = level,
-        elevation = elevation,
-        navigation = navigation,
-        elev_as_z = elev_as_z,
-        params = params
-      )
-    }
+  if (as %in% "tidy") {
+    res <- route_to_df(
+      res,
+      level = level,
+      elevation = elevation,
+      navigation = navigation,
+      elev_as_z = elev_as_z,
+      params = params
+    )
   }
 
   class(res) <- c("ors_route", class(res))

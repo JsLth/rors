@@ -110,13 +110,7 @@ ors_start <- function(self, private, wait = TRUE) {
     assert_process(proc)
 
     if (isTRUE(wait)) {
-      notify_when_ready(
-        name,
-        type = "docker",
-        interval = 2L,
-        warn = FALSE,
-        verbose = verbose
-      )
+      notify_when_ready(self, private, interval = 10L, verbose = verbose)
     }
   } else {
     ors_cli(info = list(c("i" = "Container {name} is already running.")))

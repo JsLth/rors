@@ -256,7 +256,9 @@ ORSDocker <- R6::R6Class(
     #' Whether to overwrite the current OpenRouteService directory if it exists.
     #' @param dry \code{[logical]}
     #'
-    #' Whether to start a dry run, i.e. run an instance without jumpstarting.
+    #' Whether to start a dry run, i.e. initialize a docker instance without
+    #' requiring docker. This allows you to manipulate config, compose file,
+    #' and extract, but does not allow you to interact with docker.
     #' @param verbose \code{[logical]}
     #'
     #' Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
