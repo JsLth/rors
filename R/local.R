@@ -521,17 +521,16 @@ get_ors_release <- function(dir,
                             verbose = TRUE) {
   dir <- normalizePath(dir, winslash = "/")
   dir <- file.path(dir, sprintf("openrouteservice-%s", version))
+  file <- switch(
+    file,
+    docker = "docker-compose.yml",
+    jar = "ors.jar",
+    war = "ors.war"
+  )
 
   if (!dir.exists(dir) || overwrite) {
     dir.create(dir, recursive = TRUE)
-
     url <- "https://github.com/GIScience/openrouteservice/releases/download/%s/%s"
-    file <- switch(
-      file,
-      docker = "docker-compose.yml",
-      jar = "ors.jar",
-      war = "ors.war"
-    )
 
     if (is_version_desc(version, "dh")) {
       version <- "master"
@@ -567,6 +566,8 @@ get_ors_release <- function(dir,
         )
       }
     )
+  } else if (dir.exists(dir)) {
+    check_dir_has_file(dir, file)
   }
 
   ors_cli(info = list(message = c(
@@ -601,4 +602,35 @@ create_ors_docker_dirs <- function(dir) {
       showWarnings = FALSE
     )
   }
+}
+
+
+check_dir_has_file <- function(dir, file) {
+  if (!file.exists(file.path(dir, file))) {
+    exec <- ors_executables()
+    exec <- exec[exec %in% list.files(dir)][1]
+    alt_type <- switch(
+      exec,
+      `docker-compose.yml` = "docker",
+      `ors.jar` = "jar",
+      `ors.war` = "war"
+    )
+    code <- sprintf("ors_instance(..., type = \"%s\")", alt_type)
+    msg <- c(
+      "x" = paste(
+        "Directory {.path {dir}} already exists but does",
+        "not contain a file {.field {file}}."
+      ),
+      "i" = paste(
+        "It does, however, contain a file {.field {exec}}!",
+        "Consider using {.code {code}}"
+      )
+    )
+    abort(msg, class = "wrong_ors_type_error")
+  }
+}
+
+
+ors_executables <- function() {
+  c("docker-compose.yml", "ors.jar", "ors.war")
 }
