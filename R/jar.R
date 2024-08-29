@@ -282,7 +282,11 @@ get_java_version <- function(verbose) {
     ))
   }
 
-  ors_cli(verbatim = version$stderr, cat = "line")
+  if (!isTRUE(get0("java_msg", envir = ors_cache))) {
+    ors_cli(verbatim = version$stderr, cat = "line")
+    assign("java_msg", TRUE, envir = ors_cache)
+  }
+
   version$stderr
 }
 
