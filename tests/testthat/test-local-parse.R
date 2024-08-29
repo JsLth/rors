@@ -1,4 +1,6 @@
 skip_if_offline("github.com")
+skip_if(!loadable("httptest2"))
+library(httptest2)
 
 ors <- local_ors_instance(
   verbose = FALSE,
@@ -9,6 +11,18 @@ ors$set_extract(file = test_pbf())
 
 test_that("setup is created properly", {
   expect_true(file.exists(ors$paths$compose))
+})
+
+test_that("new instances of other types are blocked", {
+  expect_error(
+    without_internet(ors_instance(
+      dir = dirname(ors$paths$top),
+      version = "8.0.0",
+      verbose = FALSE,
+      type = "jar"
+    )),
+    class = "ors_wrong_ors_type_error"
+  )
 })
 
 test_that("instance is mounted", {
