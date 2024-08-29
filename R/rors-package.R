@@ -7,6 +7,33 @@
 #' vignette("ors-installation", package = "rors")
 #' vignette("ors-routing", package = "rors")
 #' }
+#'
+#' @section Package options:
+#' The package relies on a number of package-level options that can be
+#' customized:
+#'
+#' \describe{
+#'  \item{\code{rors_setup_warn}}{If \code{TRUE}, emits warnings when a
+#'  log entry of type "WARN" is encountered during the ORS setup. This
+#'  concerns ORS setups using the \code{ORSLocal} class. Defaults to
+#'  \code{TRUE}.}
+#'  \item{\code{rors_throttle_directions},
+#'  \code{rors_throttle_isochrones},
+#'  \code{rors_throttle_matrix},
+#'  \code{rors_throttle_snap}}{
+#'  Throttle specifications for each ORS service. \code{throttle}
+#'  indicates the number of allowed requests per minute that can be sent
+#'  to the server. The defaults can be retrieved from the
+#'  \href{https://openrouteservice.org/plans/}{ORS plans}. Throttle values
+#'  can either be a decimal number of (preferably) a fraction, e.g.
+#'  \code{40 / 60}.}
+#'
+#'  \item{\code{rors_retries}}{Specifies the number of retries that are performed
+#'  before signaling an HTTP error. This option can be useful if the connection
+#'  to a server is unstable. Defaults to 3 retries.}
+#' }
+#'
+#'
 #' @references
 #' This package is powered by OpenRouteService. For problems concerning their
 #' service, refer to <https://github.com/GIScience/openrouteservice>

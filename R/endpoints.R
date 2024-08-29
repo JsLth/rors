@@ -5,11 +5,6 @@ perform_call <- function(req) {
     FALSE
   })
 
-  if (is_ors_api(req$url)) {
-    req <- httr2::req_retry(req, max_tries = 3)
-    req <- httr2::req_throttle(req, rate = 40 / 60)
-  }
-
   res <- httr2::req_perform(req, verbosity = 0L)
 
   if (req$parse) {
@@ -75,6 +70,8 @@ call_ors_directions <- function(src,
   body <- body[lengths(body) > 0L]
 
   req <- httr2::req_body_json(req, body, digits = NA)
+  throttle <- getOption("rors_throttle_directions", 40 / 60)
+  req <- set_rate_limits(req, throttle)
   req$parse <- parse
   perform_call(req)
 }
@@ -134,6 +131,8 @@ call_ors_matrix <- function(src,
     resolve_locations = resolve_locations
   )
   req <- httr2::req_body_json(req, body, digits = NA)
+  throttle <- getOption("rors_throttle_matrix", 40 / 60)
+  req <- set_rate_limits(req, throttle)
   req$parse <- TRUE
 
   perform_call(req)
@@ -187,6 +186,8 @@ call_ors_isochrones <- function(src,
   )
   body <- body[lengths(body) > 0L]
   req <- httr2::req_body_json(req, body, digits = NA)
+  throttle <- getOption("rors_throttle_isochrones", 20 / 60)
+  req <- set_rate_limits(req, throttle)
   req$parse <- TRUE
 
   perform_call(req)
@@ -207,6 +208,8 @@ call_ors_snap <- function(src, profile, radius, url, ...) {
 
   body <- list(locations = locations, radius = radius, ...)
   req <- httr2::req_body_json(req, body, digits = NA)
+  throttle <- getOption("rors_throttle_snap", 100 / 60)
+  req <- set_rate_limits(req, throttle)
   req$parse <- TRUE
 
   perform_call(req)
@@ -229,4 +232,14 @@ call_ors_export <- function(bbox, profile, url, ...) {
   req$parse <- TRUE
 
   perform_call(req)
+}
+
+
+set_rate_limits <- function(req, throttle) {
+  if (is_ors_api(req$url)) {
+    retries <- getOption("rors_retries", 3)
+    req <- httr2::req_retry(req, max_tries = retries)
+    req <- httr2::req_throttle(req, rate = throttle)
+  }
+  res
 }
