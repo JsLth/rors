@@ -529,7 +529,7 @@ get_ors_release <- function(dir,
   )
 
   if (!dir.exists(dir) || overwrite) {
-    dir.create(dir, recursive = TRUE)
+    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
     url <- "https://github.com/GIScience/openrouteservice/releases/download/%s/%s"
 
     if (is_version_desc(version, "dh")) {
