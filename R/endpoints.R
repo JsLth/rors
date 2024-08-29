@@ -241,5 +241,5 @@ set_rate_limits <- function(req, throttle) {
     req <- httr2::req_retry(req, max_tries = retries)
     req <- httr2::req_throttle(req, rate = throttle)
   }
-  res
+  req
 }
