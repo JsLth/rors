@@ -384,10 +384,8 @@ print.ors_logs <- function(x, ...) {
 
 #' @export
 print.ors_status <- function(x, ...) {
-  if (is.list(x)) {
+  if (languages %in% names(x)) {
     x$languages <- paste(x$languages, collapse = ", ")
-  } else {
-    x <- list(profiles = x)
   }
   cat(yaml::as.yaml(drop_null(x)))
   invisible(x)
