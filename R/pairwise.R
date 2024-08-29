@@ -262,6 +262,7 @@ ors_pairwise_single <- function(index,
   get_ors_summary(res, geometry = geometry)
 }
 
+
 #' Calculate shortest routes to nearby points of interest
 #' @param group \code{[character/numeric]}
 #'
@@ -275,10 +276,6 @@ ors_pairwise_single <- function(index,
 #' Type of proximity that the calculations should be
 #' based on. If `distance`, the shortest physical distance will be calculated
 #' and if `duration`, the shortest temporal distance will be calculated.
-#' @param progress \code{[logical]}
-#'
-#' If \code{TRUE}, displays a progress bar if the process is taking a bit
-#' longer.
 #'
 #' @export
 #' @rdname ors_pairwise
@@ -377,9 +374,7 @@ ors_shortest_routes_single <- function(profile,
 
   # if matrix, take the whole thing
   # if its not a matrix, its a list - cut it by index
-  if (is.null(dim(dst))) {
-    dst <- dst[[idx]]
-  }
+  if (is.null(dim(dst))) dst <- dst[[idx]]
   src <- do.call(rbind, replicate(nrow(dst), src[idx, ], simplify = FALSE))
 
   # catch warning that will be formatted later

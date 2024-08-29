@@ -67,8 +67,7 @@ increase performance.}
 
 \item{progress}{\code{[logical]}
 
-If \code{TRUE}, displays a progress bar if the process is taking a bit
-longer.}
+Whether to show a progress bar for longer operations.}
 
 \item{instance}{\code{[ors_instance]}
 

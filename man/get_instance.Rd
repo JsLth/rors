@@ -59,7 +59,7 @@ session.
 }
 \examples{
 # initialize an ORS instance
-ors <- ors_instance()
+ors <- ors_instance(dry = TRUE)
 
 # confirm that instance was mounted
 any_mounted() # TRUE
