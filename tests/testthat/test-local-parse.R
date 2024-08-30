@@ -1,6 +1,4 @@
 skip_if_offline("github.com")
-skip_if(!loadable("httptest2"))
-library(httptest2)
 
 ors <- local_ors_instance(
   verbose = FALSE,

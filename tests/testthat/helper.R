@@ -1,9 +1,26 @@
+env_var_is_true <- function() {
+  isTRUE(as.logical(Sys.getenv(x, "false")))
+}
+
+on_ci <- function() {
+  env_var_is_true("CI")
+}
+
+on_cran <- function() {
+  !interactive() && !env_var_is_true("NOT_CRAN")
+}
+
+on_real_tester <- function() {
+  env_var_is_true("REAL_REQUESTS")
+}
+
 skip_if_docker_unavailable <- function() {
-  skip_if_not(docker_installed() && has_docker_access(), "docker unavailable")
+  skip_if_not(docker_running(), "docker unavailable")
 }
 
 is_mock_test <- function() {
-  !nzchar(Sys.getenv("REAL_REQUESTS"))
+  (on_ci() || on_cran() || !docker_running() || !has_valid_java()) &&
+    !on_real_tester()
 }
 
 #' Start a local ORS instance using `ors_instance`.
