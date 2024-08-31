@@ -17,6 +17,12 @@
 #'  log entry of type "WARN" is encountered during the ORS setup. This
 #'  concerns ORS setups using the \code{ORSLocal} class. Defaults to
 #'  \code{TRUE}.}
+#'
+#'  \item{\code{rors_echo}}{If \code{TRUE}, prints the results of a dry run
+#'  (using \code{\link[httr2]{req_dry_run}}) to the console each time a
+#'  request is sent to the mounted ORS server. Useful for debugging or
+#'  understanding what happens behind the scenes.}
+#'
 #'  \item{\code{rors_throttle_directions},
 #'  \code{rors_throttle_isochrones},
 #'  \code{rors_throttle_matrix},
@@ -26,7 +32,9 @@
 #'  to the server. The defaults can be retrieved from the
 #'  \href{https://openrouteservice.org/plans/}{ORS plans}. Throttle values
 #'  can either be a decimal number of (preferably) a fraction, e.g.
-#'  \code{40 / 60}.}
+#'  \code{40 / 60}. These options are useful for exploiting
+#'  rate limits of the collaborative plan or other ORS servers
+#'  that apply rate limits.}
 #'
 #'  \item{\code{rors_retries}}{Specifies the number of retries that are performed
 #'  before signaling an HTTP error. This option can be useful if the connection

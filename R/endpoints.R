@@ -5,12 +5,16 @@ perform_call <- function(req) {
     FALSE
   })
 
+  if (isTRUE(getOption("rors_echo"))) {
+    httr2::req_dry_run(req)
+  }
+
   res <- httr2::req_perform(req, verbosity = 0L)
 
-  if (req$parse) {
-    res <- httr2::resp_body_json(res, simplifyVector = TRUE)
-  } else {
+  if (isFALSE(req$parse)) {
     res <- httr2::resp_body_string(res)
+  } else {
+    res <- httr2::resp_body_json(res, simplifyVector = TRUE)
   }
 
   res
