@@ -149,7 +149,7 @@ handle_missing_directions <- function(.data) {
     cli::cli_warn(c(
       "No routes could be calculated. Is the service correctly configured?",
       cond_tip()
-    ))
+    ), class = "ors_pairwise_fail_warning")
 
   # some routes missing
   } else if (any(route_missing)) {
@@ -161,7 +161,7 @@ handle_missing_directions <- function(.data) {
         "calculated and {?was/were} skipped: {cond_indices}"
       ),
       cond_tip()
-    ))
+    ), class = "ors_pairwise_skip_warning")
   }
 
   # routes associated with warnings
@@ -174,7 +174,7 @@ handle_missing_directions <- function(.data) {
         "route{?s}: {warn_indices}"
       ),
       cond_tip()
-    ))
+    ), class = "ors_pairwise_warn_warning")
   }
 }
 
