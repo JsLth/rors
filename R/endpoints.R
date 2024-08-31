@@ -1,5 +1,4 @@
 perform_call <- function(req) {
-  req <- httr2::req_method(req, "POST")
   req <- httr2::req_user_agent(req, "https://github.com/jslth/rors")
   req <- httr2::req_error(req, is_error = function(resp) {
     FALSE

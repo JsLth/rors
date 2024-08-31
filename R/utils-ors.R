@@ -136,8 +136,7 @@ ors_status <- function(url = NULL) {
   if (!is_ors_api(url)) {
     req <- httr2::request(url)
     req <- httr2::req_template(req, "GET ors/v2/status")
-    res <- httr2::req_perform(req, verbosity = 0L)
-    res <- httr2::resp_body_json(res, simplifyVector = TRUE, flatten = TRUE)
+    res <- perform_call(req)
   } else {
     res <- list(
       profiles = unlist(base_profiles(), use.names = FALSE),
@@ -180,8 +179,7 @@ ors_ready <- function(url = NULL, force = TRUE, error = FALSE) {
     req <- httr2::req_template(req, "GET ors/v2/health")
     tryCatch(
       expr = {
-        res <- httr2::req_perform(req)
-        res <- httr2::resp_body_json(res)
+        res <- perform_call(req)
         ready <- res$status == "ready"
         stopifnot(ready)
       },
