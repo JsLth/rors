@@ -30,7 +30,7 @@
 #' ors$set_extract("Rutland")
 #'
 #' # run an OpenRouteService server
-#' ors$run()
+#' ors$up()
 #'
 #' # the external process that runs the server is stored in the object
 #' ors$proc$is_alive() # should return true
@@ -217,7 +217,7 @@ ORSJar <- R6::R6Class(
     #' \code{NULL}, estimates memory.
     #' @param ... Further options passed to the
     #' \href{https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html}{\code{java}} command.
-    run = function(wait = TRUE, init = NULL, max = NULL, ...) {
+    up = function(wait = TRUE, init = NULL, max = NULL, ...) {
       run_ors_jar(self, private, wait = wait, ...)
     },
 
@@ -244,7 +244,7 @@ ORSJar <- R6::R6Class(
 
     #' @description
     #' Checks if the ORS process is running. You can control this state using
-    #' \code{$run()} and \code{$stop()}. Check \code{$is_ready()} to see
+    #' \code{$up()} and \code{$stop()}. Check \code{$is_ready()} to see
     #' if the ORS setup succeeded.
     is_running = function() {
       if (is.null(self$proc)) {
