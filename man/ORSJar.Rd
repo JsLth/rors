@@ -33,7 +33,7 @@ ors$set_port()
 ors$set_extract("Rutland")
 
 # run an OpenRouteService server
-ors$run()
+ors$up()
 
 # the external process that runs the server is stored in the object
 ors$proc$is_alive() # should return true
@@ -67,7 +67,7 @@ process running the OpenRouteService instance. Refer to
 \item \href{#method-ORSJar-purge}{\code{ORSJar$purge()}}
 \item \href{#method-ORSJar-set_port}{\code{ORSJar$set_port()}}
 \item \href{#method-ORSJar-show_logs}{\code{ORSJar$show_logs()}}
-\item \href{#method-ORSJar-run}{\code{ORSJar$run()}}
+\item \href{#method-ORSJar-up}{\code{ORSJar$up()}}
 \item \href{#method-ORSJar-stop}{\code{ORSJar$stop()}}
 \item \href{#method-ORSJar-is_init}{\code{ORSJar$is_init()}}
 \item \href{#method-ORSJar-is_running}{\code{ORSJar$is_running()}}
@@ -188,15 +188,15 @@ are also much more error-prone.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ORSJar-run"></a>}}
-\if{latex}{\out{\hypertarget{method-ORSJar-run}{}}}
-\subsection{Method \code{run()}}{
+\if{html}{\out{<a id="method-ORSJar-up"></a>}}
+\if{latex}{\out{\hypertarget{method-ORSJar-up}{}}}
+\subsection{Method \code{up()}}{
 Run ors.jar to start a local OpenRouteService server. Creates an
 attribute of \code{ORSJar} called \code{proc} which stores the external
 process used to run the server. A running server can (and should) be
 stopped using the \code{$stop()} method.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSJar$run(wait = TRUE, init = NULL, max = NULL, ...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSJar$up(wait = TRUE, init = NULL, max = NULL, ...)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -257,7 +257,7 @@ existence of at least one sub-directory of \code{"graphs"}.
 \if{latex}{\out{\hypertarget{method-ORSJar-is_running}{}}}
 \subsection{Method \code{is_running()}}{
 Checks if the ORS process is running. You can control this state using
-\code{$run()} and \code{$stop()}. Check \code{$is_ready()} to see
+\code{$up()} and \code{$stop()}. Check \code{$is_ready()} to see
 if the ORS setup succeeded.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSJar$is_running()}\if{html}{\out{</div>}}
