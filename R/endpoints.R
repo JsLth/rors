@@ -55,21 +55,14 @@ call_ors_directions <- function(src,
   )
 
   # Create http body of the request
-  body <- list(
-    coordinates        = locations,
-    alternative_routes = params$alternative_routes,
-    attributes         = box(params$attributes),
-    continue_straight  = params$continue_straight,
-    elevation          = params$elevation,
-    extra_info         = box(params$extra_info),
-    geometry_simplify  = params$geometry_simplify,
-    options            = params$options,
-    preference         = params$preference,
-    radiuses           = params$radiuses,
-    units              = units,
-    geometry           = geometry,
-    maximum_speed      = params$maximum_speed
+  body <- c(
+    coordinates = list(locations),
+    params,
+    units = units,
+    geometry = geometry
   )
+  body$attributes <- box(body$attributes)
+  body$extra_info <- box(body$extra_info)
   body <- body[lengths(body) > 0L]
 
   req <- httr2::req_body_json(req, body, digits = NA)
