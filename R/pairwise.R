@@ -163,6 +163,7 @@ ors_pairwise <- function(src,
   src <- prepare_input(src, len = NROW(dst))
   dst <- prepare_input(dst, len = NROW(src))
   params <- prepare_ors_params(params %||% list(...), profile, nrow(src))
+  params$instructions <- FALSE # keep response slim
 
   ors_pairwise_raw(
     src = src,
