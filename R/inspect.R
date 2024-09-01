@@ -211,6 +211,7 @@ ors_inspect <- function(src,
   )
   features <- features[lengths(features) > 0]
   params <- params %||% prepare_ors_params(c(features, list(...)), profile)
+  params$instructions <- TRUE # instructions are needed for response formatting
 
   res <- call_ors_directions(
     src = src,
@@ -233,7 +234,7 @@ ors_inspect <- function(src,
   }
 
   if (as %in% "tidy") {
-    res <- route_to_df(
+    res <- tidy_route(
       res,
       level = level,
       elevation = elevation,
