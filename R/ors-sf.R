@@ -78,13 +78,6 @@ ors_contours <- function(res, df = FALSE) {
 #' Rasterizes the isochrone polygons from ORS isochrones
 #' @noRd
 rasterize_isochrones <- function(isochrones, resolution) {
-  if (!loadable("terra")) {
-    cli::cli_abort(
-      "The {.pkg raster} package is needed to rasterize isochrones.",
-      class = "ors_loadable_error"
-    )
-  }
-
   # Transform to projected CRS with global coverage (world mercator)
   isochrones <- sf::st_transform(isochrones, 3395)
   grid <- sf::st_make_grid(isochrones, n = resolution)

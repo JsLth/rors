@@ -140,7 +140,15 @@ ors_accessibility <- function(src,
                               params = NULL) {
   instance <- instance %||% get_instance()
   url <- get_ors_url(instance)
+  ts <- timestamp()
   assert_endpoint_available(url, "isochrones")
+
+  if (rasterize && !loadable("terra")) {
+    cli::cli_abort(
+      "The {.pkg raster} package is needed to rasterize isochrones.",
+      class = "ors_loadable_error"
+    )
+  }
 
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, url = url)
@@ -171,7 +179,7 @@ ors_accessibility <- function(src,
     token = needs_token(instance$token)
   )
 
-  handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
+  handle_ors_conditions(res, ts, abort_on_error = TRUE, warn_on_warning = TRUE)
 
   isochrones <- ors_polygon(res)
 
