@@ -14,6 +14,7 @@ prepare_input <- function(input, to_coords = TRUE, len = NULL) {
 
   if (to_coords) {
     input <- sf::st_coordinates(input)[, c("X", "Y"), drop = FALSE]
+    input <- as.data.frame(input)
   }
 
   if (!is.null(len)) {

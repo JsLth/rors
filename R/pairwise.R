@@ -299,11 +299,12 @@ ors_shortest_distances <- function(src,
   url <- get_ors_url(instance)
   assert_endpoint_available(url, "routing")
 
+  grp <- dst[[group]]
   src <- prepare_input(src)
   dst <- prepare_input(dst)
 
   if (!is.null(group)) {
-    dst <- split(dst, f = dst[[group]])
+    dst <- split(dst, f = grp)
   }
 
   # Create a nested iterator that iterates through every point number for each
