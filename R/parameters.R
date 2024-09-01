@@ -255,7 +255,7 @@
 #'
 #' \itemize{
 #'  \item{"requires a different profile": Some parameters require a specific
-#'  profile. For example, \core{vehicle_type} is only meaningful for profile
+#'  profile. For example, \code{vehicle_type} is only meaningful for profile
 #'  \code{driving-hgv}. If the profile in \code{profile} does not match
 #'  the required profile, an error is thrown.}
 #'
@@ -307,7 +307,7 @@ ors_params <- function(profile,
                        weightings = list(),
                        surface_quality_known = FALSE,
                        allow_unsuitable = FALSE) {
-  params <- as.list(environment())
+  params <- as.list(match.call()[-1])
   params[c("n", "profile")] <- NULL
   prepare_ors_params(params, profile, n)
 }
