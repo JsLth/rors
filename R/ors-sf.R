@@ -37,7 +37,7 @@ ors_polygon <- function(res) {
   # convert coordinates to polygon geometry
   poly <- coords_to_polygon(coords)
   poly <- sf::st_sf(props, geometry = poly)
-browser()
+
   # reverse order of isochrones within each group for proper plotting
   poly <- tapply(
     seq_len(nrow(poly)),

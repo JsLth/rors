@@ -24,7 +24,7 @@ tidy_alternative <- function(alt,
                              params = list()) {
   # get waypoints from steps for each segment
   route <- get_ors_waypoints(res, alt)
-browser()
+
   if (level == "segment") {
     route[c("type", "instruction", "exit_number")] <- NULL
   }

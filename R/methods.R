@@ -200,7 +200,6 @@ format.ors_condition <- function(x, ...) {
   max_nc <- nchar(max(index))
   msg <- lapply(index, function(i) {
     nc <- nchar(x$index[i])
-    if (inherits(strrep(" ", max_nc - nc), "try-error")) browser()
     fmsg <- strwrap(
       msg[i],
       width = cli::console_width(),
