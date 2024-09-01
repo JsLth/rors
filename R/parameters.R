@@ -248,6 +248,34 @@
 #' Whether unsuitable ways should be included in routing. Only available
 #' for \code{"wheelchair"} profile.
 #'
+#' @details
+#' This function performs some basic validation checks. If a check fails,
+#' an error is thrown. In particular, the following reasons can lead to
+#' an error:
+#'
+#' \itemize{
+#'  \item{"requires a different profile": Some parameters require a specific
+#'  profile. For example, \core{vehicle_type} is only meaningful for profile
+#'  \code{driving-hgv}. If the profile in \code{profile} does not match
+#'  the required profile, an error is thrown.}
+#'
+#'  \item{"invalid length": Some parameters allow vectors of length > 1, but
+#'  some require scalar values.}
+#'
+#'  \item{"exceeds defined value limits": Some parameters are only valid
+#'  within a certain value range. For example, the \code{green}, \code{quiet},
+#'  and \code{shadow} parameters expect a value between 0 and 1. If outside
+#'  of the defined value range, an error is thrown.}
+#'
+#'  \item{"undefined values": Some parameters require a specific pre-defined
+#'  string. For example, the \code{preference} parameters expects either
+#'  "fastest", "shortest", or "recommended". If any other value, an error
+#'  is thrown.}
+#'
+#'  \item{"invalid sf object": The \code{avoid_polygons} parameter expects
+#'  an sf object. Otherwise, an error is thrown.}
+#' }
+#'
 #' @export
 ors_params <- function(profile,
                        n = NULL,
@@ -279,7 +307,7 @@ ors_params <- function(profile,
                        weightings = list(),
                        surface_quality_known = FALSE,
                        allow_unsuitable = FALSE) {
-  params <- as.list(match.call())[-1]
+  params <- as.list(environment())
   params[c("n", "profile")] <- NULL
   prepare_ors_params(params, profile, n)
 }
@@ -320,7 +348,6 @@ param_recurse <- function(name, params, info, profile, n) {
   if (is_list(val)) {
     info <- info[info$parent %in% name, ]
     param <- lapply(names(val), param_recurse, val, info, profile, n)
-    #param <- list(Recall(names(val), val, info))
     names(param) <- names(val)
     param
   } else {
@@ -419,10 +446,10 @@ param_check_lim <- function(x, name, lim, n) {
 param_check_match <- function(x, name, match, profile, allowed) {
   if (!match) return(TRUE)
 
-  if (identical(name, "extra_info")) {
-    allowed <- startsWith(profile, param_extra_info_allowed(x))
-    x[!allowed] <- NA
-  }
+  #if (identical(name, "extra_info") && !isTRUE(x)) {
+  #  allowed <- startsWith(profile, param_extra_info_allowed(x))
+  #  x[!allowed] <- NA
+  #}
 
   identical(x, param_match_arg(name, x))
 }
@@ -650,7 +677,7 @@ param_info <- function() {
     ),
     type = c(
       NA, "double", NA, "logical", "logical", "character", "integer", "double",
-      "character", "character", "logical", "integer", "logical", "logical",
+      "character", NA, "logical", "integer", "logical", "logical",
       "logical", "character", "logical", "character", "character", NA, "character",
       "double", "character", NA, NA, "character", NA, NA, "logical", "logical",
       "double", "double", "double", "double", "double", "logical", "character",
@@ -710,38 +737,39 @@ param_info <- function() {
 
 
 param_match_arg <- function(name, values) {
-  table <- switch(
-    name,
-    avoid_borders = c("all", "controlled", "none"),
-    preference = c("fastest", "shortest", "recommended"),
-    attributes = c("avgspeed", "detourfactor", "percentage"),
-    extra_info = c(
-      "steepness", "suitability", "surface", "waycategory", "waytype",
-      "tollways", "traildifficulty", "osmid", "roadaccessrestrictions",
-      "countryinfo", "green", "noise"
-    ),
-    vehicle_type = c(
-      "hgv", "bus", "agricultural", "delivery",
-      "forestry", "goods", "unknown"
-    ),
-    track_type = c("grade1", "grade2", "grade3", "grade4", "grade5"),
-    smoothness_type = c(
-      "excellent", "good", "intermediate", "bad", "very_bad",
-      "horrible", "very_horrible", "impassable"
-    ),
-    steepness_difficulty = 0:3,
-    language_format = c("text", "html"),
-    language = c(
-      "de", "de-de", "en", "en-us", "eo", "eo-eo", "es", "es-es", "fr", "fr-fr",
-      "gr", "gr-gr", "he", "he-il", "hu", "hu-hu", "id", "id-id", "it", "it-it",
-      "ja", "ja-jp", "ne", "ne-np", "nl", "nl-nl", "nb", "nb-no", "pl", "pl-pl",
-      "pt", "pt-pt", "ro", "ro-ro", "ru", "ru-ru", "tr", "tr-tr", "zh", "zh-cn",
-      "cs", "cs-cz"
-    )
-  )
-
+  table <- param_lists[[name]]
   table[match(values, table, nomatch = 0)]
 }
+
+
+param_lists <- list(
+  avoid_borders = c("all", "controlled", "none"),
+  preference = c("fastest", "shortest", "recommended"),
+  attributes = c("avgspeed", "detourfactor", "percentage"),
+  extra_info = c(
+    "steepness", "suitability", "surface", "waycategory", "waytype",
+    "tollways", "traildifficulty", "osmid", "roadaccessrestrictions",
+    "countryinfo", "green", "noise"
+  ),
+  vehicle_type = c(
+    "hgv", "bus", "agricultural", "delivery",
+    "forestry", "goods", "unknown"
+  ),
+  track_type = c("grade1", "grade2", "grade3", "grade4", "grade5"),
+  smoothness_type = c(
+    "excellent", "good", "intermediate", "bad", "very_bad",
+    "horrible", "very_horrible", "impassable"
+  ),
+  steepness_difficulty = 0:3,
+  language_format = c("text", "html"),
+  language = c(
+    "de", "de-de", "en", "en-us", "eo", "eo-eo", "es", "es-es", "fr", "fr-fr",
+    "gr", "gr-gr", "he", "he-il", "hu", "hu-hu", "id", "id-id", "it", "it-it",
+    "ja", "ja-jp", "ne", "ne-np", "nl", "nl-nl", "nb", "nb-no", "pl", "pl-pl",
+    "pt", "pt-pt", "ro", "ro-ro", "ru", "ru-ru", "tr", "tr-tr", "zh", "zh-cn",
+    "cs", "cs-cz"
+  )
+)
 
 
 param_match_lim <- function(name, value, n) {

@@ -198,6 +198,9 @@ ors_inspect <- function(src,
 
   # Bring input data into shape
   src <- prepare_input(src)
+  if (isTRUE(extra_info)) {
+    extra_info <- param_lists[["extra_info"]]
+  }
 
   features <- list(
     attributes = attributes,

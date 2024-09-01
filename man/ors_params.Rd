@@ -288,3 +288,31 @@ Note that this function provides a means to manually construct parameters.
 For all high-level endpoint functions such as \code{\link{ors_inspect}},
 parameters can be passed as dot arguments.
 }
+\details{
+This function performs some basic validation checks. If a check fails,
+an error is thrown. In particular, the following reasons can lead to
+an error:
+
+\itemize{
+\item{"requires a different profile": Some parameters require a specific
+profile. For example, \core{vehicle_type} is only meaningful for profile
+\code{driving-hgv}. If the profile in \code{profile} does not match
+the required profile, an error is thrown.}
+
+\item{"invalid length": Some parameters allow vectors of length > 1, but
+some require scalar values.}
+
+\item{"exceeds defined value limits": Some parameters are only valid
+within a certain value range. For example, the \code{green}, \code{quiet},
+and \code{shadow} parameters expect a value between 0 and 1. If outside
+of the defined value range, an error is thrown.}
+
+\item{"undefined values": Some parameters require a specific pre-defined
+string. For example, the \code{preference} parameters expects either
+"fastest", "shortest", or "recommended". If any other value, an error
+is thrown.}
+
+\item{"invalid sf object": The \code{avoid_polygons} parameter expects
+an sf object. Otherwise, an error is thrown.}
+}
+}

@@ -2,25 +2,26 @@
 % Please edit documentation in R/group.R
 \name{group_by_proximity}
 \alias{group_by_proximity}
-\title{Group a POI dataset}
+\title{Group a dataset for routing}
 \usage{
-group_by_proximity(src, pois, n = NULL, radius = NULL)
+group_by_proximity(src, dst, n = NULL, radius = NULL)
 }
 \arguments{
 \item{src}{\code{[sf/sfc]}
 
 Source dataset containing point geometries that should be routed from.}
 
-\item{pois}{\code{[sf]}
+\item{dst}{\code{[sf]}
 
-Dataset that represents a list of points of interest to be routed to for each
-row in the source dataset}
+Dataset that represents a list of destination points to be routed to for each
+row in the source dataset. For each point in \code{src}, a number of
+nearest points in \code{dst} is selected.}
 
 \item{n}{\code{[numeric]}
 
 Maximum number of points of interest around each point in the source dataset
 that shall be returned. The actual number might be lower depending on the
-rows in the \code{pois} dataset and the remaining number of points if
+rows in the \code{dst} dataset and the remaining number of points if
 \code{radius} is not \code{NULL}. If \code{NULL}, \code{radius} must be
 provided.}
 
@@ -31,20 +32,29 @@ dataset. All returned points of interest lie within this distance to the
 source points. If \code{NULL}, \code{n} must be provided.}
 }
 \value{
-Returns \code{pois} with an added \code{.groups} column that links
-each row to a row in the \code{src} dataset.
+Returns an \code{sf} dataframe containing a \code{.group}
+specifying the row in \code{src} for which the closest point in dst
+is specified. The \code{geometry} column can contain duplicated geometries
+because a point can be a closest point to multiple rows in \code{src}.
 }
 \description{
 Groups a dataset containing points of interest based on their
-proximity to a source dataset. Proximity can be defined through physical
-distance (argument \code{n}) and/or a distance buffer (\code{radius}).
+proximity to a source dataset. Proximity can be defined through nearest
+neighbors (argument \code{n}) and/or a distance buffer (\code{radius}).
+The grouped output can be used as an input to
+\code{\link{ors_shortest_distances}}.
 }
 \examples{
 \dontrun{
 sample <- ors_sample(20)
-pois <- get_osm_pois("Cologne", amenity = "hospital")
+dest <- ors_sample(20)
 
-by_points <- get_closest_pois(sample, pois, n = 5)
-by_buffer <- get_closest_pois(sample, pois, radius = 5000)
-by_both <- get_closest_pois(sample_pois, n = 5, radius = 5000)}
+# group by n nearest points
+get_closest_dst(sample, dest, n = 5)
+
+# group by distance threshold
+get_closest_dst(sample, dest, radius = 5000)
+
+# group by distance and then by nearest points
+get_closest_dst(sample, dest, n = 5, radius = 5000)}
 }
