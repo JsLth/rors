@@ -17,7 +17,7 @@ test_that("jar setup works", {
   # check if service is startable
   ors$set_extract(file = system.file("setup/monaco.pbf", package = "rors"))
   ors$set_port()
-  ors$run()
+  ors$up()
 
   # service is started - should return true
   expect_true(ors$is_init())

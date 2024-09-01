@@ -1,4 +1,4 @@
-env_var_is_true <- function() {
+env_var_is_true <- function(x) {
   isTRUE(as.logical(Sys.getenv(x, "false")))
 }
 
@@ -34,12 +34,7 @@ local_ors_instance <- function(dir = tempdir(),
                                dry = TRUE,
                                .local_envir = parent.frame()) {
   ors <- ors_instance(dir = dir, dry = dry, ...)
-  ors$set_port()
-
-  if (inherits(ors, "ORSDocker")) {
-    ors$set_name(paste0("test-rors-", cli::hash_obj_md5(sample(1:1000, 1))))
-  }
-
+  if (!dry) make_test_ors(ors)
   withr::defer(ors$purge(), envir = .local_envir)
   invisible(ors)
 }
@@ -58,17 +53,22 @@ with_ors_instance <- function(code,
     ...
   )
 
-  if (inherits(ors, "ORSDocker")) {
-    ors$set_name(paste0("test-rors-", cli::hash_obj_md5(sample(1:1000, 1))))
-  }
-
+  if (!dry) make_test_ors(ors)
   env <- new.env(parent = .local_envir)
   assign("ors", ors, envir = env)
-
   withr::defer(capture.output(ors$purge(), type = "message"), envir = env)
   res <- force(eval(substitute(code), envir = env))
   withr::deferred_run(envir = env)
   res
+}
+
+
+make_test_ors <- function(ors) {
+  ors$set_port()
+  ors$set_extract(file = test_pbf())
+  if (inherits(ors, "ORSDocker")) {
+    ors$set_name(paste0("test-rors-", cli::hash_obj_md5(sample(1:1000, 1))))
+  }
 }
 
 
