@@ -1,83 +1,6 @@
-route_to_df <- function(res,
-                        level = "waypoint",
-                        elevation = TRUE,
-                        navigation = FALSE,
-                        elev_as_z = FALSE,
-                        params = list()) {
+tidy_route <- function(res, ...) {
   alt <- get_ors_alternatives(res)
-
-  rlist <- lapply(seq_len(alt), function(i) {
-    # get waypoints from steps for each segment
-    route <- get_ors_waypoints(res, i)
-
-    if (level == "segment") {
-      route[c("type", "instruction", "exit_number")] <- NULL
-    }
-
-    # combine waypoints with geometry
-    route <- sf::st_sf(
-      route,
-      geometry = ors_multiple_linestrings(res, alt = i)
-    )
-
-    # extract z variable
-    if (elevation && !elev_as_z) {
-      coords <- sf::st_coordinates(route)
-      route$elevation <- coords[!duplicated(coords[, "L1"]), "Z"]
-      route <- sf::st_zm(route)
-    }
-
-    # derive waypoint metrics from geometry
-    if (level == "waypoint") {
-      # get distances by measuring geometry length
-      distances <- calculate_distances(route)
-      # then derive durations by computing percentage of measured distances from
-      # aggregated distances
-      durations <- calculate_durations(route, distances)
-      route[c("distance", "duration")] <- data.frame(distances, durations)
-    }
-    route$avgspeed <- calculate_avgspeed(route$distance, route$duration)
-
-    # extract attributes
-    params$attributes <- c(
-      if (elevation) c("ascent", "descent"),
-      if (level == "segment") c("distance", "duration"),
-      params$attributes
-    )
-    attrib <- get_ors_attributes(res, which = params$attributes, alt = i)
-
-    # extract and format extra info
-    extra_info <- lapply(
-      params$extra_info,
-      function(x) format_extra_info(res, x, i)
-    )
-    extra_info <- do.call(cbind.data.frame, extra_info)
-    names(extra_info) <- params$extra_info
-    if (ncol(extra_info)) {
-      route <- cbind(route, extra_info)
-    }
-
-    # aggregate in case level is not "waypoint"
-    if (level != "waypoint") {
-      if (level == "segment") {
-        route[names(attrib)] <- NA
-      }
-
-      route <- by(
-        route[3L:ncol(route)],
-        INDICES = route[[level]],
-        FUN = aggregate_route,
-        level = level,
-        attrib = attrib
-      )
-      route <- do.call(rbind.data.frame, route)
-    }
-
-    # reorder columns
-    route <- reorder_route_columns(route)
-
-    sf::st_as_sf(data_frame(route))
-  })
+  rlist <- lapply(seq_len(alt), tidy_alternative, res = res, ...)
 
   if (length(rlist) > 1) {
     names(rlist) <- c(
@@ -89,6 +12,86 @@ route_to_df <- function(res,
   }
 
   rlist
+}
+
+
+tidy_alternative <- function(alt,
+                             res,
+                             level = "waypoint",
+                             elevation = TRUE,
+                             navigation = FALSE,
+                             elev_as_z = FALSE,
+                             params = list()) {
+  # get waypoints from steps for each segment
+  route <- get_ors_waypoints(res, alt)
+browser()
+  if (level == "segment") {
+    route[c("type", "instruction", "exit_number")] <- NULL
+  }
+
+  # combine waypoints with geometry
+  route <- sf::st_sf(
+    route,
+    geometry = ors_multiple_linestrings(res, alt = alt)
+  )
+
+  # extract z variable and remove it from geometry
+  if (elevation && !elev_as_z) {
+    coords <- sf::st_coordinates(route)
+    route$elevation <- coords[!duplicated(coords[, "L1"]), "Z"]
+    route <- sf::st_zm(route)
+  }
+
+  # derive waypoint metrics from geometry
+  if (level == "waypoint") {
+    # get distances by measuring geometry length
+    distances <- calculate_distances(route)
+    # then derive durations by computing percentage of measured distances from
+    # aggregated distances
+    durations <- calculate_durations(route, distances)
+    route[c("distance", "duration")] <- data.frame(distances, durations)
+  }
+  route$avgspeed <- calculate_avgspeed(route$distance, route$duration)
+
+  # extract attributes
+  params$attributes <- c(
+    if (elevation) c("ascent", "descent"),
+    if (level == "segment") c("distance", "duration"),
+    params$attributes
+  )
+  attrib <- get_ors_attributes(res, which = params$attributes, alt = alt)
+
+  # extract and format extra info
+  extra_info <- lapply(
+    params$extra_info,
+    function(x) format_extra_info(res, x, alt)
+  )
+  extra_info <- do.call(cbind.data.frame, extra_info)
+  names(extra_info) <- params$extra_info
+  if (ncol(extra_info)) {
+    route <- cbind(route, extra_info)
+  }
+
+  # aggregate in case level is not "waypoint"
+  if (level != "waypoint") {
+    if (level == "segment") {
+      route[names(attrib)] <- NA
+    }
+
+    route <- by(
+      route[3L:ncol(route)],
+      INDICES = route[[level]],
+      FUN = aggregate_route,
+      level = level,
+      attrib = attrib
+    )
+    route <- do.call(rbind.data.frame, route)
+  }
+
+  # reorder columns
+  route <- reorder_route_columns(route)
+
+  sf::st_as_sf(data_frame(route))
 }
 
 
@@ -245,7 +248,7 @@ format_extra_info <- function(res, info_type, alt = 1L) {
     )
 
     indices <- Map(
-      FUN = get_waypoint_index,
+      f = get_waypoint_index,
       start,
       end,
       MoreArgs = list(waypoints = iterator, by_waypoint = FALSE)
