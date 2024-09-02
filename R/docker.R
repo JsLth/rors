@@ -188,7 +188,7 @@
 #'
 #'
 #' @export
-ORSDocker <- R6::R6Class(
+ORSDocker <- R6Class(
   classname = "ORSDocker",
   inherit = ORSLocal,
 
@@ -479,7 +479,7 @@ ORSDocker <- R6::R6Class(
     set_graphbuilding = function(mode) {
       assert_that(is_true_or_false(mode))
 
-      old <- self$compose$build_graphs
+      old <- self$compose$rebuild_graphs
       new <- mode
 
       if (!identical(old, new)) {
