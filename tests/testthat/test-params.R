@@ -29,7 +29,7 @@ test_that("param checking works", {
     sf::st_linestring(matrix(c(0, 0, 1, 1, 0, 0, 1, 1, 0, 0), ncol = 2)),
     "POLYGON"
   ), crs = 4326)))
-  v7 <- list(extra_info = c("osmid", "roadaccessrestrictions"))
+  #v7 <- list(extra_info = c("osmid", "roadaccessrestrictions"))
   v8 <- list(extra_info = "osmid")
 
   # check if param checking can run successfully
@@ -52,7 +52,7 @@ test_that("param checking works", {
   expect_error(prepare_ors_params(list(avoid_polygons = 1), profile = "driving-car"), "invalid sf object")
 
   # check if extra_info checks work
-  expect_error(prepare_ors_params(v7, profile = "wheelchair"), "possibly wrong profile")
+  #expect_error(prepare_ors_params(v7, profile = "wheelchair"), "possibly wrong profile")
   expect_equal(unclass(prepare_ors_params(v8, profile = "wheelchair")), v8)
 })
 

@@ -5,7 +5,7 @@ describe("group_by_proximity()", {
   it("can group by n", {
     res <- group_by_proximity(src, dst, n = 2)
     expect_equal(unique(res$.group), c(1, 2, 3))
-    expect_length(res$.group, 3)
+    expect_equal(as.vector(table(res$.group)), c(2, 2, 2))
   })
 
   it("can group by distance", {
@@ -29,6 +29,6 @@ describe("group_by_proximity()", {
   })
 
   it("must have a valid radius", {
-    expect_error(group_by_proximity(src, dst, radius = "test"), class = "group_invalid_radius_error")
+    expect_error(group_by_proximity(src, dst, n = 2, radius = "test"), class = "ors_group_invalid_radius_error")
   })
 })

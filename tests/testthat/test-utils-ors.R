@@ -22,14 +22,14 @@ test_that("ors_ready() works", {
 
 test_that("ors_status() formats correctly", {
   ors_instance(server = "public")
-  expect_type(ors_status(), "character")
+  expect_type(ors_status(), "list")
   expect_identical(
     unclass(get_profiles()),
     unlist(base_profiles(), use.names = FALSE)
   )
 
   app <- webfakes::new_app()
-  app$get("/ors/v2/health", function(req, res) res$send_json("ready"))
+  app$get("/ors/v2/health", function(req, res) res$send_json(list(status = "ready")))
   app$get("/ors/v2/status", function(req, res) {
     path <- testthat::test_path("fixtures/status.json")
     status <- jsonlite::read_json(path, simplifyVector = TRUE)

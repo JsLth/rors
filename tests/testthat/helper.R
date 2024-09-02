@@ -31,9 +31,17 @@ is_mock_test <- function() {
 #' @noRd
 local_ors_instance <- function(dir = tempdir(),
                                ...,
+                               verbose = TRUE,
                                dry = TRUE,
                                .local_envir = parent.frame()) {
-  ors <- ors_instance(dir = dir, dry = dry, ...)
+  ors <- ors_instance(
+    dir = dir,
+    dry = dry,
+    verbose = verbose,
+    prompts = FALSE,
+    ...
+  )
+
   if (!dry) make_test_ors(ors)
   withr::defer(ors$purge(), envir = .local_envir)
   invisible(ors)

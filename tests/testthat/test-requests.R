@@ -1,3 +1,6 @@
+# cran does not have java nor docker
+skip_on_cran()
+
 # if on a tester machine, try to setup an ORS instance
 # a real tester is a machine with env variable REAL_REQUESTS="true"
 # otherwise, try to use mock tests

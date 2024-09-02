@@ -44,7 +44,7 @@ test_that("public api works", {
   ors <- ors_instance(server = "pub")
 
   expect_true(is_ors_api(ors$url))
-  expect_type(ors$get_status(), "character")
+  expect_type(ors$get_status(), "list")
   expect_true(ors$is_ready())
   expect_true(ors$token)
   expect_true(attr(ors$token, "active"))
@@ -56,5 +56,5 @@ test_that("public api works", {
 
   expect_warning(ors_pairwise(sample[1], sample[2]))
   cond <- last_ors_conditions()
-  expect_match(cond[[1]]$conditions, "Access to this API has been disallowed")
+  expect_match(cond[[1]]$msg, "Access to this API has been disallowed")
 })
