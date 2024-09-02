@@ -131,6 +131,13 @@ file_path_up <- function(path, ndir = 1L) {
 }
 
 
+#' basename but returns NULL, if input is NULL
+#' @noRd
+basename2 <- function(x) {
+  basename(x %||% NA) %NA% NULL
+}
+
+
 #' Capitalizes the first symbol of a character string
 #' @noRd
 capitalize_char <- function(string) {

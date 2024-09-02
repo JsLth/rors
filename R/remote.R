@@ -24,7 +24,7 @@
 #' to \code{TRUE}.
 #'
 #' @export
-ORSRemote <- R6::R6Class(
+ORSRemote <- R6Class(
   classname = "ORSRemote",
   inherit = ORSInstance,
 
