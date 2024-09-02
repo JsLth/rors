@@ -18,7 +18,7 @@
 #' For \code{ors_shortest_distances}, the destination argument can also
 #' be a dataframe containing a grouping column specified by the \code{group}
 #' argument that indicates which destinations refer to which row in the source
-#' dataset (as returned by \code{\link{get_closest_pois}}). This is
+#' dataset (as returned by \code{\link{group_by_proximity}}). This is
 #' recommended for large datasets because passing a plain sf dataframe routes
 #' from each source point to each point in the entire destination dataset.
 #' @param profile \code{[character]}
@@ -300,12 +300,12 @@ ors_shortest_distances <- function(src,
   url <- get_ors_url(instance)
   assert_endpoint_available(url, "routing")
 
-  grp <- dst[[group]]
   src <- prepare_input(src)
-  dst <- prepare_input(dst)
+  poi <- prepare_input(dst)
 
   if (!is.null(group)) {
-    dst <- split(dst, f = grp)
+    assert_that(group %in% names(dst))
+    poi <- split(poi, f = dst[[group]])
   }
 
   # Create a nested iterator that iterates through every point number for each
@@ -320,7 +320,7 @@ ors_shortest_distances <- function(src,
 
   args <- list(
     src = src,
-    dst = dst,
+    dst = poi,
     units = units,
     geometry = geometry,
     instance = instance,
