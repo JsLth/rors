@@ -77,7 +77,7 @@ group_by_proximity <- function(src,
     } else {
       msg <- c(
         "Radius must be either numeric or {.var NULL}.",
-        "Got {.cls {class(radius)}} instead."
+        "i" = "Got {.cls {class(radius)}} instead."
       )
       abort(msg, class = "group_invalid_radius_error")
     }
