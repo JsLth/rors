@@ -112,69 +112,46 @@ format.ors_settings <- function(x, ...) {
 
 #' @export
 format.ors_paths <- function(x, ...) {
-  basedir <- basename(x$top)
-  compose <- if (!is.null(x$compose)) basename(x$compose) else NULL
-  config <- if (!is.null(x$config)) basename(x$config) else NULL
-  extract <- if (!is.null(x$extract)) basename(x$extract) else NULL
+  basedir <- basename2(x$top)
+  compose <- basename2(x$compose)
+  config <- basename2(x$config)
+  extract <- basename2(x$extract)
 
-  config_dir <- ifelse(grepl("\\/conf\\/", x$config), "conf", "data")
-  docker_path <- file.path(x$top, "docker")
-  subdocker_paths <- file.path(docker_path, dir(docker_path))
-  subdocker_paths_files <- lapply(seq_along(subdocker_paths), function(i) {
-    d <- dir(subdocker_paths[i])
-    if (basename(subdocker_paths[i]) != config_dir && "ors-config.json" %in% d) {
-      ci <- which("ors-config.json" == d)
-      d[ci] <- paste0(d[ci], " ")
-    }
-    d
+  # get files in top directory
+  subpaths <- dir(x$top)
+
+  # get files in sub directories
+  end_files <- lapply(seq_along(subpaths), function(i) {
+    dir(file.path(x$top, subpaths[i]))
   })
 
-  topdir_files <- list.files(x$top, full.names = TRUE)
-  docker_files <- list.files(docker_path, full.names = TRUE)
-  end_files <- subdocker_paths_files[lengths(subdocker_paths_files) > 0]
+  # append all files in relative top directories
+  basedir <- cli::style_bold(basedir)
+  top_dir <- c(base = basedir, top = subpaths, end = unlist(end_files))
 
-  top_dir <- c(
-    base = cli::style_bold(basedir),
-    top = basename(topdir_files),
-    sub = basename(file.path(docker_path, dir(docker_path))),
-    end = unlist(end_files)
-  )
+  # append all children of a relative top directory
+  apx <- rep(list(character()), length(unlist(end_files)))
+  children <- c(base = list(subpaths), top = end_files, end = apx)
 
-  children <- c(
-    base = list(dir(x$top)),
-    top = lapply(topdir_files, \(x) list.files(x)),
-    sub = subdocker_paths_files,
-    end = rep(list(character()), length(unlist(end_files)))
-  )
-
-  compose_i <- config_i <- extract_i <- NULL
-  if (!is.null(compose) && compose %in% top_dir) {
-    compose_i <- which(compose == top_dir)
-  }
-
-  if (!is.null(config) && config %in% top_dir) {
-    config_i <- which(config == top_dir)
-  }
-
-  if (!is.null(extract) && extract %in% top_dir) {
-    extract_i <- which(extract == top_dir)
-  }
-
+  # create colored arrow annotations
   annot <- top_dir
-  annot[compose_i] <- paste(annot[compose_i], cli::col_yellow("<- compose"))
-  annot[config_i] <- paste(annot[config_i], cli::col_blue("<- config"))
-  annot[extract_i] <- paste(annot[extract_i], cli::col_green("<- extract"))
+  for (file in c("compose", "config", "extract")) {
+    fname <- get(file)
+    i <- which(fname == top_dir)
+    col <- switch(file, compose = "yellow", config = "blue", extract = "green")
+    fun <- getFromNamespace(sprintf("col_%s", col), ns = "cli")
+    annot[i] <- paste(annot[i], fun(sprintf("<- %s", file)))
+  }
 
-  cli::tree(
-    data.frame(
-      stringsAsFactors = FALSE,
-      dir = top_dir,
-      children = I(children),
-      annot = annot
-    ),
-    trim = TRUE,
-    ...
+  # merge file names to tree structure
+  tree <- data.frame(
+    stringsAsFactors = FALSE,
+    dir = top_dir,
+    children = I(children),
+    annot = annot
   )
+
+  cli::tree(tree, trim = TRUE, ...)
 }
 
 
@@ -383,7 +360,7 @@ print.ors_logs <- function(x, ...) {
 
 #' @export
 print.ors_status <- function(x, ...) {
-  if (languages %in% names(x)) {
+  if ("languages" %in% names(x)) {
     x$languages <- paste(x$languages, collapse = ", ")
   }
   cat(yaml::as.yaml(drop_null(x)))
