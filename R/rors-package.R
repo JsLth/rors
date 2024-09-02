@@ -48,6 +48,7 @@
 #'
 #' © openrouteservice.org by HeiGIT | Map data © OpenStreetMap contributors
 #' @encoding UTF-8
+#' @importFrom R6 R6Class
 "_PACKAGE"
 
 # The following block is used by usethis to automatically manage
