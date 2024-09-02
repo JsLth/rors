@@ -11,7 +11,7 @@
 #' ors <- ors_instance(dir = "~", type = "jar")
 #' ors <- ors_instance(dir = "~", type = "war")
 #' }
-ORSLocal <- R6::R6Class(
+ORSLocal <- R6Class(
   classname = "ORSLocal",
   inherit = ORSInstance,
 

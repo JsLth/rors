@@ -41,7 +41,7 @@
 #' # stop the server
 #' ors$stop()
 #' }
-ORSJar <- R6::R6Class(
+ORSJar <- R6Class(
   classname = "ORSJar",
   inherit = ORSLocal,
 

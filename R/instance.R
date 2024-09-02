@@ -4,8 +4,7 @@
 #' \code{\link{ORSRemote}} and cannot be initialized. It defines methods to
 #' check status and information of a remote ORS server and to mount itself to
 #' the R session.
-#'
-ORSInstance <- R6::R6Class(
+ORSInstance <- R6Class(
   classname = "ORSInstance",
 
   # Public ----
