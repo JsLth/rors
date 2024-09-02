@@ -41,7 +41,7 @@ Destination dataset containing point geometries that should be routed to.
 For \code{ors_shortest_distances}, the destination argument can also
 be a dataframe containing a grouping column specified by the \code{group}
 argument that indicates which destinations refer to which row in the source
-dataset (as returned by \code{\link{get_closest_pois}}). This is
+dataset (as returned by \code{\link{group_by_proximity}}). This is
 recommended for large datasets because passing a plain sf dataframe routes
 from each source point to each point in the entire destination dataset.}
 
