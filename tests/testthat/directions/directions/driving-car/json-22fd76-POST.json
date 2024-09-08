@@ -1,0 +1,50 @@
+{
+    "bbox": [
+        7.412175,
+        43.731139,
+        7.41998,
+        43.738306
+    ],
+    "routes": [
+        {
+            "summary": {
+                "distance": 1307.5,
+                "duration": 139.0
+            },
+            "bbox": [
+                7.412175,
+                43.731139,
+                7.41998,
+                43.738306
+            ]
+        }
+    ],
+    "metadata": {
+        "attribution": "openrouteservice.org, OpenStreetMap contributors, tmc - BASt",
+        "service": "routing",
+        "timestamp": 1725834576642,
+        "query": {
+            "coordinates": [
+                [
+                    7.41879016120929,
+                    43.7383228512922
+                ],
+                [
+                    7.41219110700415,
+                    43.7313009478493
+                ]
+            ],
+            "profile": "driving-car",
+            "format": "json",
+            "units": "m",
+            "radiuses": [
+                20.0
+            ]
+        },
+        "engine": {
+            "version": "8.1.1",
+            "build_date": "2024-07-17T08:47:22Z",
+            "graph_date": "2024-09-08T22:29:34Z"
+        }
+    }
+}

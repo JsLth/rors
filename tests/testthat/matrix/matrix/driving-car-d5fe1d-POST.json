@@ -1,0 +1,119 @@
+{
+    "distances": [
+        [
+            1307.53,
+            616.54,
+            1981.2
+        ],
+        [
+            1239.3,
+            1304.34,
+            2264.18
+        ],
+        [
+            1872.92,
+            1181.93,
+            1081.67
+        ]
+    ],
+    "destinations": [
+        {
+            "location": [
+                7.412175,
+                43.731201
+            ],
+            "snapped_distance": 11.16
+        },
+        {
+            "location": [
+                7.417077,
+                43.734491
+            ],
+            "snapped_distance": 12.45
+        },
+        {
+            "location": [
+                7.429842,
+                43.740057
+            ],
+            "snapped_distance": 9.88
+        }
+    ],
+    "sources": [
+        {
+            "location": [
+                7.41902,
+                43.738306
+            ],
+            "snapped_distance": 18.54
+        },
+        {
+            "location": [
+                7.423832,
+                43.732686
+            ],
+            "snapped_distance": 23.48
+        },
+        {
+            "location": [
+                7.424157,
+                43.740786
+            ],
+            "snapped_distance": 14.38
+        }
+    ],
+    "metadata": {
+        "attribution": "openrouteservice.org, OpenStreetMap contributors",
+        "service": "matrix",
+        "timestamp": 1725834577733,
+        "query": {
+            "locations": [
+                [
+                    7.41879016120929,
+                    43.7383228512922
+                ],
+                [
+                    7.4240132974494,
+                    43.7325200234902
+                ],
+                [
+                    7.42430374072274,
+                    43.7407111758462
+                ],
+                [
+                    7.41219110700415,
+                    43.7313009478493
+                ],
+                [
+                    7.41723154562308,
+                    43.7344925954199
+                ],
+                [
+                    7.42996372675009,
+                    43.740043918669
+                ]
+            ],
+            "profile": "driving-car",
+            "responseType": "json",
+            "sources": [
+                "0",
+                "1",
+                "2"
+            ],
+            "destinations": [
+                "3",
+                "4",
+                "5"
+            ],
+            "metrics": [
+                "distance"
+            ],
+            "units": "m"
+        },
+        "engine": {
+            "version": "8.1.1",
+            "build_date": "2024-07-17T08:47:22Z",
+            "graph_date": "2024-09-08T22:29:34Z"
+        }
+    }
+}

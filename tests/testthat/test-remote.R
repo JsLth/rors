@@ -1,24 +1,4 @@
-skip_if_offline("openrouteservice.org")
-skip_if(!loadable("withr"))
-
-test_that("public api works", {
-  withr::with_envvar(
-    c(ORS_TOKEN = ""),
-    code = {
-      expect_error(
-        ors_instance(server = "pub"),
-        "requires an API token",
-        fixed = TRUE
-      )
-
-      expect_error(
-        ors_instance(server = "test.io", token = TRUE),
-        "requires an API token",
-        fixed = TRUE
-      )
-    }
-  )
-
+test_that("ors_token() works", {
   withr::with_envvar(
     c(ORS_TOKEN = ""),
     code = {
@@ -37,9 +17,34 @@ test_that("public api works", {
       expect_output(print(ors_token(TRUE)), "A token is stored", fixed = TRUE)
     }
   )
+})
 
-  expect_error(ors_instance(server = "test"), "not a valid URL", fixed = TRUE)
 
+test_that("public api works", {
+  withr::with_envvar(
+    c(ORS_TOKEN = ""),
+    code = {
+      expect_error(
+        ors_instance(server = "pub"),
+        class = "ors_token_missing_error"
+      )
+
+      expect_error(
+        ors_instance(server = "test.io", token = TRUE),
+        class = "ors_token_missing_error"
+      )
+    }
+  )
+
+  expect_error(ors_instance(server = "test"), class = "ors_invalid_server_error")
+
+
+})
+
+
+test_that("token is properly used", {
+  skip_if_offline("openrouteservice.org")
+  skip_on_cran()
   withr::local_envvar(ORS_TOKEN = "notactuallyatoken")
   ors <- ors_instance(server = "pub")
 

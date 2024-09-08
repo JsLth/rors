@@ -112,7 +112,7 @@ ORSJar <- R6Class(
 
       if (private$.prompts) {
         ors_cli(info = list(c("i" = paste(
-          "Purging the current instance removes the docker container,",
+          "Purging the current instance kills the running service process,",
           "ORS directory and cleans up the R6 object."
         ))))
 

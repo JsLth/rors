@@ -4,8 +4,7 @@ skip_on_cran()
 ors <- local_ors_instance(
   verbose = TRUE,
   dry = TRUE,
-  version = "8.0.0",
-  prompts = FALSE
+  version = "8.0.0"
 )
 ors$set_extract(file = test_pbf())
 

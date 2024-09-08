@@ -1,0 +1,85 @@
+{
+    "languages": [
+        "cs",
+        "cs-cz",
+        "da",
+        "da-dk",
+        "de",
+        "de-de",
+        "en",
+        "en-us",
+        "eo",
+        "eo-eo",
+        "es",
+        "es-es",
+        "fr",
+        "fr-fr",
+        "gr",
+        "gr-gr",
+        "he",
+        "he-il",
+        "hu",
+        "hu-hu",
+        "id",
+        "id-id",
+        "it",
+        "it-it",
+        "ja",
+        "ja-jp",
+        "nb",
+        "nb-no",
+        "ne",
+        "ne-np",
+        "nl",
+        "nl-nl",
+        "pl",
+        "pl-pl",
+        "pt",
+        "pt-pt",
+        "ro",
+        "ro-ro",
+        "ru",
+        "ru-ru",
+        "tr",
+        "tr-tr",
+        "zh",
+        "zh-cn"
+    ],
+    "engine": {
+        "build_date": "2024-07-17T08:47:22Z",
+        "version": "8.1.1"
+    },
+    "profiles": {
+        "profile 1": {
+            "storages": {
+                "WayCategory": {
+                    "gh_profile": "car_ors_fastest_with_turn_costs"
+                },
+                "HeavyVehicle": {
+                    "gh_profile": "car_ors_fastest_with_turn_costs"
+                },
+                "WaySurfaceType": {
+                    "gh_profile": "car_ors_fastest_with_turn_costs"
+                },
+                "RoadAccessRestrictions": {
+                    "gh_profile": "car_ors_fastest_with_turn_costs",
+                    "use_for_warnings": "true"
+                }
+            },
+            "profiles": "driving-car",
+            "creation_date": "",
+            "limits": {
+                "maximum_distance": 100000,
+                "maximum_waypoints": 50,
+                "maximum_distance_dynamic_weights": 100000,
+                "maximum_distance_avoid_areas": 100000
+            }
+        }
+    },
+    "services": [
+        "routing",
+        "isochrones",
+        "matrix",
+        "snap"
+    ]
+}

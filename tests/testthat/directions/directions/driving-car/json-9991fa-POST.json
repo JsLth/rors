@@ -1,0 +1,122 @@
+{
+    "bbox": [
+        7.418045,
+        43.734342,
+        7.429842,
+        43.740057
+    ],
+    "routes": [
+        {
+            "summary": {
+                "distance": 1981.2,
+                "duration": 236.0
+            },
+            "segments": [
+                {
+                    "distance": 1981.2,
+                    "duration": 236.0,
+                    "steps": [
+                        {
+                            "distance": 8.2,
+                            "duration": 1.2,
+                            "type": 11,
+                            "instruction": "Head south on Pont Sainte-Dévote",
+                            "name": "Pont Sainte-Dévote",
+                            "way_points": [
+                                0,
+                                1
+                            ]
+                        },
+                        {
+                            "distance": 88.7,
+                            "duration": 20.4,
+                            "type": 12,
+                            "instruction": "Keep left",
+                            "name": "-",
+                            "way_points": [
+                                1,
+                                6
+                            ]
+                        },
+                        {
+                            "distance": 131.0,
+                            "duration": 13.1,
+                            "type": 6,
+                            "instruction": "Continue straight",
+                            "name": "-",
+                            "way_points": [
+                                6,
+                                13
+                            ]
+                        },
+                        {
+                            "distance": 456.0,
+                            "duration": 45.5,
+                            "type": 2,
+                            "instruction": "Turn sharp left onto Rue Louis Auréglia",
+                            "name": "Rue Louis Auréglia",
+                            "way_points": [
+                                13,
+                                31
+                            ]
+                        },
+                        {
+                            "distance": 1297.4,
+                            "duration": 155.9,
+                            "type": 7,
+                            "instruction": "Enter the roundabout and take the 3rd exit onto Tunnel Aureglia",
+                            "name": "Tunnel Aureglia",
+                            "exit_number": 3,
+                            "way_points": [
+                                31,
+                                61
+                            ]
+                        },
+                        {
+                            "distance": 0.0,
+                            "duration": 0.0,
+                            "type": 10,
+                            "instruction": "Arrive at Tunnel Aureglia, on the right",
+                            "name": "-",
+                            "way_points": [
+                                61,
+                                61
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "bbox": [
+                7.418045,
+                43.734342,
+                7.429842,
+                43.740057
+            ]
+        }
+    ],
+    "metadata": {
+        "attribution": "openrouteservice.org, OpenStreetMap contributors, tmc - BASt",
+        "service": "routing",
+        "timestamp": 1725834577229,
+        "query": {
+            "coordinates": [
+                [
+                    7.41879016120929,
+                    43.7383228512922
+                ],
+                [
+                    7.42996372675009,
+                    43.740043918669
+                ]
+            ],
+            "profile": "driving-car",
+            "format": "json",
+            "units": "m"
+        },
+        "engine": {
+            "version": "8.1.1",
+            "build_date": "2024-07-17T08:47:22Z",
+            "graph_date": "2024-09-08T22:29:34Z"
+        }
+    }
+}

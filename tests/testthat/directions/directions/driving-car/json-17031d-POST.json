@@ -1,0 +1,122 @@
+{
+    "bbox": [
+        7.412175,
+        43.731139,
+        7.423832,
+        43.732686
+    ],
+    "routes": [
+        {
+            "summary": {
+                "distance": 1239.3,
+                "duration": 148.3
+            },
+            "segments": [
+                {
+                    "distance": 1239.3,
+                    "duration": 148.3,
+                    "steps": [
+                        {
+                            "distance": 30.8,
+                            "duration": 7.4,
+                            "type": 11,
+                            "instruction": "Head west",
+                            "name": "-",
+                            "way_points": [
+                                0,
+                                1
+                            ]
+                        },
+                        {
+                            "distance": 56.8,
+                            "duration": 13.6,
+                            "type": 0,
+                            "instruction": "Turn left onto Quai Albert 1er",
+                            "name": "Quai Albert 1er",
+                            "way_points": [
+                                1,
+                                5
+                            ]
+                        },
+                        {
+                            "distance": 603.0,
+                            "duration": 61.0,
+                            "type": 0,
+                            "instruction": "Turn left onto Virage Antony Nogues",
+                            "name": "Virage Antony Nogues",
+                            "way_points": [
+                                5,
+                                19
+                            ]
+                        },
+                        {
+                            "distance": 336.0,
+                            "duration": 38.9,
+                            "type": 7,
+                            "instruction": "Enter the roundabout and take the 4th exit",
+                            "name": "-",
+                            "exit_number": 4,
+                            "way_points": [
+                                19,
+                                32
+                            ]
+                        },
+                        {
+                            "distance": 212.6,
+                            "duration": 27.4,
+                            "type": 2,
+                            "instruction": "Turn sharp left onto Boulevard du Jardin Exotique",
+                            "name": "Boulevard du Jardin Exotique",
+                            "way_points": [
+                                32,
+                                41
+                            ]
+                        },
+                        {
+                            "distance": 0.0,
+                            "duration": 0.0,
+                            "type": 10,
+                            "instruction": "Arrive at Boulevard du Jardin Exotique, on the right",
+                            "name": "-",
+                            "way_points": [
+                                41,
+                                41
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "bbox": [
+                7.412175,
+                43.731139,
+                7.423832,
+                43.732686
+            ]
+        }
+    ],
+    "metadata": {
+        "attribution": "openrouteservice.org, OpenStreetMap contributors, tmc - BASt",
+        "service": "routing",
+        "timestamp": 1725834577268,
+        "query": {
+            "coordinates": [
+                [
+                    7.4240132974494,
+                    43.7325200234902
+                ],
+                [
+                    7.41219110700415,
+                    43.7313009478493
+                ]
+            ],
+            "profile": "driving-car",
+            "format": "json",
+            "units": "m"
+        },
+        "engine": {
+            "version": "8.1.1",
+            "build_date": "2024-07-17T08:47:22Z",
+            "graph_date": "2024-09-08T22:29:34Z"
+        }
+    }
+}

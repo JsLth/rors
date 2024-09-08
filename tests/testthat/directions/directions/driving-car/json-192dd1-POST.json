@@ -1,0 +1,123 @@
+{
+    "bbox": [
+        7.416569,
+        43.731527,
+        7.429842,
+        43.740057
+    ],
+    "routes": [
+        {
+            "summary": {
+                "distance": 2264.2,
+                "duration": 257.8
+            },
+            "segments": [
+                {
+                    "distance": 2264.2,
+                    "duration": 257.8,
+                    "steps": [
+                        {
+                            "distance": 30.8,
+                            "duration": 7.4,
+                            "type": 11,
+                            "instruction": "Head west",
+                            "name": "-",
+                            "way_points": [
+                                0,
+                                1
+                            ]
+                        },
+                        {
+                            "distance": 56.8,
+                            "duration": 13.6,
+                            "type": 0,
+                            "instruction": "Turn left onto Quai Albert 1er",
+                            "name": "Quai Albert 1er",
+                            "way_points": [
+                                1,
+                                5
+                            ]
+                        },
+                        {
+                            "distance": 603.0,
+                            "duration": 61.0,
+                            "type": 0,
+                            "instruction": "Turn left onto Virage Antony Nogues",
+                            "name": "Virage Antony Nogues",
+                            "way_points": [
+                                5,
+                                19
+                            ]
+                        },
+                        {
+                            "distance": 292.1,
+                            "duration": 20.8,
+                            "type": 7,
+                            "instruction": "Enter the roundabout and take the 2nd exit onto Tunnel Dorsale",
+                            "name": "Tunnel Dorsale",
+                            "exit_number": 2,
+                            "way_points": [
+                                19,
+                                27
+                            ]
+                        },
+                        {
+                            "distance": 1281.4,
+                            "duration": 155.0,
+                            "type": 7,
+                            "instruction": "Enter the roundabout and take the 2nd exit onto Tunnel Aureglia",
+                            "name": "Tunnel Aureglia",
+                            "exit_number": 2,
+                            "way_points": [
+                                27,
+                                54
+                            ]
+                        },
+                        {
+                            "distance": 0.0,
+                            "duration": 0.0,
+                            "type": 10,
+                            "instruction": "Arrive at Tunnel Aureglia, on the right",
+                            "name": "-",
+                            "way_points": [
+                                54,
+                                54
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "bbox": [
+                7.416569,
+                43.731527,
+                7.429842,
+                43.740057
+            ]
+        }
+    ],
+    "metadata": {
+        "attribution": "openrouteservice.org, OpenStreetMap contributors, tmc - BASt",
+        "service": "routing",
+        "timestamp": 1725834576997,
+        "query": {
+            "coordinates": [
+                [
+                    7.4240132974494,
+                    43.7325200234902
+                ],
+                [
+                    7.42996372675009,
+                    43.740043918669
+                ]
+            ],
+            "profile": "driving-car",
+            "format": "json",
+            "units": "m"
+        },
+        "engine": {
+            "version": "8.1.1",
+            "build_date": "2024-07-17T08:47:22Z",
+            "graph_date": "2024-09-08T22:29:34Z"
+        }
+    }
+}

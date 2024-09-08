@@ -1,0 +1,99 @@
+{
+    "bbox": [
+        7.417072,
+        43.734491,
+        7.420121,
+        43.738306
+    ],
+    "routes": [
+        {
+            "summary": {
+                "distance": 616.5,
+                "duration": 60.1
+            },
+            "segments": [
+                {
+                    "distance": 616.5,
+                    "duration": 60.1,
+                    "steps": [
+                        {
+                            "distance": 8.2,
+                            "duration": 1.2,
+                            "type": 11,
+                            "instruction": "Head south on Pont Sainte-Dévote",
+                            "name": "Pont Sainte-Dévote",
+                            "way_points": [
+                                0,
+                                1
+                            ]
+                        },
+                        {
+                            "distance": 88.7,
+                            "duration": 20.4,
+                            "type": 12,
+                            "instruction": "Keep left",
+                            "name": "-",
+                            "way_points": [
+                                1,
+                                6
+                            ]
+                        },
+                        {
+                            "distance": 519.7,
+                            "duration": 38.5,
+                            "type": 6,
+                            "instruction": "Continue straight",
+                            "name": "-",
+                            "way_points": [
+                                6,
+                                24
+                            ]
+                        },
+                        {
+                            "distance": 0.0,
+                            "duration": 0.0,
+                            "type": 10,
+                            "instruction": "Arrive at your destination, on the left",
+                            "name": "-",
+                            "way_points": [
+                                24,
+                                24
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "bbox": [
+                7.417072,
+                43.734491,
+                7.420121,
+                43.738306
+            ]
+        }
+    ],
+    "metadata": {
+        "attribution": "openrouteservice.org, OpenStreetMap contributors, tmc - BASt",
+        "service": "routing",
+        "timestamp": 1725834577206,
+        "query": {
+            "coordinates": [
+                [
+                    7.41879016120929,
+                    43.7383228512922
+                ],
+                [
+                    7.41723154562308,
+                    43.7344925954199
+                ]
+            ],
+            "profile": "driving-car",
+            "format": "json",
+            "units": "m"
+        },
+        "engine": {
+            "version": "8.1.1",
+            "build_date": "2024-07-17T08:47:22Z",
+            "graph_date": "2024-09-08T22:29:34Z"
+        }
+    }
+}

@@ -1,0 +1,110 @@
+{
+    "bbox": [
+        7.417072,
+        43.734491,
+        7.424157,
+        43.740786
+    ],
+    "routes": [
+        {
+            "summary": {
+                "distance": 1181.9,
+                "duration": 133.5
+            },
+            "segments": [
+                {
+                    "distance": 1181.9,
+                    "duration": 133.5,
+                    "steps": [
+                        {
+                            "distance": 118.4,
+                            "duration": 28.4,
+                            "type": 11,
+                            "instruction": "Head southwest on Rue des Lilas",
+                            "name": "Rue des Lilas",
+                            "way_points": [
+                                0,
+                                6
+                            ]
+                        },
+                        {
+                            "distance": 455.1,
+                            "duration": 46.1,
+                            "type": 1,
+                            "instruction": "Turn right onto Boulevard Princesse Charlotte",
+                            "name": "Boulevard Princesse Charlotte",
+                            "way_points": [
+                                6,
+                                22
+                            ]
+                        },
+                        {
+                            "distance": 88.7,
+                            "duration": 20.4,
+                            "type": 12,
+                            "instruction": "Keep left",
+                            "name": "-",
+                            "way_points": [
+                                22,
+                                27
+                            ]
+                        },
+                        {
+                            "distance": 519.7,
+                            "duration": 38.5,
+                            "type": 6,
+                            "instruction": "Continue straight",
+                            "name": "-",
+                            "way_points": [
+                                27,
+                                45
+                            ]
+                        },
+                        {
+                            "distance": 0.0,
+                            "duration": 0.0,
+                            "type": 10,
+                            "instruction": "Arrive at your destination, on the left",
+                            "name": "-",
+                            "way_points": [
+                                45,
+                                45
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "bbox": [
+                7.417072,
+                43.734491,
+                7.424157,
+                43.740786
+            ]
+        }
+    ],
+    "metadata": {
+        "attribution": "openrouteservice.org, OpenStreetMap contributors, tmc - BASt",
+        "service": "routing",
+        "timestamp": 1725834577308,
+        "query": {
+            "coordinates": [
+                [
+                    7.42430374072274,
+                    43.7407111758462
+                ],
+                [
+                    7.41723154562308,
+                    43.7344925954199
+                ]
+            ],
+            "profile": "driving-car",
+            "format": "json",
+            "units": "m"
+        },
+        "engine": {
+            "version": "8.1.1",
+            "build_date": "2024-07-17T08:47:22Z",
+            "graph_date": "2024-09-08T22:29:34Z"
+        }
+    }
+}

@@ -12,8 +12,7 @@ if (on_real_tester()) {
     ors <- local_ors_instance(
       dry = FALSE,
       verbose = FALSE,
-      type = "docker",
-      prompts = FALSE
+      type = "docker"
     )
   } else if (has_valid_java()) {
     ors <- local_ors_instance(
