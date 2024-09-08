@@ -128,7 +128,7 @@
 #'   ors_shortest_distances(pharma, dest, units = "km")
 #'
 #'   # Pre-filter the nearest 5 destination points by Euclidian distance
-#'   pois <- get_closest_pois(pharma, dest, n = 5)
+#'   pois <- group_by_proximity(pharma, dest, n = 5)
 #'
 #'   # Only route from each pharmacy to one of the closest 5 destination points
 #'   # respectively. For larger datasets, this can increase performance.
@@ -269,7 +269,7 @@ ors_pairwise_single <- function(index,
 #'
 #' Column name or index providing a grouping column that indicates which row
 #' in the destination dataset corresponds to which row in the source dataset
-#' (as in the output of \code{\link{get_closest_pois}}). Providing
+#' (as in the output of \code{\link{group_by_proximity}}). Providing
 #' a grouping column can considerably reduce the processing load for larger
 #' datasets.
 #' @param proximity_type \code{[character]}

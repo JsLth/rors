@@ -8,7 +8,7 @@
 ^\.idea$
 ^\.Rhistory$
 ^\.RData$
-^openrouteservice-.*$
+^openrouteservice-8\.1\.1$
 ^public$
 ^ci$
 ^codecov\.yml$

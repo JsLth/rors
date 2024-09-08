@@ -139,7 +139,7 @@ format.ors_paths <- function(x, ...) {
     fname <- get(file)
     i <- which(fname == top_dir)
     col <- switch(file, compose = "yellow", config = "blue", extract = "green")
-    fun <- getFromNamespace(sprintf("col_%s", col), ns = "cli")
+    fun <- utils::getFromNamespace(sprintf("col_%s", col), ns = "cli")
     annot[i] <- paste(annot[i], fun(sprintf("<- %s", file)))
   }
 

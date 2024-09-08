@@ -95,11 +95,7 @@ ors_token <- function(active = FALSE) {
 
 
 needs_token <- function(x) {
-  if (inherits(x, "ors_token")) {
-    isTRUE(attr(x, "active"))
-  } else {
-    FALSE
-  }
+  inherits(x, "ors_token") && isTRUE(attr(x, "active"))
 }
 
 
