@@ -81,6 +81,7 @@ ORSJar <- R6Class(
     initialize = function(dir,
                           version = "8.1.1",
                           overwrite = FALSE,
+                          dry = FALSE,
                           verbose = TRUE,
                           ...) {
       check_jdk_version(verbose)
@@ -272,16 +273,19 @@ ORSJar <- R6Class(
 
 
 get_java_version <- function(verbose) {
-  version <- callr::run("java", "-version", error_on_status = FALSE)
+  version <- tryCatch(
+    callr::run("java", "-version", error_on_status = TRUE),
+    error = function(e) {
+      url <- "https://www.oracle.com/de/java/technologies/downloads/"
+      msg <- c(
+        "!" = "JDK required but not found.",
+        "i" = "Download JDK from {.url {url}}."
+      )
+      abort(msg, class = "ors_java_missing_error", call = NULL)
+    }
+  )
 
-  if (!identical(version$status, 0L)) {
-    url <- "https://www.oracle.com/de/java/technologies/downloads/"
-    cli::cli_abort(c(
-      "!" = "JDK required but not found.",
-      "i" = "Download JDK from {.url {url}}."
-    ))
-  }
-
+  # only show java message once per session
   if (!isTRUE(get0("java_msg", envir = ors_cache))) {
     ors_cli(verbatim = version$stderr, cat = "line")
     assign("java_msg", TRUE, envir = ors_cache)
@@ -323,6 +327,7 @@ run_ors_jar <- function(self, private, wait = TRUE, ...) {
     stdout = "|",
     stderr = "|",
     wd = self$paths$top,
+    cleanup_tree = TRUE
   )
 
   error <- proc$read_error()

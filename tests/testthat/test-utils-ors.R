@@ -1,4 +1,4 @@
-skip_if(!loadable("webfakes"))
+skip_if(!loadable("webfakes"), "webfakes unavailable")
 
 test_that("ors_ready() works", {
   server <- "pub"

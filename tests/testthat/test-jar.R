@@ -1,5 +1,5 @@
 skip_on_cran()
-skip_if(!has_valid_java())
+skip_if(!has_valid_java(), "java unavailable")
 
 ors <- local_ors_instance(
   type = "jar",
