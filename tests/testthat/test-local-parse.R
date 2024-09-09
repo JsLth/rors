@@ -12,6 +12,8 @@ test_that("setup is created properly", {
 })
 
 test_that("new instances of other types are blocked", {
+  skip_if_not(has_valid_java(), "java unavailable")
+
   expect_error(
     without_internet(ors_instance(
       dir = dirname(ors$paths$top),

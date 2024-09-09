@@ -1,4 +1,8 @@
 skip_if(!loadable("webfakes"), "webfakes unavailable")
+skip_webfakes <- function(web) {
+  failed <- inherits(web, "try-error")
+  skip_if(failed, "webfakes bug: https://github.com/r-lib/webfakes/issues/103")
+}
 
 test_that("ors_ready() works", {
   server <- "pub"
@@ -10,7 +14,8 @@ test_that("ors_ready() works", {
     res$app$locals$counter <- counter + 1
     res$send_json(list(status = ready), auto_unbox = TRUE)
   })
-  web <- webfakes::local_app_process(app, start = TRUE)
+  web <- try(webfakes::local_app_process(app, start = TRUE))
+  skip_webfakes(web)
   ors <- ors_instance(server = web$url())
 
   expect_true(ors_ready())
@@ -31,11 +36,13 @@ test_that("ors_status() formats correctly", {
   app <- webfakes::new_app()
   app$get("/ors/v2/health", function(req, res) res$send_json(list(status = "ready")))
   app$get("/ors/v2/status", function(req, res) {
-    path <- testthat::test_path("fixtures/status.json")
+    path <- test_path("fixtures/status.json")
     status <- jsonlite::read_json(path, simplifyVector = TRUE)
     res$send_json(status)
   })
-  web <- webfakes::local_app_process(app, start = TRUE)
+  web <- try(webfakes::local_app_process(app, start = TRUE))
+  skip_webfakes(web)
+
   ors <- ors_instance(server = web$url())
 
   status <- ors_status()
