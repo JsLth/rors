@@ -281,7 +281,7 @@ get_java_version <- function(verbose) {
         "!" = "JDK required but not found.",
         "i" = "Download JDK from {.url {url}}."
       )
-      abort(msg, class = "ors_java_missing_error", call = NULL)
+      abort(msg, class = "java_missing_error", call = NULL)
     }
   )
 

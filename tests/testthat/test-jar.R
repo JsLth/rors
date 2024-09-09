@@ -1,3 +1,11 @@
+test_that("properly stops without java", {
+  expect_error(with_mocked_bindings(
+    run = function(...) stop(),
+    .package = "callr",
+    get_java_version(FALSE)
+  ), class = "ors_java_missing_error")
+})
+
 skip_on_cran()
 skip_if(!has_valid_java(), "java unavailable")
 
