@@ -112,3 +112,9 @@ test_coords <- function(idx = 1:6) {
     sf::st_point(c(7.429963726750094, 43.740043918669045))
   )[idx]
 }
+
+
+rors_cleanup <- function() {
+  ors_cache <- get0("ors_cache", envir = asNamespace("rors"))
+  rm(list = ls(envir = ors_cache), envir = ors_cache)
+}

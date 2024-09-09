@@ -37,8 +37,6 @@ test_that("public api works", {
   )
 
   expect_error(ors_instance(server = "test"), class = "ors_invalid_server_error")
-
-
 })
 
 
@@ -63,3 +61,6 @@ test_that("token is properly used", {
   cond <- last_ors_conditions()
   expect_match(cond[[1]]$msg, "Access to this API has been disallowed")
 })
+
+
+rors_cleanup()

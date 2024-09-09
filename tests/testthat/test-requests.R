@@ -105,3 +105,6 @@ with_mock_dir("isochrones", {
 
   })
 })
+
+
+rors_cleanup()
