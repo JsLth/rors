@@ -144,7 +144,7 @@ This function call makes an Overpass query that searches for every hospital insi
 While we could directly process this dataframe, we would need to route from each point in `sample_a` to each point in `hospitals`. In this case, we only have 30 hospitals and the extra charge in processing time is probably endurable, but it's generally a good idea to keep the datasets as small as possible:
 
 ```{r}
-nearest_pharmacies <- get_closest_pois(
+nearest_pharmacies <- group_by_proximity(
   sample_a,
   pharmacies,
   number_of_points = 5,

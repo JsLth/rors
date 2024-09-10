@@ -57,7 +57,7 @@ reference:
   - title: Utility functions
     contents:
       - ors_sample
-      - get_closest_pois
+      - group_by_proximity
       - get_extract_boundaries
       - get_instance
       - last_ors_conditions
