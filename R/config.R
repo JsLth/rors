@@ -153,7 +153,6 @@ change_endpoints <- function(self, ...) {
 
   dots <- dots[names(dots) %in% endpoints()]
   dots <- dots[lengths(dots) > 0]
-  names(dots)["snap" %in% names(dots)] <- "Snap"
 
   if (is.null(config$ors$endpoints)) {
     config$ors$endpoints <- list()
@@ -270,7 +269,7 @@ get_all_profiles <- function() {
 
 
 endpoints <- function() {
-  c("routing", "matrix", "isochrone", "snap")
+  c("routing", "matrix", "isochrones", "snap")
 }
 
 base_profiles <- function() {
