@@ -31,6 +31,7 @@ is_mock_test <- function() {
 #' @noRd
 local_ors_instance <- function(dir = tempdir(),
                                ...,
+                               version = "8.0.0",
                                verbose = TRUE,
                                dry = TRUE,
                                .local_envir = parent.frame()) {
@@ -50,6 +51,7 @@ local_ors_instance <- function(dir = tempdir(),
 with_ors_instance <- function(code,
                               dir = tempdir(),
                               ...,
+                              version = "8.0.0",
                               verbose = TRUE,
                               dry = TRUE,
                               .local_envir = parent.frame()) {

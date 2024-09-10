@@ -9,11 +9,7 @@ test_that("properly stops without java", {
 skip_on_cran()
 skip_if_not(has_valid_java(), "java unavailable")
 
-ors <- local_ors_instance(
-  type = "jar",
-  verbose = FALSE,
-  version = "8.0.0"
-)
+ors <- local_ors_instance(type = "jar", verbose = FALSE)
 
 test_that("jar setup works", {
   # service not started - should return false

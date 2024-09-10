@@ -70,7 +70,7 @@ with_mock_dir("directions", {
 
   describe("ors_shortest_distances()", {
     it("routes from each point in src to each point in dst", {
-      res <- ors_shortest_distances(src, dst)
+      res <- ors_shortest_distances(src, dst, geometry = TRUE)
       expect_equal(nrow(res), 3)
       expect_equal(res$dest, c(2, 1, 2))
     })

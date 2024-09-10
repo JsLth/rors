@@ -1,11 +1,7 @@
 skip_if_offline("github.com")
 skip_on_cran()
 
-ors <- local_ors_instance(
-  verbose = TRUE,
-  dry = TRUE,
-  version = "8.0.0"
-)
+ors <- local_ors_instance(verbose = TRUE, dry = TRUE)
 ors$set_extract(file = test_pbf())
 
 test_that("$set_ram() works", {

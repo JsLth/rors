@@ -1,10 +1,6 @@
 skip_if_offline("github.com")
 
-ors <- local_ors_instance(
-  verbose = FALSE,
-  dry = TRUE,
-  version = "8.0.0"
-)
+ors <- local_ors_instance(verbose = FALSE, dry = TRUE)
 ors$set_extract(file = test_pbf())
 
 test_that("setup is created properly", {
