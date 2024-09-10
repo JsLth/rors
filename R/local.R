@@ -613,25 +613,39 @@ check_dir_has_file <- function(dir, file) {
   if (!file.exists(file.path(dir, file))) {
     exec <- ors_executables()
     exec <- exec[exec %in% list.files(dir)][1]
-    alt_type <- switch(
-      exec,
-      `docker-compose.yml` = "docker",
-      `ors.jar` = "jar",
-      `ors.war` = "war"
-    )
-    code <- sprintf("ors_instance(..., type = \"%s\")", alt_type)
+    type <- ors_exec_to_type(file)
+    alt_type <- ors_exec_to_type(exec)
     msg <- c(
       "x" = paste(
         "Directory {.path {dir}} already exists but does",
         "not contain a file {.field {file}}."
-      ),
-      "i" = paste(
-        "It does, however, contain a file {.field {exec}}!",
-        "Consider using {.code {code}}"
       )
     )
+
+    # if a different executable is found, append a tip to the error
+    if (!is.null(alt_type)) {
+      code1 <- sprintf("ors_instance(..., type = \"%s\")", alt_type)
+      code2 <- sprintf("ors_instance(..., type = \"%s\", overwrite = TRUE)", type)
+      tip <- paste(
+        "It does, however, contain a file {.field {exec}}!",
+        "Consider using {.code {code1}} or force a new directory using",
+        "{.code {code2}}."
+      )
+      msg <- c(msg, "i" = tip)
+    }
+
     abort(msg, class = "wrong_ors_type_error")
   }
+}
+
+
+ors_exec_to_type <- function(exec) {
+  switch(
+    exec,
+    `docker-compose.yml` = "docker",
+    `ors.jar` = "jar",
+    `ors.war` = "war"
+  )
 }
 
 
