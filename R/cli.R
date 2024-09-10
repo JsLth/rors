@@ -55,3 +55,8 @@ ors_cli <- function(..., .envir = parent.frame()) {
     do.call(cfun, args)
   }
 }
+
+
+escape_cli <- function(x) {
+  gsub("\\}", "}}", gsub("\\{", "{{", x))
+}
