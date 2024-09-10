@@ -52,49 +52,60 @@ and \code{"total_pop"}.}
 
 \item{intersections}{\code{[logical]}
 
-Wether to return overlapping polygons.}
+Whether to return the overlapping area of seperate isochrones. If
+\code{TRUE}, the response will not contain the actual isochrones but only
+their intersections. See below for details. Defaults to \code{FALSE}.}
 
 \item{interval}{\code{[integer]}
 
 If \code{range} is a length-1 vector, defines the distance interval to break
-down the isochrones.}
+down the isochrones. For example, if \code{range} is 300 and \code{interval}
+is 50, creates 6 isochrones where each isochrone is 50 units further from
+the center. If \code{length(range) > 1}, this argument is ignored. Defaults
+to 30.}
 
 \item{location_type}{\code{[character]}
 
 Whether to route from (\code{"start"}) or to (\code{"destination"}) the
-points of the input data.}
+points of the input data. Defaults to \code{"start"}.}
 
 \item{range_type}{\code{[character]}
 
 Type of distance that the calculations should be based on. \code{"time"}
-produces isochrones while \code{"distance"} produces isodistance polygons.}
+produces isochrones while \code{"distance"} produces isodistance polygons.
+Defaults to \code{"time"}.}
 
 \item{smoothing}{\code{[integer]}
 
 Smoothing factor between 0 and 100 to be applied to the polygon geometries.
-For details, refer to the API playground.}
+For details, refer to the API playground. Defaults to 25.}
 
 \item{area_units}{\code{[character]}
 
-Distance unit to use for the \code{area} attribute from \code{attributes}.}
+Distance unit to use for the \code{area} attribute from \code{attributes}.
+Defaults to \code{"m"}.}
 
 \item{units}{\code{[character]}
 
-Units to be used for the \code{range} argument if \code{range_type = "distance"}.}
+Units to be used for the \code{range} argument if \code{range_type = "distance"}.
+Defaults to \code{"m"}.}
 
 \item{rasterize}{\code{[logical]}
 
 If \code{FALSE}, returns the isochrone polygon geometries. If \code{TRUE},
 aggregates polygon distance values onto a vector grid and then rasterizes
-the vector grid to a \code{SpatRaster} object. When rasterizing, only the
-distance value is preserved while all variables specified in \code{attributes}
-are discarded.}
+the vector grid to a \code{SpatRaster} object created using
+\code{\link[terra]{rast}}. When rasterizing, only the distance value is
+preserved while all variables specified in \code{attributes} are discarded.
+Requires the \code{\link{terra}} package to be installed. Defaults to
+\code{FALSE}.}
 
 \item{raster_resolution}{\code{[numeric]}
 
 If \code{rasterize = TRUE}, specifies the resolution of the template raster.
 Corresponds to the number of cells in each direction (x, y). This argument is
-passed on to \code{\link[sf]{st_make_grid}} and \code{\link[terra]{rast}}.}
+passed on to \code{\link[sf]{st_make_grid}} and \code{\link[terra]{rast}}.
+Defaults to 100x100.}
 
 \item{instance}{\code{[ors_instance]}
 
@@ -134,12 +145,26 @@ restrictions for \code{driving-hgv}.}
 \code{\link{ors_params}} for details.}
 }
 \value{
-If \code{rasterize = FALSE}, returns an \code{sf} object containing
-the isochrone or isodistance polygon geometries as well as additional
-attributes. Each polygon's outer lines represent places of equal distance or
-travel time from or to the respective point in the source dataset. If
-\code{rasterize = FALSE}, returns a \code{raster} object with a discrete
-value classification.
+If \code{rasterize = FALSE} and \code{intersections = FALSE},
+returns an \code{sf} object containing the isochrone or isodistance polygon
+geometries as well as additional attributes. Each polygon's outer lines
+represent places of equal distance or travel time from or to the respective
+point in the source dataset.
+
+If \code{rasterize = TRUE}, returns a
+\code{raster} object with a discrete value classification.
+
+If \code{intersections = TRUE}, returns an \code{sf} dataframe containing
+the intersections between two respective isochrones and their indices.
+The response contains four indices. Index names starting \code{a_*}
+specify the first isochrone of the intersection and names starting with
+\code{b_*} specify the second isochrone. Index names ending with
+\code{*_index} correspond to the \code{group_index} of the isochrones.
+Index names ending with \code{*_range} correspond to the index of values
+in the \code{range} argument. For example, if \code{range = c(200, 300)},
+a \code{a_range} of 1 would correspond to 300. Taken together, each
+intersection can be assigned to two isochrone and each isochrone can be
+identified using their group index and their respective range.
 }
 \description{
 \code{ors_accessibility} returns isochrone or isodistance data
@@ -147,14 +172,12 @@ for a set of source points, either as polygons or as a raster.
 }
 \examples{
 \dontrun{
-set.seed(123)
-src <- ors_sample(10)
 data("pharma")
 
 # Returns a polygon sf dataframe divided by four 15 minute time breaks
 # Also contains information on the area and population inside the isochrones
 ors_accessibility(
-  source_sf,
+  pharma,
   profile = "driving-car",
   range = c(900, 1800, 2700, 3600),
   attributes = c("area", "total_pop"),
@@ -165,7 +188,7 @@ ors_accessibility(
 
 # Returns a raster image classified by 3 distance intervals
 ors_accessibility(
-  source_df,
+  pharma,
   profile = "driving-car",
   range = c(1000, 5000, 10000),
   location_type = "destination",
@@ -175,11 +198,13 @@ ors_accessibility(
 # Returns a polygon sf dataframe that is broken down every 50 meters up until
 # the maximum distance of 500 meters.
 ors_accessibility(
-  source_df,
+  pharma,
   profile = "cycling-regular",
   range = 500,
   location_type = "start",
   interval = 50,
   range_type = "distance"
 )}
+
+
 }

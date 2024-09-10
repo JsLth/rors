@@ -126,7 +126,9 @@ The OpenRouteService version to use. Can either be a version number (e.g.
 
 Whether to overwrite the current OpenRouteService directory if it exists.}
 
-\item{\code{dry}}{Whether to start a instance, i.e. initialize a \code{ORSJar}
+\item{\code{dry}}{\code{[logical]}
+
+Whether to start a instance, i.e. initialize a \code{ORSJar}
 instance without downloading the executable. This allows you to
 manipulate config and extract files but does not allow you to interact
 with java.}
