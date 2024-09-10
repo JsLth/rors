@@ -60,16 +60,16 @@ ors_contours <- function(res, df = FALSE) {
 
   contours <- lapply(contours, function(x) {
     colnames(x) <- c("index", "range")
-    rownames(x) <- c("from", "to")
+    rownames(x) <- c("a", "b")
     x
   })
   contours <- simplify2array(contours)
 
   sf::st_as_sf(data_frame(
-    from_index = contours["from", "index", ],
-    to_index = contours["to", "index", ],
-    from_range = contours["from", "range", ],
-    to_range = contours["to", "range", ],
+    a_index = contours["a", "index", ],
+    b_index = contours["b", "index", ],
+    a_range = contours["a", "range", ],
+    b_range = contours["b", "range", ],
     geometry = poly
   ))
 }
@@ -77,18 +77,12 @@ ors_contours <- function(res, df = FALSE) {
 
 #' Rasterizes the isochrone polygons from ORS isochrones
 #' @noRd
-rasterize_isochrones <- function(isochrones, resolution) {
-  # Transform to projected CRS with global coverage (world mercator)
-  isochrones <- sf::st_transform(isochrones, 3395)
-  grid <- sf::st_make_grid(isochrones, n = resolution)
-  grid <- stats::aggregate(isochrones, by = grid, FUN = min, join = sf::st_intersects)
+rasterize_isochrones <- function(iso, res) {
+  grid <- sf::st_make_grid(iso, n = res)
+  grid <- stats::aggregate(iso, by = grid, FUN = min, join = sf::st_intersects)
   grid <- terra::vect(grid)
-  rasterized <- terra::rasterize(
-    grid,
-    terra::rast(grid, resolution = resolution),
-    field = "value"
-  )
-  terra::project(rasterized, y = "epsg:4326", method = "near")
+  base <- terra::rast(grid, ncols = res[1], nrows = res[2])
+  terra::rasterize(grid, base, field = "value")
 }
 
 
