@@ -191,7 +191,7 @@ check_docker_installation <- function() {
   if (!docker_installed()) {
     link <- cli::style_hyperlink(
       text = "Docker",
-      link = "https://docs.docker.com/get-docker/"
+      url = "https://docs.docker.com/get-docker/"
     )
     cli::cli_abort(
       c(
