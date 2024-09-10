@@ -38,6 +38,7 @@ local_ors_instance <- function(dir = tempdir(),
   ors <- ors_instance(
     dir = dir,
     dry = dry,
+    version = version,
     verbose = verbose,
     prompts = FALSE,
     ...
@@ -58,6 +59,7 @@ with_ors_instance <- function(code,
   ors <- ors_instance(
     dir = dir,
     dry = dry,
+    version = version,
     verbose = verbose,
     prompts = FALSE,
     ...
