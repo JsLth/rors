@@ -1,10 +1,12 @@
 # cran does not have java nor docker
 skip_on_cran()
 
+rors_cleanup()
+
 # if on a tester machine, try to setup an ORS instance
 # a real tester is a machine with env variable REAL_REQUESTS="true"
 # otherwise, try to use mock tests
-if (on_real_tester()) {
+if (is_mock_test()) {
   # if java is available, use it
   # otherwise, fall back to docker
   # if all fails, skip
@@ -20,11 +22,15 @@ if (on_real_tester()) {
       verbose = FALSE,
       type = "jar"
     )
-  } else {
-    skip("neither docker or jdk available -- cannot start ors instance")
   }
 
+  #ors$set_port(8002)
   ors$up()
+} else {
+  # set up a mock instance
+  # no requests are actually sent
+  # this just serves to let the functions think there is a server
+  ors_instance(server = "http://localhost:8002/")
 }
 
 src <- test_coords(1:3)
