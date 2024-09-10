@@ -52,7 +52,7 @@
 #' the vector grid to a \code{SpatRaster} object created using
 #' \code{\link[terra]{rast}}. When rasterizing, only the distance value is
 #' preserved while all variables specified in \code{attributes} are discarded.
-#' Requires the \code{\link{terra}} package to be installed. Defaults to
+#' Requires the \code{terra} package to be installed. Defaults to
 #' \code{FALSE}.
 #' @param raster_resolution \code{[numeric]}
 #'

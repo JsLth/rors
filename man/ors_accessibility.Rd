@@ -97,7 +97,7 @@ aggregates polygon distance values onto a vector grid and then rasterizes
 the vector grid to a \code{SpatRaster} object created using
 \code{\link[terra]{rast}}. When rasterizing, only the distance value is
 preserved while all variables specified in \code{attributes} are discarded.
-Requires the \code{\link{terra}} package to be installed. Defaults to
+Requires the \code{terra} package to be installed. Defaults to
 \code{FALSE}.}
 
 \item{raster_resolution}{\code{[numeric]}
@@ -120,26 +120,9 @@ refer to the
 \href{https://openrouteservice.org/dev/#/api-docs/v2/isochrones/{profile}/post}{API playground}
 and
 \href{https://giscience.github.io/openrouteservice/api-reference/endpoints/directions/routing-options}{documentation}.
-\describe{
-\item{\strong{avoid_borders}}{Length-1 character vector specifying whether
-to avoid, all borders, only controlled ones
-or none. Only available for \code{driving-*}.}
-\item{\strong{avoid_countries}}{Numeric vector listing countries to avoid.
-Each country is assigned a numeric value.
-Refer to the ORS documentation. Only
-available for \code{driving-*}.}
-\item{\strong{avoid_features}}{Character vector containing traffic features
-to avoid (e.g. highways or tunnels).}
-\item{\strong{avoid_polygons}}{\code{sf} or \code{sfc} object describing
-areas to avoid.}
-\item{\strong{profile_params}}{Nested list containing restrictions and
-weightings for \code{driving-hgv},
-\code{cycling-*}, \code{walking},
-\code{hiking} and \code{wheelchair}.}
-\item{\strong{vehicle_type}}{Length-1 character vector specifying the type
-of heavy goods vehicle. Needed to set
-restrictions for \code{driving-hgv}.}
-}}
+Reasonable arguments include \code{avoid_borders}, \code{avoid_countries},
+\code{avoid_features}, \code{avoid_polygons}, profile parameters, and
+\code{vehicle_type}.}
 
 \item{params}{List of additional arguments passed to the ORS API. See
 \code{\link{ors_params}} for details.}

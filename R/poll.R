@@ -30,7 +30,7 @@ notify_when_ready <- function(self, private, interval = 10L, verbose = TRUE) {
   # ... and errors
   if (!is.null(cond$error)) {
     errors <- paste(cli::col_yellow(cli::symbol$bullet), cond$error)
-    names(errors) <- rep(" ", n_bad)
+    names(errors) <- rep(" ", length(errors))
     errors <- escape_cli(errors)
     msg <- c("The service ran into the following errors:", errors)
     cli::cli_abort(msg, call = NULL, class = "ors_setup_error")
