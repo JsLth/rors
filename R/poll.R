@@ -29,8 +29,10 @@ notify_when_ready <- function(self, private, interval = 10L, verbose = TRUE) {
 
   # ... and errors
   if (!is.null(cond$error)) {
-    cond_fmt <- cli::cli_vec(cond$error, style = list(vec_sep = "\n\n"))
-    msg <- c("The service ran into the following errors:", cond_fmt)
+    errors <- paste(cli::col_yellow(cli::symbol$bullet), cond$error)
+    names(errors) <- rep(" ", n_bad)
+    errors <- escape_cli(errors)
+    msg <- c("The service ran into the following errors:", errors)
     cli::cli_abort(msg, call = NULL, class = "ors_setup_error")
   }
 
@@ -77,8 +79,10 @@ watch_for_condition <- function(src) {
 #' Takes ORS logs and extracts all conditions of type `type`.
 #' @noRd
 extract_setup_condition <- function(logs, type = "ERROR") {
+  rgx <- sprintf("\\[%s\\]|(^%s)", type, type)
+  rgx <- paste0("\\[", type, "\\]")
   cond <- grep(type, logs, value = TRUE, fixed = TRUE)
-  cond <- regex_match(cli::ansi_strip(cond), "\\[.+\\](.+$)")
+  cond <- regex_match(cli::ansi_strip(cond), sprintf("%s(.+$)", type))
   cond <- vapply(cond, "[", 2, FUN.VALUE = character(1))
   if (length(cond)) {
     cond <- unique(trimws(cond))
