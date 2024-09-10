@@ -1,0 +1,578 @@
+#################
+# Container ENV #
+#################
+[32m✓ CONTAINER_LOG_LEVEL: INFO. Set CONTAINER_LOG_LEVEL=DEBUG for more details.[39m
+[34mⓘ Any config file settings can be overwritten by environment variables.[39m
+[34mⓘ Use 'CONTAINER_LOG_LEVEL=DEBUG' to see the full list of active environment variables for this container.[39m
+###########################
+# Container sanity checks #
+###########################
+[34mⓘ Running container as user root with id 0 and group 0[39m
+[32m✓ ORS_HOME: /home/ors exists and is writable.[39m
+[32m✓ Update the file /home/ors/config/example-ors-config.env with /example-ors-config.env[39m
+[32m✓ Update the file /home/ors/config/example-ors-config.yml with /example-ors-config.yml[39m
+[33m⚠ No config file found. Copying /example-ors-config.yml to /home/ors/config/ors-config.yml[39m
+[33m⚠ To adjust your config edit ors-config.yml in your 'config' docker volume or use the environment variable configuration.[39m
+[32m✓ Update the file /home/ors/config/ors-config.yml with /example-ors-config.yml[39m
+[34mⓘ Default to graphs folder: /home/ors/graphs[39m
+[34mⓘ Any ENV variables will have precedence over configuration variables from config files.[39m
+[32m✓ All checks passed. For details set CONTAINER_LOG_LEVEL=DEBUG.[39m
+#####################################
+# Container file system preparation #
+#####################################
+[32m✓ Update the file /home/ors/files/example-heidelberg.osm.gz with /heidelberg.osm.gz[39m
+[32m✓ Removed graphs at /home/ors/graphs/*.[39m
+[32m✓ Container file system preparation complete. For details set CONTAINER_LOG_LEVEL=DEBUG.[39m
+#######################################
+# Prepare CATALINA_OPTS and JAVA_OPTS #
+#######################################
+[32m✓ CATALINA_OPTS and JAVA_OPTS ready. For details set CONTAINER_LOG_LEVEL=DEBUG.[39m
+[34mⓘ ##########################################[39m
+[34mⓘ # Config options and migration information #[39m
+[34mⓘ ##########################################[39m
+[34mⓘ >>> Migration information <<<[39m
+[33m⚠ Configuring ors with a .json config is deprecated and will be removed in the future.[39m
+[34mⓘ You can use the ors-config-migration tool to migrate your .json config to .yml:[39m
+  [34mhttps://github.com/GIScience/ors-config-migration#usage[39m
+[34mⓘ >>> Config options <<<[39m
+[34mⓘ You have the following options to configure ORS:[39m
+[34mⓘ Method 1 yml config:[39m
+[34mⓘ > docker cp ors-container-name:/home/ors/config/example-ors-config.yml ./ors-config.yml[39m
+[34mⓘ > docker run --name example-ors-instance-conf-file -e ORS_CONFIG_LOCATION=/home/ors/config/ors-config.yml -v[39m
+  [34m$(pwd)/ors-config.yml:/home/ors/config/ors-config.yml openrouteservice/openrouteservice:latest[39m
+[34mⓘ Method 2 environment variables:[39m
+[34mⓘ > docker cp ors-container-name:/home/ors/config/example-ors-config.env ./ors-config.env[39m
+[34mⓘ > docker run --name example-ors-instance-env-file --env-file ors-config.env openrouteservice/openrouteservice:latest[39m
+[34mⓘ >>> End of migration information <<<[39m
+#####################
+# ORS startup phase #
+#####################
+[32m✓ 🙭 Ready to start the ORS application 🙭[39m
+ERROR StatusConsoleListener RollingFileManager (./logs/ors.log) java.io.FileNotFoundException: ./logs/ors.log (No such
+  file or directory)
+java.io.FileNotFoundException: ./logs/ors.log (No such file or directory)
+at java.base/java.io.FileOutputStream.open0(Native Method)
+at java.base/java.io.FileOutputStream.open(FileOutputStream.java:289)
+at java.base/java.io.FileOutputStream.<init>(FileOutputStream.java:230)
+at java.base/java.io.FileOutputStream.<init>(FileOutputStream.java:150)
+at
+  org.apache.logging.log4j.core.appender.rolling.RollingFileManager$RollingFileManagerFactory.createManager(RollingFileManager.java:748)
+at
+  org.apache.logging.log4j.core.appender.rolling.RollingFileManager$RollingFileManagerFactory.createManager(RollingFileManager.java:718)
+at org.apache.logging.log4j.core.appender.AbstractManager.getManager(AbstractManager.java:144)
+at org.apache.logging.log4j.core.appender.OutputStreamManager.getManager(OutputStreamManager.java:100)
+at org.apache.logging.log4j.core.appender.rolling.RollingFileManager.getFileManager(RollingFileManager.java:217)
+at org.apache.logging.log4j.core.appender.RollingFileAppender$Builder.build(RollingFileAppender.java:135)
+at org.apache.logging.log4j.core.appender.RollingFileAppender$Builder.build(RollingFileAppender.java:62)
+at org.apache.logging.log4j.core.config.plugins.util.PluginBuilder.build(PluginBuilder.java:124)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.createPluginObject(AbstractConfiguration.java:1138)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1063)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1055)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.doConfigure(AbstractConfiguration.java:664)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.initialize(AbstractConfiguration.java:258)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.start(AbstractConfiguration.java:304)
+at org.apache.logging.log4j.core.LoggerContext.setConfiguration(LoggerContext.java:621)
+at org.apache.logging.log4j.core.LoggerContext.start(LoggerContext.java:285)
+at org.springframework.boot.logging.log4j2.Log4J2LoggingSystem.loadConfiguration(Log4J2LoggingSystem.java:294)
+at org.springframework.boot.logging.log4j2.Log4J2LoggingSystem.loadDefaults(Log4J2LoggingSystem.java:253)
+at org.springframework.boot.logging.AbstractLoggingSystem.initializeWithConventions(AbstractLoggingSystem.java:83)
+at org.springframework.boot.logging.AbstractLoggingSystem.initialize(AbstractLoggingSystem.java:60)
+at org.springframework.boot.logging.log4j2.Log4J2LoggingSystem.initialize(Log4J2LoggingSystem.java:246)
+at
+  org.springframework.boot.context.logging.LoggingApplicationListener.initializeSystem(LoggingApplicationListener.java:332)
+at org.springframework.boot.context.logging.LoggingApplicationListener.initialize(LoggingApplicationListener.java:298)
+at
+  org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEnvironmentPreparedEvent(LoggingApplicationListener.java:246)
+at
+  org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEvent(LoggingApplicationListener.java:223)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.doInvokeListener(SimpleApplicationEventMulticaster.java:174)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.invokeListener(SimpleApplicationEventMulticaster.java:167)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:145)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:133)
+at
+  org.springframework.boot.context.event.EventPublishingRunListener.multicastInitialEvent(EventPublishingRunListener.java:136)
+at
+  org.springframework.boot.context.event.EventPublishingRunListener.environmentPrepared(EventPublishingRunListener.java:81)
+at
+  org.springframework.boot.SpringApplicationRunListeners.lambda$environmentPrepared$2(SpringApplicationRunListeners.java:64)
+at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:118)
+at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:112)
+at org.springframework.boot.SpringApplicationRunListeners.environmentPrepared(SpringApplicationRunListeners.java:63)
+at org.springframework.boot.SpringApplication.prepareEnvironment(SpringApplication.java:360)
+at org.springframework.boot.SpringApplication.run(SpringApplication.java:311)
+at org.springframework.boot.SpringApplication.run(SpringApplication.java:1306)
+at org.springframework.boot.SpringApplication.run(SpringApplication.java:1295)
+at org.heigit.ors.api.Application.main(Application.java:29)
+at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+at org.springframework.boot.loader.MainMethodRunner.run(MainMethodRunner.java:49)
+at org.springframework.boot.loader.Launcher.launch(Launcher.java:95)
+at org.springframework.boot.loader.Launcher.launch(Launcher.java:58)
+at org.springframework.boot.loader.JarLauncher.main(JarLauncher.java:65)
+ERROR StatusConsoleListener Could not create plugin of type class
+  org.apache.logging.log4j.core.appender.RollingFileAppender for element RollingFile: java.lang.IllegalStateException:
+  ManagerFactory [org.apache.logging.log4j.core.appender.rolling.RollingFileManager$RollingFileManagerFactory@389c4eb1]
+  unable to create manager for [./logs/ors.log] with data
+  [org.apache.logging.log4j.core.appender.rolling.RollingFileManager$FactoryData@3fc79729[pattern=${sys:LOG_PATH}/${date:yyyy-MM}/app-%d{yyyy-MM-dd-HH}-%i.log.gz,
+  append=true, bufferedIO=true, bufferSize=8192,
+  policy=CompositeTriggeringPolicy(policies=[SizeBasedTriggeringPolicy(size=10485760)]),
+  strategy=DefaultRolloverStrategy(min=1, max=7, useMax=true), advertiseURI=null, layout=%d{yyyy-MM-dd HH:mm:ss} %p
+  [%-40.40c{1.}] - %m%n, filePermissions=null, fileOwner=null]]
+java.lang.IllegalStateException: ManagerFactory
+  [org.apache.logging.log4j.core.appender.rolling.RollingFileManager$RollingFileManagerFactory@389c4eb1] unable to create
+  manager for [./logs/ors.log] with data
+  [org.apache.logging.log4j.core.appender.rolling.RollingFileManager$FactoryData@3fc79729[pattern=${sys:LOG_PATH}/${date:yyyy-MM}/app-%d{yyyy-MM-dd-HH}-%i.log.gz,
+  append=true, bufferedIO=true, bufferSize=8192,
+  policy=CompositeTriggeringPolicy(policies=[SizeBasedTriggeringPolicy(size=10485760)]),
+  strategy=DefaultRolloverStrategy(min=1, max=7, useMax=true), advertiseURI=null, layout=%d{yyyy-MM-dd HH:mm:ss} %p
+  [%-40.40c{1.}] - %m%n, filePermissions=null, fileOwner=null]]
+at org.apache.logging.log4j.core.appender.AbstractManager.getManager(AbstractManager.java:146)
+at org.apache.logging.log4j.core.appender.OutputStreamManager.getManager(OutputStreamManager.java:100)
+at org.apache.logging.log4j.core.appender.rolling.RollingFileManager.getFileManager(RollingFileManager.java:217)
+at org.apache.logging.log4j.core.appender.RollingFileAppender$Builder.build(RollingFileAppender.java:135)
+at org.apache.logging.log4j.core.appender.RollingFileAppender$Builder.build(RollingFileAppender.java:62)
+at org.apache.logging.log4j.core.config.plugins.util.PluginBuilder.build(PluginBuilder.java:124)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.createPluginObject(AbstractConfiguration.java:1138)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1063)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1055)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.doConfigure(AbstractConfiguration.java:664)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.initialize(AbstractConfiguration.java:258)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.start(AbstractConfiguration.java:304)
+at org.apache.logging.log4j.core.LoggerContext.setConfiguration(LoggerContext.java:621)
+at org.apache.logging.log4j.core.LoggerContext.start(LoggerContext.java:285)
+at org.springframework.boot.logging.log4j2.Log4J2LoggingSystem.loadConfiguration(Log4J2LoggingSystem.java:294)
+at org.springframework.boot.logging.log4j2.Log4J2LoggingSystem.loadDefaults(Log4J2LoggingSystem.java:253)
+at org.springframework.boot.logging.AbstractLoggingSystem.initializeWithConventions(AbstractLoggingSystem.java:83)
+at org.springframework.boot.logging.AbstractLoggingSystem.initialize(AbstractLoggingSystem.java:60)
+at org.springframework.boot.logging.log4j2.Log4J2LoggingSystem.initialize(Log4J2LoggingSystem.java:246)
+at
+  org.springframework.boot.context.logging.LoggingApplicationListener.initializeSystem(LoggingApplicationListener.java:332)
+at org.springframework.boot.context.logging.LoggingApplicationListener.initialize(LoggingApplicationListener.java:298)
+at
+  org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEnvironmentPreparedEvent(LoggingApplicationListener.java:246)
+at
+  org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEvent(LoggingApplicationListener.java:223)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.doInvokeListener(SimpleApplicationEventMulticaster.java:174)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.invokeListener(SimpleApplicationEventMulticaster.java:167)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:145)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:133)
+at
+  org.springframework.boot.context.event.EventPublishingRunListener.multicastInitialEvent(EventPublishingRunListener.java:136)
+at
+  org.springframework.boot.context.event.EventPublishingRunListener.environmentPrepared(EventPublishingRunListener.java:81)
+at
+  org.springframework.boot.SpringApplicationRunListeners.lambda$environmentPrepared$2(SpringApplicationRunListeners.java:64)
+at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:118)
+at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:112)
+at org.springframework.boot.SpringApplicationRunListeners.environmentPrepared(SpringApplicationRunListeners.java:63)
+at org.springframework.boot.SpringApplication.prepareEnvironment(SpringApplication.java:360)
+at org.springframework.boot.SpringApplication.run(SpringApplication.java:311)
+at org.springframework.boot.SpringApplication.run(SpringApplication.java:1306)
+at org.springframework.boot.SpringApplication.run(SpringApplication.java:1295)
+at org.heigit.ors.api.Application.main(Application.java:29)
+at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+at org.springframework.boot.loader.MainMethodRunner.run(MainMethodRunner.java:49)
+at org.springframework.boot.loader.Launcher.launch(Launcher.java:95)
+at org.springframework.boot.loader.Launcher.launch(Launcher.java:58)
+at org.springframework.boot.loader.JarLauncher.main(JarLauncher.java:65)
+ERROR StatusConsoleListener Unable to invoke factory method in class
+  org.apache.logging.log4j.core.appender.RollingFileAppender for element RollingFile: java.lang.IllegalStateException: No
+  factory method found for class org.apache.logging.log4j.core.appender.RollingFileAppender
+java.lang.IllegalStateException: No factory method found for class
+  org.apache.logging.log4j.core.appender.RollingFileAppender
+at org.apache.logging.log4j.core.config.plugins.util.PluginBuilder.findFactoryMethod(PluginBuilder.java:260)
+at org.apache.logging.log4j.core.config.plugins.util.PluginBuilder.build(PluginBuilder.java:136)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.createPluginObject(AbstractConfiguration.java:1138)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1063)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1055)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.doConfigure(AbstractConfiguration.java:664)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.initialize(AbstractConfiguration.java:258)
+at org.apache.logging.log4j.core.config.AbstractConfiguration.start(AbstractConfiguration.java:304)
+at org.apache.logging.log4j.core.LoggerContext.setConfiguration(LoggerContext.java:621)
+at org.apache.logging.log4j.core.LoggerContext.start(LoggerContext.java:285)
+at org.springframework.boot.logging.log4j2.Log4J2LoggingSystem.loadConfiguration(Log4J2LoggingSystem.java:294)
+at org.springframework.boot.logging.log4j2.Log4J2LoggingSystem.loadDefaults(Log4J2LoggingSystem.java:253)
+at org.springframework.boot.logging.AbstractLoggingSystem.initializeWithConventions(AbstractLoggingSystem.java:83)
+at org.springframework.boot.logging.AbstractLoggingSystem.initialize(AbstractLoggingSystem.java:60)
+at org.springframework.boot.logging.log4j2.Log4J2LoggingSystem.initialize(Log4J2LoggingSystem.java:246)
+at
+  org.springframework.boot.context.logging.LoggingApplicationListener.initializeSystem(LoggingApplicationListener.java:332)
+at org.springframework.boot.context.logging.LoggingApplicationListener.initialize(LoggingApplicationListener.java:298)
+at
+  org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEnvironmentPreparedEvent(LoggingApplicationListener.java:246)
+at
+  org.springframework.boot.context.logging.LoggingApplicationListener.onApplicationEvent(LoggingApplicationListener.java:223)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.doInvokeListener(SimpleApplicationEventMulticaster.java:174)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.invokeListener(SimpleApplicationEventMulticaster.java:167)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:145)
+at
+  org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:133)
+at
+  org.springframework.boot.context.event.EventPublishingRunListener.multicastInitialEvent(EventPublishingRunListener.java:136)
+at
+  org.springframework.boot.context.event.EventPublishingRunListener.environmentPrepared(EventPublishingRunListener.java:81)
+at
+  org.springframework.boot.SpringApplicationRunListeners.lambda$environmentPrepared$2(SpringApplicationRunListeners.java:64)
+at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:118)
+at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:112)
+at org.springframework.boot.SpringApplicationRunListeners.environmentPrepared(SpringApplicationRunListeners.java:63)
+at org.springframework.boot.SpringApplication.prepareEnvironment(SpringApplication.java:360)
+at org.springframework.boot.SpringApplication.run(SpringApplication.java:311)
+at org.springframework.boot.SpringApplication.run(SpringApplication.java:1306)
+at org.springframework.boot.SpringApplication.run(SpringApplication.java:1295)
+at org.heigit.ors.api.Application.main(Application.java:29)
+at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+at org.springframework.boot.loader.MainMethodRunner.run(MainMethodRunner.java:49)
+at org.springframework.boot.loader.Launcher.launch(Launcher.java:95)
+at org.springframework.boot.loader.Launcher.launch(Launcher.java:58)
+at org.springframework.boot.loader.JarLauncher.main(JarLauncher.java:65)
+ERROR StatusConsoleListener Null object returned for RollingFile in Appenders.
+ERROR StatusConsoleListener Unable to locate appender "File" for logger config "root"
+
+.  ____ _ __ _ _
+/\\ / ___'_ __ _ _(_)_ __ __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+\\/ ___)| |_)| | | | | || (_| | ) ) ) )
+' |____| .__|_| |_|_| |_\__, | / / / /
+=========|_|==============|___/=/_/_/_/
+:: Spring Boot :: (v3.1.6)
+
+2024-09-10 19:10:43 [32mINFO [39m [36m main[39m [1m[36m[ o.h.o.a.Application ][39m[22m Starting Application v8.0.0 using Java 21.0.2 with PID 1 (/ors.jar
+  started by root in /home/ors)
+2024-09-10 19:10:44 [32mINFO [39m [36m main[39m [1m[36m[ o.h.o.a.Application ][39m[22m The following 1 profile is active: "default"
+2024-09-10 19:10:44 [32mINFO [39m [36m main[39m [1m[36m[ o.h.o.a.ORSEnvironmentPostProcessor ][39m[22m
+2024-09-10 19:10:44 [32mINFO [39m [36m main[39m [1m[36m[ o.h.o.a.ORSEnvironmentPostProcessor ][39m[22m Configuration lookup started.
+2024-09-10 19:10:44 [32mINFO [39m [36m main[39m [1m[36m[ o.h.o.a.ORSEnvironmentPostProcessor ][39m[22m Configuration file set by environment variable.
+2024-09-10 19:10:44 [32mINFO [39m [36m main[39m [1m[36m[ o.h.o.a.ORSEnvironmentPostProcessor ][39m[22m Loaded file '/home/ors/config/ors-config.yml'
+2024-09-10 19:10:44 [32mINFO [39m [36m main[39m [1m[36m[ o.h.o.a.ORSEnvironmentPostProcessor ][39m[22m Configuration lookup finished.
+2024-09-10 19:10:44 [32mINFO [39m [36m main[39m [1m[36m[ o.h.o.a.ORSEnvironmentPostProcessor ][39m[22m
+2024-09-10 19:10:47 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.a.s.l.ORSInitContextListener ][39m[22m Initializing ORS...
+2024-09-10 19:10:47 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m Total - 1024 MB, Free - 965.23 MB, Max: 2 GB, Used -
+  58.77 MB
+2024-09-10 19:10:47 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m ====> Initializing profiles from
+  '/home/ors/files/monaco.pbf' (1 threads) ...
+2024-09-10 19:10:47 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m 1 profile configurations submitted as tasks.
+2024-09-10 19:10:47 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.RoutingProfile ][39m[22m [1] Profiles: 'driving-car', location:
+  '/home/ors/./graphs/car'.
+2024-09-10 19:10:47 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler ][39m[22m Loaded landmark splitting collection from
+2024-09-10 19:10:48 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.ORSGraphHopper ][39m[22m version v4.9.1|2024-01-17T09:08:46Z (7,20,5,4,5,7)
+2024-09-10 19:10:48 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.ORSGraphHopper ][39m[22m graph CH|car_ors|RAM_STORE|3D|turn_cost|,,,,,
+  details:edges:0(0MB), nodes:0(0MB), name:(0MB), geo:0(0MB),
+  bounds:1.7976931348623157E308,-1.7976931348623157E308,1.7976931348623157E308,-1.7976931348623157E308,1.7976931348623157E308,-1.7976931348623157E308,
+  shortcuts:0 (0MB), nodesCH:-1 (0MB), shortcuts:0 (0MB), nodesCH:-1 (0MB), shortcuts:0 (0MB), nodesCH:-1 (0MB)
+2024-09-10 19:10:48 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.ORSGraphHopper ][39m[22m No custom areas are used, custom_areas.directory not
+  given
+2024-09-10 19:10:48 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.ORSGraphHopper ][39m[22m start creating graph from /home/ors/files/monaco.pbf
+2024-09-10 19:10:48 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.ORSGraphHopper ][39m[22m using CH|car_ors|RAM_STORE|3D|turn_cost|,,,,,
+  memory:totalMB:1024, usedMB:262
+2024-09-10 19:10:49 [32mINFO [39m [36m main[39m [1m[36m[ o.h.o.a.Application ][39m[22m Started Application in 6.569 seconds (process running for 8.845)
+2024-09-10 19:10:49 [32mINFO [39m [36m main[39m [1m[36m[ o.h.o.a.Application ][39m[22m openrouteservice
+  {"build_date":"2024-03-21T13:55:54Z","version":"8.0.0"}
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.ORSGraphHopper ][39m[22m call cleanUp for '/home/ors/./graphs/car'
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.ORSGraphHopper ][39m[22m graph CH|car_ors|RAM_STORE|3D|turn_cost|7,20,5,4,5,
+  details:edges:921(1MB), nodes:738(1MB), name:(2MB), geo:5 044(1MB),
+  bounds:7.4071209,7.439278,43.7234113,43.7519628,0.0,0.0, shortcuts:0 (1MB), nodesCH:-1 (1MB), shortcuts:0 (1MB),
+  nodesCH:-1 (1MB), shortcuts:0 (1MB), nodesCH:-1 (1MB)
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.ORSGraphHopper ][39m[22m nodes: 738, edges: 921
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.ORSGraphHopper ][39m[22m Bridge interpolation 0s, tunnel interpolation 0s,
+  ferry interpolation 0s
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.c.CorePreparationHandler ][39m[22m Creating CH preparations, totalMB:1024,
+  usedMB:441
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.c.CorePreparationHandler ][39m[22m 1/2 calling CH prepare.doWork for profile
+  'car_ors_fastest_with_turn_costs' EDGE_BASED ... (totalMB:1024, usedMB:441)
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.c.CorePreparationHandler ][39m[22m 2/2 calling CH prepare.doWork for profile
+  'car_ors_shortest_with_turn_costs' EDGE_BASED ... (totalMB:1024, usedMB:441)
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m Creating Core graph, totalMB:1024,
+  usedMB:441
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m Building Core graph, totalMB:1024,
+  usedMB:441
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m Finished building Core graph,
+  took: 0.012413615s, totalMB:1024, usedMB:442
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m Building initial queue of nodes to
+  be contracted: 738 nodes, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m Finished building queue, took:
+  0.006218293s, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 695, shortcuts: 0,
+  updates: 0, checked-nodes: 0, t(total): 0.03, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.03, dijkstra-ratio: 0.50%, meanDegree: 1.25, dijkstras: 1 639, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 661, shortcuts: 0,
+  updates: 0, checked-nodes: 35, t(total): 0.04, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.03, dijkstra-ratio: 0.44%, meanDegree: 1.00, dijkstras: 1 639, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 627, shortcuts: 0,
+  updates: 0, checked-nodes: 70, t(total): 0.04, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.03, dijkstra-ratio: 0.43%, meanDegree: 1.00, dijkstras: 1 639, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 594, shortcuts: 1,
+  updates: 0, checked-nodes: 105, t(total): 0.05, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.03, dijkstra-ratio: 2.81%, meanDegree: 1.60, dijkstras: 1 683, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 567, shortcuts: 2,
+  updates: 0, checked-nodes: 140, t(total): 0.05, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.03, dijkstra-ratio: 3.97%, meanDegree: 1.77, dijkstras: 1 791, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 540, shortcuts: 8,
+  updates: 0, checked-nodes: 175, t(total): 0.05, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.03, dijkstra-ratio: 4.62%, meanDegree: 1.74, dijkstras: 1 881, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 516, shortcuts: 27,
+  updates: 0, checked-nodes: 210, t(total): 0.05, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 5.97%, meanDegree: 1.70, dijkstras: 1 999, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 482, shortcuts: 29,
+  updates: 0, checked-nodes: 245, t(total): 0.06, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 5.87%, meanDegree: 0.75, dijkstras: 2 005, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 452, shortcuts: 37,
+  updates: 0, checked-nodes: 280, t(total): 0.06, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 6.96%, meanDegree: 1.00, dijkstras: 2 076, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 423, shortcuts: 39,
+  updates: 0, checked-nodes: 315, t(total): 0.06, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 7.24%, meanDegree: 1.00, dijkstras: 2 138, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 393, shortcuts: 49,
+  updates: 0, checked-nodes: 350, t(total): 0.06, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 7.45%, meanDegree: 1.35, dijkstras: 2 219, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 374, shortcuts: 50,
+  updates: 0, checked-nodes: 385, t(total): 0.06, t(period): 0.01, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 7.80%, meanDegree: 1.62, dijkstras: 2 324, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 360, shortcuts: 59,
+  updates: 0, checked-nodes: 420, t(total): 0.06, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 8.04%, meanDegree: 1.55, dijkstras: 2 413, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 344, shortcuts: 68,
+  updates: 0, checked-nodes: 455, t(total): 0.06, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 8.24%, meanDegree: 1.21, dijkstras: 2 496, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 328, shortcuts: 79,
+  updates: 0, checked-nodes: 490, t(total): 0.07, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 8.64%, meanDegree: 1.54, dijkstras: 2 593, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 304, shortcuts: 103,
+  updates: 0, checked-nodes: 525, t(total): 0.07, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 9.10%, meanDegree: 1.42, dijkstras: 2 720, mem: 0MB, totalMB:1024, usedMB:443
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 283, shortcuts: 127,
+  updates: 0, checked-nodes: 560, t(total): 0.07, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 9.48%, meanDegree: 1.82, dijkstras: 2 843, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 257, shortcuts: 148,
+  updates: 0, checked-nodes: 595, t(total): 0.07, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.04, dijkstra-ratio: 9.98%, meanDegree: 1.43, dijkstras: 2 972, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 235, shortcuts: 183,
+  updates: 0, checked-nodes: 630, t(total): 0.07, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.05, dijkstra-ratio: 10.33%, meanDegree: 1.33, dijkstras: 3 099, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 214, shortcuts: 224,
+  updates: 0, checked-nodes: 665, t(total): 0.07, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.05, dijkstra-ratio: 10.72%, meanDegree: 2.13, dijkstras: 3 230, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 192, shortcuts: 261,
+  updates: 0, checked-nodes: 700, t(total): 0.08, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.05, dijkstra-ratio: 11.74%, meanDegree: 1.78, dijkstras: 3 403, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 172, shortcuts: 289,
+  updates: 0, checked-nodes: 735, t(total): 0.08, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.02,
+  t(other) : 0.05, dijkstra-ratio: 12.42%, meanDegree: 1.95, dijkstras: 3 537, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 151, shortcuts: 332,
+  updates: 0, checked-nodes: 770, t(total): 0.08, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.02,
+  t(other) : 0.05, dijkstra-ratio: 12.67%, meanDegree: 2.47, dijkstras: 3 713, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 130, shortcuts: 393,
+  updates: 0, checked-nodes: 805, t(total): 0.08, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.02,
+  t(other) : 0.05, dijkstra-ratio: 13.37%, meanDegree: 1.78, dijkstras: 3 943, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 105, shortcuts: 438,
+  updates: 0, checked-nodes: 840, t(total): 0.08, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.02,
+  t(other) : 0.05, dijkstra-ratio: 14.11%, meanDegree: 2.35, dijkstras: 4 176, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 77, shortcuts: 491,
+  updates: 0, checked-nodes: 875, t(total): 0.08, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.02,
+  t(other) : 0.05, dijkstra-ratio: 14.47%, meanDegree: 2.19, dijkstras: 4 380, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 53, shortcuts: 562,
+  updates: 0, checked-nodes: 910, t(total): 0.08, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.02,
+  t(other) : 0.05, dijkstra-ratio: 15.14%, meanDegree: 2.63, dijkstras: 4 648, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 34, shortcuts: 642,
+  updates: 0, checked-nodes: 945, t(total): 0.09, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.02,
+  t(other) : 0.05, dijkstra-ratio: 16.02%, meanDegree: 2.71, dijkstras: 4 934, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 12, shortcuts: 753,
+  updates: 0, checked-nodes: 980, t(total): 0.09, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.02,
+  t(other) : 0.05, dijkstra-ratio: 17.78%, meanDegree: 2.68, dijkstras: 5 406, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 0, shortcuts: 974,
+  updates: 0, checked-nodes: 989, t(total): 0.09, t(period): 0.01, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.02,
+  t(other) : 0.05, dijkstra-ratio: 17.62%, meanDegree: 3.77, dijkstras: 5 612, mem: 0MB, totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m new shortcuts: 974, initSize:695,
+  limited_access|fastest|car_ors, periodic:0, lazy:100, neighbor:0, t(total): 0.09, t(period): 0.01, t(lazy): 0.01,
+  t(neighbor): 0.00, t(contr): 0.02, t(other) : 0.05, dijkstra-ratio: 17.49%, lazy-overhead: 42%, totalMB:1024,
+  usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m shortcuts that exceed maximum
+  weight: 0
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m took: 0s, graph now - num edges:
+  921, num nodes: 738, num shortcuts: 974
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m Creating Core graph,
+  totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m Building Core graph,
+  totalMB:1024, usedMB:444
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m Finished building Core graph,
+  took: 0.002837812s, totalMB:1024, usedMB:445
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m Building initial queue of nodes
+  to be contracted: 738 nodes, totalMB:1024, usedMB:445
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m Finished building queue, took:
+  0.001696671s, totalMB:1024, usedMB:445
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 695, shortcuts: 0,
+  updates: 0, checked-nodes: 0, t(total): 0.01, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 2.36%, meanDegree: 1.25, dijkstras: 1 639, mem: 0MB, totalMB:1024, usedMB:445
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 661, shortcuts: 0,
+  updates: 0, checked-nodes: 35, t(total): 0.01, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 2.07%, meanDegree: 1.00, dijkstras: 1 639, mem: 0MB, totalMB:1024, usedMB:445
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 627, shortcuts: 0,
+  updates: 0, checked-nodes: 70, t(total): 0.01, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 1.93%, meanDegree: 1.00, dijkstras: 1 639, mem: 0MB, totalMB:1024, usedMB:445
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 594, shortcuts: 1,
+  updates: 0, checked-nodes: 105, t(total): 0.01, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 3.10%, meanDegree: 1.60, dijkstras: 1 683, mem: 0MB, totalMB:1024, usedMB:445
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 567, shortcuts: 2,
+  updates: 0, checked-nodes: 140, t(total): 0.01, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 6.29%, meanDegree: 1.77, dijkstras: 1 791, mem: 0MB, totalMB:1024, usedMB:445
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 540, shortcuts: 8,
+  updates: 0, checked-nodes: 175, t(total): 0.01, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 6.26%, meanDegree: 1.74, dijkstras: 1 881, mem: 0MB, totalMB:1024, usedMB:445
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 516, shortcuts: 27,
+  updates: 0, checked-nodes: 210, t(total): 0.01, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 6.61%, meanDegree: 1.70, dijkstras: 1 999, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 482, shortcuts: 29,
+  updates: 0, checked-nodes: 245, t(total): 0.01, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 6.40%, meanDegree: 0.75, dijkstras: 2 005, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 453, shortcuts: 36,
+  updates: 0, checked-nodes: 280, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 6.63%, meanDegree: 1.00, dijkstras: 2 075, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 424, shortcuts: 38,
+  updates: 0, checked-nodes: 315, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 6.62%, meanDegree: 1.00, dijkstras: 2 137, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 394, shortcuts: 49,
+  updates: 0, checked-nodes: 350, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 6.66%, meanDegree: 1.36, dijkstras: 2 218, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 375, shortcuts: 50,
+  updates: 0, checked-nodes: 385, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 6.47%, meanDegree: 1.62, dijkstras: 2 323, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 360, shortcuts: 60,
+  updates: 0, checked-nodes: 420, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 6.57%, meanDegree: 1.35, dijkstras: 2 410, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 344, shortcuts: 68,
+  updates: 0, checked-nodes: 455, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 6.61%, meanDegree: 1.46, dijkstras: 2 493, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 328, shortcuts: 77,
+  updates: 0, checked-nodes: 490, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 7.15%, meanDegree: 1.48, dijkstras: 2 596, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 306, shortcuts: 100,
+  updates: 0, checked-nodes: 525, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 7.25%, meanDegree: 1.39, dijkstras: 2 723, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 288, shortcuts: 118,
+  updates: 0, checked-nodes: 560, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.01, dijkstra-ratio: 7.29%, meanDegree: 1.58, dijkstras: 2 840, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 260, shortcuts: 143,
+  updates: 0, checked-nodes: 595, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 7.47%, meanDegree: 1.45, dijkstras: 2 971, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 240, shortcuts: 173,
+  updates: 0, checked-nodes: 630, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 8.11%, meanDegree: 1.38, dijkstras: 3 101, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 218, shortcuts: 212,
+  updates: 0, checked-nodes: 665, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 8.06%, meanDegree: 1.46, dijkstras: 3 217, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 198, shortcuts: 248,
+  updates: 0, checked-nodes: 700, t(total): 0.02, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 8.29%, meanDegree: 2.24, dijkstras: 3 406, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 174, shortcuts: 287,
+  updates: 0, checked-nodes: 735, t(total): 0.03, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 8.60%, meanDegree: 1.74, dijkstras: 3 560, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 156, shortcuts: 323,
+  updates: 0, checked-nodes: 770, t(total): 0.03, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 8.66%, meanDegree: 2.39, dijkstras: 3 746, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 135, shortcuts: 383,
+  updates: 0, checked-nodes: 805, t(total): 0.03, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 8.94%, meanDegree: 1.68, dijkstras: 3 959, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 110, shortcuts: 425,
+  updates: 0, checked-nodes: 840, t(total): 0.03, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 9.13%, meanDegree: 2.03, dijkstras: 4 194, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 85, shortcuts: 476,
+  updates: 0, checked-nodes: 875, t(total): 0.03, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 9.28%, meanDegree: 2.27, dijkstras: 4 420, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 67, shortcuts: 539,
+  updates: 0, checked-nodes: 910, t(total): 0.03, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 9.54%, meanDegree: 2.51, dijkstras: 4 668, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 47, shortcuts: 609,
+  updates: 0, checked-nodes: 945, t(total): 0.03, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 9.77%, meanDegree: 2.37, dijkstras: 4 937, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 26, shortcuts: 703,
+  updates: 0, checked-nodes: 980, t(total): 0.03, t(period): 0.00, t(lazy): 0.00, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 10.14%, meanDegree: 2.87, dijkstras: 5 334, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 8, shortcuts: 814,
+  updates: 0, checked-nodes: 1 015, t(total): 0.03, t(period): 0.00, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.00,
+  t(other) : 0.02, dijkstra-ratio: 10.47%, meanDegree: 4.84, dijkstras: 5 980, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m edge, nodes: 0, shortcuts: 1 031,
+  updates: 0, checked-nodes: 1 020, t(total): 0.04, t(period): 0.00, t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.01,
+  t(other) : 0.02, dijkstra-ratio: 10.13%, meanDegree: 5.60, dijkstras: 6 181, mem: 0MB, totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m new shortcuts: 1 031,
+  initSize:695, limited_access|shortest|car_ors, periodic:0, lazy:100, neighbor:0, t(total): 0.04, t(period): 0.00,
+  t(lazy): 0.01, t(neighbor): 0.00, t(contr): 0.01, t(other) : 0.02, dijkstra-ratio: 9.96%, lazy-overhead: 46%,
+  totalMB:1024, usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m shortcuts that exceed maximum
+  weight: 0
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_shortest_with_turn_costs[39m [1m[36m[ o.h.o.r.g.e.c.PrepareCore ][39m[22m took: 0s, graph now - num edges:
+  921, num nodes: 738, num shortcuts: 1 031
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.c.CorePreparationHandler ][39m[22m Finished CH preparation, totalMB:1024,
+  usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler ][39m[22m Creating LM preparations, totalMB:1024,
+  usedMB:446
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.c.CoreLandmarkStorage ][39m[22m Created core node ID map for
+  car_ors_fastest_with_turn_costs_highways of size 49
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.c.CoreLandmarkStorage ][39m[22m Created core node ID map for
+  car_ors_fastest_with_turn_costs_allow_all of size 49
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.c.CoreLandmarkStorage ][39m[22m Created core node ID map for
+  car_ors_shortest_with_turn_costs_highways of size 49
+2024-09-10 19:10:50 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.c.CoreLandmarkStorage ][39m[22m Created core node ID map for
+  car_ors_shortest_with_turn_costs_allow_all of size 49
+2024-09-10 19:10:50 [32mINFO [39m [36m pool-10-thread-1[39m [1m[36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler ][39m[22m 1/4 calling LM prepare.doWork for
+  limited_access|fastest|car_ors ... (totalMB:1024, usedMB:447)
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs_highways[39m [1m[36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler ][39m[22m LM
+  car_ors_fastest_with_turn_costs_highways finished totalMB:1024, usedMB:479
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs_highways[39m [1m[36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler ][39m[22m 2/4 calling
+  LM prepare.doWork for limited_access|fastest|car_ors ... (totalMB:1024, usedMB:479)
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs_allow_all[39m [1m[36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler ][39m[22m LM
+  car_ors_fastest_with_turn_costs_allow_all finished totalMB:1024, usedMB:509
+2024-09-10 19:10:50 [32mINFO [39m [36m car_ors_fastest_with_turn_costs_allow_all[39m [1m[36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler ][39m[22m 3/4 calling
+  LM prepare.doWork for limited_access|shortest|car_ors ... (totalMB:1024, usedMB:509)
+2024-09-10 19:10:50 [33mWARN [39m [36m car_ors_shortest_with_turn_costs_highways[39m [1m[36m[ o.h.o.r.g.e.c.CoreLandmarkStorage ][39m[22m landmark 2
+  (43.7499791,7.4371146): too many weights were maxed out (5/46). Use a bigger factor than 0.050262156738281244. For
+  example use maximum_lm_weight: 4030.3547999999996 in your LM profile definition
+2024-09-10 19:10:51 [32mINFO [39m [36m car_ors_shortest_with_turn_costs_highways[39m [1m[36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler ][39m[22m LM
+  car_ors_shortest_with_turn_costs_highways finished totalMB:1024, usedMB:543
+2024-09-10 19:10:51 [32mINFO [39m [36m car_ors_shortest_with_turn_costs_highways[39m [1m[36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler ][39m[22m 4/4 calling
+  LM prepare.doWork for limited_access|shortest|car_ors ... (totalMB:1024, usedMB:543)
+2024-09-10 19:10:51 [33mWARN [39m [36m car_ors_shortest_with_turn_costs_allow_all[39m [1m[36m[ o.h.o.r.g.e.c.CoreLandmarkStorage ][39m[22m landmark 2
+  (43.7499791,7.4371146): too many weights were maxed out (5/46). Use a bigger factor than 0.050262156738281244. For
+  example use maximum_lm_weight: 4030.3547999999996 in your LM profile definition
+2024-09-10 19:10:51 [32mINFO [39m [36m car_ors_shortest_with_turn_costs_allow_all[39m [1m[36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler ][39m[22m LM
+  car_ors_shortest_with_turn_costs_allow_all finished totalMB:1024, usedMB:576
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.c.CoreLMPreparationHandler ][39m[22m Finished LM preparation, totalMB:1024,
+  usedMB:576
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.ORSGraphHopper ][39m[22m flushing graph
+  CH|car_ors|RAM_STORE|3D|turn_cost|7,20,5,4,5, details:edges:921(1MB), nodes:738(1MB), name:(2MB), geo:5 044(1MB),
+  bounds:7.4071209,7.439278,43.7234113,43.7519628,0.0,0.0, shortcuts:808 (1MB), nodesCH:738 (1MB), shortcuts:974 (1MB),
+  nodesCH:738 (1MB), shortcuts:1 031 (1MB), nodesCH:738 (1MB), totalMB:1024, usedMB:576)
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.g.e.ORSGraphHopper ][39m[22m flushed graph totalMB:1024, usedMB:595)
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.RoutingProfile ][39m[22m [1] Edges: 921 - Nodes: 738.
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.RoutingProfile ][39m[22m [1] Total time: 4.02s.
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-pl-car[39m [1m[36m[ o.h.o.r.RoutingProfile ][39m[22m [1] Finished at: 2024-09-10 19:10:51.
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m Total time: 4.071s.
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m
+  ========================================================================
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m ====> Recycling garbage...
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m Before: Total - 1024 MB, Free - 428.67 MB, Max: 2 GB,
+  Used - 595.33 MB
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m After: Total - 1024 MB, Free - 949.80 MB, Max: 2 GB,
+  Used - 74.20 MB
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m
+  ========================================================================
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m ====> Memory usage by profiles:
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m [1] 24.03 MB (32.4%)
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m Total: 24.03 MB (32.4%)
+2024-09-10 19:10:51 [32mINFO [39m [36m ORS-Init[39m [1m[36m[ o.h.o.r.RoutingProfileManager ][39m[22m
+  ========================================================================

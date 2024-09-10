@@ -2,8 +2,6 @@
     "languages": [
         "cs",
         "cs-cz",
-        "da",
-        "da-dk",
         "de",
         "de-de",
         "en",
@@ -46,8 +44,8 @@
         "zh-cn"
     ],
     "engine": {
-        "build_date": "2024-07-17T08:47:22Z",
-        "version": "8.1.1"
+        "build_date": "2024-03-21T13:55:54Z",
+        "version": "8.0.0"
     },
     "profiles": {
         "profile 1": {

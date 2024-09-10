@@ -196,11 +196,11 @@ test_that("$set_endpoints works", {
   matrix <- list(maximum_routes = 200, maximum_visited_nodes = 50000)
   isochr <- list(maximum_intervals = 1)
 
-  expect_message(ors$set_endpoints(matrix = matrix, isochrone = isochr))
-  expect_no_message(ors$set_endpoints(matrix = matrix, isochrone = isochr))
+  expect_message(ors$set_endpoints(matrix = matrix, isochrones = isochr))
+  expect_no_message(ors$set_endpoints(matrix = matrix, isochrones = isochr))
 
   expect_identical(get_endpoints(ors, "matrix"), matrix)
-  expect_identical(get_endpoints(ors, "isochrone"), isochr)
+  expect_identical(get_endpoints(ors, "isochrones"), isochr)
 
   ors$set_endpoints(matrix = list(test = 5))
   expect_identical(get_endpoints(ors, "matrix"), c(matrix, test = 5))

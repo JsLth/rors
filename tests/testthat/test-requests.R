@@ -6,7 +6,7 @@ rors_cleanup()
 # if on a tester machine, try to setup an ORS instance
 # a real tester is a machine with env variable REAL_REQUESTS="true"
 # otherwise, try to use mock tests
-if (is_mock_test()) {
+if (!is_mock_test()) {
   # if java is available, use it
   # otherwise, fall back to docker
   # if all fails, skip
@@ -24,7 +24,6 @@ if (is_mock_test()) {
     )
   }
 
-  #ors$set_port(8002)
   ors$up()
 } else {
   # set up a mock instance
@@ -84,7 +83,38 @@ with_mock_dir("directions", {
   })
 
   describe("ors_inspect()", {
+  })
 
+  describe("ors_accessibility()", {
+    it("can compute isochrones in the right order", {
+      res <- ors_accessibility(src)
+      expect_s3_class(res, "sf")
+      expect_equal(unique(table(res$group_index)), 2)
+      expect_equal(unique(res$value), c(300, 200))
+    })
+
+    it("can compute and format intersections", {
+      res <- ors_accessibility(src, intersections = TRUE)
+      expect_s3_class(res, "sf")
+      expect_named(res, c("a_index", "b_index", "a_range", "b_range", "geometry"))
+    })
+
+    it("can rasterize isochrones", {
+      skip_if_not_installed("terra")
+      res <- ors_accessibility(src, rasterize = TRUE, raster_resolution = c(10, 10))
+      expect_s4_class(res, "SpatRaster")
+      expect_equal(terra::ncol(res), 10)
+      expect_equal(terra::nrow(res), 10)
+      with_mocked_bindings(
+        loadable = function(...) FALSE,
+        expect_no_request(expect_error(
+          ors_accessibility(src, rasterize = TRUE),
+          class = "ors_loadable_error"
+        ))
+      )
+
+
+    })
   })
 })
 

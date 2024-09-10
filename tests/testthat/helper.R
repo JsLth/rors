@@ -78,6 +78,7 @@ with_ors_instance <- function(code,
 make_test_ors <- function(ors) {
   ors$set_port()
   ors$set_extract(file = test_pbf())
+  ors$set_endpoints(isochrones = list(maximum_intervals = 2, maximum_locations = 3))
   if (inherits(ors, "ORSDocker")) {
     ors$set_name(paste0("test-rors-", cli::hash_obj_md5(sample(1:1000, 1))))
   }

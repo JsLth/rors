@@ -36,7 +36,7 @@ test_that("ors_status() formats correctly", {
   app <- webfakes::new_app()
   app$get("/ors/v2/health", function(req, res) res$send_json(list(status = "ready")))
   app$get("/ors/v2/status", function(req, res) {
-    path <- test_path("fixtures/status.json")
+    path <- testthat::test_path("fixtures/status.json")
     status <- jsonlite::read_json(path, simplifyVector = TRUE)
     res$send_json(status)
   })
@@ -70,4 +70,11 @@ test_that("cache recovery works", {
 test_that("logs are split correctly", {
   logs <- readChar(test_path("fixtures/testlog.txt"), 10012)
   expect_length(split_by_log_entry(logs), 77)
+})
+
+
+test_that("errors in ors startup are caught", {
+  logs <- readChar(test_path("fixtures/testlog_startup.txt"), 59765)
+  errors <- extract_setup_condition(split_by_log_entry(logs), "ERROR")
+  expect_length(errors, 5)
 })
