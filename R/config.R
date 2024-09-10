@@ -57,8 +57,7 @@ yaml_handlers <- function() {
       x
     },
     numeric = function(x) {
-      intx <- as.integer(x)
-      if (all.equal(x, intx))
+      if (is_integerish(x))
         x <- as.integer(x)
       x
     },
@@ -88,8 +87,12 @@ write_config <- function(config, file = NULL) {
 
 
 write_envfile <- function(config, file = NULL) {
-  config <- unlist(config, use.names = TRUE)
-  cat(paste0(names(config), "=", config), sep = "\n", file = file)
+  config <- flatten_list(config)
+  config <- lapply(config, function(x) {
+    handler <- yaml_handlers()[[class(x)]] %||% identity
+    handler(x)
+  })
+  cat(paste0(names(config), "=", config), sep = "\n", file = file %||% "")
 }
 
 

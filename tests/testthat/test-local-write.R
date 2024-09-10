@@ -1,3 +1,14 @@
+test_that("env files are written correctly", {
+  lst <- list(
+    test1 = NULL,
+    test2 = TRUE,
+    test3 = list(test4 = 10000000)
+  )
+  env <- "test1=\ntest2=true\ntest3.test4=10000000"
+  out <- paste(capture.output(write_envfile(lst)), collapse = "\n")
+  expect_identical(out, env)
+})
+
 skip_if_offline("github.com")
 skip_on_cran()
 
