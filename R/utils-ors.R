@@ -51,7 +51,7 @@ recover_from_cache <- function(obj, force = FALSE) {
 #'
 #' @examples
 #' # initialize an ORS instance
-#' ors <- ors_instance(dry = TRUE)
+#' ors <- ors_instance(dir = tempdir(), dry = TRUE)
 #'
 #' # confirm that instance was mounted
 #' any_mounted() # TRUE

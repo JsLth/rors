@@ -97,7 +97,14 @@ process running the OpenRouteService instance. Refer to
 \subsection{Method \code{new()}}{
 Initialize the ORSJar object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSJar$new(dir, version = "8.1.1", overwrite = FALSE, verbose = TRUE, ...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSJar$new(
+  dir,
+  version = "8.1.1",
+  overwrite = FALSE,
+  dry = FALSE,
+  verbose = TRUE,
+  ...
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -118,6 +125,11 @@ The OpenRouteService version to use. Can either be a version number (e.g.
 \item{\code{overwrite}}{\code{[logical]}
 
 Whether to overwrite the current OpenRouteService directory if it exists.}
+
+\item{\code{dry}}{Whether to start a instance, i.e. initialize a \code{ORSJar}
+instance without downloading the executable. This allows you to
+manipulate config and extract files but does not allow you to interact
+with java.}
 
 \item{\code{verbose}}{\code{[logical]}
 

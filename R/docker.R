@@ -91,23 +91,15 @@
 #'
 #' @section Configuration files:
 #'
-#' In line with the
+#' Contrary to what is written in the
 #' \href{https://giscience.github.io/openrouteservice/run-instance/configuration/}{ORS documentation},
-#' \code{ORSLocal} searches for a pre-defined configuration file in the
-#' following places (in this order):
-#'
-#' \itemize{
-#'  \item{Config directory: \code{./docker/config/ors-config.yml}}
-#'  \item{R working directory: \code{{getwd()}/ors-config.yml}}
-#'  \item{ORS runtime directory: \code{./ors-config.yml}}
-#'  \item{User directory: \code{~/.openrouteservice/ors-config.yml} (Linux only)}
-#'  \item{Global directory: \code{/etc/openrouteservice/ors-config.yml} (Linux only)}
-#' }
-#'
-#' If none of these files is found, \code{ORSLocal} checks for the existence
-#' of a \code{ors-config.json} file and - if found - invokes a warning.
-#' If no configuration file is found at all, a new minimal configuration is
-#' created containing only a source file specification and one profile (car).
+#' \code{ORSLocal} does not search for a pre-defined configuration file.
+#' Instead, it explicitly creates a configuration file in the runtime directory.
+#' Configurations are passed using an .env file but changes to the
+#' configuration file are done using a .yml file due to easier reading and
+#' writing within R. Accordingly, changes made to the .env file are
+#' overwritten when `$update("fs")` is called and cannot be read using
+#' `$update("self")`. All manual changes should be made to the .yml file.
 #' Alternative configuration files can be specified by modifying the
 #' \code{ORS_CONFIG_LOCATION} option in the compose file:
 #'
@@ -116,13 +108,12 @@
 #' ors$update()
 #' }
 #'
+#' @export
+#'
 #' @examples
 #' \dontrun{
 #' # Download ORS, start docker and jumpstart a default session
-#' ors <- ors_instance("~/ex_ors")
-#'
-#' # Take down the newly created instance
-#' ors$down()
+#' ors <- ors_instance(tempdir())
 #'
 #' # Set a new extract file
 #' ors$set_extract("Rutland")
@@ -185,9 +176,6 @@
 #' # Finally, start the container again to run the newly configured service
 #' ors$start()
 #' }
-#'
-#'
-#' @export
 ORSDocker <- R6Class(
   classname = "ORSDocker",
   inherit = ORSLocal,
@@ -256,9 +244,9 @@ ORSDocker <- R6Class(
     #' Whether to overwrite the current OpenRouteService directory if it exists.
     #' @param dry \code{[logical]}
     #'
-    #' Whether to start a dry run, i.e. initialize a docker instance without
+    #' Whether to start a dry instance, i.e. initialize a docker instance without
     #' requiring docker. This allows you to manipulate config, compose file,
-    #' and extract, but does not allow you to interact with docker.
+    #' and extract but does not allow you to interact with docker.
     #' @param verbose \code{[logical]}
     #'
     #' Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
@@ -666,53 +654,6 @@ ORSDocker <- R6Class(
       self$compose <- private$.construct("compose")
       self$extract <- private$.construct("extract")
       self$config <- private$.construct("config")
-    },
-
-    .jumpstart = function() {
-      ors_cli(h1 = "Jumpstarting container")
-
-      if (private$.verbose) {
-        ors_cli(
-          cat = "line",
-          info = list(c("i" = paste(
-            "Docker will now jumpstart an initial ORS setup. This setup runs the",
-            "default config, settings, and data from Heidelberg, Germany.",
-            "It will fail for any coordinates outside of Heidelberg.",
-            "You can make changes to this setup afterwards.",
-            "This process can take a few minutes.",
-            "Jumpstarting is recommended by the ORS developer team, but you can",
-            "also start a dry run and jumpstart yourself."
-          )))
-        )
-      } else {
-        cli::cli_inform(list(c(
-          "i" = "Docker will now jumpstart an initial ORS setup.")
-        ))
-      }
-
-      proceed <- yes_no(
-        "Do you want to proceed?",
-        ask = private$.prompts,
-        dflt = TRUE
-      )
-      if (isFALSE(proceed)) return()
-
-      # For initialization, avoid overwriting existing setups by setting
-      # a random container name and port
-      self$set_name()
-      self$set_port()
-
-      self$up()
-      self$update("self")
-
-      ors_cli(
-        cat = "line",
-        info = list(c("i" = paste(
-          "If you wish to make changes to the existing setup,",
-          "run {.code $down()}, or {.code $stop()} and make the",
-          "required changes manually."
-        )))
-      )
     }
   )
 )

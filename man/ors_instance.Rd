@@ -30,8 +30,8 @@ The type of application to set up. Can be one of \code{"docker"} (default),
 \code{"jar"}, or \code{"war"}. Docker instances are the most versatile but
 also the most complex. Docker instances require Docker to be installed and
 accessible (relevant for Linux users). JAR instances require JDK >= 17 to
-be installed. WAR instances require Tomcat 10 to be installed. Both JAR
-and WAR instances are controlled using an external process and are thus
+be installed. WAR instances require Tomcat 10 to be installed. JAR
+instances are controlled using an external process and are thus
 bound to the R session. If the session dies, so do the OpenRouteService
 servers. Docker containers, conversely, are not bound to the R session.
 When using Docker Desktop (on Windows) and starting the Docker daemon from
@@ -86,11 +86,9 @@ the mounted instance.
 }
 
 \examples{
-\dontrun{
-dir <- dir.create("~/test_ors")
-
+\donttest{
 # Download and furnish an ORS instance
-ors_instance(dir = dir, version = "7.2.0")
+ors_instance(dir = tempdir(), version = "8.0.0")
 
 # Connect to the public API
 ors_instance(server = "public")
@@ -103,5 +101,4 @@ ors_instance(server = "public")
 # `dir` argument.
 ors_instance(server = "https://127.0.0.1:8001/")
 }
-
 }

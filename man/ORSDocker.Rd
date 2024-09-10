@@ -101,23 +101,15 @@ To read changes done manually to the files on disk, run
 \section{Configuration files}{
 
 
-In line with the
+Contrary to what is written in the
 \href{https://giscience.github.io/openrouteservice/run-instance/configuration/}{ORS documentation},
-\code{ORSLocal} searches for a pre-defined configuration file in the
-following places (in this order):
-
-\itemize{
-\item{Config directory: \code{./docker/config/ors-config.yml}}
-\item{R working directory: \code{{getwd()}/ors-config.yml}}
-\item{ORS runtime directory: \code{./ors-config.yml}}
-\item{User directory: \code{~/.openrouteservice/ors-config.yml} (Linux only)}
-\item{Global directory: \code{/etc/openrouteservice/ors-config.yml} (Linux only)}
-}
-
-If none of these files is found, \code{ORSLocal} checks for the existence
-of a \code{ors-config.json} file and - if found - invokes a warning.
-If no configuration file is found at all, a new minimal configuration is
-created containing only a source file specification and one profile (car).
+\code{ORSLocal} does not search for a pre-defined configuration file.
+Instead, it explicitly creates a configuration file in the runtime directory.
+Configurations are passed using an .env file but changes to the
+configuration file are done using a .yml file due to easier reading and
+writing within R. Accordingly, changes made to the .env file are
+overwritten when \verb{$update("fs")} is called and cannot be read using
+\verb{$update("self")}. All manual changes should be made to the .yml file.
 Alternative configuration files can be specified by modifying the
 \code{ORS_CONFIG_LOCATION} option in the compose file:
 
@@ -130,10 +122,7 @@ ors$update()
 \examples{
 \dontrun{
 # Download ORS, start docker and jumpstart a default session
-ors <- ors_instance("~/ex_ors")
-
-# Take down the newly created instance
-ors$down()
+ors <- ors_instance(tempdir())
 
 # Set a new extract file
 ors$set_extract("Rutland")
@@ -196,8 +185,6 @@ ors$set_graphbuilding(TRUE)
 # Finally, start the container again to run the newly configured service
 ors$start()
 }
-
-
 }
 \section{Super classes}{
 \code{\link[rors:ORSInstance]{rors::ORSInstance}} -> \code{\link[rors:ORSLocal]{rors::ORSLocal}} -> \code{ORSDocker}
@@ -323,9 +310,9 @@ Whether to overwrite the current OpenRouteService directory if it exists.}
 
 \item{\code{dry}}{\code{[logical]}
 
-Whether to start a dry run, i.e. initialize a docker instance without
+Whether to start a dry instance, i.e. initialize a docker instance without
 requiring docker. This allows you to manipulate config, compose file,
-and extract, but does not allow you to interact with docker.}
+and extract but does not allow you to interact with docker.}
 
 \item{\code{verbose}}{\code{[logical]}
 

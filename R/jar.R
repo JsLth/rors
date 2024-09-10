@@ -73,6 +73,10 @@ ORSJar <- R6Class(
     #' @param overwrite \code{[logical]}
     #'
     #' Whether to overwrite the current OpenRouteService directory if it exists.
+    #' @param dry Whether to start a instance, i.e. initialize a \code{ORSJar}
+    #' instance without downloading the executable. This allows you to
+    #' manipulate config and extract files but does not allow you to interact
+    #' with java.
     #' @param verbose \code{[logical]}
     #'
     #' Level of verbosity. If \code{TRUE}, shows informative warnings and messages,
