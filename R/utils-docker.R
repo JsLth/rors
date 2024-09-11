@@ -152,13 +152,6 @@ container_running <- function(name) {
 }
 
 
-#' Checks if Docker is installed on the system.
-#' @noRd
-docker_installed <- function() {
-  any(as.logical(nchar(Sys.which("docker"))))
-}
-
-
 #' Checks if current user can access docker, i.e. if user is included in
 #' the docker group
 #' @noRd
@@ -174,7 +167,7 @@ has_docker_access <- function() {
 #' Checks if Docker is reachable and running
 #' @noRd
 docker_running <- function() {
-  if (!docker_installed()) return(FALSE)
+  if (!has_util("docker")) return(FALSE)
   callr::run(
     "docker",
     "ps",
@@ -188,7 +181,7 @@ docker_running <- function() {
 #' Verifies that docker is installed
 #' @noRd
 check_docker_installation <- function() {
-  if (!docker_installed()) {
+  if (!has_util("docker")) {
     link <- cli::style_hyperlink(
       text = "Docker",
       url = "https://docs.docker.com/get-docker/"

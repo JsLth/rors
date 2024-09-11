@@ -1,13 +1,13 @@
 test_that("properly stops without java", {
   expect_error(with_mocked_bindings(
-    run = function(...) stop(),
-    .package = "callr",
+    has_util = function(...) FALSE,
     get_java_version(FALSE)
   ), class = "ors_java_missing_error")
 })
 
 skip_on_cran()
 skip_if_not(has_valid_java(), "java unavailable")
+skip_if_offline("github.com")
 
 ors <- local_ors_instance(type = "jar", verbose = FALSE)
 

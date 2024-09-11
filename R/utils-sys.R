@@ -113,3 +113,8 @@ is_root <- function() {
     TRUE
   }
 }
+
+
+has_util <- function(util) {
+  any(as.logical(nchar(Sys.which(util))))
+}

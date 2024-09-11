@@ -279,17 +279,16 @@ ORSJar <- R6Class(
 
 
 get_java_version <- function(verbose) {
-  version <- tryCatch(
-    callr::run("java", "-version", error_on_status = TRUE),
-    error = function(e) {
-      url <- "https://www.oracle.com/de/java/technologies/downloads/"
-      msg <- c(
-        "!" = "JDK required but not found.",
-        "i" = "Download JDK from {.url {url}}."
-      )
-      abort(msg, class = "java_missing_error", call = NULL)
-    }
-  )
+  if (!has_util("java")) {
+    url <- "https://www.oracle.com/de/java/technologies/downloads/"
+    msg <- c(
+      "!" = "JDK required but not found.",
+      "i" = "Download JDK from {.url {url}}."
+    )
+    abort(msg, class = "java_missing_error", call = NULL)
+  }
+
+  version <- callr::run("java", "-version", error_on_status = TRUE)
 
   # only show java message once per session
   if (!isTRUE(get0("java_msg", envir = ors_cache))) {
