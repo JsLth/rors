@@ -69,7 +69,7 @@ ORSJar <- R6Class(
     #' @param version \code{[character]}
     #'
     #' The OpenRouteService version to use. Can either be a version number (e.g.
-    #' 8.1.1) or \code{"master"}.
+    #' 8.1.1) or \code{"master"}. Defaults to the most recent supported version.
     #' @param overwrite \code{[logical]}
     #'
     #' Whether to overwrite the current OpenRouteService directory if it exists.
@@ -85,11 +85,12 @@ ORSJar <- R6Class(
     #' spinners, progress bars and system notifications.
     #' @param ... Not used.
     initialize = function(dir,
-                          version = "8.1.1",
+                          version = NULL,
                           overwrite = FALSE,
                           dry = FALSE,
                           verbose = TRUE,
                           ...) {
+      version <- version %||% ORS_VERSION
       check_jdk_version(verbose)
       dir <- get_ors_release(dir, version, file = "jar", overwrite, verbose)
 

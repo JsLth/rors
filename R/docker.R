@@ -238,7 +238,7 @@ ORSDocker <- R6Class(
     #' @param version \code{[character]}
     #'
     #' The OpenRouteService version to use. Can either be a version number (e.g.
-    #' 8.1.1) or \code{"master"}.
+    #' 8.1.1) or \code{"master"}. Defaults to the most recent supported version.
     #' @param overwrite \code{[logical]}
     #'
     #' Whether to overwrite the current OpenRouteService directory if it exists.
@@ -257,12 +257,14 @@ ORSDocker <- R6Class(
     #' \code{TRUE} in interactive sessions.
     #' @param ... Not used.
     initialize = function(dir = ".",
-                          version = "8.1.1",
+                          version = NULL,
                           overwrite = FALSE,
                           dry = FALSE,
                           verbose = TRUE,
                           prompts = interactive(),
                           ...) {
+      version <- version %||% ORS_VERSION
+
       assert_that(assertthat::is.dir(dir), add = paste(
         "The {.var dir} argument is expected to be a valid path to store",
         "the OpenRouteService source code in."
@@ -272,6 +274,7 @@ ORSDocker <- R6Class(
         assertthat::is.string(version),
         is_true_or_false(overwrite),
         is_true_or_false(dry),
+        is_string(version),
         is_true_or_false(verbose),
         is_true_or_false(prompts)
       )

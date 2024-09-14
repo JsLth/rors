@@ -56,3 +56,5 @@
 ## usethis namespace: start
 ## usethis namespace: end
 NULL
+
+ORS_VERSION <- "8.1.3"

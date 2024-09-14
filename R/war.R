@@ -42,7 +42,7 @@ ORSWar <- R6::R6Class(
     #' @param version \code{[character]}
     #'
     #' The OpenRouteService version to use. Can either be a version number (e.g.
-    #' 8.1.1) or \code{"master"}.
+    #' 8.1.1) or \code{"master"}. Defaults to the most recent supported version.
     #' @param overwrite \code{[logical]}
     #'
     #' Whether to overwrite the current OpenRouteService directory if it exists.
@@ -52,7 +52,7 @@ ORSWar <- R6::R6Class(
     #' spinners, progress bars and system notifications.
     #' @param ... Not used.
     initialize = function(dir,
-                          version = "8.1.1",
+                          version = NULL,
                           overwrite = FALSE,
                           verbose = TRUE,
                           ...) {
@@ -61,6 +61,7 @@ ORSWar <- R6::R6Class(
         "If you want to contribute, consider creating a pull request here: https://github.com/jslth/rors"
       ), class = "war_defunct_error")
 
+      version <- version %||% ORS_VERSION
       check_tomcat(verbose)
       get_ors_release(dir, version, file = "war", overwrite, verbose)
 

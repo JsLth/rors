@@ -60,7 +60,7 @@ vignette("ors-installation", package = "rors")
 \subsection{Method \code{new()}}{
 Initialize the ORSWar object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ORSWar$new(dir, version = "8.1.1", overwrite = FALSE, verbose = TRUE, ...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ORSWar$new(dir, version = NULL, overwrite = FALSE, verbose = TRUE, ...)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -76,7 +76,7 @@ Ignored if \code{server} is not \code{NULL}.}
 \item{\code{version}}{\code{[character]}
 
 The OpenRouteService version to use. Can either be a version number (e.g.
-8.1.1) or \code{"master"}.}
+8.1.1) or \code{"master"}. Defaults to the most recent supported version.}
 
 \item{\code{overwrite}}{\code{[logical]}
 

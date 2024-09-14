@@ -280,7 +280,7 @@ Initialize the ORSDocker object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDocker$new(
   dir = ".",
-  version = "8.1.1",
+  version = NULL,
   overwrite = FALSE,
   dry = FALSE,
   verbose = TRUE,
@@ -302,7 +302,7 @@ Ignored if \code{server} is not \code{NULL}.}
 \item{\code{version}}{\code{[character]}
 
 The OpenRouteService version to use. Can either be a version number (e.g.
-8.1.1) or \code{"master"}.}
+8.1.1) or \code{"master"}. Defaults to the most recent supported version.}
 
 \item{\code{overwrite}}{\code{[logical]}
 
