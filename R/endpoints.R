@@ -5,7 +5,7 @@ perform_call <- function(req) {
   })
 
   if (isTRUE(getOption("rors_echo"))) {
-    message(capture.output(req))
+    message(utils::capture.output(req))
   }
 
   res <- httr2::req_perform(req, verbosity = 0L)
@@ -190,7 +190,7 @@ call_ors_snap <- function(src, profile, radius, url, token, ...) {
 }
 
 
-call_ors_export <- function(bbox, profile, url, ...) {
+call_ors_export <- function(bbox, profile, url, token = NULL, ...) {
   bbox <- list(bbox[1:2], bbox[3:4])
 
   req <- httr2::request(url)
