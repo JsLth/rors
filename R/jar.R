@@ -290,13 +290,7 @@ get_java_version <- function(verbose) {
   }
 
   version <- callr::run("java", "-version", error_on_status = TRUE)
-
-  # only show java message once per session
-  if (!isTRUE(get0("java_msg", envir = ors_cache))) {
-    ors_cli(verbatim = version$stderr, cat = "line")
-    assign("java_msg", TRUE, envir = ors_cache)
-  }
-
+  cli_once("java_msg", msg = version$stderr)
   version$stderr
 }
 

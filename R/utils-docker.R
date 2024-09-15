@@ -164,6 +164,13 @@ has_docker_access <- function() {
 }
 
 
+docker_info <- function(verbose) {
+  version <- trimws(callr::run("docker", "--version")$stdout)
+  cli_once("docker_msg", msg = version, verbose = verbose)
+  invisible(version)
+}
+
+
 #' Checks if Docker is reachable and running
 #' @noRd
 docker_running <- function() {

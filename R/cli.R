@@ -60,3 +60,11 @@ ors_cli <- function(..., .envir = parent.frame()) {
 escape_cli <- function(x) {
   gsub("\\}", "}}", gsub("\\{", "{{", x))
 }
+
+
+cli_once <- function(name, msg, verbose) {
+  if (!isTRUE(get0(name, envir = ors_cache))) {
+    ors_cli(info = list(c("i" = msg)))
+    assign(name, TRUE, envir = ors_cache)
+  }
+}

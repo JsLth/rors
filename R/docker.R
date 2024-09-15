@@ -283,6 +283,7 @@ ORSDocker <- R6Class(
         check_docker_installation()
         check_docker_access()
         start_docker(verbose = verbose)
+        docker_info(verbose = verbose)
       }
 
       dir <- get_ors_release(dir, version, file = "docker", overwrite, verbose)
