@@ -33,6 +33,9 @@ reference:
       - ORSLocal
       - ORSRemote
       - ORSInstance
+      - ORSDocker
+      - ORSJar
+      - ORSWar
       - ors_profile
 
   - title: Main endpoints
