@@ -60,9 +60,10 @@ handle_ors_conditions <- function(res,
     )
 
     if (abort_on_error) {
+      code <- ifelse(!is.null(code), sprintf(" code %s", code), "")
       msg <- c(
         "!" = "ORS encountered the following exception:",
-        sprintf("Error code %s: %s", code, msg)
+        sprintf("Error%s: %s", code, msg)
       )
       abort(msg, call = NULL, class = "api_error")
     }

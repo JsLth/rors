@@ -1,11 +1,11 @@
 perform_call <- function(req) {
   req <- httr2::req_user_agent(req, "https://github.com/jslth/rors")
-  req <- httr2::req_error(req, is_error = function(resp) {
-    FALSE
+  req <- httr2::req_error(req, is_error = function(x) {
+    !x$status_code %in% c(200, 401)
   })
 
   if (isTRUE(getOption("rors_echo"))) {
-    httr2::req_dry_run(req)
+    message(capture.output(req))
   }
 
   res <- httr2::req_perform(req, verbosity = 0L)
@@ -43,16 +43,7 @@ call_ors_directions <- function(src,
   }
   format <- ifelse(geometry, "geojson", "json")
   req <- httr2::req_template(req, "POST v2/directions/{profile}/{format}")
-
-  req <- httr2::req_headers(
-    req,
-    Accept = paste(
-      "application/json, application/geo+json,",
-      "application/gpx+xml, img/png; charset=utf-8"
-    ),
-    Authorization = if (isTRUE(token)) get_ors_token(),
-    `Content-Type` = "application/json; charset=utf-8"
-  )
+  req <- set_headers(req, token)
 
   # Create http body of the request
   body <- c(
@@ -109,13 +100,7 @@ call_ors_matrix <- function(src,
     req <- httr2::req_url_path(req, "ors")
   }
   req <- httr2::req_template(req, "POST v2/matrix/{profile}")
-
-  req <- httr2::req_headers(
-    req,
-    Accept = "application/json; charset=utf-8",
-    Authorization = if (isTRUE(token)) get_ors_token(),
-    `Content-Type` = "application/json; charset=utf-8"
-  )
+  req <- set_headers(req, token)
 
   # Create http body of the request
   body <- list(
@@ -159,13 +144,7 @@ call_ors_isochrones <- function(src,
     req <- httr2::req_url_path(req, "ors")
   }
   req <- httr2::req_template(req, "POST v2/isochrones/{profile}/geojson")
-
-  req <- httr2::req_headers(
-    req,
-    Accept = "application/geo+json; charset=utf-8",
-    Authorization = if (isTRUE(token)) get_ors_token(),
-    `Content-Type` = "application/json; charset=utf-8"
-  )
+  req <- set_headers(req, token)
 
   body <- list(
     locations = locations,
@@ -189,8 +168,8 @@ call_ors_isochrones <- function(src,
   perform_call(req)
 }
 
-# TODO: this is now live and has slightly changed. needs to be reworked
-call_ors_snap <- function(src, profile, radius, url, ...) {
+
+call_ors_snap <- function(src, profile, radius, url, token, ...) {
   locations <- unname(split(src, seq_len(nrow(src))))
   locations <- lapply(locations, as.numeric)
 
@@ -198,12 +177,8 @@ call_ors_snap <- function(src, profile, radius, url, ...) {
   if (!is_ors_api(url)) {
     req <- httr2::req_url_path(req, "ors")
   }
-  req <- httr2::req_template(req, "POST ors/v2/snap/{profile}/json")
-  req <- httr2::req_headers(
-    req,
-    Accept = "application/json",
-    `Content-Type` = "application/json"
-  )
+  req <- httr2::req_template(req, "POST v2/snap/{profile}/json")
+  req <- set_headers(req, token)
 
   body <- list(locations = locations, radius = radius, ...)
   req <- httr2::req_body_json(req, body, digits = NA)
@@ -220,11 +195,7 @@ call_ors_export <- function(bbox, profile, url, ...) {
 
   req <- httr2::request(url)
   req <- httr2::req_template(req, "ors/v2/export/{profile}")
-  req <- httr2::req_headers(
-    req,
-    Accept = "application/geo+json",
-    `Content-Type` = "application/json"
-  )
+  req <- set_headers(req, token)
 
   body <- list(bbox = bbox, ...)
   req <- httr2::req_body_json(req, body, digits = NA)
@@ -241,4 +212,14 @@ set_rate_limits <- function(req, throttle) {
     req <- httr2::req_throttle(req, rate = throttle)
   }
   req
+}
+
+
+set_headers <- function(req, token) {
+  httr2::req_headers(
+    req,
+    Accept = "application/json, application/geo+json,",
+    Authorization = if (isTRUE(token)) get_ors_token(),
+    `Content-Type` = "application/json; charset=utf-8"
+  )
 }

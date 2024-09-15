@@ -48,7 +48,14 @@ ors_snap <- function(src,
   src <- prepare_input(src)
 
   ts <- timestamp()
-  res <- call_ors_snap(src, profile, radius, url, ...)
+  res <- call_ors_snap(
+    src,
+    profile,
+    radius,
+    url,
+    token = needs_token(instance$token),
+    ...
+  )
   handle_ors_conditions(res, ts, abort_on_error = TRUE, warn_on_warning = TRUE)
 
   meta <- res$metadata
