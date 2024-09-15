@@ -1,87 +1,37 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://jslth.github.io/rors/404.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/articles/ors-installation.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/index.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ORSInstance.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ORSLocal.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ORSRemote.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/get_closest_pois.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/get_extract_boundaries.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/get_instance.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/last_ors_conditions.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ors_accessibility.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ors_export.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ors_guess.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ors_inspect.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ors_instance.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ors_matrix.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ors_pairwise.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ors_profile.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ors_sample.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/ors_snap.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/pharma.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/plot_section.html</loc>
-  </url>
-  <url>
-    <loc>https://jslth.github.io/rors/reference/rors-package.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://jslth.github.io/rors/404.html</loc></url>
+<url><loc>https://jslth.github.io/rors/LICENSE-text.html</loc></url>
+<url><loc>https://jslth.github.io/rors/LICENSE.html</loc></url>
+<url><loc>https://jslth.github.io/rors/articles/index.html</loc></url>
+<url><loc>https://jslth.github.io/rors/articles/ors-installation.html</loc></url>
+<url><loc>https://jslth.github.io/rors/authors.html</loc></url>
+<url><loc>https://jslth.github.io/rors/index.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ORSDocker.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ORSInstance.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ORSJar.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ORSLocal.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ORSRemote.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ORSWar.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/country_info.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/get_extract_boundaries.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/get_instance.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/group_by_proximity.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/index.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/last_ors_conditions.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ors_accessibility.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ors_export.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ors_guess.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ors_inspect.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ors_instance.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ors_matrix.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ors_pairwise.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ors_params.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ors_profile.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ors_sample.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/ors_snap.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/param_info.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/pharma.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/plot_section.html</loc></url>
+<url><loc>https://jslth.github.io/rors/reference/rors-package.html</loc></url>
 </urlset>
+
