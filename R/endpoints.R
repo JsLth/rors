@@ -195,6 +195,9 @@ call_ors_snap <- function(src, profile, radius, url, ...) {
   locations <- lapply(locations, as.numeric)
 
   req <- httr2::request(url)
+  if (!is_ors_api(url)) {
+    req <- httr2::req_url_path(req, "ors")
+  }
   req <- httr2::req_template(req, "POST ors/v2/snap/{profile}/json")
   req <- httr2::req_headers(
     req,
