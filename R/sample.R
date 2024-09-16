@@ -77,6 +77,10 @@ ors_sample <- function(size,
 
 
 #' @rdname ors_sample
+#' @param verbose \code{[logical]}
+#'
+#' If \code{TRUE}, prints a loading spinner.
+#' @inheritParams ors_pairwise
 #' @export
 get_extract_boundaries <- function(instance = NULL,
                                    force = FALSE,
