@@ -116,33 +116,23 @@ because a point can be a closest point to multiple rows in <code>src</code>.</p>
 <span class="r-in"><span><span class="va">dst</span> <span class="op">&lt;-</span> <span class="va">pharma</span><span class="op">[</span><span class="fl">5</span><span class="op">:</span><span class="fl">8</span>, <span class="op">]</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># group by n nearest points</span></span></span>
-<span class="r-in"><span><span class="fu">group_by_proximity</span><span class="op">(</span><span class="va">src</span>, <span class="va">dst</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span><span style="color: #BBBB00;">!</span> Argument `n` is greater than the number of items in `dst`</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> `n` changed to `length(dst)`.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 16 features and 1 field</span>
+<span class="r-in"><span><span class="fu">group_by_proximity</span><span class="op">(</span><span class="va">src</span>, <span class="va">dst</span>, n <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 8 features and 1 field</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: POINT</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: -0.7303072 ymin: 52.6507 xmax: -0.4677719 ymax: 52.66998</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: -0.7303072 ymin: 52.6507 xmax: -0.4780519 ymax: 52.66998</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Geodetic CRS:  WGS 84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 16 × 2</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    .group              geometry</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;POINT [°]&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>      1 (-0.7303072 52.66998)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>      1  (-0.4783052 52.6507)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>      1 (-0.4780519 52.65265)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>      1 (-0.4677719 52.65619)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>      2 (-0.7303072 52.66998)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>      2 (-0.4780519 52.65265)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>      2  (-0.4783052 52.6507)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>      2 (-0.4677719 52.65619)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>      3 (-0.7303072 52.66998)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>      3 (-0.4780519 52.65265)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span>      3  (-0.4783052 52.6507)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span>      3 (-0.4677719 52.65619)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span>      4 (-0.7303072 52.66998)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">14</span>      4  (-0.4783052 52.6507)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">15</span>      4 (-0.4780519 52.65265)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">16</span>      4 (-0.4677719 52.65619)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 8 × 2</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .group              geometry</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;POINT [°]&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1 (-0.7303072 52.66998)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1  (-0.4783052 52.6507)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      2 (-0.7303072 52.66998)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      2 (-0.4780519 52.65265)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>      3 (-0.7303072 52.66998)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>      3 (-0.4780519 52.65265)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span>      4 (-0.7303072 52.66998)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">8</span>      4  (-0.4783052 52.6507)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># group by distance threshold</span></span></span>
 <span class="r-in"><span><span class="fu">group_by_proximity</span><span class="op">(</span><span class="va">src</span>, <span class="va">dst</span>, radius <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span></span>
@@ -158,9 +148,7 @@ because a point can be a closest point to multiple rows in <code>src</code>.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      3 (-0.7303072 52.66998)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># group by distance and then by nearest points</span></span></span>
-<span class="r-in"><span><span class="fu">group_by_proximity</span><span class="op">(</span><span class="va">src</span>, <span class="va">dst</span>, n <span class="op">=</span> <span class="fl">5</span>, radius <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span><span style="color: #BBBB00;">!</span> Argument `n` is greater than the number of items in `dst`</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> `n` changed to `length(dst)`.</span>
+<span class="r-in"><span><span class="fu">group_by_proximity</span><span class="op">(</span><span class="va">src</span>, <span class="va">dst</span>, n <span class="op">=</span> <span class="fl">2</span>, radius <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span><span style="color: #BBBB00;">!</span> Argument `n` is greater than the number of items in `dst`</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> `n` changed to `length(dst)`.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span><span style="color: #BBBB00;">!</span> Argument `n` is greater than the number of items in `dst`</span>
