@@ -82,11 +82,24 @@ Defaults to <code>FALSE</code> to increase speed. Set this to <code>TRUE</code> 
 extract has changed and a new one needs to be loaded.</p></dd>
 
 
+<dt id="arg-instance">instance<a class="anchor" aria-label="anchor" href="#arg-instance"></a></dt>
+<dd><p><code>[ors_instance]</code></p>
+<p>Object of an OpenRouteService instance that should be used for route
+computations. It is recommended to use <code><a href="ors_instance.html">ors_instance</a></code>
+to set an instance globally. This argument should only be used if activating
+an instance globally is not feasible.</p></dd>
+
+
 <dt id="arg-poly">poly<a class="anchor" aria-label="anchor" href="#arg-poly"></a></dt>
 <dd><p><code>[sf/sfc]</code></p>
 <p>Boundary polygon used to sample points. If <code>NULL</code>, the default, boundary
 polygons are extracted from the current instance as set by
 <code><a href="ors_instance.html">ors_instance</a></code>.</p></dd>
+
+
+<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
+<dd><p><code>[logical]</code></p>
+<p>If <code>TRUE</code>, prints a loading spinner.</p></dd>
 
 </dl></div>
     <div class="section level2">
