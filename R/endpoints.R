@@ -6,7 +6,7 @@ perform_call <- function(req) {
   })
 
   if (isTRUE(getOption("rors_echo"))) {
-    message(utils::capture.output(req))
+    cli::cli_verbatim(utils::capture.output(req))
   }
 
   res <- httr2::req_perform(req, verbosity = 0L)
