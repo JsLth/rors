@@ -18,9 +18,7 @@ call to one of the ORS endpoints.
 }
 \examples{
 \dontrun{
-library(sf)
-
-ors_pairwise(pharma, st_geometry(pharma) + 100)
+ors_pairwise(pharma, sf::st_geometry(pharma) + 100)
 last_ors_conditions()
 }
 }

@@ -2,16 +2,19 @@
 % Please edit documentation in R/sample.R
 \name{ors_sample}
 \alias{ors_sample}
+\alias{get_extract_boundaries}
 \title{ORS-based sampling}
 \usage{
 ors_sample(
   size,
   ...,
-  force_new_extract = FALSE,
+  force = FALSE,
   instance = NULL,
   poly = NULL,
   verbose = TRUE
 )
+
+get_extract_boundaries(instance = NULL, force = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{size}{\code{[integer]}
@@ -20,42 +23,60 @@ Number of points to be sampled.}
 
 \item{...}{Passed to \code{\link[sf]{st_sample}}.}
 
-\item{force_new_extract}{\code{[logical]}
-
-If \code{TRUE}, forces the cached extract geometries to be overwritten.
-Defaults to \code{FALSE} to increase speed. Set this to \code{TRUE} if the
-extract has changed and a new one needs to be loaded.}
-
-\item{instance}{\code{[ors_instance]}
-
-Object of an OpenRouteService instance that should be used for route
-computations. It is recommended to use \code{\link{ors_instance}}
-to set an instance globally. This argument should only be used if activating
-an instance globally is not feasible.}
-
 \item{poly}{\code{[sf/sfc]}
 
 Boundary polygon used to sample points. If \code{NULL}, the default, boundary
 polygons are extracted from the current instance as set by
 \code{\link{ors_instance}}.}
 
-\item{verbose}{\code{[logical]}
+\item{force_new_extract}{\code{[logical]}
 
-If \code{TRUE}, prints a loading spinner.}
+If \code{TRUE}, forces the cached extract geometries to be overwritten.
+Defaults to \code{FALSE} to increase speed. Set this to \code{TRUE} if the
+extract has changed and a new one needs to be loaded.}
 }
 \value{
-\code{sfc} object containing the sampled \code{POINT} geometries
+\code{ors_sample} returns an \code{sfc} object containing the
+sampled \code{POINT} geometries. \code{get_extract_boundaries} returns an
+\code{sfc} object of the currently mounted extract boundaries.
 }
 \description{
 Sample point geometries within the boundaries of the running
-ORS extract.
-
-If the mounted instance is not local, the running ORS extract cannot be
-identified. In this case, a random bounding box is generated. See
-\code{\link{get_extract_boundaries}} for details.
+ORS extract. This function works by reading in the mounted extract file and
+can thus only be run with a local instance.
 }
 \details{
 The function vectortranslates the extract file to an \code{sf} object.
 Depending on the file, this can take a while. The unionized boundaries are
 then cached making subsequent function calls a lot faster.
+
+If \code{instance} is not local, it is more difficult to derive the
+extract boundaries. There is thus far no way of accessing an OSM extract file
+knowing only the server address. We can, however, make use of some
+heuristics: \code{\link{ors_export}} can export the built graphs from an ORS
+server if it allows it. However, it does not work on the public API and it
+requires knowledge about the approximate area of an extract.
+\code{\link{ors_guess}} can make an approximation of an extract area. It
+accesses the snap endpoint which also does not work on the public API and
+needs to be enabled on other servers. \code{ors_guess} can make a lot of
+requests and might not be feasible in many situations.
+}
+\examples{
+\dontrun{
+# ORS sampling only works with a local instance
+monaco <- system.file("setup/monaco.pbf", package = "rors")
+ors <- ors_instance()
+ors$set_extract(file = monaco)
+ors$up()
+
+# reads in boundaries of monaco pbf file
+bounds <- get_extract_boundaries()
+plot(bounds)
+
+# subsequent calls do not need to read the pbf file
+ors_sample(5)
+
+# ... except when they are forced to
+ors_sample(force = TRUE)
+}
 }

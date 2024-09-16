@@ -3,7 +3,10 @@
 #' proximity to a source dataset. Proximity can be defined through nearest
 #' neighbors (argument \code{n}) and/or a distance buffer (\code{radius}).
 #' The grouped output can be used as an input to
-#' \code{\link{ors_shortest_distances}}.
+#' \code{\link{ors_shortest_distances}}. Note that unlike other \code{rors}
+#' functions, this function is not based on routing but on linear Euclidean
+#' distances and is primarily used to pre-select points of interest and
+#' save computing time.
 #'
 #' @param dst \code{[sf]}
 #'
@@ -28,20 +31,20 @@
 #' is specified. The \code{geometry} column can contain duplicated geometries
 #' because a point can be a closest point to multiple rows in \code{src}.
 #'
+#' @export
+#'
 #' @examples
-#' \dontrun{
-#' sample <- ors_sample(20)
-#' dest <- ors_sample(20)
+#' src <- pharma[1:4, ]
+#' dst <- pharma[5:8, ]
 #'
 #' # group by n nearest points
-#' get_closest_dst(sample, dest, n = 5)
+#' group_by_proximity(src, dst, n = 5)
 #'
 #' # group by distance threshold
-#' get_closest_dst(sample, dest, radius = 5000)
+#' group_by_proximity(src, dst, radius = 5000)
 #'
 #' # group by distance and then by nearest points
-#' get_closest_dst(sample, dest, n = 5, radius = 5000)}
-#' @export
+#' group_by_proximity(src, dst, n = 5, radius = 5000)
 group_by_proximity <- function(src,
                                dst,
                                n = NULL,

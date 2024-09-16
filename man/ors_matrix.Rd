@@ -58,3 +58,18 @@ returns a list containing two matrices accordingly.
 \description{
 Calls the matrix service and returns a routing distance matrix.
 }
+\examples{
+if (any_mounted() && ors_ready()) {
+  # compute distances from each row to each other row
+  ors_matrix(pharma)
+
+  # if two datasets are provided, route from each row in `src` to each row in `dst`
+  ors_matrix(pharma[1:4, ], pharma[5:8, ])
+
+  # distance matrices can be based on time or physical distance
+  ors_matrix(pharma, proximity_type = "duration")
+
+  # units can be adjusted
+  ors_matrix(pharma, units = "km")
+}
+}

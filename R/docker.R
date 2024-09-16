@@ -47,31 +47,6 @@
 #' Note that this procedure grants root-level privileges to a user and can
 #' negatively impact your system's security.
 #'
-#' @section Jumpstarting:
-#'
-#' When first initializing \code{ORSLocal} or when first creating a new
-#' directory, \code{ORSLocal} will ask you if you would like to perform a
-#' jumpstart. Jumpstarting means creating an initial Docker build that runs
-#' on default settings, config and an extract file from Heidelberg, Germany.
-#' On the initial build, Docker also creates the file system of ORS instances
-#' including a configuration file. Irrespective of your choice to jumpstart,
-#' Docker only allows one routing profile and automatically uses the
-#' default extract of Heidelberg on the initial run.
-#'
-#' By jumpstarting, \code{ORSLocal} takes over this initial build,
-#' so that subsequent builds run flawlessly without the need to manually
-#' create the file system. This is deemed good practice by the ORS developer
-#' team (refer to the
-#' \href{https://giscience.github.io/openrouteservice/run-instance/installation/running-with-docker}{ORS reference}
-#' for details).
-#'
-#' Conversely, if you choose not to jumpstart (\code{dry = TRUE}),
-#' \code{ORSLocal} does not interact with Docker until explicitly told to.
-#' The configuration and extract files as well as the rest of the file system
-#' do not exist yet. You can manually jumpstart by calling \code{$up()}.
-#' Initializing a dry instance can be useful if you need to make changes to
-#' the compose file before building ORS for the first time.
-#'
 #' @section Manual changes:
 #'
 #' \code{ORSLocal} provides a range of convenience methods to change the
