@@ -3,7 +3,7 @@ pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
   ors-installation: ors-installation.html
-last_built: 2024-09-16T19:16Z
+last_built: 2024-09-16T19:43Z
 urls:
   reference: https://jslth.github.io/rors/reference
   article: https://jslth.github.io/rors/articles
