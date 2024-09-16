@@ -34,7 +34,6 @@ Imports:
     httr2 (>= 1.0.0),
     sf
 Suggests:
-    covr,
     testthat (>= 3.0.0),
     webfakes,
     httptest2,
