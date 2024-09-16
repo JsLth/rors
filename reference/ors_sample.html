@@ -75,18 +75,18 @@ can thus only be run with a local instance.</p>
 <dd><p>Passed to <code><a href="https://r-spatial.github.io/sf/reference/st_sample.html" class="external-link">st_sample</a></code>.</p></dd>
 
 
+<dt id="arg-force">force<a class="anchor" aria-label="anchor" href="#arg-force"></a></dt>
+<dd><p><code>[logical]</code></p>
+<p>If <code>TRUE</code>, forces the cached extract geometries to be overwritten.
+Defaults to <code>FALSE</code> to increase speed. Set this to <code>TRUE</code> if the
+extract has changed and a new one needs to be loaded.</p></dd>
+
+
 <dt id="arg-poly">poly<a class="anchor" aria-label="anchor" href="#arg-poly"></a></dt>
 <dd><p><code>[sf/sfc]</code></p>
 <p>Boundary polygon used to sample points. If <code>NULL</code>, the default, boundary
 polygons are extracted from the current instance as set by
 <code><a href="ors_instance.html">ors_instance</a></code>.</p></dd>
-
-
-<dt id="arg-force-new-extract">force_new_extract<a class="anchor" aria-label="anchor" href="#arg-force-new-extract"></a></dt>
-<dd><p><code>[logical]</code></p>
-<p>If <code>TRUE</code>, forces the cached extract geometries to be overwritten.
-Defaults to <code>FALSE</code> to increase speed. Set this to <code>TRUE</code> if the
-extract has changed and a new one needs to be loaded.</p></dd>
 
 </dl></div>
     <div class="section level2">
