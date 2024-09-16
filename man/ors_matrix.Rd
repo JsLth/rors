@@ -51,9 +51,7 @@ to set an instance globally. This argument should only be used if activating
 an instance globally is not feasible.}
 }
 \value{
-If \code{length(proximity_type) == 1}, returns a
-\code{nrow(src) * nrow(dst)} routing distance matrix. Otherwise,
-returns a list containing two matrices accordingly.
+A distance matrix.
 }
 \description{
 Calls the matrix service and returns a routing distance matrix.

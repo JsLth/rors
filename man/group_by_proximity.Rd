@@ -53,11 +53,11 @@ src <- pharma[1:4, ]
 dst <- pharma[5:8, ]
 
 # group by n nearest points
-group_by_proximity(src, dst, n = 5)
+group_by_proximity(src, dst, n = 2)
 
 # group by distance threshold
 group_by_proximity(src, dst, radius = 5000)
 
 # group by distance and then by nearest points
-group_by_proximity(src, dst, n = 5, radius = 5000)
+group_by_proximity(src, dst, n = 2, radius = 5000)
 }

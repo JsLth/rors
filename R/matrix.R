@@ -5,9 +5,7 @@
 #' Destination dataset containing point geometries that should be routed to.
 #' If \code{NULL}, only routes between points in \code{src}.
 #' @inheritParams ors_pairwise
-#' @returns If \code{length(proximity_type) == 1}, returns a
-#' \code{nrow(src) * nrow(dst)} routing distance matrix. Otherwise,
-#' returns a list containing two matrices accordingly.
+#' @returns A distance matrix.
 #'
 #' @export
 #'
