@@ -1,7 +1,8 @@
 perform_call <- function(req) {
   req <- httr2::req_user_agent(req, "https://github.com/jslth/rors")
   req <- httr2::req_error(req, is_error = function(x) {
-    !grepl("application/json", x$headers$`Content-Type`, fixed = TRUE)
+    type <- x$headers$`Content-Type`
+    !grepl("application/(geo+)?json", type)
   })
 
   if (isTRUE(getOption("rors_echo"))) {
