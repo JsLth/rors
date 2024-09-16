@@ -91,6 +91,7 @@ the mounted instance.
 ors_instance(dir = tempdir(), version = "8.0.0")
 
 # Connect to the public API
+Sys.setenv(ORS_TOKEN = "xxx") # a token must be set
 ors_instance(server = "public")
 
 # Connect to a local server
