@@ -148,7 +148,8 @@ ORSInstance <- R6Class(
 #' @examples
 #' \donttest{
 #' # Download and furnish an ORS instance
-#' ors_instance(dir = tempdir(), version = "8.0.0")
+#' # To execute this code, docker is required to be running
+#' try(ors_instance(dir = tempdir(), version = "8.0.0"))
 #'
 #' # Connect to the public API
 #' Sys.setenv(ORS_TOKEN = "xxx") # a token must be set
