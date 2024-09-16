@@ -7,7 +7,7 @@
 #'
 #' Number of points to be sampled.
 #' @param ... Passed to \code{\link[sf]{st_sample}}.
-#' @param force_new_extract \code{[logical]}
+#' @param force \code{[logical]}
 #'
 #' If \code{TRUE}, forces the cached extract geometries to be overwritten.
 #' Defaults to \code{FALSE} to increase speed. Set this to \code{TRUE} if the
@@ -67,7 +67,7 @@ ors_sample <- function(size,
                        verbose = TRUE) {
   assert_that(
     assertthat::is.count(size),
-    is_true_or_false(force_new_extract),
+    is_true_or_false(force),
     is_true_or_false(verbose)
   )
 
@@ -81,7 +81,7 @@ ors_sample <- function(size,
 get_extract_boundaries <- function(instance = NULL,
                                    force = FALSE,
                                    verbose = TRUE) {
-  recover_from_cache(extract_boundaries, force = force)
+  recover_from_cache("extract_boundaries", force = force)
   instance <- instance %||% get_instance()
 
   if (ors_is_local(instance)) {

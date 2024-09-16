@@ -23,17 +23,17 @@ Number of points to be sampled.}
 
 \item{...}{Passed to \code{\link[sf]{st_sample}}.}
 
+\item{force}{\code{[logical]}
+
+If \code{TRUE}, forces the cached extract geometries to be overwritten.
+Defaults to \code{FALSE} to increase speed. Set this to \code{TRUE} if the
+extract has changed and a new one needs to be loaded.}
+
 \item{poly}{\code{[sf/sfc]}
 
 Boundary polygon used to sample points. If \code{NULL}, the default, boundary
 polygons are extracted from the current instance as set by
 \code{\link{ors_instance}}.}
-
-\item{force_new_extract}{\code{[logical]}
-
-If \code{TRUE}, forces the cached extract geometries to be overwritten.
-Defaults to \code{FALSE} to increase speed. Set this to \code{TRUE} if the
-extract has changed and a new one needs to be loaded.}
 }
 \value{
 \code{ors_sample} returns an \code{sfc} object containing the

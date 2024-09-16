@@ -2,7 +2,6 @@ ors_cache <- new.env(parent = emptyenv())
 
 
 recover_from_cache <- function(obj, force = FALSE) {
-  obj <- deparse(substitute(obj))
   obj <- get0(obj, envir = ors_cache)
   if (!is.null(obj) && !force) {
     return_from_parent(obj, .envir = parent.frame())
@@ -97,7 +96,7 @@ check_instance <- function(instance = NULL) {
 #' Returns the output of `docker inspect` as parsed json
 #' @noRd
 inspect_container <- function(id = NULL) {
-  recover_from_cache(container_info)
+  recover_from_cache("container_info")
 
   if (is.null(id)) {
     return()
@@ -151,7 +150,7 @@ ors_status <- function(url = NULL) {
 #' @rdname get_instance
 #' @export
 get_profiles <- function(url = NULL, force = TRUE) {
-  recover_from_cache(profiles, force = force)
+  recover_from_cache("profiles", force = force)
   profiles <- ors_status(url)$profiles
 
   if (is.list(profiles)) {
@@ -169,7 +168,7 @@ get_profiles <- function(url = NULL, force = TRUE) {
 ors_ready <- function(url = NULL, force = TRUE, error = FALSE) {
   ready <- get0("ready", envir = ors_cache)
   if (isTRUE(ready)) {
-    recover_from_cache(ready, force = force)
+    recover_from_cache("ready", force = force)
   }
 
   url <- url %||% get_ors_url()

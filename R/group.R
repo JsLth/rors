@@ -34,6 +34,7 @@
 #' @export
 #'
 #' @examples
+#' library(sf)
 #' src <- pharma[1:4, ]
 #' dst <- pharma[5:8, ]
 #'
