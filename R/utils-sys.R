@@ -1,7 +1,7 @@
 #' Opens a file
 #' @returns Exit status
 #' @noRd
-file.open <- function(file) {
+file.open <- function(file) { # nocov start
   file <- file
   if (is_linux()) {
     proc <- callr::process$new(command = "xdg-open", args = file)
@@ -9,7 +9,7 @@ file.open <- function(file) {
     proc <- callr::process$new(command = "open", args = file)
   }
   proc$get_exit_status
-}
+} # nocov end
 
 
 #' For Windows and Linux, returns the total and available memory of the system
@@ -17,7 +17,7 @@ file.open <- function(file) {
 #' @noRd
 get_memory_info <- function() {
   if (is_windows()) {
-    cmd <- paste(
+    cmd <- paste( # nocov start
       "(Get-WmiObject Win32_OperatingSystem)",
       "| %{'{{\"total\": {0},\n\"free\": {1}}}'",
       "-f $_.totalvisiblememorysize, $_.freephysicalmemory}"
@@ -25,14 +25,14 @@ get_memory_info <- function() {
 
     mem_json <- callr::run("powershell", cmd, stdout = "|", stderr = NULL)
     parsed_json <- jsonlite::fromJSON(mem_json$stdout)
-    lapply(parsed_json, function(x) as.numeric(x) / 1048576L)
+    lapply(parsed_json, function(x) as.numeric(x) / 1048576L) # nocov end
   } else if (is_linux()) {
     mem_csv <- callr::run("free", args = "--kibi", stdout = "|", stderr = NULL)
     mem_csv <- unlist(strsplit(mem_csv$stdout, "\n"))
     mem_csv <- paste(gsub("\\s+", ",", mem_csv), "\n")
     mem_df <- utils::read.csv(text = mem_csv)[1, c("total", "free")]
     lapply(mem_df, function(x) x / 1048576L)
-  } else if (is_macos()) {
+  } else if (is_macos()) { # nocov start
     # callr::run doesnt work here for some reason
     # cmd <- c("-l 1", "-s 0", "| grep PhysMem")
     # mem <- callr::run("top", cmd, stdout = "|", stderr = NULL)$stdout
@@ -40,14 +40,14 @@ get_memory_info <- function() {
     used <- as.numeric(regex_match(mem, "([0-9]+)M used")[[1]][2]) / 1024
     free <- as.numeric(regex_match(mem, "([0-9]+)M unused")[[1]][2]) / 1024
     list(total = used + free, free = free)
-  }
+  } # nocov end
 }
 
 
 #' Makes a subtle system sound and displays a notification window
 #' @param msg Message to be displayed.
 #' @noRd
-notify <- function(msg) {
+notify <- function(msg) { # nocov start
   if (!interactive()) return(invisible())
   if (is_windows()) {
     if (!identical(system2("powershell", stdout = FALSE), 127L)) {
@@ -80,7 +80,7 @@ notify <- function(msg) {
     callr::run("osascript", cmd, stdout = NULL, stderr = NULL, error_on_status = FALSE)
   }
   invisible()
-}
+} # nocov end
 
 
 #' Checks if Windows is the current OS

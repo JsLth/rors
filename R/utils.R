@@ -296,14 +296,6 @@ box <- function(x) {
 }
 
 
-unbox <- function(x) {
-  if (length(x) == 1 && is_list(x)) {
-    x <- x[[1]]
-  }
-  x
-}
-
-
 #' Turns input data.frames to a single data.frame without seperating the columns.
 #' Comparable to tidyr::nest, just with base R
 #' @param ... Data.frames where the argument name is the column name of the
