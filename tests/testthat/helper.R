@@ -85,18 +85,6 @@ make_test_ors <- function(ors) {
 }
 
 
-on_os <- function(os) {
-  os <- switch(
-    os,
-    windows = "windows",
-    mac = "darwin",
-    linux = "linux",
-    solaris = "sunos"
-  )
-  identical(tolower(Sys.info()[["sysname"]]), os)
-}
-
-
 has_valid_java <- function() {
   !inherits(try(check_jdk_version(FALSE)), "try-error")
 }

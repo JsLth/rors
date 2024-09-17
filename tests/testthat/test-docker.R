@@ -12,7 +12,7 @@ skip_on_ci()
 
 skip_if_offline("github.com")
 skip_on_cran()
-if (on_os("darwin")) {
+if (is_macos()) {
   skip_on_ci()
 }
 skip_on_os("solaris")

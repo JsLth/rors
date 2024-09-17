@@ -11,11 +11,18 @@ test_that("%NA% works", {
   expect_equal(c(NA, NA) %NA% 2, 2)
 })
 
+test_that("%empty%", {
+  expect_equal(1 %empty% 2, 1)
+  expect_equal(list() %empty% 2, 2)
+  expect_equal(NULL %empty% 2, 2)
+  expect_equal(NA %empty% 2, NA)
+})
+
 test_that("file_path_up works", {
   home <- normalizePath("~", "/")
   path1 <- file.path(home, "first")
   path2 <- file.path(path1, "second")
-  root <- ifelse(on_os("windows"), "C:/", "/")
+  root <- ifelse(is_windows(), "C:/", "/")
 
   expect_equal(file_path_up(path1), home)
   expect_equal(file_path_up(path2, 2), home)
@@ -53,7 +60,7 @@ test_that("url tools work", {
   expect_true(is_ors_api(url6))
 })
 
-test_that("is_numer works", {
+test_that("version detection works", {
   ver1 <- "7.2.0"
   ver2 <- "7c77ae5"
   ver3 <- "master"
@@ -61,6 +68,12 @@ test_that("is_numer works", {
   expect_true(is_numver(ver1))
   expect_false(is_numver(ver2))
   expect_false(is_numver(ver3))
+
+  expect_true(is_version_desc("master"))
+  expect_false(is_version_desc("master", "dh"))
+  expect_true(is_version_desc("latest", "dh"))
+  expect_false(is_version_desc("nightly", "gh"))
+  expect_true(is_version_desc("master", "gh"))
 })
 
 test_that("relative_path works", {
@@ -182,6 +195,10 @@ test_that("sys tools work", {
   mem <- get_memory_info()
   expect_type(mem$total, "double")
   expect_type(mem$free, "double")
+
+  if (is_linux()) {
+    expect_type(is_root(), "logical")
+  }
 })
 
 test_that("is_true_or_false works", {

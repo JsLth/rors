@@ -97,7 +97,7 @@
     "metadata": {
         "attribution": "openrouteservice.org, OpenStreetMap contributors, tmc - BASt",
         "service": "routing",
-        "timestamp": 1726009113217,
+        "timestamp": 1726531495259,
         "query": {
             "coordinates": [
                 [
@@ -116,7 +116,7 @@
         "engine": {
             "version": "8.0.0",
             "build_date": "2024-03-21T13:55:54Z",
-            "graph_date": "2024-09-10T22:58:29Z"
+            "graph_date": "2024-09-17T00:04:47Z"
         }
     }
 }

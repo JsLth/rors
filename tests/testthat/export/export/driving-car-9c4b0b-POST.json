@@ -1,0 +1,14 @@
+{
+    "nodes": [
+
+    ],
+    "edges": [
+
+    ],
+    "warning": {
+        "code": 1,
+        "message": "The specified bbox doesn't contain any nodes."
+    },
+    "nodes_count": 0,
+    "edges_count": 0
+}

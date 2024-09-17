@@ -1,0 +1,56 @@
+{
+    "locations": [
+        {
+            "location": [
+                7.41902,
+                43.738306
+            ],
+            "name": "Pont Sainte-Dévote",
+            "snapped_distance": 18.54
+        },
+        {
+            "location": [
+                7.423832,
+                43.732686
+            ],
+            "snapped_distance": 23.48
+        },
+        {
+            "location": [
+                7.424157,
+                43.740786
+            ],
+            "name": "Rue des Lilas",
+            "snapped_distance": 14.38
+        }
+    ],
+    "metadata": {
+        "attribution": "openrouteservice.org, OpenStreetMap contributors",
+        "service": "snap",
+        "timestamp": 1726531506141,
+        "query": {
+            "locations": [
+                [
+                    7.41879016120929,
+                    43.7383228512922
+                ],
+                [
+                    7.4240132974494,
+                    43.7325200234902
+                ],
+                [
+                    7.42430374072274,
+                    43.7407111758462
+                ]
+            ],
+            "profile": "driving-car",
+            "format": "json",
+            "radius": 350.0
+        },
+        "engine": {
+            "version": "8.0.0",
+            "build_date": "2024-03-21T13:55:54Z",
+            "graph_date": "2024-09-17T00:04:47Z"
+        }
+    }
+}

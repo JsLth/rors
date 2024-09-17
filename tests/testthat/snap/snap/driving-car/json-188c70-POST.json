@@ -1,0 +1,50 @@
+{
+    "locations": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    ],
+    "metadata": {
+        "attribution": "openrouteservice.org, OpenStreetMap contributors",
+        "service": "snap",
+        "timestamp": 1726531507126,
+        "query": {
+            "locations": [
+                [
+                    7.41879016120929,
+                    43.7383228512922
+                ],
+                [
+                    7.4240132974494,
+                    43.7325200234902
+                ],
+                [
+                    7.42430374072274,
+                    43.7407111758462
+                ],
+                [
+                    7.41219110700415,
+                    43.7313009478493
+                ],
+                [
+                    7.41723154562308,
+                    43.7344925954199
+                ],
+                [
+                    7.42996372675009,
+                    43.740043918669
+                ]
+            ],
+            "profile": "driving-car",
+            "format": "json"
+        },
+        "engine": {
+            "version": "8.0.0",
+            "build_date": "2024-03-21T13:55:54Z",
+            "graph_date": "2024-09-17T00:04:47Z"
+        }
+    }
+}

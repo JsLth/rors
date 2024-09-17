@@ -1,3 +1,16 @@
+# this test file is both the core part and the part that is causing the
+# biggest headache! If not absolutely possible, it only runs on mocks. If not
+# absolutely necessary, it does not run at all. Mocks are fed on local machines
+# that fulfill a number of requirements.
+# Requirements include:
+# 1. docker available OR valid JDK available
+# 2. fast and stable internet connection
+# 3. not on CRAN or CI (due to instabilities)
+# 4. environment variable REAL_REQUESTS set to "true"
+#
+# to re-create mocks, remove all test folders named after ORS endpoints and
+# run `test_file(test_path("test-requests.R"))`.
+
 # cran does not have java nor docker
 skip_on_cran()
 
@@ -83,8 +96,25 @@ with_mock_dir("directions", {
   })
 
   describe("ors_inspect()", {
-  })
+    it("can route over multiple segments", {
+      res <- ors_inspect(src[1:2])
+      expect_s3_class(res, "ors_route")
+      expect_gt(nrow(res), 0)
+    })
 
+    it("can route at different levels", {
+      res1 <- ors_inspect(src[1:2], level = "waypoint")
+      res2 <- ors_inspect(src[1:2], level = "step")
+      res3 <- ors_inspect(src[1:2], level = "segment")
+
+      expect_gt(nrow(res1), nrow(res2))
+      expect_gt(nrow(res2), nrow(res3))
+    })
+  })
+})
+
+
+with_mock_dir("isochrones", {
   describe("ors_accessibility()", {
     it("can compute isochrones in the right order", {
       res <- ors_accessibility(src)
@@ -112,8 +142,6 @@ with_mock_dir("directions", {
           class = "ors_loadable_error"
         ))
       )
-
-
     })
   })
 })
@@ -136,9 +164,42 @@ with_mock_dir("matrix", {
 })
 
 
-with_mock_dir("isochrones", {
-  describe("ors_accessibility()", {
+with_mock_dir("snap", {
+  describe("ors_snap()", {
+    it("snaps to streets", {
+      expect_equal(nrow(ors_snap(src)), 3)
+    })
 
+    it("stops when output is empty", {
+      expect_error(
+        ors_snap(test_coords(), radius = 0),
+        class = "ors_snap_na_error"
+      )
+    })
+  })
+})
+
+
+with_mock_dir("export", {
+  describe("ors_export()", {
+    it("can export to sfnetworks", {
+      skip_if_not_installed("sfnetworks")
+      expect_s3_class(ors_export(sf::st_bbox(test_coords(1:2))), "sfnetwork")
+    })
+
+    it("can fall back to simple lists", {
+      expect_named(
+        ors_export(sf::st_bbox(test_coords(1:2)), network = FALSE),
+        c("nodes", "edges")
+      )
+    })
+
+    it("fails if street network is empty", {
+      expect_error(
+        ors_export(sf::st_bbox(test_coords(1))),
+        class = "ors_empty_export_error"
+      )
+    })
   })
 })
 
