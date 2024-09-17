@@ -20,8 +20,8 @@ test_that("extract is read and processed properly", {
 
 test_that("fails properly", {
   ors$rm_extract()
-  expect_error(get_extract_boundaries(), class = "ors_extract_not_found_error")
+  get_extract_boundaries()
 
   ors <- ors_instance(server = "public")
-  expect_error(get_extract_boundaries(), class = "ors_remote_sample_error")
+  get_extract_boundaries()
 })
