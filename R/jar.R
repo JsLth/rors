@@ -290,7 +290,7 @@ get_java_version <- function(verbose) {
   }
 
   version <- callr::run("java", "-version", error_on_status = TRUE)
-  cli_once("java_msg", msg = version$stderr)
+  cli_once("java_msg", msg = version$stderr, verbose = verbose)
   version$stderr
 }
 
