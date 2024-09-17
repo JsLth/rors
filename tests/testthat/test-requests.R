@@ -35,6 +35,8 @@ if (!is_mock_test()) {
       verbose = FALSE,
       type = "jar"
     )
+  } else {
+    stop("On real tester, but neither docker or java available!")
   }
 
   ors$up()
