@@ -134,7 +134,7 @@ get_extract_boundaries <- function(instance = NULL,
 }
 
 
-admin_from_osm <- function(path) {
+admin_from_osm <- function(path) { # nocov start
   sql <- paste(
     "SELECT geometry FROM \"multipolygons\"",
     "WHERE boundary = \"administrative\"",
@@ -153,4 +153,4 @@ admin_from_osm <- function(path) {
 
   # extract only outer boundaries
   sf::st_union(sf::st_geometry(admin))
-}
+} # nocov end
