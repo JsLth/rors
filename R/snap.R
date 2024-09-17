@@ -2,7 +2,7 @@
 #'
 #' @description
 #' Queries the snap endpoint to snap source points to the nearest accessible
-#' street. This function does not work with the public API.
+#' street.
 #'
 #' @param radius \code{[numeric]}
 #'
@@ -14,23 +14,21 @@
 #' @returns A dataframe containing the snapped geometries of each point in
 #' \code{src} together with the name of the street and the snapping distance.
 #'
+#' @export
+#'
 #' @examples
 #' \dontrun{
-#' set.seed(123)
+#' plot(pharma, col = "black")
 #'
-#' samp <- ors_sample(50)
-#' plot(samp, col = "black")
-#'
-#' snap1 <- ors_snap(samp)
+#' snap1 <- ors_snap(pharma)
 #' plot(snap1, add = TRUE, col = "red")
 #'
-#' snap2 <- ors_snap(samp, radius = 5000)
+#' snap2 <- ors_snap(pharma, radius = 5000)
 #' plot(snap2, add = TRUE, col = "blue")
 #'
-#' snap2 <- ors_snap(samp, profile = "foot-walking")
-#' plot(snap2, add = TRUE, col = "green")
+#' snap3 <- ors_snap(pharma, profile = "foot-walking")
+#' plot(snap3, add = TRUE, col = "green")
 #' }
-#' @export
 ors_snap <- function(src,
                      profile = get_profiles(),
                      radius = 350,
@@ -70,9 +68,9 @@ ors_snap <- function(src,
 tidy_snap <- function(res) {
   loc <- res$locations
   if (all(is.na(loc))) {
-    cli::cli_abort(
+    abort(
       "All output locations are missing. Cannot tidy snap data.",
-      class = "ors_snap_na_error"
+      class = "snap_na_error"
     )
   }
   coords <- loc$location
