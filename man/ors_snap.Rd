@@ -40,22 +40,19 @@ A dataframe containing the snapped geometries of each point in
 }
 \description{
 Queries the snap endpoint to snap source points to the nearest accessible
-street. This function does not work with the public API.
+street.
 }
 \examples{
 \dontrun{
-set.seed(123)
+plot(pharma, col = "black")
 
-samp <- ors_sample(50)
-plot(samp, col = "black")
-
-snap1 <- ors_snap(samp)
+snap1 <- ors_snap(pharma)
 plot(snap1, add = TRUE, col = "red")
 
-snap2 <- ors_snap(samp, radius = 5000)
+snap2 <- ors_snap(pharma, radius = 5000)
 plot(snap2, add = TRUE, col = "blue")
 
-snap2 <- ors_snap(samp, profile = "foot-walking")
-plot(snap2, add = TRUE, col = "green")
+snap3 <- ors_snap(pharma, profile = "foot-walking")
+plot(snap3, add = TRUE, col = "green")
 }
 }
