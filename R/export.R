@@ -22,6 +22,8 @@
 #' \code{weight} that represents the fastest routing duration with the
 #' specified profile.
 #'
+#' @export
+#'
 #' @examples
 #' \dontrun{
 #' library(sfnetworks)
@@ -42,7 +44,6 @@
 #' ggplot() +
 #'   geom_sf(data = exp2$nodes, size = 1) +
 #'   geom_sf(data = exp2$edges)}
-#' @export
 ors_export <- function(bbox,
                        profile = get_profiles(),
                        network = TRUE,
@@ -53,12 +54,9 @@ ors_export <- function(bbox,
   profile <- match.arg(profile)
   instance <- check_instance(instance)
   url <- get_ors_url(instance)
-  assert_endpoint_available(url, "export")
 
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, url = url)
-
-
 
   res <- call_ors_export(bbox, profile, url, ...)
   handle_ors_conditions(res, abort_on_error = TRUE, warn_on_warning = TRUE)
@@ -73,12 +71,20 @@ tidy_export <- function(res, network) {
   geom <- sf::st_sfc(lapply(nodes$location, sf::st_point), crs = 4326)
   nodes <- sf::st_sf(data_frame(geometry = geom))
 
+  if (!nrow(nodes)) {
+    msg <- c(
+      "!" = "Street network is empty.",
+      "i" = "Ensure that the specified boundary box is valid and covers streets."
+    )
+    abort(msg, class = "empty_export_error")
+  }
+
   # Construct edges
   edges <- res$edges
   from <- match(edges$fromId, res$nodes$nodeId)
   to <- match(edges$toId, res$nodes$nodeId)
   geom <- Map(
-    FUN = function(from, to) {
+    function(from, to) {
       geom <- sf::st_geometry(nodes[c(from, to), ])
       geom <- sf::st_combine(geom)
       sf::st_cast(geom, "LINESTRING")
