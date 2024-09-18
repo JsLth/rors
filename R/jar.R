@@ -289,17 +289,21 @@ get_java_version <- function(verbose) {
     abort(msg, class = "java_missing_error", call = NULL)
   }
 
-  version <- callr::run("java", "-version", error_on_status = TRUE)
-  cli_once("java_msg", msg = version$stderr, verbose = verbose)
-  version$stderr
+  version <- callr::run("java", "-version", error_on_status = TRUE)$stderr
+  version <- gsub("\n", "\f", gsub("\r", "", version))
+  cli_once("java_msg", msg = version, verbose = verbose)
+  version
 }
 
 
+# regex borrowed from https://github.com/e-kotov/rJavaEnv/blob/main/R/java_env.R
 check_jdk_version <- function(verbose) {
   version <- get_java_version(verbose)
-  version <- strsplit(version, "\n")[[1]]
-  version <- version[startsWith(version, "java version")]
-  version <- regex_match(version, dQuote("([0-9\\.]+).*", q = FALSE))[[1]][2]
+  version <- regex_match(
+    version,
+    "(?<=openjdk|java version \\\")[0-9]{1,2}(?=\\.)",
+    perl = TRUE
+  )[[1]]
 
   if (!minimum_version(version, "17")) {
     url <- "https://www.oracle.com/de/java/technologies/downloads/"

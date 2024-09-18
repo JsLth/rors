@@ -64,7 +64,7 @@ escape_cli <- function(x) {
 
 cli_once <- function(name, msg, verbose) {
   if (!isTRUE(get0(name, envir = ors_cache))) {
-    ors_cli(info = list(c("i" = msg)))
+    ors_cli(info = list(msg))
     assign(name, TRUE, envir = ors_cache)
   }
 }
