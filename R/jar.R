@@ -301,9 +301,9 @@ check_jdk_version <- function(verbose) {
   version <- get_java_version(verbose)
   version <- regex_match(
     version,
-    "(?<=openjdk|java version \\\")[0-9]{1,2}(?=\\.)",
+    "(?<=(openjdk|java) (version \\\")?)[0-9]{1,2}(?=\\.)",
     perl = TRUE
-  )[[1]]
+  )[[1]][1]
 
   if (!minimum_version(version, "17")) {
     url <- "https://www.oracle.com/de/java/technologies/downloads/"
