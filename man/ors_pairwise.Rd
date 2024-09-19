@@ -125,6 +125,11 @@ For \code{ors_pairwise}, the profile argument supports only length-1
 vectors while \code{ors_shortest_distances} supports multiple profiles.
 \code{ors_shortest_distances} finds the shortest route for each source
 point and each profile, respectively.
+
+Responses are kept as small as possible by automatically setting the
+\code{navigation} parameter to \code{FALSE}. Pairwise computations
+only exploit route summary statistics and do not benefit from any extra
+information.
 }
 \section{Error handling}{
 

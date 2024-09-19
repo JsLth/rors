@@ -71,6 +71,11 @@
 #' \code{ors_shortest_distances} finds the shortest route for each source
 #' point and each profile, respectively.
 #'
+#' Responses are kept as small as possible by automatically setting the
+#' \code{navigation} parameter to \code{FALSE}. Pairwise computations
+#' only exploit route summary statistics and do not benefit from any extra
+#' information.
+#'
 #' @section Error handling:
 #' Since \code{ors_pairwise} is supposed to conduct a lot of calculations
 #' in one go, errors might occur even in well-conceived service setups. In

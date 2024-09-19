@@ -37,12 +37,13 @@ jobs:
         shell: bash
 
       - name: Test coverage
-        run: covr::codecov(
-          quiet = FALSE,
-          token = "${{ secrets.CODECOV_TOKEN }}",
-          clean = FALSE,
-          install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
-        )
+        run: |
+          covr::codecov(
+            quiet = FALSE,
+            token = "${{ secrets.CODECOV_TOKEN }}",
+            clean = FALSE,
+            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
+          )
         shell: Rscript {0}
 
       - name: Show testthat output
