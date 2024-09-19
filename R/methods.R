@@ -3,7 +3,7 @@ format.ORSInstance <- function(x, ...) {
   # check if local or remote
   type <- ifelse(ors_is_local(x), "local", "remote")
   is_local <- identical(type, "local")
-  ltype <- ifelse(is_local, paste0("(", get_ors_local_type(ors), ")"), "")
+  ltype <- ifelse(is_local, paste0("(", get_ors_local_type(x), ")"), "")
 
   if (is.null(x$paths) && is_local) {
     return("<ORSInstance>")
