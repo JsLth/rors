@@ -19,9 +19,7 @@ set_redactor(function(x) {
 start_vignette("README")
 ```
 
-# rors
-
-<img src="man/figures/rors_sticker.png" width="150" align="right"/>
+# rors <img src="man/figures/rors_sticker.png" align="right" height="180/"/>
 
 <!-- badges: start -->
 
@@ -54,7 +52,7 @@ devtools::install_github("jslth/rors")
 
 To connect to a running OpenRouteService server - or to build a new one, use the workhorse function `ors_instance`:
 
-```{r instance}
+```{r instance, results='hide', message=FALSE}
 library(rors)
 library(sf)
 
@@ -70,11 +68,11 @@ ors_inspect(pharma, profile = "driving-car", level = "segment")
 
 ## Local instances
 
-While `rors` can work with public API requests, it is primarily designed to be used together with local instances. The `ors_instance` family can be used to manage, control and build local ORS instances. The following code would jumpstart an initial instance, add an OSM extract of Rutland, add three routing profiles, set a random port, 100 MB of RAM and finally start the ORS instance. For more details, refer to `vignette("ors-installation")`.
+While `rors` can work with public API requests, it is primarily designed to be used together with local instances. The `ors_instance` family can be used to manage, control and build local ORS instances. The following code would jumpstart an initial instance, add an OSM extract of Rutland, add three routing profiles, set a random port, 100 MB of RAM and finally start the ORS instance. For more details, refer to [`vignette("ors-installation")`](https://jslth.github.io/rors/articles/ors-installation.html).
 
 ```{r local, eval=FALSE}
-ors <- ors_instance(dir = "~")$
-  set_extract("Rutland", provider = "geofabrik")$
+ors <- ors_instance()$
+  set_extract("Rutland")$
   add_profiles("car", "bike-regular", "walking")$
   set_port()$
   set_ram(0.1)$

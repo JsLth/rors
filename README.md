@@ -1,7 +1,5 @@
 
-# rors
-
-<img src="man/figures/rors_sticker.png" width="150" align="right"/>
+# rors <img src="man/figures/rors_sticker.png" align="right" height="180/"/>
 
 <!-- badges: start -->
 
@@ -53,10 +51,7 @@ use the workhorse function `ors_instance`:
 
 ``` r
 library(rors)
-#> © openrouteservice.org by HeiGIT | Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright
 library(sf)
-#> Warning: Paket 'sf' wurde unter R Version 4.3.2 erstellt
-#> Linking to GEOS 3.11.2, GDAL 3.7.2, PROJ 9.3.0; sf_use_s2() is TRUE
 
 # API keys are stored in the ORS_TOKEN environment variable
 ors <- ors_instance(server = "public")
@@ -71,18 +66,18 @@ ors_inspect(pharma, profile = "driving-car", level = "segment")
 #> Simple feature collection with 7 features and 5 fields
 #> Geometry type: MULTILINESTRING
 #> Dimension:     XY
-#> Bounding box:  xmin: -0.730349 ymin: 52.5876 xmax: -0.467708 ymax: 52.6747
+#> Bounding box:  xmin: -0.730349 ymin: 52.5876 xmax: -0.467708 ymax: 52.67472
 #> Geodetic CRS:  WGS 84
 #> # A tibble: 7 × 6
 #>   name            distance duration avgspeed elevation                  geometry
-#>   <chr>                [m]      [s]   [km/h]       [m]     <MULTILINESTRING [°]>
-#> 1 Uppingham Road…   9983.     618.      69.8     121.  ((-0.722324 52.58762, -0…
-#> 2 High Street, B…     26.3      2.4     39.4     111.  ((-0.727928 52.66962, -0…
+#>   <chr>              <dbl>    <dbl>    <dbl>     <dbl>     <MULTILINESTRING [°]>
+#> 1 Uppingham Road…   9983.     618.      69.8     120.  ((-0.722324 52.58762, -0…
+#> 2 High Street, B…     26.3      2.4     39.4     112   ((-0.727928 52.66962, -0…
 #> 3 Uppingham Road…  10059.     628.      68.8     120.  ((-0.728317 52.66962, -0…
-#> 4 Uppingham Road…  10642.     676.      69.8     123.  ((-0.721097 52.58816, -0…
-#> 5 Stamford Road,…  19188.    1137.      66.0      77.9 ((-0.730349 52.66991, -0…
-#> 6 St Mary's Stre…    358.      61.9     25.0      32.5 ((-0.478222 52.65071, -0…
-#> 7 St George's St…   1094.     140.      27.7      38.9 ((-0.477902 52.65231, -0…
+#> 4 Uppingham Road…  10642.     676.      69.8     122.  ((-0.721097 52.58816, -0…
+#> 5 Stamford Road,…  19187.    1144.      63.5      78.4 ((-0.730349 52.66991, -0…
+#> 6 St Mary's Stre…    358.      61.9     25.0      34.9 ((-0.478222 52.65071, -0…
+#> 7 St George's St…   1094.     140.      27.7      38.5 ((-0.477902 52.65231, -0…
 ```
 
 ## Local instances
@@ -93,11 +88,11 @@ be used to manage, control and build local ORS instances. The following
 code would jumpstart an initial instance, add an OSM extract of Rutland,
 add three routing profiles, set a random port, 100 MB of RAM and finally
 start the ORS instance. For more details, refer to
-`vignette("ors-installation")`.
+[`vignette("ors-installation")`](https://jslth.github.io/rors/articles/ors-installation.html).
 
 ``` r
-ors <- ors_instance(dir = "~")$
-  set_extract("Rutland", provider = "geofabrik")$
+ors <- ors_instance()$
+  set_extract("Rutland")$
   add_profiles("car", "bike-regular", "walking")$
   set_port()$
   set_ram(0.1)$
