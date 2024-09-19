@@ -287,21 +287,19 @@ ors_pairwise_single <- function(index,
 ors_shortest_distances <- function(src,
                                    dst,
                                    group = NULL,
-                                   profile = get_profiles(),
+                                   profile = NULL,
                                    units = c("m", "km", "mi"),
                                    geometry = FALSE,
                                    instance = NULL,
                                    ...,
                                    proximity_type = c("duration", "distance"),
                                    progress = TRUE) {
-  # Validate arguments
+  instance <- check_instance(instance)
+  url <- get_ors_url(instance)
   assert_that(is_sf(src), is_sf(dst), is_true_or_false(geometry))
   units <- match.arg(units)
   proximity_type <- match.arg(proximity_type)
-  profile <- match.arg(profile, several.ok = TRUE)
-
-  instance <- check_instance(instance)
-  url <- get_ors_url(instance)
+  profile <- profile %||% get_profiles(url = url, force = FALSE)
   assert_endpoint_available(url, "routing")
 
   src <- prepare_input(src)
