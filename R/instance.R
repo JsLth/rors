@@ -61,7 +61,7 @@ ORSInstance <- R6Class(
     },
 
     .mount = function() {
-      assign("instance", self, envir = ors_cache)
+      assign("instance", self, envir = rors_cache)
     }
   )
 )

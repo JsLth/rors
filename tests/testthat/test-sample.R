@@ -12,7 +12,7 @@ test_that("extract is read and processed properly", {
     expect_true(sf::st_is(bounds, "MULTIPOLYGON"))
     expect_length(bounds, 1)
 
-    exists("extract_boundaries", envir = getFromNamespace("ors_cache", ns = "rors"))
+    exists("extract_boundaries", envir = getFromNamespace("rors_cache", ns = "rors"))
 
     expect_no_error(get_extract_boundaries())
     expect_s3_class(ors_sample(2), "sfc")
@@ -22,8 +22,13 @@ test_that("extract is read and processed properly", {
 
 test_that("fails properly", {
   ors$rm_extract()
+  print(identify_extract(get_instance()$paths$top))
   get_extract_boundaries()
 
   ors <- ors_instance(server = "public")
+  print(ors_is_local(ors))
   get_extract_boundaries()
 })
+
+
+rors_cleanup()

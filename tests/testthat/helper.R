@@ -108,6 +108,6 @@ test_coords <- function(idx = 1:6) {
 
 
 rors_cleanup <- function() {
-  ors_cache <- get0("ors_cache", envir = asNamespace("rors"))
-  rm(list = ls(envir = ors_cache), envir = ors_cache)
+  rors_cache <- get0("rors_cache", envir = asNamespace("rors"))
+  rm(list = ls(envir = rors_cache), envir = rors_cache)
 }

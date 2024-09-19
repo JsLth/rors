@@ -1,8 +1,8 @@
-ors_cache <- new.env(parent = emptyenv())
+rors_cache <- new.env(parent = emptyenv())
 
 
 recover_from_cache <- function(obj, force = FALSE) {
-  obj <- get0(obj, envir = ors_cache)
+  obj <- get0(obj, envir = rors_cache)
   if (!is.null(obj) && !force) {
     return_from_parent(obj, .envir = parent.frame())
   }
@@ -34,7 +34,10 @@ recover_from_cache <- function(obj, force = FALSE) {
 #' If \code{TRUE}, function must query server. If \code{FALSE}, the information
 #' will be read from the cache if possible. This argument is specially useful
 #' automated workflows where it is inconvenient to query the server
-#' unnecessarily often.
+#' unnecessarily often. Functions like \code{\link{ors_pairwise}} or
+#' \code{\link{ors_inspect}} generally do not force server requests for these
+#' functions in order to make subsequent calls faster. When running directly,
+#' this argument should stay \code{TRUE} to ensure the accuracy of the output.
 #' @param error \code{[logical]}
 #'
 #' If \code{TRUE}, gives out an error if the service is not ready.
@@ -74,7 +77,7 @@ recover_from_cache <- function(obj, force = FALSE) {
 #' }
 get_instance <- function() {
   if (any_mounted()) {
-    get("instance", envir = ors_cache)
+    get("instance", envir = rors_cache)
   } else {
     code <- cli::code_highlight("ors_instance()")
     msg <- c(
@@ -122,43 +125,43 @@ inspect_container <- function(id = NULL) {
   }
 
   container_info <- jsonlite::fromJSON(container_info$stdout)
-  assign("container_info", container_info, envir = ors_cache)
+  assign("container_info", container_info, envir = rors_cache)
   container_info
 }
 
 
 #' @rdname get_instance
 #' @export
-ors_status <- function(url = NULL) {
+ors_status <- function(url = NULL, force = TRUE) {
+  recover_from_cache("status", force = force)
   url <- url %||% get_ors_url()
-  ors_ready(url = url, force = TRUE, error = TRUE)
+  ors_ready(url = url, force = FALSE, error = TRUE)
   if (!is_ors_api(url)) {
     req <- httr2::request(url)
     req <- httr2::req_template(req, "GET ors/v2/status")
-    res <- perform_call(req)
+    status <- perform_call(req)
   } else {
-    res <- list(
+    status <- list(
       profiles = unlist(base_profiles(), use.names = FALSE),
       services = list("routing", "matrix", "isochrones", "snap")
     )
   }
-  class(res) <- "ors_status"
-  res
+  class(status) <- "ors_status"
+  assign("status", status, envir = rors_cache)
+  status
 }
 
 
 #' @rdname get_instance
 #' @export
 get_profiles <- function(url = NULL, force = TRUE) {
-  recover_from_cache("profiles", force = force)
-  profiles <- ors_status(url)$profiles
+  profiles <- ors_status(url, force = force)$profiles
 
   if (is.list(profiles)) {
     profiles <- lapply(profiles, function(x) x$profiles)
     profiles <- unlist(profiles, use.names = FALSE)
   }
 
-  assign("profiles", profiles, envir = ors_cache)
   profiles
 }
 
@@ -166,9 +169,9 @@ get_profiles <- function(url = NULL, force = TRUE) {
 #' @rdname get_instance
 #' @export
 ors_ready <- function(url = NULL, force = TRUE, error = FALSE) {
-  ready <- get0("ready", envir = ors_cache)
+  ready <- get0("ready", envir = rors_cache)
   if (isTRUE(ready)) {
-    recover_from_cache("ready", force = force)
+    t <- recover_from_cache("ready", force = force)
   }
 
   url <- url %||% get_ors_url()
@@ -201,7 +204,7 @@ ors_ready <- function(url = NULL, force = TRUE, error = FALSE) {
     )
   }
 
-  assign("ready", ready, envir = ors_cache)
+  assign("ready", ready, envir = rors_cache)
   ready
 }
 
@@ -257,7 +260,7 @@ get_ors_url <- function(instance = NULL) {
 #' @rdname get_instance
 #' @export
 any_mounted <- function() {
-  "instance" %in% names(ors_cache)
+  "instance" %in% names(rors_cache)
 }
 
 
@@ -267,7 +270,7 @@ ors_is_local <- function(instance) {
 
 
 assert_endpoint_available <- function(url, endpoint) {
-  status <- ors_status(url)
+  status <- ors_status(url, force = FALSE)
   available <- endpoint %in% status$services
 
   if (!available) {

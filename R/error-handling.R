@@ -13,7 +13,7 @@
 #' }
 #' @export
 last_ors_conditions <- function(last = 1L) {
-  conditions <- get0("cond", envir = ors_cache)
+  conditions <- get0("cond", envir = rors_cache)
 
   if (length(conditions)) {
     assert_that(is.numeric(last), last >= 1)
@@ -96,7 +96,7 @@ handle_ors_conditions <- function(res,
 
 
 store_condition <- function(code, msg, index, ts, call, error) {
-  conds <- ors_cache$cond
+  conds <- rors_cache$cond
   last_cond <- conds[[1]]
 
   if (identical(last_cond$ts, ts)) {
@@ -117,7 +117,7 @@ store_condition <- function(code, msg, index, ts, call, error) {
     conds <- c(list(new_cond), conds)
   }
 
-  assign("cond", conds, envir = ors_cache)
+  assign("cond", conds, envir = rors_cache)
 }
 
 
@@ -138,7 +138,7 @@ ors_condition <- function(code, msg, index, ts, call, error) {
 
 handle_missing_directions <- function(.data) {
   route_missing <- is.na(.data)
-  conds <- get0("cond", envir = ors_cache)[[1]]
+  conds <- get0("cond", envir = rors_cache)[[1]]
   if (is.null(conds)) return()
   has_warnings <- any(!conds$error)
   style <- list(vec_sep = ", ", vec_last = ", ")

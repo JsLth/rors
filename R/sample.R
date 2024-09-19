@@ -129,7 +129,7 @@ get_extract_boundaries <- function(instance = NULL,
     )
   }
 
-  assign("extract_boundaries", poly, envir = ors_cache)
+  assign("extract_boundaries", poly, envir = rors_cache)
   poly
 }
 
