@@ -35,3 +35,5 @@ test_that("jar setup works", {
   expect_false(ors$is_running())
   expect_true(ors$is_init())
 })
+
+rors_cleanup()

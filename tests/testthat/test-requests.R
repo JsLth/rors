@@ -120,19 +120,20 @@ with_mock_dir("directions", {
 
 with_mock_dir("isochrones", {
   describe("ors_accessibility()", {
+    print(1)
     it("can compute isochrones in the right order", {
       res <- ors_accessibility(src)
       expect_s3_class(res, "sf")
       expect_equal(unique(table(res$group_index)), 2)
       expect_equal(unique(res$value), c(300, 200))
     })
-
+    print(2)
     it("can compute and format intersections", {
       res <- ors_accessibility(src, intersections = TRUE)
       expect_s3_class(res, "sf")
       expect_named(res, c("a_index", "b_index", "a_range", "b_range", "geometry"))
     })
-
+    print(3)
     it("can rasterize isochrones", {
       skip_if_not_installed("terra")
       res <- ors_accessibility(src, rasterize = TRUE, raster_resolution = c(10, 10))
@@ -153,12 +154,13 @@ with_mock_dir("isochrones", {
 
 with_mock_dir("matrix", {
   describe("ors_matrix()", {
+    print(4)
     it("can take only one matrix", {
       res <- ors_matrix(src)
       expect_equal(dim(res), c(3, 3))
       expect_equal(diag(res), c(0, 0, 0))
     })
-
+    print(5)
     it("can also take two matrices", {
       res <- ors_matrix(src, dst)
       expect_equal(dim(res), c(3, 3))
@@ -170,10 +172,11 @@ with_mock_dir("matrix", {
 
 with_mock_dir("snap", {
   describe("ors_snap()", {
+    print(6)
     it("snaps to streets", {
       expect_equal(nrow(ors_snap(src)), 3)
     })
-
+    print(7)
     it("stops when output is empty", {
       expect_error(
         ors_snap(test_coords(), radius = 0),
@@ -186,18 +189,19 @@ with_mock_dir("snap", {
 
 with_mock_dir("export", {
   describe("ors_export()", {
+    print(8)
     it("can export to sfnetworks", {
       skip_if_not_installed("sfnetworks")
       expect_s3_class(ors_export(sf::st_bbox(test_coords(1:2))), "sfnetwork")
     })
-
+    print(9)
     it("can fall back to simple lists", {
       expect_named(
         ors_export(sf::st_bbox(test_coords(1:2)), network = FALSE),
         c("nodes", "edges")
       )
     })
-
+    print(10)
     it("fails if street network is empty", {
       expect_error(
         ors_export(sf::st_bbox(test_coords(1))),
