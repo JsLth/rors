@@ -1,4 +1,4 @@
-print(basename(scriptName::current_source_filename()$value))
+message("utils")
 
 test_that("%||% works", {
   expect_equal(1 %||% 2, 1)

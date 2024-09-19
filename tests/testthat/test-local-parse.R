@@ -1,4 +1,4 @@
-print(basename(scriptName::current_source_filename()$value))
+message("local-parse")
 
 skip_if_offline("github.com")
 

@@ -1,3 +1,5 @@
+message("params")
+
 test_that("verifying works", {
   expect_identical(param_verify(c(type = FALSE), "avoid_polygons"), "invalid type")
   expect_length(param_verify(c(type = FALSE, match = FALSE), "avoid_polygons"), 2)
@@ -18,8 +20,6 @@ test_that("fails early", {
   # undefined nested params shouldnt work
   expect_error(prepare_ors_params(p3, "driving-car"), class =  "ors_param_invalid_child_error")
 })
-
-print(basename(scriptName::current_source_filename()$value))
 
 test_that("param checking works", {
   v1 <- list(geometry_simplify = TRUE)

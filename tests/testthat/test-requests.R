@@ -1,4 +1,4 @@
-print(basename(scriptName::current_source_filename()$value))
+message("requests")
 
 # this test file is both the core part and the part that is causing the
 # biggest headache! If not absolutely possible, it only runs on mocks. If not

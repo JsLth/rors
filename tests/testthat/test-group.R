@@ -1,3 +1,5 @@
+message("group")
+
 src <- test_coords(1:3)
 dst <- test_coords(4:6)
 

@@ -1,4 +1,4 @@
-print(basename(scriptName::current_source_filename()$value))
+message("sample")
 
 skip_if_not(sf::sf_extSoftVersion()["GDAL"] > "2.1.0")
 skip_on_cran()

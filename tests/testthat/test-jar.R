@@ -1,4 +1,4 @@
-print(basename(scriptName::current_source_filename()$value))
+message("jar")
 
 test_that("properly stops without java", {
   expect_error(with_mocked_bindings(

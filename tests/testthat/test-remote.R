@@ -1,4 +1,4 @@
-print(basename(scriptName::current_source_filename()$value))
+message("remote")
 
 test_that("ors_token() works", {
   withr::with_envvar(

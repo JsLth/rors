@@ -8,6 +8,8 @@
 # * StatusConsoleListener Unable to locate appender "File" for logger config "root"
 # * ORS-Init [ o.h.o.r.RoutingProfileManager ]
 # * ORS-Init [ o.h.o.r.RoutingProfileManager ] Failed to either read or execute the ors configuration and its parameters: java.lang.RuntimeException: Directory /home/ors/./graphs/car does not exist and cannot be created to place lock file there: /home/ors/./graphs/car/gh.lock
+message("docker")
+
 skip_on_ci()
 
 skip_if_offline("github.com")

@@ -1,4 +1,4 @@
-print(basename(scriptName::current_source_filename()$value))
+message("utils-ors")
 
 skip_if(!loadable("webfakes"), "webfakes unavailable")
 skip_webfakes <- function(web) {

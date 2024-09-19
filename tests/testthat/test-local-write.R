@@ -1,4 +1,4 @@
-print(basename(scriptName::current_source_filename()$value))
+message("local-write")
 
 test_that("env files are written correctly", {
   lst <- list(
