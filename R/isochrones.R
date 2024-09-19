@@ -131,7 +131,7 @@
 #'
 #' @export
 ors_accessibility <- function(src,
-                              profile = get_profiles(force = FALSE),
+                              profile = NULL,
                               range = c(200, 300),
                               attributes = "area",
                               intersections = FALSE, # to-do: check intersections
@@ -149,6 +149,11 @@ ors_accessibility <- function(src,
   instance <- instance %||% get_instance()
   url <- get_ors_url(instance)
   ts <- timestamp()
+  profile <- profile %||% get_profiles(url = url, force = FALSE)[[1]]
+  location_type <- match.arg(location_type)
+  range_type <- match.arg(range_type)
+  area_units <- if ("area" %in% attributes) match.arg(area_units)
+  units <- if ("distance" %in% range_type) match.arg(units)
   assert_endpoint_available(url, "isochrones")
 
   if (rasterize && !loadable("terra")) {
@@ -160,12 +165,6 @@ ors_accessibility <- function(src,
 
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, url = url)
-
-  profile <- match.arg(profile)
-  location_type <- match.arg(location_type)
-  range_type <- match.arg(range_type)
-  area_units <- if ("area" %in% attributes) match.arg(area_units)
-  units <- if ("distance" %in% range_type) match.arg(units)
 
   src <- prepare_input(src)
   params <- params %||% prepare_ors_params(list(...), profile)

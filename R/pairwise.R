@@ -146,19 +146,18 @@
 #' }
 ors_pairwise <- function(src,
                          dst,
-                         profile = get_profiles(force = FALSE),
+                         profile = NULL,
                          units = c("m", "km", "mi"),
                          geometry = FALSE,
                          progress = FALSE,
                          instance = NULL,
                          ...,
                          params = NULL) {
-  # Validate arguments
-  assert_that(is_sf(src), is_sf(dst), is_true_or_false(geometry))
-  profile <- match.arg(profile)
-  units <- match.arg(units)
   instance <- check_instance(instance)
   url <- get_ors_url(instance)
+  assert_that(is_sf(src), is_sf(dst), is_true_or_false(geometry))
+  profile <- profile %||% get_profiles(url = url, force = FALSE)[[1]]
+  units <- match.arg(units)
   assert_endpoint_available(url, "routing")
 
   # Check if ORS is ready to use

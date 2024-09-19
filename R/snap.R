@@ -30,12 +30,12 @@
 #' plot(snap3, add = TRUE, col = "green")
 #' }
 ors_snap <- function(src,
-                     profile = get_profiles(force = FALSE),
+                     profile = NULL,
                      radius = 350,
                      instance = NULL,
                      ...) {
   assert_that(is_sf(src), is.numeric(radius))
-  profile <- match.arg(profile)
+  profile <- profile %||% get_profiles(force = FALSE)[[1]]
   instance <- check_instance(instance)
   url <- get_ors_url(instance)
   assert_endpoint_available(url, "snap")

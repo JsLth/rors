@@ -25,20 +25,19 @@
 #' }
 ors_matrix <- function(src,
                        dst = NULL,
-                       profile = get_profiles(force = FALSE),
+                       profile = NULL,
                        units = c("m", "km", "mi"),
                        proximity_type = c("distance", "duration"),
                        instance = NULL) {
   instance <- instance %||% get_instance()
   url <- get_ors_url(instance)
+  profile <- profile %||% get_profiles(url = url, force = FALSE)[[1]]
+  proximity_type <- match.arg(proximity_type)
+  units <- match.arg(units)
   assert_endpoint_available(url, "matrix")
 
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, url = url)
-
-  profile <- match.arg(profile)
-  proximity_type <- match.arg(proximity_type)
-  units <- match.arg(units)
 
   src <- prepare_input(src, len = nrow(dst))
 

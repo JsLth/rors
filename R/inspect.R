@@ -91,7 +91,11 @@
 #' in the s2 package). Extra information (using the \code{extra_info} argument)
 #' and street names do not perfectly overlap with steps and segments. In these
 #' cases, the value with the highest overlap is adopted causing some information
-#' loss. Navigation information is dropped on \code{"segment"} level.
+#' loss. Navigation information is dropped on \code{"segment"} level. In order
+#' to establish this structure, \code{ors_inspect} depends on the
+#' \code{navigation} parameter and forces it to be \code{TRUE}. When
+#' \code{navigation} is \code{FALSE}, ORS omits steps - and hence also waypoints
+#' - from the response.
 #'
 #' Extra information can be requested as additional context for each waypoint on
 #' a route. Possible values include:
@@ -172,7 +176,7 @@
 #' route_summary <- summary(insp_adv)
 #' }
 ors_inspect <- function(src,
-                        profile = get_profiles(force = FALSE),
+                        profile = NULL,
                         level = c("waypoint", "step", "segment"),
                         attributes = NULL,
                         extra_info = NULL,
@@ -185,13 +189,14 @@ ors_inspect <- function(src,
                         instance = NULL,
                         ...,
                         params = NULL) {
-  assert_that(is_sf(src), is_true_or_false(elev_as_z))
-  profile <- match.arg(profile)
-  level <- match.arg(level)
-  as <- match.arg(as)
   instance <- check_instance(instance)
   url <- get_ors_url(instance)
   timestamp <- timestamp()
+  assert_that(is_sf(src), is_true_or_false(elev_as_z))
+  profile <- profile %||% get_profiles(url = url, force = FALSE)[[1]]
+  level <- match.arg(level)
+  as <- match.arg(as)
+  assert_endpoint_available(url, "routing")
 
   # Check if ORS is ready to use
   ors_ready(force = TRUE, error = TRUE, url = url)
