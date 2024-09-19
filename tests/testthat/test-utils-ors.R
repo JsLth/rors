@@ -68,7 +68,7 @@ test_that("cache recovery works", {
   expect_identical(test_recover(force = TRUE), "not successful")
 
   # test if cache content is boxed correctly
-  assign("test", list(1, 2), envir = rrors_cache)
+  assign("test", list(1, 2), envir = rors_cache)
   expect_identical(test_recover(), list(1, 2))
 })
 

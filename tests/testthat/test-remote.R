@@ -65,18 +65,12 @@ test_that("token is properly used", {
 })
 
 
-test_that("$.mount() always assigns to the correct environment", {
-  ors1 <- ors_instance(server = "test1.org")
-  ors2 <- ors_instance(server = "test2.org")
-  expect_identical(ors2, get_instance())
-  ors1$update()
-  expect_identical(ors1, get_instance())
-})
-
-
 test_that("export fails early", {
   ors <- ors_instance(server = "pub")
-  expect_error(sf::st_bbox(test_coords()), class = "ors_public_export_error")
+  expect_error(
+    ors_export(sf::st_bbox(test_coords())),
+    class = "ors_public_export_error"
+  )
 })
 
 

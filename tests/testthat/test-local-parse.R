@@ -76,3 +76,18 @@ test_that("version errors are informative", {
     class = "ors_version_404_error"
   )
 })
+
+test_that("$.mount() always assigns to the correct environment", {
+  dir.create(d1 <- file.path(tempdir(), "test1"))
+  dir.create(d2 <- file.path(tempdir(), "test2"))
+  ors1 <- local_ors_instance(dir = d1)
+  ors2 <- local_ors_instance(dir = d2)
+  ors1$set_name("test1")
+  ors2$set_name("test2")
+  expect_identical(ors2, get_instance())
+  ors1$update()
+  expect_identical(ors1, get_instance())
+})
+
+
+rors_cleanup()

@@ -57,7 +57,7 @@ ors_export <- function(bbox,
 
   if (is_ors_api(url)) {
     abort(
-      "ors_export() is not supported for the public API",
+      "{.fn ors_export} is not supported for the public API.",
       class = "public_export_error"
     )
   }
