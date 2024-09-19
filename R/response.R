@@ -31,7 +31,7 @@ get_ors_geometry <- function(res, alt = 1L, as_coords = FALSE) {
 
 get_ors_summary <- function(res, geometry = TRUE) {
   if (is_ors_error(res)) {
-    summ <- data.frame(distance = NA, duration = NA)
+    summ <- data.frame(distance = NA_real_, duration = NA_real_)
     if (geometry) {
       summ <- sf::st_sf(
         summ,
