@@ -353,13 +353,7 @@ ORSLocal <- R6Class(
       }
     },
     .get_type = function() {
-      switch(
-        class(self)[[1]],
-        ORSDocker = "docker",
-        ORSJar = "jar",
-        ORSWar = "war",
-        "unknown"
-      )
+      get_ors_local_type(self)
     },
     .is_type = function(type) {
       identical(private$.get_type(), type)
@@ -651,4 +645,15 @@ ors_exec_to_type <- function(exec) {
 
 ors_executables <- function() {
   c("docker-compose.yml", "ors.jar", "ors.war")
+}
+
+
+get_ors_local_type <- function(self) {
+  switch(
+    class(self)[[1]],
+    ORSDocker = "docker",
+    ORSJar = "jar",
+    ORSWar = "war",
+    "unknown"
+  )
 }
