@@ -131,7 +131,7 @@
 #'
 #' @export
 ors_accessibility <- function(src,
-                              profile = get_profiles(),
+                              profile = get_profiles(force = FALSE),
                               range = c(200, 300),
                               attributes = "area",
                               intersections = FALSE, # to-do: check intersections

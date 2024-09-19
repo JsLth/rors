@@ -30,7 +30,7 @@
 #' plot(snap3, add = TRUE, col = "green")
 #' }
 ors_snap <- function(src,
-                     profile = get_profiles(),
+                     profile = get_profiles(force = FALSE),
                      radius = 350,
                      instance = NULL,
                      ...) {

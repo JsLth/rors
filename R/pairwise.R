@@ -146,7 +146,7 @@
 #' }
 ors_pairwise <- function(src,
                          dst,
-                         profile = get_profiles(),
+                         profile = get_profiles(force = FALSE),
                          units = c("m", "km", "mi"),
                          geometry = FALSE,
                          progress = FALSE,

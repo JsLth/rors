@@ -25,7 +25,7 @@
 #' }
 ors_matrix <- function(src,
                        dst = NULL,
-                       profile = get_profiles(),
+                       profile = get_profiles(force = FALSE),
                        units = c("m", "km", "mi"),
                        proximity_type = c("distance", "duration"),
                        instance = NULL) {

@@ -172,7 +172,7 @@
 #' route_summary <- summary(insp_adv)
 #' }
 ors_inspect <- function(src,
-                        profile = get_profiles(),
+                        profile = get_profiles(force = FALSE),
                         level = c("waypoint", "step", "segment"),
                         attributes = NULL,
                         extra_info = NULL,
