@@ -169,7 +169,7 @@ ors_accessibility <- function(src,
 
   src <- prepare_input(src)
   params <- params %||% prepare_ors_params(list(...), profile)
-
+message("right before isochrone call")
   res <- call_ors_isochrones(
     src = src,
     profile = profile,
@@ -186,7 +186,7 @@ ors_accessibility <- function(src,
     url = url,
     token = needs_token(instance$token)
   )
-
+message("right before error handle")
   handle_ors_conditions(res, ts, abort_on_error = TRUE, warn_on_warning = TRUE)
 
   if (intersections) {
