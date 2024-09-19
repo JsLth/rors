@@ -65,4 +65,13 @@ test_that("token is properly used", {
 })
 
 
+test_that("$.mount() always assigns to the correct environment", {
+  ors1 <- ors_instance(server = "test1.org")
+  ors2 <- ors_instance(server = "test2.org")
+  expect_identical(ors2, get_instance())
+  ors1$update()
+  expect_identical(ors1, get_instance())
+})
+
+
 rors_cleanup()

@@ -323,7 +323,10 @@ ORSLocal <- R6Class(
     .prompts = TRUE,
     .alive = TRUE,
     .mount = function() {
-      assign("instance", self, envir = ors_cache)
+      # no idea why this is necessary but when just using envir = rors_cache
+      # $.mount() uses a different environment than defined globally
+      rors_cache <- get("rors_cache", envir = asNamespace("rors"))
+      assign("instance", self, envir = rors_cache)
     },
     .parse = function() {
       self$paths <- private$.construct("paths")
