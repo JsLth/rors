@@ -19,6 +19,8 @@ test_that("fails early", {
   expect_error(prepare_ors_params(p3, "driving-car"), class =  "ors_param_invalid_child_error")
 })
 
+print(basename(scriptName::current_source_filename()$value))
+
 test_that("param checking works", {
   v1 <- list(geometry_simplify = TRUE)
   v2 <- list(geometry_simplify = c(TRUE, TRUE))

@@ -1,3 +1,5 @@
+print(basename(scriptName::current_source_filename()$value))
+
 skip_if_offline("github.com")
 
 ors <- local_ors_instance(verbose = FALSE, dry = TRUE)

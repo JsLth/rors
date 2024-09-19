@@ -1,3 +1,5 @@
+print(basename(scriptName::current_source_filename()$value))
+
 skip_if(!loadable("webfakes"), "webfakes unavailable")
 skip_webfakes <- function(web) {
   failed <- inherits(web, "try-error")

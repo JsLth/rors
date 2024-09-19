@@ -1,3 +1,5 @@
+print(basename(scriptName::current_source_filename()$value))
+
 test_that("env files are written correctly", {
   lst <- list(
     test1 = NULL,

@@ -1,3 +1,5 @@
+print(basename(scriptName::current_source_filename()$value))
+
 test_that("ors_token() works", {
   withr::with_envvar(
     c(ORS_TOKEN = ""),

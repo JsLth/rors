@@ -1,3 +1,5 @@
+print(basename(scriptName::current_source_filename()$value))
+
 # this test file is both the core part and the part that is causing the
 # biggest headache! If not absolutely possible, it only runs on mocks. If not
 # absolutely necessary, it does not run at all. Mocks are fed on local machines
