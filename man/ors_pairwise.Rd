@@ -8,7 +8,7 @@
 ors_pairwise(
   src,
   dst,
-  profile = get_profiles(),
+  profile = NULL,
   units = c("m", "km", "mi"),
   geometry = FALSE,
   progress = FALSE,
@@ -21,7 +21,7 @@ ors_shortest_distances(
   src,
   dst,
   group = NULL,
-  profile = get_profiles(),
+  profile = NULL,
   units = c("m", "km", "mi"),
   geometry = FALSE,
   instance = NULL,

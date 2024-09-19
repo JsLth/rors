@@ -7,7 +7,7 @@
 ors_matrix(
   src,
   dst = NULL,
-  profile = get_profiles(),
+  profile = NULL,
   units = c("m", "km", "mi"),
   proximity_type = c("distance", "duration"),
   instance = NULL

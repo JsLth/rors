@@ -7,7 +7,7 @@
 \usage{
 ors_inspect(
   src,
-  profile = get_profiles(),
+  profile = NULL,
   level = c("waypoint", "step", "segment"),
   attributes = NULL,
   extra_info = NULL,
@@ -153,7 +153,13 @@ geometry lengths and do not take into account elevation (due to restrictions
 in the s2 package). Extra information (using the \code{extra_info} argument)
 and street names do not perfectly overlap with steps and segments. In these
 cases, the value with the highest overlap is adopted causing some information
-loss. Navigation information is dropped on \code{"segment"} level.
+loss. Navigation information is dropped on \code{"segment"} level. In order
+to establish this structure, \code{ors_inspect} depends on the
+\code{navigation} parameter and forces it to be \code{TRUE}. When
+\code{navigation} is \code{FALSE}, ORS omits steps - and hence also waypoints
+\itemize{
+\item from the response.
+}
 
 Extra information can be requested as additional context for each waypoint on
 a route. Possible values include:

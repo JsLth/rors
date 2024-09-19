@@ -4,7 +4,7 @@
 \alias{ors_snap}
 \title{Snap to nearest street}
 \usage{
-ors_snap(src, profile = get_profiles(), radius = 350, instance = NULL, ...)
+ors_snap(src, profile = NULL, radius = 350, instance = NULL, ...)
 }
 \arguments{
 \item{src}{\code{[sf/sfc]}

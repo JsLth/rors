@@ -10,7 +10,7 @@
 \usage{
 get_instance()
 
-ors_status(url = NULL)
+ors_status(url = NULL, force = TRUE)
 
 get_profiles(url = NULL, force = TRUE)
 
@@ -31,7 +31,10 @@ this argument should not need to be specfied.}
 If \code{TRUE}, function must query server. If \code{FALSE}, the information
 will be read from the cache if possible. This argument is specially useful
 automated workflows where it is inconvenient to query the server
-unnecessarily often.}
+unnecessarily often. Functions like \code{\link{ors_pairwise}} or
+\code{\link{ors_inspect}} generally do not force server requests for these
+functions in order to make subsequent calls faster. When running directly,
+this argument should stay \code{TRUE} to ensure the accuracy of the output.}
 
 \item{error}{\code{[logical]}
 
