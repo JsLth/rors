@@ -374,5 +374,5 @@ abort <- function(msg, class = NULL, .envir = parent.frame(), ...) {
 #' Returns an object from a specified environment
 #' @noRd
 return_from_parent <- function(obj, .envir = parent.frame()) {
-  do.call("return", args = box(obj), envir = .envir)
+  do.call("return", args = list(obj), envir = .envir)
 }
