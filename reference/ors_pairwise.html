@@ -189,6 +189,10 @@ linestring geometries of the respective routes.</p>
 vectors while <code>ors_shortest_distances</code> supports multiple profiles.
 <code>ors_shortest_distances</code> finds the shortest route for each source
 point and each profile, respectively.</p>
+<p>Responses are kept as small as possible by automatically setting the
+<code>navigation</code> parameter to <code>FALSE</code>. Pairwise computations
+only exploit route summary statistics and do not benefit from any extra
+information.</p>
     </div>
     <div class="section level2">
     <h2 id="error-handling">Error handling<a class="anchor" aria-label="anchor" href="#error-handling"></a></h2>
