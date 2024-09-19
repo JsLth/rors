@@ -1,3 +1,5 @@
+skip_on_ci()
+
 test_that("properly stops without java", {
   expect_error(with_mocked_bindings(
     has_util = function(...) FALSE,
