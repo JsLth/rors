@@ -49,11 +49,18 @@ ors_export <- function(bbox,
                        network = TRUE,
                        instance = NULL,
                        ...) {
+  instance <- check_instance(instance)
+  url <- get_ors_url(instance)
   assert_that(is.logical(network))
   bbox <- sf::st_bbox(bbox)
   profile <- match.arg(profile)
-  instance <- check_instance(instance)
-  url <- get_ors_url(instance)
+
+  if (is_ors_api(url)) {
+    abort(
+      "ors_export() is not supported for the public API",
+      class = "public_export_error"
+    )
+  }
 
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, url = url)

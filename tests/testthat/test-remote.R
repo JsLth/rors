@@ -74,4 +74,10 @@ test_that("$.mount() always assigns to the correct environment", {
 })
 
 
+test_that("export fails early", {
+  ors <- ors_instance(server = "pub")
+  expect_error(sf::st_bbox(test_coords()), class = "ors_public_export_error")
+})
+
+
 rors_cleanup()
