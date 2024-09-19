@@ -115,7 +115,7 @@ ORSJar <- R6Class(
     #' examples and can easily be used together with \code{\link{on.exit}}.
     purge = function() {
       if (!private$.alive) {
-        return(invisible(NULL))
+        return(invisible(NULL)) # nocov
       }
 
       if (private$.prompts) {
@@ -307,10 +307,11 @@ check_jdk_version <- function(verbose) {
 
   if (!minimum_version(version, "17")) {
     url <- "https://www.oracle.com/de/java/technologies/downloads/"
-    cli::cli_abort(c(
+    msg <- c(
       "!" = "JDK version {version} detected but version 17 required.",
       "i" = "Download JDK from {.url {url}}"
-    ))
+    )
+    abort(msg, class = "java_version_error")
   }
 }
 
@@ -319,10 +320,10 @@ run_ors_jar <- function(self, private, wait = TRUE, ...) {
   verbose <- private$.verbose
 
   if (self$is_running()) {
-    cli::cli_abort(c(
+    cli::cli_abort(c( # nocov start
       "!" = "Another OpenRouteService is still running.",
       "i" = "You may stop it using `$stop()`."
-    ))
+    )) # nocov end
   }
 
   proc <- callr::process$new(
@@ -336,7 +337,7 @@ run_ors_jar <- function(self, private, wait = TRUE, ...) {
 
   error <- proc$read_error()
   if (nzchar(error)) {
-    cli::cli_abort("ors.jar setup error: {error}")
+    cli::cli_abort("ors.jar setup error: {error}") # nocov
   }
 
   self$proc <- proc
