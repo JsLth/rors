@@ -59,7 +59,7 @@ test_that("ors_status() formats correctly", {
 
 
 test_that("cache recovery works", {
-  assign("test", "successful", envir = rrors_cache)
+  assign("test", "successful", envir = rors_cache)
   test_recover <- function(force = FALSE) {
     recover_from_cache("test", force = force)
     "not successful"
