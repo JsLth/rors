@@ -1,5 +1,5 @@
 
-# rors <img src="man/figures/rors_sticker.png" align="right" height="180/"/>
+# rors <img src="man/figures/rors_sticker.png" align="right" height="180"/>
 
 <!-- badges: start -->
 
