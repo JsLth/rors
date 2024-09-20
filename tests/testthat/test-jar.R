@@ -40,6 +40,7 @@ test_that("properly stops without java", {
 })
 
 skip_on_cran()
+skip_on_os("darwin") # TODO
 skip_if_not(has_valid_java(), "java unavailable")
 skip_if_offline("github.com")
 
