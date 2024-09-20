@@ -33,7 +33,8 @@ ORSInstance <- R6Class(
     #' not been updated with \code{$update()} thus is not considered
     #' mounted.
     is_mounted = function() {
-      identical(private$.get_hash(), cli::hash_obj_md5(get_instance()))
+      instance <- get0("instance", envir = rors_cache())
+      identical(private$.get_hash(), cli::hash_obj_md5(instance))
     },
 
     #' @description
@@ -61,7 +62,12 @@ ORSInstance <- R6Class(
     },
 
     .mount = function() {
-      assign("instance", self, envir = rors_cache)
+      if (!self$is_mounted()) {
+        # if a new instance is mounted, clear runtime cache
+        clear_runtime_cache()
+      }
+
+      assign("instance", self, envir = rors_cache())
     }
   )
 )

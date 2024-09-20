@@ -1,8 +1,14 @@
-rors_cache <- new.env(parent = emptyenv())
+cache_env <- new.env(parent = emptyenv())
 
 
+rors_cache <- function() {
+  get("cache_env", envir = asNamespace("rors"))
+}
+
+
+#' Get an object from cache and return it from the parent environment
 recover_from_cache <- function(obj, force = FALSE) {
-  obj <- get0(obj, envir = rors_cache)
+  obj <- get0(obj, envir = rors_cache())
   if (!is.null(obj) && !force) {
     obj <- obj[[1]]
     return_from_parent(obj, .envir = parent.frame())
@@ -10,20 +16,22 @@ recover_from_cache <- function(obj, force = FALSE) {
 }
 
 
+#' Store an object in the rors cache environment as a runtime object
 store_in_cache <- function(obj) {
   name <- deparse(substitute(obj))
   obj <- list(obj)
   class(obj) <- "rors_runtime_cache"
-  assign(name, obj, envir = rors_cache)
+  assign(name, obj, envir = rors_cache())
 }
 
 
+#' Remove all runtime objects from the rors cache
 clear_runtime_cache <- function() {
-  is_runtime <- eapply(rors_cache, function(x) {
+  is_runtime <- eapply(rors_cache(), function(x) {
     inherits(x, "rors_runtime_cache")
   })
   cached <- names(is_runtime)[unlist(is_runtime)]
-  rm(list = cached, envir = rors_cache)
+  rm(list = cached, envir = rors_cache())
 }
 
 
@@ -71,7 +79,7 @@ clear_runtime_cache <- function() {
 #'
 #' @section Caching:
 #'
-#' The following functions make use of a "runtime" caching system:
+#' The following functions make use of a runtime caching system:
 #' \code{ors_ready()}, \code{ors_status()}, \code{get_profiles()},
 #' \code{get_extract_boundaries()}, \code{ors_sample()}. This means that,
 #' if \code{force = FALSE}, previously generated output is re-used instead
@@ -83,8 +91,8 @@ clear_runtime_cache <- function() {
 #'
 #' "Runtime" in this context refers to the runtime of an ORS instance, i.e.
 #' the time after it is started. Cached results should only be valid for a
-#' specific runtime and discarded afterwards. After starting or stopping
-#' an instance or when mounting a new instance, the runtime cache is cleared
+#' specific runtime and discarded afterwards. When mounting a new instance
+#' different from the one mounted before, the runtime cache is cleared
 #' so that fresh requests must be made.
 #'
 #' @examples
@@ -113,7 +121,7 @@ clear_runtime_cache <- function() {
 #' }
 get_instance <- function() {
   if (any_mounted()) {
-    get("instance", envir = rors_cache)
+    get("instance", envir = rors_cache())
   } else {
     code <- cli::code_highlight("ors_instance()")
     msg <- c(
@@ -161,7 +169,7 @@ inspect_container <- function(id = NULL) {
   }
 
   container_info <- jsonlite::fromJSON(container_info$stdout)
-  assign("container_info", container_info, envir = rors_cache)
+  assign("container_info", container_info, envir = rors_cache())
   container_info
 }
 
@@ -205,7 +213,7 @@ get_profiles <- function(url = NULL, force = TRUE) {
 #' @rdname get_instance
 #' @export
 ors_ready <- function(url = NULL, force = TRUE, error = FALSE) {
-  ready <- get0("ready", envir = rors_cache)
+  ready <- get0("ready", envir = rors_cache())[[1]]
   if (isTRUE(ready)) {
     recover_from_cache("ready", force = force)
   }
@@ -296,7 +304,7 @@ get_ors_url <- function(instance = NULL) {
 #' @rdname get_instance
 #' @export
 any_mounted <- function() {
-  "instance" %in% names(rors_cache)
+  "instance" %in% names(rors_cache())
 }
 
 
