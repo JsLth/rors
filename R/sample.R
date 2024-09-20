@@ -38,6 +38,7 @@
 #' needs to be enabled on other servers. \code{ors_guess} can make a lot of
 #' requests and might not be feasible in many situations.
 #'
+#' @inheritSection get_instance Caching
 #'
 #' @export
 #'
@@ -85,7 +86,7 @@ ors_sample <- function(size,
 get_extract_boundaries <- function(instance = NULL,
                                    force = FALSE,
                                    verbose = TRUE) {
-  recover_from_cache("extract_boundaries", force = force)
+  recover_from_cache("poly", force = force)
   instance <- instance %||% get_instance()
 
   if (ors_is_local(instance)) {
@@ -119,7 +120,7 @@ get_extract_boundaries <- function(instance = NULL,
     poly <- proc$get_result()
   } else {
     tip <- paste(
-      "{.code get_extract_boundaries} is not usable for unkown remote",
+      "{.fn get_extract_boundaries} is not usable for unkown remote",
       "servers as the extract boundaries cannot easily be determined.",
       "Consider using {.fn ors_guess}."
     )
@@ -129,7 +130,7 @@ get_extract_boundaries <- function(instance = NULL,
     )
   }
 
-  assign("extract_boundaries", poly, envir = rors_cache)
+  store_in_cache(poly)
   poly
 }
 

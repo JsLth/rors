@@ -323,6 +323,11 @@ ORSLocal <- R6Class(
     .prompts = TRUE,
     .alive = TRUE,
     .mount = function() {
+      if (!self$is_mounted()) {
+        # if a new instance is mounted, clear runtime cache
+        clear_runtime_cache()
+      }
+
       # no idea why this is necessary but when just using envir = rors_cache
       # $.mount() uses a different environment than defined globally
       rors_cache <- get("rors_cache", envir = asNamespace("rors"))

@@ -4,8 +4,26 @@ rors_cache <- new.env(parent = emptyenv())
 recover_from_cache <- function(obj, force = FALSE) {
   obj <- get0(obj, envir = rors_cache)
   if (!is.null(obj) && !force) {
+    obj <- obj[[1]]
     return_from_parent(obj, .envir = parent.frame())
   }
+}
+
+
+store_in_cache <- function(obj) {
+  name <- deparse(substitute(obj))
+  obj <- list(obj)
+  class(obj) <- "rors_runtime_cache"
+  assign(name, obj, envir = rors_cache)
+}
+
+
+clear_runtime_cache <- function() {
+  is_runtime <- eapply(rors_cache, function(x) {
+    inherits(x, "rors_runtime_cache")
+  })
+  cached <- names(is_runtime)[unlist(is_runtime)]
+  rm(list = cached, envir = rors_cache)
 }
 
 
@@ -50,6 +68,24 @@ recover_from_cache <- function(obj, force = FALSE) {
 #'
 #' @seealso \code{\link{ors_instance}}
 #' @export
+#'
+#' @section Caching:
+#'
+#' The following functions make use of a "runtime" caching system:
+#' \code{ors_ready()}, \code{ors_status()}, \code{get_profiles()},
+#' \code{get_extract_boundaries()}, \code{ors_sample()}. This means that,
+#' if \code{force = FALSE}, previously generated output is re-used instead
+#' of sending new requests. This can be particularly useful in automated
+#' workflows like loops where speed is important. When run directly, caching
+#' should not be necessary, which is why \code{force = FALSE} is the default
+#' of most of these functions (except \code{get_extract_boundaries()} because
+#' it deals with potentially much larger amounts of data).
+#'
+#' "Runtime" in this context refers to the runtime of an ORS instance, i.e.
+#' the time after it is started. Cached results should only be valid for a
+#' specific runtime and discarded afterwards. After starting or stopping
+#' an instance or when mounting a new instance, the runtime cache is cleared
+#' so that fresh requests must be made.
 #'
 #' @examples
 #' # initialize an ORS instance
@@ -147,7 +183,7 @@ ors_status <- function(url = NULL, force = TRUE) {
     )
   }
   class(status) <- "ors_status"
-  assign("status", status, envir = rors_cache)
+  store_in_cache(status)
   status
 }
 
@@ -171,7 +207,7 @@ get_profiles <- function(url = NULL, force = TRUE) {
 ors_ready <- function(url = NULL, force = TRUE, error = FALSE) {
   ready <- get0("ready", envir = rors_cache)
   if (isTRUE(ready)) {
-    t <- recover_from_cache("ready", force = force)
+    recover_from_cache("ready", force = force)
   }
 
   url <- url %||% get_ors_url()
@@ -204,7 +240,7 @@ ors_ready <- function(url = NULL, force = TRUE, error = FALSE) {
     )
   }
 
-  assign("ready", ready, envir = rors_cache)
+  store_in_cache(ready)
   ready
 }
 

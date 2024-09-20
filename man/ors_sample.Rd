@@ -72,6 +72,26 @@ accesses the snap endpoint which also does not work on the public API and
 needs to be enabled on other servers. \code{ors_guess} can make a lot of
 requests and might not be feasible in many situations.
 }
+\section{Caching}{
+
+
+The following functions make use of a "runtime" caching system:
+\code{ors_ready()}, \code{ors_status()}, \code{get_profiles()},
+\code{get_extract_boundaries()}, \code{ors_sample()}. This means that,
+if \code{force = FALSE}, previously generated output is re-used instead
+of sending new requests. This can be particularly useful in automated
+workflows like loops where speed is important. When run directly, caching
+should not be necessary, which is why \code{force = FALSE} is the default
+of most of these functions (except \code{get_extract_boundaries()} because
+it deals with potentially much larger amounts of data).
+
+"Runtime" in this context refers to the runtime of an ORS instance, i.e.
+the time after it is started. Cached results should only be valid for a
+specific runtime and discarded afterwards. After starting or stopping
+an instance or when mounting a new instance, the runtime cache is cleared
+so that fresh requests must be made.
+}
+
 \examples{
 \dontrun{
 # ORS sampling only works with a local instance
