@@ -178,11 +178,13 @@ the mounted instance.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Docker version 26.1.3, build b72abbb</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Downloading docker-compose.yml</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Using OpenRouteService version <span style="color: #00BB00;">v8.0.0</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Downloaded docker-compose.yml <span style="color: #B2B2B2;">[419ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Downloaded docker-compose.yml <span style="color: #B2B2B2;">[212ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error in get_instance() : </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   No OpenRouteService instance initialized.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> You can initialize an instance using <span style="font-weight: bold;">ors_instance</span><span style="color: #D7AF00;">()</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;ORSInstance&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  server : http://localhost:8080/</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  type   : local (docker)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  active : TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  init   : FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Connect to the public API</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>ORS_TOKEN <span class="op">=</span> <span class="st">"xxx"</span><span class="op">)</span> <span class="co"># a token must be set</span></span></span>
