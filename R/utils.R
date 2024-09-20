@@ -215,8 +215,8 @@ modify_list <- function(x, y) {
 #' @noRd
 flatten_list <- function(x) {
   # https://stackoverflow.com/a/8142955
-  while (any(vapply(x, is.list, logical(1)))) {
-    x <- lapply(x, function(x) if (is.list(x)) x else list(x))
+  while (any(vapply(x, is_list, logical(1)))) {
+    x <- lapply(x, function(x) if (is_list(x)) x else list(x))
     x <- unlist(x, recursive = FALSE)
   }
   x
