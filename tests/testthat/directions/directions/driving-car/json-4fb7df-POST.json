@@ -22,7 +22,7 @@
     "metadata": {
         "attribution": "openrouteservice.org, OpenStreetMap contributors, tmc - BASt",
         "service": "routing",
-        "timestamp": 1726531490406,
+        "timestamp": 1726841723017,
         "query": {
             "coordinates": [
                 [
@@ -41,7 +41,7 @@
         "engine": {
             "version": "8.0.0",
             "build_date": "2024-03-21T13:55:54Z",
-            "graph_date": "2024-09-17T00:04:47Z"
+            "graph_date": "2024-09-20T14:15:20Z"
         }
     }
 }

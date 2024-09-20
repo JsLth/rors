@@ -21,7 +21,6 @@ skip_on_os("solaris")
 skip_if_not(docker_running(), "docker unavailable")
 
 ors <- local_ors_instance(verbose = FALSE, dry = FALSE, version = "8.0.0")
-ors$set_extract(file = test_pbf())
 withr::local_options(list(rors_setup_warn = FALSE))
 
 skip_if_not(startsWith(ors$compose$name, "test-rors"))

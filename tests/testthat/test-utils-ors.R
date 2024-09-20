@@ -59,7 +59,7 @@ test_that("ors_status() formats correctly", {
 
 
 test_that("cache recovery works", {
-  assign("test", "successful", envir = rors_cache)
+  assign("test", "successful", envir = rors_cache())
   test_recover <- function(force = FALSE) {
     recover_from_cache("test", force = force)
     "not successful"
@@ -68,7 +68,8 @@ test_that("cache recovery works", {
   expect_identical(test_recover(force = TRUE), "not successful")
 
   # test if cache content is boxed correctly
-  assign("test", list(1, 2), envir = rors_cache)
+  test <- list(1, 2)
+  store_in_cache(test)
   expect_identical(test_recover(), list(1, 2))
 })
 
