@@ -34,7 +34,8 @@ ors_params(
   restrictions = list(),
   weightings = list(),
   surface_quality_known = FALSE,
-  allow_unsuitable = FALSE
+  allow_unsuitable = FALSE,
+  ...
 )
 }
 \arguments{

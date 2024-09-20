@@ -75,7 +75,7 @@ requests and might not be feasible in many situations.
 \section{Caching}{
 
 
-The following functions make use of a "runtime" caching system:
+The following functions make use of a runtime caching system:
 \code{ors_ready()}, \code{ors_status()}, \code{get_profiles()},
 \code{get_extract_boundaries()}, \code{ors_sample()}. This means that,
 if \code{force = FALSE}, previously generated output is re-used instead
@@ -87,8 +87,8 @@ it deals with potentially much larger amounts of data).
 
 "Runtime" in this context refers to the runtime of an ORS instance, i.e.
 the time after it is started. Cached results should only be valid for a
-specific runtime and discarded afterwards. After starting or stopping
-an instance or when mounting a new instance, the runtime cache is cleared
+specific runtime and discarded afterwards. When mounting a new instance
+different from the one mounted before, the runtime cache is cleared
 so that fresh requests must be made.
 }
 
