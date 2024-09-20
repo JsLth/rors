@@ -65,7 +65,7 @@ ors_guess <- function(poly = NULL,
                       poly_fun = sf::st_convex_hull,
                       instance = NULL,
                       ...) {
-  if (is.null(poly)) {
+  if (is.null(poly)) { # nocov start
     poly <- sf::st_as_sfc(sf::st_bbox(c(
       xmin = -180,
       ymin = -90,
@@ -95,5 +95,5 @@ ors_guess <- function(poly = NULL,
     }
   )
 
-  poly_fun(sf::st_union(res), ...)
+  poly_fun(sf::st_union(res), ...) # nocov end
 }

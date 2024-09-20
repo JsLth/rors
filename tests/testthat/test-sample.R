@@ -22,12 +22,10 @@ test_that("extract is read and processed properly", {
 
 test_that("fails properly", {
   ors$rm_extract()
-  print(identify_extract(get_instance()$paths$top))
-  get_extract_boundaries()
+  expect_error(get_extract_boundaries(force = TRUE), class = "ors_extract_not_found_error")
 
   ors <- ors_instance(server = "public")
-  print(ors_is_local(ors))
-  get_extract_boundaries()
+  expect_error(get_extract_boundaries(force = TRUE), class = "ors_remote_sample_error")
 })
 
 

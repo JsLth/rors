@@ -117,6 +117,17 @@ with_mock_dir("directions", {
       expect_gt(nrow(res1), nrow(res2))
       expect_gt(nrow(res2), nrow(res3))
     })
+
+    it("can format extra info", {
+      res <- ors_inspect(src[1:2], extra_info = TRUE)
+      expect_in(
+        c(
+          "type", "instruction", "exit_number", "steepness", "suitability",
+          "surface", "waycategory", "waytype"
+        ),
+        names(res)
+      )
+    })
   })
 })
 
