@@ -301,7 +301,7 @@ check_jdk_version <- function(verbose) {
   version <- get_java_version(verbose)
   version <- last(regex_match(
     version,
-    "(openjdk|java) (version \\\")?([0-9]{1,2})",
+    "(openjdk|java) (version )?(\\\")?([0-9]{1,2})",
     perl = TRUE
   )[[1]])
 
