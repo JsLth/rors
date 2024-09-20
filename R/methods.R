@@ -238,13 +238,6 @@ format.ors_token <- function(x, ...) {
 
 
 #' @export
-print.ors_matrix <- function(x, ...) {
-  class(x) <- NULL
-  print(x)
-}
-
-
-#' @export
 print.ors_condition <- function(x, ...) {
   cat(format(x, ...), sep = "\n")
   invisible(x)
@@ -296,6 +289,16 @@ print.ors_settings <- function(x, ...) {
 
 
 #' @export
+print.ors_local_sitrep <- function(x, ...) {
+  for (obj in x) {
+    print(obj)
+    cli::cat_line()
+  }
+  invisible(x)
+}
+
+
+#' @export
 print.ors_compose_parsed <- function(x, ...) {
   write_dockercompose(x, ...)
   invisible(x)
@@ -317,13 +320,6 @@ print.ors_profile <- function(x, ...) {
 
 
 #' @export
-print.stprof <- function(x, ...) {
-  cat(write_config(x, ...))
-  invisible(x)
-}
-
-
-#' @export
 print.ors_token <- function(x, ...) {
   cat(format(x, ...), sep = "\n")
   invisible(x)
@@ -332,13 +328,18 @@ print.ors_token <- function(x, ...) {
 
 #' @export
 print.ors_params <- function(x, ...) {
-  params <- cli::col_green(paste(cli::symbol$bullet, names(x)))
-  names(params) <- rep(" ", length(params))
+  if (length(x)) {
+    params <- cli::col_green(paste(cli::symbol$bullet, names(x)))
+    names(params) <- rep(" ", length(params))
 
-  msg <- cli::format_message(c(
-    "Object of class {.cls ors_params} with the following parameters:",
-    params
-  ))
+    msg <- cli::format_message(c(
+      "{.cls ors_params} with the following parameters:",
+      params
+    ))
+  } else {
+    msg <- cli::format_message("Empty {.cls ors_params}")
+  }
+
   cat(msg, "\n", ...)
   invisible(x)
 }
