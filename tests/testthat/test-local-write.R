@@ -228,10 +228,24 @@ test_that("$set_image works", {
   expect_identical(ors$compose$image, "latest")
 })
 
+
 test_that("ors_profile() works", {
   expect_named(ors_profile(), "profile_default")
   expect_identical(ors_profile("walking"), ors_profile("foot-walking"))
+  expect_s3_class(ors_profile("driving-car"), "ors_profile")
+  expect_s3_class(ors_profile("driving-hgv"), "ors_profile")
+  expect_s3_class(ors_profile("cycling-regular"), "ors_profile")
+  expect_s3_class(ors_profile("cycling-mountain"), "ors_profile")
+  expect_s3_class(ors_profile("cycling-road"), "ors_profile")
+  expect_s3_class(ors_profile("cycling-electric"), "ors_profile")
+  expect_s3_class(ors_profile("wheelchair"), "ors_profile")
+  expect_s3_class(ors_profile("public-transport"), "ors_profile")
+  expect_failure(expect_equal(
+    ors_profile("driving-car", test = 1),
+    ors_profile("driving-car")
+  ))
 
+  expect_no_error(print(ors_profile()))
   expect_error(ors_profile("test"), class = "ors_profile_template_error")
   expect_named(ors_profile("test", template = FALSE)$test, c("profile", "enabled"))
   cstm <- ors_profile(c("name", "title"), template = FALSE)

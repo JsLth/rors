@@ -31,7 +31,7 @@ test_that("param checking works", {
     sf::st_linestring(matrix(c(0, 0, 1, 1, 0, 0, 1, 1, 0, 0), ncol = 2)),
     "POLYGON"
   ), crs = 4326)))
-  #v7 <- list(extra_info = c("osmid", "roadaccessrestrictions"))
+  v7 <- list(avoid_polygons = test_coords())
   v8 <- list(extra_info = "osmid")
 
   # check if param checking can run successfully
@@ -50,12 +50,23 @@ test_that("param checking works", {
   expect_error(prepare_ors_params(v5, profile = "driving-car"), "undefined values")
 
   # check if sf checks work
-  expect_equal(prepare_ors_params(v6, profile = "driving-car")$avoid_polygons$type, "FeatureCollection")
+  p <- prepare_ors_params(v6, profile = "driving-car")
+  expect_equal(p$avoid_polygons$type, "FeatureCollection")
+  expect_output(print(p$avoid_polygons), "<truncated>")
   expect_error(prepare_ors_params(list(avoid_polygons = 1), profile = "driving-car"), "invalid sf object")
+  expect_error(prepare_ors_params(v7, profile = "driving-car"), "invalid sf object")
+
 
   # check if extra_info checks work
   #expect_error(prepare_ors_params(v7, profile = "wheelchair"), "possibly wrong profile")
   expect_equal(unclass(prepare_ors_params(v8, profile = "wheelchair")), v8)
+})
+
+
+test_that("high-level interface and printing works", {
+  expect_output(print(ors_params("driving-car", n = 5)), "Empty")
+  expect_output(print(ors_params("driving-car", n = 5, radiuses = -1)), "following")
+  expect_error(ors_params("driving-car", n = 5, test = 2), class = "ors_param_unknown_error")
 })
 
 

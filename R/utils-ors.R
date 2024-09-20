@@ -7,6 +7,7 @@ rors_cache <- function() {
 
 
 #' Get an object from cache and return it from the parent environment
+#' @noRd
 recover_from_cache <- function(obj, force = FALSE) {
   obj <- get0(obj, envir = rors_cache())
   if (!is.null(obj) && !force) {
@@ -17,6 +18,7 @@ recover_from_cache <- function(obj, force = FALSE) {
 
 
 #' Store an object in the rors cache environment as a runtime object
+#' @noRd
 store_in_cache <- function(obj) {
   name <- deparse(substitute(obj))
   obj <- list(obj)
@@ -26,6 +28,7 @@ store_in_cache <- function(obj) {
 
 
 #' Remove all runtime objects from the rors cache
+#' @noRd
 clear_runtime_cache <- function() {
   is_runtime <- eapply(rors_cache(), function(x) {
     inherits(x, "rors_runtime_cache")
@@ -140,40 +143,6 @@ check_instance <- function(instance = NULL) {
 }
 
 
-#' Returns the output of `docker inspect` as parsed json
-#' @noRd
-inspect_container <- function(id = NULL) {
-  recover_from_cache("container_info")
-
-  if (is.null(id)) {
-    return()
-  }
-
-  assert_docker_running()
-  cmd <- c("container", "inspect", id)
-
-  container_info <- callr::run(
-    command = "docker",
-    args = cmd,
-    stdout = "|",
-    stderr = NULL,
-    error_on_status = FALSE
-  )
-
-  if (length(container_info$stderr)) {
-    container_info$stderr <- gsub("Error: ", "", container_info$stderr)
-    abort(
-      "Cannot access container {.val {name}}: {container_info$stderr}",
-      "container_inaccessible_error"
-    )
-  }
-
-  container_info <- jsonlite::fromJSON(container_info$stdout)
-  assign("container_info", container_info, envir = rors_cache())
-  container_info
-}
-
-
 #' @rdname get_instance
 #' @export
 ors_status <- function(url = NULL, force = TRUE) {
@@ -281,7 +250,7 @@ identify_extract <- function(dir) {
     is_pbf <- is_pbf(data_files)
 
     if (sum(is_pbf) == 1L) {
-      extract_path <- data_files[is_pbf]
+      extract_path <- data_files[is_pbf] # nocov
     }
   }
 
@@ -318,8 +287,8 @@ assert_endpoint_available <- function(url, endpoint) {
   available <- endpoint %in% status$services
 
   if (!available) {
-    fun <- sys.call(sys.parent())[[1]]
+    fun <- sys.call(sys.parent())[[1]] # nocov start
     msg <- "{.fn {fun}} is not available on the mounted API."
-    abort(msg, class = "endpoint_unavailable_error")
+    abort(msg, class = "endpoint_unavailable_error") # nocov end
   }
 }

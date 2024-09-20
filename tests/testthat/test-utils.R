@@ -153,6 +153,7 @@ test_that("list tools work", {
   names(lst5) <- c("", "b")
 
   lst6 <- list("a", "b")
+  lst7 <- list(a = data.frame(a = 1))
 
   mod <- modify_list(lst1, lst2)
 
@@ -176,6 +177,7 @@ test_that("list tools work", {
 
   expect_named(flatten_list(lst5), c("", "b.x", "b.y"))
   expect_identical(flatten_list(lst6), lst6)
+  expect_identical(flatten_list(lst7)$a, data.frame(a = 1))
 })
 
 test_that("decode_base2 works", {

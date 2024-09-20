@@ -5,6 +5,47 @@ skip_if_offline("github.com")
 ors <- local_ors_instance(verbose = FALSE, dry = TRUE)
 ors$set_extract(file = test_pbf())
 
+test_that("printing produces non-standard output", {
+  # if a print method is found, use it
+  # otherwise, omit attributes and print.default
+  print_no_attributes <- function(x, ...) {
+    cls <- class(x)[[1]]
+    method <- get0(
+      sprintf("print.%s", cls),
+      envir = asNamespace("rors"),
+      ifnotfound = print.default
+    )
+    attributes(x) <- NULL
+    method(x)
+    invisible(x)
+  }
+
+  expect_failure(expect_equal(
+    capture.output(print(ors$extract)),
+    capture.output(print_no_attributes(unclass(ors$extract)))
+  ))
+  expect_failure(expect_equal(
+    capture.output(print(ors$compose)),
+    capture.output(print_no_attributes(unclass(ors$compose)))
+  ))
+  expect_failure(expect_equal(
+    capture.output(print(ors$config)),
+    capture.output(print_no_attributes(unclass(ors$config)))
+  ))
+  expect_failure(expect_equal(
+    capture.output(print(ors$compose$parsed)),
+    capture.output(print_no_attributes(unclass(ors$compose$parsed)))
+  ))
+  expect_failure(expect_equal(
+    capture.output(print(ors$config$parsed)),
+    capture.output(print_no_attributes(unclass(ors$config$parsed)))
+  ))
+  expect_failure(expect_equal(
+    capture.output(print(ors$report())),
+    capture.output(print_no_attributes(unclass(ors$report())))
+  ))
+})
+
 test_that("setup is created properly", {
   expect_true(file.exists(ors$paths$compose))
 })

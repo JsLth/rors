@@ -1,5 +1,11 @@
 message("utils-ors")
 
+rors_cleanup()
+
+test_that("instance can be asserted", {
+  expect_error(get_instance(), class = "ors_init_error")
+})
+
 skip_if(!loadable("webfakes"), "webfakes unavailable")
 skip_webfakes <- function(web) {
   failed <- inherits(web, "try-error")
