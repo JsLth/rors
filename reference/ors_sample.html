@@ -124,6 +124,26 @@ accesses the snap endpoint which also does not work on the public API and
 needs to be enabled on other servers. <code>ors_guess</code> can make a lot of
 requests and might not be feasible in many situations.</p>
     </div>
+    <div class="section level2">
+    <h2 id="caching">Caching<a class="anchor" aria-label="anchor" href="#caching"></a></h2>
+
+
+
+<p>The following functions make use of a "runtime" caching system:
+<code><a href="get_instance.html">ors_ready()</a></code>, <code><a href="get_instance.html">ors_status()</a></code>, <code><a href="get_instance.html">get_profiles()</a></code>,
+<code>get_extract_boundaries()</code>, <code>ors_sample()</code>. This means that,
+if <code>force = FALSE</code>, previously generated output is re-used instead
+of sending new requests. This can be particularly useful in automated
+workflows like loops where speed is important. When run directly, caching
+should not be necessary, which is why <code>force = FALSE</code> is the default
+of most of these functions (except <code>get_extract_boundaries()</code> because
+it deals with potentially much larger amounts of data).</p>
+<p>"Runtime" in this context refers to the runtime of an ORS instance, i.e.
+the time after it is started. Cached results should only be valid for a
+specific runtime and discarded afterwards. After starting or stopping
+an instance or when mounting a new instance, the runtime cache is cleared
+so that fresh requests must be made.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

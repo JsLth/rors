@@ -119,6 +119,26 @@ is running. <code>get_profiles</code> returns a vector containing the active
 profiles. <code>any_mounted</code> returns a length-1 logical.</p>
     </div>
     <div class="section level2">
+    <h2 id="caching">Caching<a class="anchor" aria-label="anchor" href="#caching"></a></h2>
+
+
+
+<p>The following functions make use of a "runtime" caching system:
+<code>ors_ready()</code>, <code>ors_status()</code>, <code>get_profiles()</code>,
+<code><a href="ors_sample.html">get_extract_boundaries()</a></code>, <code><a href="ors_sample.html">ors_sample()</a></code>. This means that,
+if <code>force = FALSE</code>, previously generated output is re-used instead
+of sending new requests. This can be particularly useful in automated
+workflows like loops where speed is important. When run directly, caching
+should not be necessary, which is why <code>force = FALSE</code> is the default
+of most of these functions (except <code><a href="ors_sample.html">get_extract_boundaries()</a></code> because
+it deals with potentially much larger amounts of data).</p>
+<p>"Runtime" in this context refers to the runtime of an ORS instance, i.e.
+the time after it is started. Cached results should only be valid for a
+specific runtime and discarded afterwards. After starting or stopping
+an instance or when mounting a new instance, the runtime cache is cleared
+so that fresh requests must be made.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="ors_instance.html">ors_instance</a></code></p></div>
     </div>
@@ -129,29 +149,30 @@ profiles. <code>any_mounted</code> returns a length-1 logical.</p>
 <span class="r-in"><span><span class="va">ors</span> <span class="op">&lt;-</span> <span class="fu"><a href="ors_instance.html">ors_instance</a></span><span class="op">(</span>dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, dry <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Downloading docker-compose.yml</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Using OpenRouteService version <span style="color: #00BB00;">v8.1.3</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Downloaded docker-compose.yml <span style="color: #B2B2B2;">[182ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Downloaded docker-compose.yml <span style="color: #B2B2B2;">[482ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in get_instance():</span> No OpenRouteService instance initialized.</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> You can initialize an instance using <span style="font-weight: bold;">ors_instance</span><span style="color: #D7AF00;">()</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># confirm that instance was mounted</span></span></span>
 <span class="r-in"><span><span class="fu">any_mounted</span><span class="op">(</span><span class="op">)</span> <span class="co"># TRUE</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># retrieve the instance object</span></span></span>
 <span class="r-in"><span><span class="fu">get_instance</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;ORSInstance&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  server : http://localhost:8080/</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  type   : local (docker)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  active : TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  init   : FALSE</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in get_instance():</span> No OpenRouteService instance initialized.</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> You can initialize an instance using <span style="font-weight: bold;">ors_instance</span><span style="color: #D7AF00;">()</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># check if the service is ready</span></span></span>
 <span class="r-in"><span><span class="fu">ors_ready</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in get_instance():</span> No OpenRouteService instance initialized.</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> You can initialize an instance using <span style="font-weight: bold;">ors_instance</span><span style="color: #D7AF00;">()</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># assert the ready status</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">ors_ready</span><span class="op">(</span>error <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : Cannot reach the OpenRouteService server.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Did you start your local instance?</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error in get_instance() : </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No OpenRouteService instance initialized.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> You can initialize an instance using <span style="font-weight: bold;">ors_instance</span><span style="color: #D7AF00;">()</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="co"># the following functions require a running service</span></span></span>

@@ -57,9 +57,8 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="rors">rors<a class="anchor" aria-label="anchor" href="#rors"></a>
+<div class="page-header"><h1 id="rors-">rors <img src="reference/figures/rors_sticker.png" align="right" height="180/"><a class="anchor" aria-label="anchor" href="#rors-"></a>
 </h1></div>
-<p><img src="reference/figures/rors_sticker.png" width="150" align="right"></p>
 <!-- badges: start -->
 
 <!-- badges: end -->
@@ -87,10 +86,7 @@
 <p>To connect to a running OpenRouteService server - or to build a new one, use the workhorse function <code>ors_instance</code>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/JsLth/rors" class="external-link">rors</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; © openrouteservice.org by HeiGIT | Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Paket 'sf' wurde unter R Version 4.3.2 erstellt</span></span>
-<span><span class="co">#&gt; Linking to GEOS 3.11.2, GDAL 3.7.2, PROJ 9.3.0; sf_use_s2() is TRUE</span></span>
 <span></span>
 <span><span class="co"># API keys are stored in the ORS_TOKEN environment variable</span></span>
 <span><span class="va">ors</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ors_instance.html">ors_instance</a></span><span class="op">(</span>server <span class="op">=</span> <span class="st">"public"</span><span class="op">)</span></span></code></pre></div>
@@ -100,26 +96,26 @@
 <span><span class="co">#&gt; Simple feature collection with 7 features and 5 fields</span></span>
 <span><span class="co">#&gt; Geometry type: MULTILINESTRING</span></span>
 <span><span class="co">#&gt; Dimension:     XY</span></span>
-<span><span class="co">#&gt; Bounding box:  xmin: -0.730349 ymin: 52.5876 xmax: -0.467708 ymax: 52.6747</span></span>
+<span><span class="co">#&gt; Bounding box:  xmin: -0.730349 ymin: 52.5876 xmax: -0.467708 ymax: 52.67472</span></span>
 <span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
 <span><span class="co">#&gt; # A tibble: 7 × 6</span></span>
 <span><span class="co">#&gt;   name            distance duration avgspeed elevation                  geometry</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                [m]      [s]   [km/h]       [m]     &lt;MULTILINESTRING [°]&gt;</span></span>
-<span><span class="co">#&gt; 1 Uppingham Road…   9983.     618.      69.8     121.  ((-0.722324 52.58762, -0…</span></span>
-<span><span class="co">#&gt; 2 High Street, B…     26.3      2.4     39.4     111.  ((-0.727928 52.66962, -0…</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;              &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;     &lt;MULTILINESTRING [°]&gt;</span></span>
+<span><span class="co">#&gt; 1 Uppingham Road…   9983.     618.      69.8     120.  ((-0.722324 52.58762, -0…</span></span>
+<span><span class="co">#&gt; 2 High Street, B…     26.3      2.4     39.4     112   ((-0.727928 52.66962, -0…</span></span>
 <span><span class="co">#&gt; 3 Uppingham Road…  10059.     628.      68.8     120.  ((-0.728317 52.66962, -0…</span></span>
-<span><span class="co">#&gt; 4 Uppingham Road…  10642.     676.      69.8     123.  ((-0.721097 52.58816, -0…</span></span>
-<span><span class="co">#&gt; 5 Stamford Road,…  19188.    1137.      66.0      77.9 ((-0.730349 52.66991, -0…</span></span>
-<span><span class="co">#&gt; 6 St Mary's Stre…    358.      61.9     25.0      32.5 ((-0.478222 52.65071, -0…</span></span>
-<span><span class="co">#&gt; 7 St George's St…   1094.     140.      27.7      38.9 ((-0.477902 52.65231, -0…</span></span></code></pre></div>
+<span><span class="co">#&gt; 4 Uppingham Road…  10642.     676.      69.8     122.  ((-0.721097 52.58816, -0…</span></span>
+<span><span class="co">#&gt; 5 Stamford Road,…  19187.    1144.      63.5      78.4 ((-0.730349 52.66991, -0…</span></span>
+<span><span class="co">#&gt; 6 St Mary's Stre…    358.      61.9     25.0      34.9 ((-0.478222 52.65071, -0…</span></span>
+<span><span class="co">#&gt; 7 St George's St…   1094.     140.      27.7      38.5 ((-0.477902 52.65231, -0…</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="local-instances">Local instances<a class="anchor" aria-label="anchor" href="#local-instances"></a>
 </h2>
-<p>While <code>rors</code> can work with public API requests, it is primarily designed to be used together with local instances. The <code>ors_instance</code> family can be used to manage, control and build local ORS instances. The following code would jumpstart an initial instance, add an OSM extract of Rutland, add three routing profiles, set a random port, 100 MB of RAM and finally start the ORS instance. For more details, refer to <code><a href="articles/ors-installation.html">vignette("ors-installation")</a></code>.</p>
+<p>While <code>rors</code> can work with public API requests, it is primarily designed to be used together with local instances. The <code>ors_instance</code> family can be used to manage, control and build local ORS instances. The following code would jumpstart an initial instance, add an OSM extract of Rutland, add three routing profiles, set a random port, 100 MB of RAM and finally start the ORS instance. For more details, refer to <a href="https://jslth.github.io/rors/articles/ors-installation.html"><code>vignette("ors-installation")</code></a>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ors</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ors_instance.html">ors_instance</a></span><span class="op">(</span>dir <span class="op">=</span> <span class="st">"~"</span><span class="op">)</span><span class="op">$</span></span>
-<span>  <span class="fu">set_extract</span><span class="op">(</span><span class="st">"Rutland"</span>, provider <span class="op">=</span> <span class="st">"geofabrik"</span><span class="op">)</span><span class="op">$</span></span>
+<code class="sourceCode R"><span><span class="va">ors</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ors_instance.html">ors_instance</a></span><span class="op">(</span><span class="op">)</span><span class="op">$</span></span>
+<span>  <span class="fu">set_extract</span><span class="op">(</span><span class="st">"Rutland"</span><span class="op">)</span><span class="op">$</span></span>
 <span>  <span class="fu">add_profiles</span><span class="op">(</span><span class="st">"car"</span>, <span class="st">"bike-regular"</span>, <span class="st">"walking"</span><span class="op">)</span><span class="op">$</span></span>
 <span>  <span class="fu">set_port</span><span class="op">(</span><span class="op">)</span><span class="op">$</span></span>
 <span>  <span class="fu">set_ram</span><span class="op">(</span><span class="fl">0.1</span><span class="op">)</span><span class="op">$</span></span>
