@@ -248,6 +248,9 @@
 #' Whether unsuitable ways should be included in routing. Only available
 #' for \code{"wheelchair"} profile.
 #'
+#' @param ... Reserved for further expansion. If a dot argument is used,
+#' an error is thrown.
+#'
 #' @details
 #' This function performs some basic validation checks. If a check fails,
 #' an error is thrown. In particular, the following reasons can lead to
@@ -584,8 +587,8 @@ construct_ors_params <- function(params) {
     param_list <- construct_ors_object(params[[name]], name, param_list, info)
   }
 
-  class(params) <- "ors_params"
-  params
+  class(param_list) <- "ors_params"
+  param_list
 }
 
 

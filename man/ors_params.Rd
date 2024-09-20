@@ -276,6 +276,9 @@ Only available for \code{"wheelchair"} profile.}
 
 Whether unsuitable ways should be included in routing. Only available
 for \code{"wheelchair"} profile.}
+
+\item{...}{Reserved for further expansion. If a dot argument is used,
+an error is thrown.}
 }
 \description{
 Create a list of parameters that can be passed to a function that supports
