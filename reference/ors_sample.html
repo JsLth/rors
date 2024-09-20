@@ -129,7 +129,7 @@ requests and might not be feasible in many situations.</p>
 
 
 
-<p>The following functions make use of a "runtime" caching system:
+<p>The following functions make use of a runtime caching system:
 <code><a href="get_instance.html">ors_ready()</a></code>, <code><a href="get_instance.html">ors_status()</a></code>, <code><a href="get_instance.html">get_profiles()</a></code>,
 <code>get_extract_boundaries()</code>, <code>ors_sample()</code>. This means that,
 if <code>force = FALSE</code>, previously generated output is re-used instead
@@ -140,8 +140,8 @@ of most of these functions (except <code>get_extract_boundaries()</code> because
 it deals with potentially much larger amounts of data).</p>
 <p>"Runtime" in this context refers to the runtime of an ORS instance, i.e.
 the time after it is started. Cached results should only be valid for a
-specific runtime and discarded afterwards. After starting or stopping
-an instance or when mounting a new instance, the runtime cache is cleared
+specific runtime and discarded afterwards. When mounting a new instance
+different from the one mounted before, the runtime cache is cleared
 so that fresh requests must be made.</p>
     </div>
 
