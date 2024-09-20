@@ -306,7 +306,8 @@ ors_params <- function(profile,
                        restrictions = list(),
                        weightings = list(),
                        surface_quality_known = FALSE,
-                       allow_unsuitable = FALSE) {
+                       allow_unsuitable = FALSE,
+                       ...) {
   params <- as.list(match.call()[-1])
   params[c("n", "profile")] <- NULL
   prepare_ors_params(params, profile, n)
