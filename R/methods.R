@@ -37,7 +37,7 @@ format.ors_config <- function(x, ...) {
     n_opts <- length(sep[[x]])
     sprintf("%s - {cli::no(%s)} option{?s} changed", enabled_fmt, n_opts)
   })
-  names(ep_fmt) <- capitalize_char(paste0(ep, strrep("\u00a0", 10 - nchar(ep))))
+  names(ep_fmt) <- capitalize_char(paste0(ep, strrep("\u00a0", 11 - nchar(ep))))
 
   # profiles
   prof <- union(get_all_profiles(), names(x$profiles))
