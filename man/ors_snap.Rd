@@ -18,7 +18,7 @@ Defaults to the first profile in a call to \code{\link{get_profiles}}.
 For \code{ors_shortest_distances}, \code{profile} can be a character
 vector, for all other functions it needs to be a character scalar.
 For details on all profiles, refer to the
-\href{https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html}{documentation}.}
+\href{https://giscience.github.io/openrouteservice/technical-details/tag-filtering}{backend reference}.}
 
 \item{radius}{\code{[numeric]}
 

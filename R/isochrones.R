@@ -92,12 +92,14 @@
 #' intersection can be assigned to two isochrone and each isochrone can be
 #' identified using their group index and their respective range.
 #'
+#' @export
+#'
 #' @examples
 #' \dontrun{
 #' data("pharma")
 #'
-#' # Returns a polygon sf dataframe divided by four 15 minute time breaks
-#' # Also contains information on the area and population inside the isochrones
+#' # Returns a polygon sf dataframe divided by four 15 minute time breaks.
+#' # Also contains information on the area and population inside the isochrones.
 #' ors_accessibility(
 #'   pharma,
 #'   profile = "driving-car",
@@ -114,7 +116,8 @@
 #'   profile = "driving-car",
 #'   range = c(1000, 5000, 10000),
 #'   location_type = "destination",
-#'   range_type = "distance"
+#'   range_type = "distance",
+#'   rasterize = TRUE
 #' )
 #'
 #' # Returns a polygon sf dataframe that is broken down every 50 meters up until
@@ -126,10 +129,19 @@
 #'   location_type = "start",
 #'   interval = 50,
 #'   range_type = "distance"
-#' )}
+#' )
 #'
-#'
-#' @export
+#' # Returns the intersections of the above isochrones
+#' ors_accessibility(
+#'   pharma,
+#'   intersections = TRUE,
+#'   profile = "cycling-regular",
+#'   range = 500,
+#'   location_type = "start",
+#'   interval = 50,
+#'   range_type = "distance"
+#' )
+#' }
 ors_accessibility <- function(src,
                               profile = NULL,
                               range = c(200, 300),

@@ -179,7 +179,7 @@ ORSDocker <- R6Class(
     #'  version.}
     #'  \item{\code{parsed}: Parsed compose file. When making changes to this
     #'  object, make sure to run \code{$update()} to apply the changes. For details,
-    #' refer to the \href{https://giscience.github.io/openrouteservice/run-instance/installation/running-with-docker#docker-configuration}{official reference}.}
+    #'  refer to the \href{https://giscience.github.io/openrouteservice/run-instance/running-with-docker}{official reference}.}
     #' }
     compose = NULL,
 

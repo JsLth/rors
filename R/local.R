@@ -533,7 +533,7 @@ get_ors_release <- function(dir,
 
     if (is_numver(version)) {
       if (!minimum_version(version, "8.0.0")) {
-        msg = c(
+        msg <- c(
           "!" = "OpenRouteService version must be at least 8.0.0, not {version}",
           "i" = "Older versions are deprecated."
         )
