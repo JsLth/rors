@@ -50,7 +50,7 @@ test_that("param checking works", {
   expect_error(prepare_ors_params(v5, profile = "driving-car"), "undefined values")
 
   # check if sf checks work
-  p <- prepare_ors_params(v6, profile = "driving-car")
+  p <- prepare_ors_params(v6, profile = "driving-car")$options
   expect_equal(p$avoid_polygons$type, "FeatureCollection")
   expect_output(print(p$avoid_polygons), "<truncated>")
   expect_error(prepare_ors_params(list(avoid_polygons = 1), profile = "driving-car"), "invalid sf object")
