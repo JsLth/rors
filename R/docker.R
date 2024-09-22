@@ -12,9 +12,7 @@
 #' For details on how to use \code{ORSDocker} objects, refer to the installation
 #' vignette:
 #'
-#' \preformatted{
-#' vignette("ors-installation", package = "rors")
-#' }
+#' \preformatted{vignette("ors-installation", package = "rors")}
 #'
 #'
 #' @details
@@ -56,10 +54,8 @@
 #' also need to be done manually. To write changes to disk, run
 #' \code{$update()}, e.g.:
 #'
-#' \preformatted{
-#'  ors$compose$parsed$services$`ors-app`$container_name <- "new-name-123"
-#'  ors$update()
-#' }
+#' \preformatted{ors$compose$parsed$services$`ors-app`$container_name <- "new-name-123"
+#' ors$update()}
 #'
 #' To read changes done manually to the files on disk, run
 #' \code{$update("self")}.
@@ -78,10 +74,8 @@
 #' Alternative configuration files can be specified by modifying the
 #' \code{ORS_CONFIG_LOCATION} option in the compose file:
 #'
-#' \preformatted{
-#' ors$compose$parsed$services$`ors-app`$environment$ORS_CONFIG_LOCATION <- "ors-config.yml"
-#' ors$update()
-#' }
+#' \preformatted{ors$compose$parsed$services$`ors-app`$environment$ORS_CONFIG_LOCATION <- "ors-config.yml"
+#' ors$update()}
 #'
 #' @export
 #'
@@ -109,15 +103,29 @@
 #' # Set up ORS
 #' ors$up()
 #'
+#' # If the setup fails or produces warnings, you can check
+#' # using $show_logs()
+#' ors$show_logs()
+#'
 #' # Check if ORS container exists and is running
-#' ors$is_built()
-#' ors$is_running()
+#' ors$is_built() # TRUE
+#' ors$is_running() # TRUE
 #'
 #' # Check if ORS is ready to use
 #' ors$is_ready()
 #'
-#' # Stop container, e.g. to make configuration changes
+#' # You can stop and start a container
+#' # This does not remove a container but only interrupts it
 #' ors$stop()
+#' ors$is_built() # TRUE
+#' ors$is_running() # FALSE
+#' ors$start()
+#'
+#' # Take down container, e.g. to make configuration changes
+#' # This removes a container so that you have to rebuild it
+#' ors$down()
+#' ors$is_built() # FALSE
+#' ors$is_running() # FALSE
 #'
 #' # Make changes to the configuration
 #' ors$set_endpoints(matrix = list(maximum_routes = 1e+05)) # default is 2500
@@ -135,13 +143,8 @@
 #' # refreshed
 #' ors$update("self") # reads the disk state to the R object
 #'
-#' # Adding profiles does not work when the container is still built!
-#' # Why? Because graphs need to be built for new profiles, so the container
-#' # must be down.
-#' if (FALSE) {
-#'   bike <- ors_profile("bike-road")
-#'   ors$add_profiles(bike) # only do this when the container is down!!
-#' }
+#' bike <- ors_profile("bike-road")
+#' ors$add_profiles(bike)
 #'
 #' # Additionally, graphs are only re-built if we enable graph building.
 #' # When changing the extract, this happens automatically, but we can also
@@ -149,7 +152,7 @@
 #' ors$set_graphbuilding(TRUE)
 #'
 #' # Finally, start the container again to run the newly configured service
-#' ors$start()
+#' ors$up()
 #' }
 ORSDocker <- R6Class(
   classname = "ORSDocker",
@@ -262,7 +265,6 @@ ORSDocker <- R6Class(
       }
 
       dir <- get_ors_release(dir, version, file = "docker", overwrite, verbose)
-      check_ors_dir(dir, type = "docker")
 
       private$.verbose <- verbose
       private$.prompts <- prompts
@@ -401,14 +403,14 @@ ORSDocker <- R6Class(
     #'
     #' @param init \code{[numeric/NULL]}
     #'
-    #' Initial memory. This can change if more memory is needed. If not
-    #' specified, uses \code{max}. If both are \code{NULL}, estimates
-    #' memory.
+    #' Initial memory in gigabytes. This can change if more memory is needed.
+    #' If not specified, uses \code{max}. If both are \code{NULL}, estimates
+    #' required memory.
     #' @param max \code{[numeric/NULL]}
     #'
-    #' Maximum memory. The container is not allowed to use more
+    #' Maximum memory in gigabytes. The container is not allowed to use more
     #' memory than this value. If not specified, uses \code{init}. If both are
-    #' \code{NULL}, estimates memory.
+    #' \code{NULL}, estimates required memory.
     set_memory = function(init = NULL, max = NULL) {
       assert_that(is_number(init, null = TRUE), is_number(max, null = TRUE))
 
@@ -438,7 +440,9 @@ ORSDocker <- R6Class(
     #' Turning graph building on enables new profiles to be built or the
     #' extract to be changed but significantly increases setup time. Turn
     #' this off if you are changing configuration options that do not alter
-    #' routing graphs.
+    #' routing graphs. Usually, you do not need to call this method
+    #' yourself because it is called automatically when a new extract is
+    #' set or when the setup is completed.
     #'
     #' @param mode \code{[logical]}
     #'
@@ -461,7 +465,7 @@ ORSDocker <- R6Class(
     },
 
     #' @description
-    #' Set version of the ORS Docker image. This should preferably be compatible
+    #' Set version of the ORS Docker image. The version should be compatible
     #' with the compose version.
     #'
     #' @param version \code{[character]}
@@ -488,7 +492,7 @@ ORSDocker <- R6Class(
 
     ## Docker ----
     #' @description
-    #' Create the ORS docker container and setup the ORS backend on a local
+    #' Create the ORS docker container and set up the ORS backend on a local
     #' host.
     #'
     #' @param wait \code{logical}
@@ -703,30 +707,4 @@ start_docker <- function(verbose = TRUE) {
       stderr = NULL
     )
   }
-}
-
-
-check_ors_dir <- function(dir, type) {
-  switch(
-    type,
-    docker = {
-      check <- file.exists(file.path(dir, "docker-compose.yml"))
-      if (!check) {
-        cli::cli_abort(c(
-          "!" = "OpenRouteService directory is corrupted",
-          "i" = "Compose file is missing."
-        ), class = "ors_corrupted_dir_error")
-      }
-    },
-
-    jar = {
-      check <- file.exists(file.path(dir, "ors.jar"))
-      if (!check) {
-        cli::cli_abort(c(
-          "!" = "OpenRouteService directory is corrupted",
-          "i" = "JAR file is missing."
-        ), class = "ors_corrupted_dir_error")
-      }
-    }
-  )
 }

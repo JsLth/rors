@@ -16,9 +16,7 @@ For technical details on the setup of local ORS instances, refer to the
 For details on how to use \code{ORSDocker} objects, refer to the installation
 vignette:
 
-\preformatted{
-vignette("ors-installation", package = "rors")
-}
+\preformatted{vignette("ors-installation", package = "rors")}
 }
 \details{
 \code{ORSDocker} defines methods for all four steps in the ORS setup:
@@ -62,10 +60,8 @@ their changes to disk. It is also possible to make direct changes to the
 also need to be done manually. To write changes to disk, run
 \code{$update()}, e.g.:
 
-\preformatted{
- ors$compose$parsed$services$`ors-app`$container_name <- "new-name-123"
- ors$update()
-}
+\preformatted{ors$compose$parsed$services$`ors-app`$container_name <- "new-name-123"
+ors$update()}
 
 To read changes done manually to the files on disk, run
 \code{$update("self")}.
@@ -86,10 +82,8 @@ overwritten when \verb{$update("fs")} is called and cannot be read using
 Alternative configuration files can be specified by modifying the
 \code{ORS_CONFIG_LOCATION} option in the compose file:
 
-\preformatted{
-ors$compose$parsed$services$`ors-app`$environment$ORS_CONFIG_LOCATION <- "ors-config.yml"
-ors$update()
-}
+\preformatted{ors$compose$parsed$services$`ors-app`$environment$ORS_CONFIG_LOCATION <- "ors-config.yml"
+ors$update()}
 }
 
 \examples{
@@ -116,15 +110,29 @@ ors$set_name("example-ors")
 # Set up ORS
 ors$up()
 
+# If the setup fails or produces warnings, you can check
+# using $show_logs()
+ors$show_logs()
+
 # Check if ORS container exists and is running
-ors$is_built()
-ors$is_running()
+ors$is_built() # TRUE
+ors$is_running() # TRUE
 
 # Check if ORS is ready to use
 ors$is_ready()
 
-# Stop container, e.g. to make configuration changes
+# You can stop and start a container
+# This does not remove a container but only interrupts it
 ors$stop()
+ors$is_built() # TRUE
+ors$is_running() # FALSE
+ors$start()
+
+# Take down container, e.g. to make configuration changes
+# This removes a container so that you have to rebuild it
+ors$down()
+ors$is_built() # FALSE
+ors$is_running() # FALSE
 
 # Make changes to the configuration
 ors$set_endpoints(matrix = list(maximum_routes = 1e+05)) # default is 2500
@@ -142,13 +150,8 @@ ors$update() # writes the current object state to the disk
 # refreshed
 ors$update("self") # reads the disk state to the R object
 
-# Adding profiles does not work when the container is still built!
-# Why? Because graphs need to be built for new profiles, so the container
-# must be down.
-if (FALSE) {
-  bike <- ors_profile("bike-road")
-  ors$add_profiles(bike) # only do this when the container is down!!
-}
+bike <- ors_profile("bike-road")
+ors$add_profiles(bike)
 
 # Additionally, graphs are only re-built if we enable graph building.
 # When changing the extract, this happens automatically, but we can also
@@ -156,7 +159,7 @@ if (FALSE) {
 ors$set_graphbuilding(TRUE)
 
 # Finally, start the container again to run the newly configured service
-ors$start()
+ors$up()
 }
 }
 \section{Super classes}{
@@ -380,15 +383,15 @@ Set initial and max memory that the ORS container is allowed to use.
 \describe{
 \item{\code{init}}{\code{[numeric/NULL]}
 
-Initial memory. This can change if more memory is needed. If not
-specified, uses \code{max}. If both are \code{NULL}, estimates
-memory.}
+Initial memory in gigabytes. This can change if more memory is needed.
+If not specified, uses \code{max}. If both are \code{NULL}, estimates
+required memory.}
 
 \item{\code{max}}{\code{[numeric/NULL]}
 
-Maximum memory. The container is not allowed to use more
+Maximum memory in gigabytes. The container is not allowed to use more
 memory than this value. If not specified, uses \code{init}. If both are
-\code{NULL}, estimates memory.}
+\code{NULL}, estimates required memory.}
 }
 \if{html}{\out{</div>}}
 }
@@ -401,7 +404,9 @@ Graph building specifies whether routing graphs should be (re-)built.
 Turning graph building on enables new profiles to be built or the
 extract to be changed but significantly increases setup time. Turn
 this off if you are changing configuration options that do not alter
-routing graphs.
+routing graphs. Usually, you do not need to call this method
+yourself because it is called automatically when a new extract is
+set or when the setup is completed.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDocker$set_graphbuilding(mode)}\if{html}{\out{</div>}}
 }
@@ -420,7 +425,7 @@ Whether to turn graph building on or off.}
 \if{html}{\out{<a id="method-ORSDocker-set_image"></a>}}
 \if{latex}{\out{\hypertarget{method-ORSDocker-set_image}{}}}
 \subsection{Method \code{set_image()}}{
-Set version of the ORS Docker image. This should preferably be compatible
+Set version of the ORS Docker image. The version should be compatible
 with the compose version.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDocker$set_image(version)}\if{html}{\out{</div>}}
@@ -440,7 +445,7 @@ Version specification of the ORS image.}
 \if{html}{\out{<a id="method-ORSDocker-up"></a>}}
 \if{latex}{\out{\hypertarget{method-ORSDocker-up}{}}}
 \subsection{Method \code{up()}}{
-Create the ORS docker container and setup the ORS backend on a local
+Create the ORS docker container and set up the ORS backend on a local
 host.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ORSDocker$up(wait = TRUE, ...)}\if{html}{\out{</div>}}

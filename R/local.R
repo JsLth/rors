@@ -614,14 +614,17 @@ check_dir_has_file <- function(dir, file) {
     )
 
     # if a different executable is found, append a tip to the error
+    code2 <- sprintf("ors_instance(..., type = \"%s\", overwrite = TRUE)", type)
     if (!is.null(alt_type)) {
       code1 <- sprintf("ors_instance(..., type = \"%s\")", alt_type)
-      code2 <- sprintf("ors_instance(..., type = \"%s\", overwrite = TRUE)", type)
       tip <- paste(
         "It does, however, contain a file {.field {exec}}!",
         "Consider using {.code {code1}} or force a new directory using",
         "{.code {code2}}."
       )
+      msg <- c(msg, "i" = tip)
+    } else {
+      tip <- "You can force a new directory using {.code {code2}}."
       msg <- c(msg, "i" = tip)
     }
 
