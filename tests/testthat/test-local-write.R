@@ -111,26 +111,26 @@ test_that("$set_extract() works", {
 
   skip_if_offline("geofabrik.de")
 
-  ors$set_extract("Rutland", provider = "geofabrik")
+  ors$set_extract("monaco", provider = "geofabrik")
   expect_message(
-    ors$set_extract("Rutland", provider = "geofabrik"),
+    ors$set_extract("monaco", provider = "geofabrik"),
     "already exists",
     fixed = TRUE
   )
 
   expect_identical(
     ors$config$parsed$ors$engine$source_file,
-    "files/geofabrik_rutland-latest.osm.pbf"
+    "files/geofabrik_monaco-latest.osm.pbf"
   )
 
   expect_error(
     ors$set_extract(file = "test.pbf"),
     class = "ors_extract_relative_error"
   )
-  expect_warning(expect_error(
+  expect_no_warning(expect_warning(expect_error(
     ors$set_extract(file = "test/test.pbf"),
     class = "ors_extract_not_found_error"
-  ))
+  )))
 
   expect_message(
     ors$rm_extract(dir(
@@ -143,6 +143,18 @@ test_that("$set_extract() works", {
 
   expect_null(ors$config$parsed$ors$engine$source_file)
   expect_null(ors$extract)
+
+  if (loadable("httptest2")) {
+    expect_warning(expect_error(httptest2::without_internet(
+      ors$set_extract("monaco", provider = "bbbike"))),
+      regexp = "Falling back to provider"
+    )
+  }
+
+  expect_error(
+    ors$set_extract("not an actual place"),
+    class = "ors_extract_not_found_error"
+  )
 
   # test if extract is actually unset or if it is still in compose
   expect_no_warning(ors$update("self"))
