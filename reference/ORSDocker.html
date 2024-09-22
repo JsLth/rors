@@ -9,9 +9,7 @@ For technical details on the setup of local ORS instances, refer to the
 Running with Docker documentation.
 For details on how to use ORSDocker objects, refer to the installation
 vignette:
-
 vignette("ors-installation", package = "rors")
-
 '><meta property="og:description" content='Creates a new ORS instance object that operates on a Docker instance of
 OpenRouteService. This R6 class is typically constructed by
 ors_instance. ORSDocker requires Docker to be
@@ -22,9 +20,7 @@ For technical details on the setup of local ORS instances, refer to the
 Running with Docker documentation.
 For details on how to use ORSDocker objects, refer to the installation
 vignette:
-
 vignette("ors-installation", package = "rors")
-
 '></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -75,8 +71,7 @@ requirements cannot be met, consider using <code><a href="ORSJar.html">ORSJar</a
 <a href="https://giscience.github.io/openrouteservice/run-instance/running-with-docker" class="external-link">Running with Docker documentation</a>.
 For details on how to use <code>ORSDocker</code> objects, refer to the installation
 vignette:</p>
-<div class="sourceCode"><pre><code><span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"ors-installation"</span>, package <span class="op">=</span> <span class="st">"rors"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode"><pre><code><span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"ors-installation"</span>, package <span class="op">=</span> <span class="st">"rors"</span><span class="op">)</span></span></code></pre></div>
 
     </div>
 
@@ -122,9 +117,8 @@ their changes to disk. It is also possible to make direct changes to the
 (parsed) configuration and compose files. In this case, reading and writing
 also need to be done manually. To write changes to disk, run
 <code>$update()</code>, e.g.:</p>
-<div class="sourceCode"><pre><code><span></span>
-<span> <span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">parsed</span><span class="op">$</span><span class="va">services</span><span class="op">$</span><span class="va">`ors-app`</span><span class="op">$</span><span class="va">container_name</span> <span class="op">&lt;-</span> <span class="st">"new-name-123"</span></span>
-<span> <span class="va">ors</span><span class="op">$</span><span class="fu">update</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode"><pre><code><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">parsed</span><span class="op">$</span><span class="va">services</span><span class="op">$</span><span class="va">`ors-app`</span><span class="op">$</span><span class="va">container_name</span> <span class="op">&lt;-</span> <span class="st">"new-name-123"</span></span>
+<span><span class="va">ors</span><span class="op">$</span><span class="fu">update</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 
 <p>To read changes done manually to the files on disk, run
 <code>$update("self")</code>.</p>
@@ -145,8 +139,7 @@ overwritten when <code>$update("fs")</code> is called and cannot be read using
 <code>$update("self")</code>. All manual changes should be made to the .yml file.
 Alternative configuration files can be specified by modifying the
 <code>ORS_CONFIG_LOCATION</code> option in the compose file:</p>
-<div class="sourceCode"><pre><code><span></span>
-<span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">parsed</span><span class="op">$</span><span class="va">services</span><span class="op">$</span><span class="va">`ors-app`</span><span class="op">$</span><span class="va">environment</span><span class="op">$</span><span class="va">ORS_CONFIG_LOCATION</span> <span class="op">&lt;-</span> <span class="st">"ors-config.yml"</span></span>
+<div class="sourceCode"><pre><code><span><span class="va">ors</span><span class="op">$</span><span class="va">compose</span><span class="op">$</span><span class="va">parsed</span><span class="op">$</span><span class="va">services</span><span class="op">$</span><span class="va">`ors-app`</span><span class="op">$</span><span class="va">environment</span><span class="op">$</span><span class="va">ORS_CONFIG_LOCATION</span> <span class="op">&lt;-</span> <span class="st">"ors-config.yml"</span></span>
 <span><span class="va">ors</span><span class="op">$</span><span class="fu">update</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 
     </div>
@@ -179,7 +172,7 @@ to the latest stable version. <code>"nightly"</code> refers to the devel
 version.</p></li>
 <li><p><code>parsed</code>: Parsed compose file. When making changes to this
 object, make sure to run <code>$update()</code> to apply the changes. For details,
-refer to the <a href="https://giscience.github.io/openrouteservice/run-instance/installation/running-with-docker#docker-configuration" class="external-link">official reference</a>.</p></li>
+refer to the <a href="https://giscience.github.io/openrouteservice/run-instance/running-with-docker" class="external-link">official reference</a>.</p></li>
 </ul></dd>
 
 
@@ -368,16 +361,16 @@ additional monitoring. If <code>NULL</code>, assigns a random port using
 <h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>init</code></dt>
 <dd><p><code>[numeric/NULL]</code></p>
-<p>Initial memory. This can change if more memory is needed. If not
-specified, uses <code>max</code>. If both are <code>NULL</code>, estimates
-memory.</p></dd>
+<p>Initial memory in gigabytes. This can change if more memory is needed.
+If not specified, uses <code>max</code>. If both are <code>NULL</code>, estimates
+required memory.</p></dd>
 
 
 <dt><code>max</code></dt>
 <dd><p><code>[numeric/NULL]</code></p>
-<p>Maximum memory. The container is not allowed to use more
+<p>Maximum memory in gigabytes. The container is not allowed to use more
 memory than this value. If not specified, uses <code>init</code>. If both are
-<code>NULL</code>, estimates memory.</p></dd>
+<code>NULL</code>, estimates required memory.</p></dd>
 
 
 </dl><p></p></div>
@@ -389,7 +382,9 @@ memory than this value. If not specified, uses <code>init</code>. If both are
 Turning graph building on enables new profiles to be built or the
 extract to be changed but significantly increases setup time. Turn
 this off if you are changing configuration options that do not alter
-routing graphs.</p><div class="section">
+routing graphs. Usually, you do not need to call this method
+yourself because it is called automatically when a new extract is
+set or when the setup is completed.</p><div class="section">
 <h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSDocker</span><span class="op">$</span><span class="fu">set_graphbuilding</span><span class="op">(</span><span class="va">mode</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
@@ -406,7 +401,7 @@ routing graphs.</p><div class="section">
 
 </div><p></p><hr><a id="method-ORSDocker-set_image"></a><div class="section">
 <h3 id="method-set-image-">Method <code>set_image()</code><a class="anchor" aria-label="anchor" href="#method-set-image-"></a></h3>
-<p>Set version of the ORS Docker image. This should preferably be compatible
+<p>Set version of the ORS Docker image. The version should be compatible
 with the compose version.</p><div class="section">
 <h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSDocker</span><span class="op">$</span><span class="fu">set_image</span><span class="op">(</span><span class="va">version</span><span class="op">)</span></span></code></pre></div><p></p></div>
@@ -424,7 +419,7 @@ with the compose version.</p><div class="section">
 
 </div><p></p><hr><a id="method-ORSDocker-up"></a><div class="section">
 <h3 id="method-up-">Method <code>up()</code><a class="anchor" aria-label="anchor" href="#method-up-"></a></h3>
-<p>Create the ORS docker container and setup the ORS backend on a local
+<p>Create the ORS docker container and set up the ORS backend on a local
 host.</p><div class="section">
 <h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ORSDocker</span><span class="op">$</span><span class="fu">up</span><span class="op">(</span>wait <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
@@ -615,15 +610,29 @@ existence of at least one sub-directory of <code>"graphs"</code>.</p><div class=
 <span class="r-in"><span><span class="co"># Set up ORS</span></span></span>
 <span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">up</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># If the setup fails or produces warnings, you can check</span></span></span>
+<span class="r-in"><span><span class="co"># using $show_logs()</span></span></span>
+<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">show_logs</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check if ORS container exists and is running</span></span></span>
-<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">is_built</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">is_running</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">is_built</span><span class="op">(</span><span class="op">)</span> <span class="co"># TRUE</span></span></span>
+<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">is_running</span><span class="op">(</span><span class="op">)</span> <span class="co"># TRUE</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check if ORS is ready to use</span></span></span>
 <span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">is_ready</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Stop container, e.g. to make configuration changes</span></span></span>
+<span class="r-in"><span><span class="co"># You can stop and start a container</span></span></span>
+<span class="r-in"><span><span class="co"># This does not remove a container but only interrupts it</span></span></span>
 <span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="kw">stop</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">is_built</span><span class="op">(</span><span class="op">)</span> <span class="co"># TRUE</span></span></span>
+<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">is_running</span><span class="op">(</span><span class="op">)</span> <span class="co"># FALSE</span></span></span>
+<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">start</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Take down container, e.g. to make configuration changes</span></span></span>
+<span class="r-in"><span><span class="co"># This removes a container so that you have to rebuild it</span></span></span>
+<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">down</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">is_built</span><span class="op">(</span><span class="op">)</span> <span class="co"># FALSE</span></span></span>
+<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">is_running</span><span class="op">(</span><span class="op">)</span> <span class="co"># FALSE</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Make changes to the configuration</span></span></span>
 <span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">set_endpoints</span><span class="op">(</span>matrix <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maximum_routes <span class="op">=</span> <span class="fl">1e+05</span><span class="op">)</span><span class="op">)</span> <span class="co"># default is 2500</span></span></span>
@@ -641,13 +650,8 @@ existence of at least one sub-directory of <code>"graphs"</code>.</p><div class=
 <span class="r-in"><span><span class="co"># refreshed</span></span></span>
 <span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">update</span><span class="op">(</span><span class="st">"self"</span><span class="op">)</span> <span class="co"># reads the disk state to the R object</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Adding profiles does not work when the container is still built!</span></span></span>
-<span class="r-in"><span><span class="co"># Why? Because graphs need to be built for new profiles, so the container</span></span></span>
-<span class="r-in"><span><span class="co"># must be down.</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="va">bike</span> <span class="op">&lt;-</span> <span class="fu"><a href="ors_profile.html">ors_profile</a></span><span class="op">(</span><span class="st">"bike-road"</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">ors</span><span class="op">$</span><span class="fu">add_profiles</span><span class="op">(</span><span class="va">bike</span><span class="op">)</span> <span class="co"># only do this when the container is down!!</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="va">bike</span> <span class="op">&lt;-</span> <span class="fu"><a href="ors_profile.html">ors_profile</a></span><span class="op">(</span><span class="st">"bike-road"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">add_profiles</span><span class="op">(</span><span class="va">bike</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Additionally, graphs are only re-built if we enable graph building.</span></span></span>
 <span class="r-in"><span><span class="co"># When changing the extract, this happens automatically, but we can also</span></span></span>
@@ -655,7 +659,7 @@ existence of at least one sub-directory of <code>"graphs"</code>.</p><div class=
 <span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">set_graphbuilding</span><span class="op">(</span><span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Finally, start the container again to run the newly configured service</span></span></span>
-<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">start</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ors</span><span class="op">$</span><span class="fu">up</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

@@ -83,7 +83,7 @@ Defaults to the first profile in a call to <code><a href="get_instance.html">get
 For <code>ors_shortest_distances</code>, <code>profile</code> can be a character
 vector, for all other functions it needs to be a character scalar.
 For details on all profiles, refer to the
-<a href="https://giscience.github.io/openrouteservice/documentation/Tag-Filtering.html" class="external-link">documentation</a>.</p></dd>
+<a href="https://giscience.github.io/openrouteservice/technical-details/tag-filtering" class="external-link">backend reference</a>.</p></dd>
 
 
 <dt id="arg-range">range<a class="anchor" aria-label="anchor" href="#arg-range"></a></dt>
@@ -219,8 +219,8 @@ identified using their group index and their respective range.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pharma"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Returns a polygon sf dataframe divided by four 15 minute time breaks</span></span></span>
-<span class="r-in"><span><span class="co"># Also contains information on the area and population inside the isochrones</span></span></span>
+<span class="r-in"><span><span class="co"># Returns a polygon sf dataframe divided by four 15 minute time breaks.</span></span></span>
+<span class="r-in"><span><span class="co"># Also contains information on the area and population inside the isochrones.</span></span></span>
 <span class="r-in"><span><span class="fu">ors_accessibility</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">pharma</span>,</span></span>
 <span class="r-in"><span>  profile <span class="op">=</span> <span class="st">"driving-car"</span>,</span></span>
@@ -237,7 +237,8 @@ identified using their group index and their respective range.</p>
 <span class="r-in"><span>  profile <span class="op">=</span> <span class="st">"driving-car"</span>,</span></span>
 <span class="r-in"><span>  range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="fl">5000</span>, <span class="fl">10000</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  location_type <span class="op">=</span> <span class="st">"destination"</span>,</span></span>
-<span class="r-in"><span>  range_type <span class="op">=</span> <span class="st">"distance"</span></span></span>
+<span class="r-in"><span>  range_type <span class="op">=</span> <span class="st">"distance"</span>,</span></span>
+<span class="r-in"><span>  rasterize <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Returns a polygon sf dataframe that is broken down every 50 meters up until</span></span></span>
@@ -249,9 +250,19 @@ identified using their group index and their respective range.</p>
 <span class="r-in"><span>  location_type <span class="op">=</span> <span class="st">"start"</span>,</span></span>
 <span class="r-in"><span>  interval <span class="op">=</span> <span class="fl">50</span>,</span></span>
 <span class="r-in"><span>  range_type <span class="op">=</span> <span class="st">"distance"</span></span></span>
-<span class="r-in"><span><span class="op">)</span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Returns the intersections of the above isochrones</span></span></span>
+<span class="r-in"><span><span class="fu">ors_accessibility</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">pharma</span>,</span></span>
+<span class="r-in"><span>  intersections <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  profile <span class="op">=</span> <span class="st">"cycling-regular"</span>,</span></span>
+<span class="r-in"><span>  range <span class="op">=</span> <span class="fl">500</span>,</span></span>
+<span class="r-in"><span>  location_type <span class="op">=</span> <span class="st">"start"</span>,</span></span>
+<span class="r-in"><span>  interval <span class="op">=</span> <span class="fl">50</span>,</span></span>
+<span class="r-in"><span>  range_type <span class="op">=</span> <span class="st">"distance"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
