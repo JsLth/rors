@@ -3,7 +3,7 @@ Type: Package
 Title: Routing using 'OpenRouteService'
 Version: 1.0.9.9000
 Authors@R: c(
-    person("Jonas", "Lieth", , "jonas.lieth@gesis.org", role = c("aut", "cre", "chp"))
+    person("Jonas", "Lieth", , "jonas.lieth@gesis.org", role = c("aut", "cre", "cph"))
   )
 Maintainer: Jonas Lieth <jonas.lieth@gesis.org>
 Description: Flexible and opinionated interface to local and remote
