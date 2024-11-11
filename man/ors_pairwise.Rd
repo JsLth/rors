@@ -26,6 +26,7 @@ ors_shortest_distances(
   geometry = FALSE,
   instance = NULL,
   ...,
+  params = NULL,
   proximity_type = c("duration", "distance"),
   progress = TRUE
 )
@@ -80,7 +81,10 @@ an instance globally is not feasible.}
 directly pass arguments of \code{\link{ors_params}}.}
 
 \item{params}{List of additional arguments passed to the ORS API. See
-\code{\link{ors_params}} for details.}
+\code{\link{ors_params}} for details. If the same two arguments are passed
+through \code{...} and \code{params}, the dot arguments take priority. Note
+that the object passed through this argument needs to be built using the
+same dataset and profile as in this function, otherwise an error is thrown.}
 
 \item{group}{\code{[character/numeric]}
 
@@ -145,58 +149,58 @@ can be examined by inspecting its route attributes using
 
 \examples{
 if (any_mounted() && ors_ready()) {
-  data("pharma")
+data("pharma")
 
-  set.seed(123)
-  dest <- ors_sample(10)
+set.seed(123)
+dest <- ors_sample(10)
 
-  car <- "driving-car"
-  bike <- "cycling-regular"
+car <- "driving-car"
+bike <- "cycling-regular"
 
-  # Running with sf objects
-  ors_pairwise(pharma, dest, profile = car)
+# Running with sf objects
+ors_pairwise(pharma, dest, profile = car)
 
-  # Running with coordinate pairs
-  ors_pairwise(pharma, dest, profile = bike)
+# Running with coordinate pairs
+ors_pairwise(pharma, dest, profile = bike)
 
-  # Returns route geometries
-  ors_pairwise(
-    pharma,
-    dest,
-    profile = car,
-    geometry = TRUE
-  )
+# Returns route geometries
+ors_pairwise(
+  pharma,
+  dest,
+  profile = car,
+  geometry = TRUE
+)
 
-  # Returns routes in kilometers
-  ors_pairwise(
-    pharma,
-    dest,
-    profile = bike,
-    units = "km"
-  )
+# Returns routes in kilometers
+ors_pairwise(
+  pharma,
+  dest,
+  profile = bike,
+  units = "km"
+)
 
-  # Running with additional arguments
-  ors_pairwise(
-    pharma,
-    dest,
-    profile = car,
-    continue_straight = TRUE,
-    preference = "fastest"
-  )
+# Running with additional arguments
+ors_pairwise(
+  pharma,
+  dest,
+  profile = car,
+  continue_straight = TRUE,
+  preference = "fastest"
+)
 
-  # Finding shortest routes from each point in sample_a to sample_b
-  ors_shortest_distances(pharma, dest, units = "km")
+# Finding shortest routes from each point in sample_a to sample_b
+ors_shortest_distances(pharma, dest, units = "km")
 
-  # Pre-filter the nearest 5 destination points by Euclidian distance
-  pois <- group_by_proximity(pharma, dest, n = 5)
+# Pre-filter the nearest 5 destination points by Euclidian distance
+pois <- group_by_proximity(pharma, dest, n = 5)
 
-  # Only route from each pharmacy to one of the closest 5 destination points
-  # respectively. For larger datasets, this can increase performance.
-  ors_shortest_distances(
-    pharma,
-    pois,
-    group = ".group",
-    geometry = TRUE
-  )
+# Only route from each pharmacy to one of the closest 5 destination points
+# respectively. For larger datasets, this can increase performance.
+ors_shortest_distances(
+  pharma,
+  pois,
+  group = ".group",
+  geometry = TRUE
+)
 }
 }

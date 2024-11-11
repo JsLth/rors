@@ -5,8 +5,8 @@
 \title{Construct ORS parameters}
 \usage{
 ors_params(
+  src,
   profile,
-  n = NULL,
   bearings = NULL,
   alternative_routes = list(),
   geometry_simplify = FALSE,
@@ -39,16 +39,14 @@ ors_params(
 )
 }
 \arguments{
+\item{src}{\code{[sf/sfc]}
+
+Source dataset containing point geometries that should be routed from.}
+
 \item{profile}{\code{[character]}
 
 A routing profile defined by ORS. Not all combinations of
 profiles and parameters are supported.}
-
-\item{n}{\code{[integer]}
-
-Number of observations used for routing. This value refers to
-segments as described in \code{\link{ors_inspect}}. For use in
-\code{\link{ors_pairwise}} it should always be 1.}
 
 \item{bearings}{\code{[numeric]}
 
@@ -60,7 +58,7 @@ values can also be \code{NA_real_} to skip a value or an entire input
 row. Bearings default to 100 if not specified. Only available for
 \code{cycling-*} profiles.}
 
-\item{alternative_routes}{\code{{list}}
+\item{alternative_routes}{\code{[list]}
 
 List of options for generating alternative routes. Can be one of the
 following options:
@@ -123,8 +121,10 @@ Whether to include elevation information in the routing response.}
 
 \item{skip_segments}{\code{[numeric]}
 
-Vector of route segments to skip. Must be values between 1 and n where
-1 represents the segment between the first and second input point.}
+Vector of route segments to skip. Can contain one or multiple values
+representing segments (i.e. indices of input rows) that should be skipped
+in route computations. The vector cannot have more segments than the
+number of rows in \code{src}.}
 
 \item{roundabout_exits}{\code{[logical]}
 
@@ -178,7 +178,7 @@ Vector of country codes to avoid. Requires
 \code{avoid_borders = "controlled"}. A list of country codes can be
 found in the
 \href{https://giscience.github.io/openrouteservice/technical-details/country-list}{API reference}
-or by running \code{\link{country_info}}.
+or by running \code{\link[=info_table]{info_table("country_list")}}.
 Requires \code{driving-*} profiles.}
 
 \item{avoid_features}{\code{[character]}
@@ -224,9 +224,9 @@ meet the restrictions, it is discarded. Can include the following options:
 \item{\code{height}}{Height restrictions for \code{"driving-hgv"} in m.}
 \item{\code{axleload}}{Axleload restrictions for \code{"driving-hgv"} in tons.}
 \item{\code{weight}}{Weight restrictions for \code{"driving-hgv"} in m.}
-\item{\code{hazmat}}{Whether to adjust routing for transportation hazardous goods,
-i.e. avoid protected areas, for \code{"driving-hgv"}. Defaults to
-\code{FALSE}.}
+\item{\code{hazmat}}{Whether to adjust routing for transportation of
+hazardous goods, i.e. avoid protected areas, for \code{"driving-hgv"}.
+Defaults to \code{FALSE}.}
 \item{\code{surface_type}}{Minimum surface type for \code{"wheelchair"}.
 Corresponds to the values of OSM
 \href{https://wiki.openstreetmap.org/wiki/Key:surface}{Key:surface}.
@@ -285,8 +285,6 @@ Create a list of parameters that can be passed to a function that supports
 additional parameters. For further information on parameters, visit the
 \href{https://openrouteservice.org/dev/#/api-docs/v2}{API playground} or
 the \href{https://giscience.github.io/openrouteservice/api-reference/endpoints/directions/routing-options}{backend reference}.
-\code{\link{param_info}} provides an overview of the checks and
-preparations performed by \code{ors_params}.
 
 Note that this function provides a means to manually construct parameters.
 For all high-level endpoint functions such as \code{\link{ors_inspect}},
@@ -294,29 +292,16 @@ parameters can be passed as dot arguments.
 }
 \details{
 This function performs some basic validation checks. If a check fails,
-an error is thrown. In particular, the following reasons can lead to
-an error:
-
-\itemize{
-\item{"requires a different profile": Some parameters require a specific
-profile. For example, \code{vehicle_type} is only meaningful for profile
-\code{driving-hgv}. If the profile in \code{profile} does not match
-the required profile, an error is thrown.}
-
-\item{"invalid length": Some parameters allow vectors of length > 1, but
-some require scalar values.}
-
-\item{"exceeds defined value limits": Some parameters are only valid
-within a certain value range. For example, the \code{green}, \code{quiet},
-and \code{shadow} parameters expect a value between 0 and 1. If outside
-of the defined value range, an error is thrown.}
-
-\item{"undefined values": Some parameters require a specific pre-defined
-string. For example, the \code{preference} parameters expects either
-"fastest", "shortest", or "recommended". If any other value, an error
-is thrown.}
-
-\item{"invalid sf object": The \code{avoid_polygons} parameter expects
-an sf object. Otherwise, an error is thrown.}
+an error is thrown. Additionally, if a dot argument is passed, it is
+interpreted as an unknown parameter and an error is thrown. To allow passing
+unknown parameters (e.g. if the API has changed), you can set
+\code{options(rors_allow_unknown_params = TRUE)}
 }
+\examples{
+# set maximum speed and maximum snapping distance
+ors_params(pharma, "driving-car", maximum_speed = 100, radiuses = -1)
+
+# set up a biking route
+rt_opts <- list(length = 5000, points = 20)
+ors_params(pharma, "cycling-regular", round_trip = rt_opts)
 }

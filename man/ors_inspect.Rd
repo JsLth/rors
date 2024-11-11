@@ -116,7 +116,10 @@ an instance globally is not feasible.}
 directly pass arguments of \code{\link{ors_params}}.}
 
 \item{params}{List of additional arguments passed to the ORS API. See
-\code{\link{ors_params}} for details.}
+\code{\link{ors_params}} for details. If the same two arguments are passed
+through \code{...} and \code{params}, the dot arguments take priority. Note
+that the object passed through this argument needs to be built using the
+same dataset and profile as in this function, otherwise an error is thrown.}
 
 \item{object}{A route object of class \code{ors_inspect}.}
 }
@@ -140,10 +143,11 @@ a given route.
 }
 \details{
 OpenRouteService distinguishes between three
-types of route aggregation: Segments, steps and waypoints. A segment is a
-single route between \code{src[i, ]} and \code{src[i + 1, ]}. A step
-is a route section as relevant for a navigation system. A waypoint is a
-straight connection between two geographical points on a route.
+types of route aggregation: Segments, steps and waypoints. A \strong{segment}
+is a single route between \code{src[i, ]} and \code{src[i + 1, ]}. A
+\strong{step} is a route section as relevant for a navigation system. A
+\strong{waypoint} is a straight connection between two geographical points
+on a route.
 
 Depending on the chosen level of aggregation, the output has to be adjusted
 through interpolation and aggregation. For all levels below \code{"segment"},
@@ -156,10 +160,8 @@ cases, the value with the highest overlap is adopted causing some information
 loss. Navigation information is dropped on \code{"segment"} level. In order
 to establish this structure, \code{ors_inspect} depends on the
 \code{navigation} parameter and forces it to be \code{TRUE}. When
-\code{navigation} is \code{FALSE}, ORS omits steps - and hence also waypoints
-\itemize{
-\item from the response.
-}
+\code{navigation} is \code{FALSE}, ORS omits steps -- and hence also waypoints
+-- from the response.
 
 Extra information can be requested as additional context for each waypoint on
 a route. Possible values include:

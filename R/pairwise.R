@@ -50,7 +50,10 @@
 #' @param ... Additional arguments passed to the ORS API. Convenience way to
 #' directly pass arguments of \code{\link{ors_params}}.
 #' @param params List of additional arguments passed to the ORS API. See
-#' \code{\link{ors_params}} for details.
+#' \code{\link{ors_params}} for details. If the same two arguments are passed
+#' through \code{...} and \code{params}, the dot arguments take priority. Note
+#' that the object passed through this argument needs to be built using the
+#' same dataset and profile as in this function, otherwise an error is thrown.
 #'
 #' @returns \code{ors_pairwise} returns a dataframe with distances and
 #' travel durations between source and destination. Distances are specified
@@ -90,59 +93,59 @@
 #'
 #' @examples
 #' if (any_mounted() && ors_ready()) {
-#'   data("pharma")
+#' data("pharma")
 #'
-#'   set.seed(123)
-#'   dest <- ors_sample(10)
+#' set.seed(123)
+#' dest <- ors_sample(10)
 #'
-#'   car <- "driving-car"
-#'   bike <- "cycling-regular"
+#' car <- "driving-car"
+#' bike <- "cycling-regular"
 #'
-#'   # Running with sf objects
-#'   ors_pairwise(pharma, dest, profile = car)
+#' # Running with sf objects
+#' ors_pairwise(pharma, dest, profile = car)
 #'
-#'   # Running with coordinate pairs
-#'   ors_pairwise(pharma, dest, profile = bike)
+#' # Running with coordinate pairs
+#' ors_pairwise(pharma, dest, profile = bike)
 #'
-#'   # Returns route geometries
-#'   ors_pairwise(
-#'     pharma,
-#'     dest,
-#'     profile = car,
-#'     geometry = TRUE
-#'   )
+#' # Returns route geometries
+#' ors_pairwise(
+#'   pharma,
+#'   dest,
+#'   profile = car,
+#'   geometry = TRUE
+#' )
 #'
-#'   # Returns routes in kilometers
-#'   ors_pairwise(
-#'     pharma,
-#'     dest,
-#'     profile = bike,
-#'     units = "km"
-#'   )
+#' # Returns routes in kilometers
+#' ors_pairwise(
+#'   pharma,
+#'   dest,
+#'   profile = bike,
+#'   units = "km"
+#' )
 #'
-#'   # Running with additional arguments
-#'   ors_pairwise(
-#'     pharma,
-#'     dest,
-#'     profile = car,
-#'     continue_straight = TRUE,
-#'     preference = "fastest"
-#'   )
+#' # Running with additional arguments
+#' ors_pairwise(
+#'   pharma,
+#'   dest,
+#'   profile = car,
+#'   continue_straight = TRUE,
+#'   preference = "fastest"
+#' )
 #'
-#'   # Finding shortest routes from each point in sample_a to sample_b
-#'   ors_shortest_distances(pharma, dest, units = "km")
+#' # Finding shortest routes from each point in sample_a to sample_b
+#' ors_shortest_distances(pharma, dest, units = "km")
 #'
-#'   # Pre-filter the nearest 5 destination points by Euclidian distance
-#'   pois <- group_by_proximity(pharma, dest, n = 5)
+#' # Pre-filter the nearest 5 destination points by Euclidian distance
+#' pois <- group_by_proximity(pharma, dest, n = 5)
 #'
-#'   # Only route from each pharmacy to one of the closest 5 destination points
-#'   # respectively. For larger datasets, this can increase performance.
-#'   ors_shortest_distances(
-#'     pharma,
-#'     pois,
-#'     group = ".group",
-#'     geometry = TRUE
-#'   )
+#' # Only route from each pharmacy to one of the closest 5 destination points
+#' # respectively. For larger datasets, this can increase performance.
+#' ors_shortest_distances(
+#'   pharma,
+#'   pois,
+#'   group = ".group",
+#'   geometry = TRUE
+#' )
 #' }
 ors_pairwise <- function(src,
                          dst,
@@ -157,8 +160,8 @@ ors_pairwise <- function(src,
   url <- get_ors_url(instance)
   assert_that(is_sf(src), is_sf(dst), is_true_or_false(geometry))
   profile <- profile %||% get_profiles(url = url, force = FALSE)[[1]]
+  assert_ors_params(params, src, profile)
   units <- match.arg(units)
-  assert_endpoint_available(url, "routing")
 
   # Check if ORS is ready to use
   ors_ready(force = FALSE, error = TRUE, url = url)
@@ -166,8 +169,9 @@ ors_pairwise <- function(src,
   # Bring input data into shape
   src <- prepare_input(src, len = NROW(dst))
   dst <- prepare_input(dst, len = NROW(src))
-  params <- prepare_ors_params(params %||% list(...), profile, nrow(src))
-  params$instructions <- FALSE # keep response slim
+  new_params <- prepare_ors_params(list(...), profile, n = 1, "pairwise")
+  new_params$instructions <- FALSE # keep response slim
+  params <- modify_list(params, new_params)
 
   ors_pairwise_raw(
     src = src,
@@ -234,7 +238,6 @@ ors_pairwise_raw <- function(src,
     res <- as_data_frame(res)
   }
 
-  attr(res, "locations") <- list(src = src, dst = dst)
   class(res) <- c("ors_dist", class(res))
   res
 }
@@ -292,6 +295,7 @@ ors_shortest_distances <- function(src,
                                    geometry = FALSE,
                                    instance = NULL,
                                    ...,
+                                   params = NULL,
                                    proximity_type = c("duration", "distance"),
                                    progress = TRUE) {
   instance <- check_instance(instance)
@@ -300,7 +304,6 @@ ors_shortest_distances <- function(src,
   units <- match.arg(units)
   proximity_type <- match.arg(proximity_type)
   profile <- profile %||% get_profiles(url = url, force = FALSE)
-  assert_endpoint_available(url, "routing")
 
   src <- prepare_input(src)
   poi <- prepare_input(dst)

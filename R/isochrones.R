@@ -95,9 +95,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' data("pharma")
-#'
+#' if (any_mounted() && is_ready()) {
 #' # Returns a polygon sf dataframe divided by four 15 minute time breaks.
 #' # Also contains information on the area and population inside the isochrones.
 #' ors_accessibility(
@@ -161,12 +159,13 @@ ors_accessibility <- function(src,
   instance <- instance %||% get_instance()
   url <- get_ors_url(instance)
   ts <- timestamp()
+  assert_that(is_sf(src))
   profile <- profile %||% get_profiles(url = url, force = FALSE)[[1]]
+  assert_ors_params(params, src, profile)
   location_type <- match.arg(location_type)
   range_type <- match.arg(range_type)
   area_units <- if ("area" %in% attributes) match.arg(area_units)
   units <- if ("distance" %in% range_type) match.arg(units)
-  assert_endpoint_available(url, "isochrones")
 
   if (rasterize && !loadable("terra")) {
     cli::cli_abort(
@@ -179,7 +178,8 @@ ors_accessibility <- function(src,
   ors_ready(force = FALSE, error = TRUE, url = url)
 
   src <- prepare_input(src)
-  params <- params %||% prepare_ors_params(list(...), profile)
+  new_params <- prepare_ors_params(list(...), src, profile, "accessibility")
+  params <- modify_list(params, new_params)
 
   res <- call_ors_isochrones(
     src = src,

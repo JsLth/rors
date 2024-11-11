@@ -78,10 +78,11 @@
 #' containing a route alternative.
 #'
 #' @details OpenRouteService distinguishes between three
-#' types of route aggregation: Segments, steps and waypoints. A segment is a
-#' single route between \code{src[i, ]} and \code{src[i + 1, ]}. A step
-#' is a route section as relevant for a navigation system. A waypoint is a
-#' straight connection between two geographical points on a route.
+#' types of route aggregation: Segments, steps and waypoints. A \strong{segment}
+#' is a single route between \code{src[i, ]} and \code{src[i + 1, ]}. A
+#' \strong{step} is a route section as relevant for a navigation system. A
+#' \strong{waypoint} is a straight connection between two geographical points
+#' on a route.
 #'
 #' Depending on the chosen level of aggregation, the output has to be adjusted
 #' through interpolation and aggregation. For all levels below \code{"segment"},
@@ -94,8 +95,8 @@
 #' loss. Navigation information is dropped on \code{"segment"} level. In order
 #' to establish this structure, \code{ors_inspect} depends on the
 #' \code{navigation} parameter and forces it to be \code{TRUE}. When
-#' \code{navigation} is \code{FALSE}, ORS omits steps - and hence also waypoints
-#' - from the response.
+#' \code{navigation} is \code{FALSE}, ORS omits steps -- and hence also waypoints
+#' -- from the response.
 #'
 #' Extra information can be requested as additional context for each waypoint on
 #' a route. Possible values include:
@@ -129,29 +130,26 @@
 #'
 #' @examples
 #' \dontrun{
-#' sample_source <- ors_sample(1)
-#' sample_dest <- ors_sample(1)
-#' profile <- get_profiles()[1]
+#' # By default, only information about places, distances, durations,
+#' # and elevations are returned
+#' ors_inspect(pharma, "driving-car")
 #'
-#' # Basic inspection without extra information
-#' insp <- ors_inspect(sample_source, sample_dest, profile)
-#'
-#' # Advanced inspection with extra information
-#' insp_adv <- ors_inspect(
-#'   sample_source,
-#'   sample_dest,
-#'   profile,
-#'   extra_info = TRUE
+#' # Extra information can be controlled using the `extra_info`,
+#' # `navigation`, and `attributes` arguments. You can either select
+#' # specific information to be returned or pass TRUE to return all
+#' # respective extra information
+#' ors_inspect(
+#'   pharma,
+#'   navigation = TRUE,
+#'   extra_info = TRUE,
+#'   attributes = TRUE
 #' )
 #'
-#' # Inspection of route elevation data
-#' insp_elev <- ors_inspect(
-#'   sample_source,
-#'   sample_dest,
-#'   profile,
-#'   elevation = TRUE,
-#'   elev_as_z = FALSE
-#' )
+#' # By default, `ors_inspect` partitions routes using the smallest possible
+#' # division, i.e. waypoints. This comes at the cost of making some
+#' # assumptions and interpolations. See details. To make partitions at
+#' # a higher level
+#' insp_elev <- ors_inspect(pharma, "driving-car", )
 #'
 #' # Inspection of route summary attributes
 #' insp_attr <- ors_inspect(
@@ -194,9 +192,9 @@ ors_inspect <- function(src,
   timestamp <- timestamp()
   assert_that(is_sf(src), is_true_or_false(elev_as_z))
   profile <- profile %||% get_profiles(url = url, force = FALSE)[[1]]
+  assert_ors_params(params, src, profile)
   level <- match.arg(level)
   as <- match.arg(as)
-  assert_endpoint_available(url, "routing")
 
   # Check if ORS is ready to use
   ors_ready(force = TRUE, error = TRUE, url = url)
@@ -215,8 +213,14 @@ ors_inspect <- function(src,
     round_trip = round_trip
   )
   features <- features[lengths(features) > 0]
-  params <- params %||% prepare_ors_params(c(features, list(...)), profile)
-  params$instructions <- TRUE # instructions are needed for response formatting
+  new_params <- prepare_ors_params(
+    c(features, list(...)),
+    src = src,
+    profile = profile,
+    "inspect"
+  )
+  new_params$instructions <- TRUE # instructions are needed for response formatting
+  params <- modify_list(params, new_params)
 
   res <- call_ors_directions(
     src = src,

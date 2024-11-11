@@ -125,7 +125,10 @@ Reasonable arguments include \code{avoid_borders}, \code{avoid_countries},
 \code{vehicle_type}.}
 
 \item{params}{List of additional arguments passed to the ORS API. See
-\code{\link{ors_params}} for details.}
+\code{\link{ors_params}} for details. If the same two arguments are passed
+through \code{...} and \code{params}, the dot arguments take priority. Note
+that the object passed through this argument needs to be built using the
+same dataset and profile as in this function, otherwise an error is thrown.}
 }
 \value{
 If \code{rasterize = FALSE} and \code{intersections = FALSE},
@@ -154,9 +157,7 @@ identified using their group index and their respective range.
 for a set of source points, either as polygons or as a raster.
 }
 \examples{
-\dontrun{
-data("pharma")
-
+if (any_mounted() && is_ready()) {
 # Returns a polygon sf dataframe divided by four 15 minute time breaks.
 # Also contains information on the area and population inside the isochrones.
 ors_accessibility(

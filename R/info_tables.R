@@ -1,3 +1,24 @@
+#' Info tables
+#' @description
+#' Automatically generated info tables pulled from the
+#' \href{https://giscience.github.io/openrouteservice/api-reference/endpoints/directions/extra-info/}{backend docs}.
+#' These tables provide information about the possible extra info values that
+#' can be retrieved when setting the \code{extra_info} argument in
+#' \code{\link{ors_inspect}}.
+#'
+#' @param type The type of extra info to get information about. Must be one of
+#' \code{"steepness"}, \code{"surface"}, \code{"waycategory"}, \code{"waytype"},
+#' \code{"trail_difficulty"}, \code{"road_access_restrictions"}, or
+#' \code{"country_list"}.
+#'
+#' @returns A tibble containing two two three columns containing the internal
+#' code and a human-readable label.
+#'
+#' @export
+#'
+#' @examples
+#' # get information about country codes used
+#' info_table("country_list")
 info_table <- function(type) {
   switch(
     type,
@@ -10,7 +31,7 @@ info_table <- function(type) {
         "10% - <16% incline", ">=16% incline"
       ),
     ),
-    
+
     surface = tibble::tibble(
       value = 0:18,
       name = c(
@@ -27,7 +48,7 @@ info_table <- function(type) {
         "sand", NA, "grass", "grass_paver"
       ),
     ),
-    
+
     waycategory = tibble::tibble(
       value = c(0L, 1L, 2L, 4L, 8L, 16L),
       name = c("No category", "Highway", "Tollways", "Steps", "Ferry", "Ford"),
@@ -36,7 +57,7 @@ info_table <- function(type) {
         "route=shuttle_train, route=ferry", "ford=yes"
       ),
     ),
-    
+
     waytype = tibble::tibble(
       value = 0:10,
       name = c(
@@ -51,7 +72,7 @@ info_table <- function(type) {
         "construction"
       ),
     ),
-    
+
     trail_difficulty = tibble::tibble(
       value = 0:7,
       foot = c(
@@ -64,7 +85,7 @@ info_table <- function(type) {
         "mtb:scale=4", "mtb:scale=5", "mtb:scale=6"
       ),
     ),
-    
+
     road_access_restrictions = tibble::tibble(
       value = c(0L, 1L, 2L, 4L, 8L, 16L, 32L),
       encoding = c(
@@ -72,7 +93,7 @@ info_table <- function(type) {
         "Delivery", "Private", "Permissive"
       ),
     ),
-    
+
     country_list = tibble::tibble(
       country_id = 1:236,
       name = c(

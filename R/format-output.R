@@ -190,7 +190,7 @@ fill_table <- function() {
         "sac_scale=difficult_alpine_hiking"
       ),
       c("None", "No", "Customers", "Destination", "Delivery", "Private", "Permissive"),
-      country_info
+      info_table("country_list")$name
     ),
     profile = rep(c(NA, "profile", NA), c(4L, 1L, 2L)),
     ordinal = c(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE),

@@ -5,8 +5,6 @@
 #' additional parameters. For further information on parameters, visit the
 #' \href{https://openrouteservice.org/dev/#/api-docs/v2}{API playground} or
 #' the \href{https://giscience.github.io/openrouteservice/api-reference/endpoints/directions/routing-options}{backend reference}.
-#' \code{\link{param_info}} provides an overview of the checks and
-#' preparations performed by \code{ors_params}.
 #'
 #' Note that this function provides a means to manually construct parameters.
 #' For all high-level endpoint functions such as \code{\link{ors_inspect}},
@@ -16,11 +14,6 @@
 #'
 #' A routing profile defined by ORS. Not all combinations of
 #' profiles and parameters are supported.
-#' @param n \code{[integer]}
-#'
-#' Number of observations used for routing. This value refers to
-#' segments as described in \code{\link{ors_inspect}}. For use in
-#' \code{\link{ors_pairwise}} it should always be 1.
 #' @param bearings \code{[numeric]}
 #'
 #' Numeric vector or matrix with \code{n} rows and 1 or 2 columns. The first
@@ -31,7 +24,7 @@
 #' row. Bearings default to 100 if not specified. Only available for
 #' \code{cycling-*} profiles.
 #'
-#' @param alternative_routes \code{{list}}
+#' @param alternative_routes \code{[list]}
 #'
 #' List of options for generating alternative routes. Can be one of the
 #' following options:
@@ -94,8 +87,10 @@
 #'
 #' @param skip_segments \code{[numeric]}
 #'
-#' Vector of route segments to skip. Must be values between 1 and n where
-#' 1 represents the segment between the first and second input point.
+#' Vector of route segments to skip. Can contain one or multiple values
+#' representing segments (i.e. indices of input rows) that should be skipped
+#' in route computations. The vector cannot have more segments than the
+#' number of rows in \code{src}.
 #'
 #' @param roundabout_exits \code{[logical]}
 #'
@@ -149,7 +144,7 @@
 #' \code{avoid_borders = "controlled"}. A list of country codes can be
 #' found in the
 #' \href{https://giscience.github.io/openrouteservice/technical-details/country-list}{API reference}
-#' or by running \code{\link{country_info}}.
+#' or by running \code{\link[=info_table]{info_table("country_list")}}.
 #' Requires \code{driving-*} profiles.
 #'
 #' @param avoid_features \code{[character]}
@@ -195,9 +190,9 @@
 #'  \item{\code{height}}{Height restrictions for \code{"driving-hgv"} in m.}
 #'  \item{\code{axleload}}{Axleload restrictions for \code{"driving-hgv"} in tons.}
 #'  \item{\code{weight}}{Weight restrictions for \code{"driving-hgv"} in m.}
-#'  \item{\code{hazmat}}{Whether to adjust routing for transportation hazardous goods,
-#'  i.e. avoid protected areas, for \code{"driving-hgv"}. Defaults to
-#'  \code{FALSE}.}
+#'  \item{\code{hazmat}}{Whether to adjust routing for transportation of
+#'  hazardous goods, i.e. avoid protected areas, for \code{"driving-hgv"}.
+#'  Defaults to \code{FALSE}.}
 #'  \item{\code{surface_type}}{Minimum surface type for \code{"wheelchair"}.
 #'  Corresponds to the values of OSM
 #'  \href{https://wiki.openstreetmap.org/wiki/Key:surface}{Key:surface}.
@@ -250,38 +245,26 @@
 #'
 #' @param ... Reserved for further expansion. If a dot argument is used,
 #' an error is thrown.
+#' @inheritParams ors_pairwise
 #'
 #' @details
 #' This function performs some basic validation checks. If a check fails,
-#' an error is thrown. In particular, the following reasons can lead to
-#' an error:
-#'
-#' \itemize{
-#'  \item{"requires a different profile": Some parameters require a specific
-#'  profile. For example, \code{vehicle_type} is only meaningful for profile
-#'  \code{driving-hgv}. If the profile in \code{profile} does not match
-#'  the required profile, an error is thrown.}
-#'
-#'  \item{"invalid length": Some parameters allow vectors of length > 1, but
-#'  some require scalar values.}
-#'
-#'  \item{"exceeds defined value limits": Some parameters are only valid
-#'  within a certain value range. For example, the \code{green}, \code{quiet},
-#'  and \code{shadow} parameters expect a value between 0 and 1. If outside
-#'  of the defined value range, an error is thrown.}
-#'
-#'  \item{"undefined values": Some parameters require a specific pre-defined
-#'  string. For example, the \code{preference} parameters expects either
-#'  "fastest", "shortest", or "recommended". If any other value, an error
-#'  is thrown.}
-#'
-#'  \item{"invalid sf object": The \code{avoid_polygons} parameter expects
-#'  an sf object. Otherwise, an error is thrown.}
-#' }
+#' an error is thrown. Additionally, if a dot argument is passed, it is
+#' interpreted as an unknown parameter and an error is thrown. To allow passing
+#' unknown parameters (e.g. if the API has changed), you can set
+#' \code{options(rors_allow_unknown_params = TRUE)}
 #'
 #' @export
-ors_params <- function(profile,
-                       n = NULL,
+#'
+#' @examples
+#' # set maximum speed and maximum snapping distance
+#' ors_params(pharma, "driving-car", maximum_speed = 100, radiuses = -1)
+#'
+#' # set up a biking route
+#' rt_opts <- list(length = 5000, points = 20)
+#' ors_params(pharma, "cycling-regular", round_trip = rt_opts)
+ors_params <- function(src,
+                       profile,
                        bearings = NULL,
                        alternative_routes = list(),
                        geometry_simplify = FALSE,
@@ -311,220 +294,411 @@ ors_params <- function(profile,
                        surface_quality_known = FALSE,
                        allow_unsuitable = FALSE,
                        ...) {
-  params <- as.list(match.call()[-1])
-  params[c("n", "profile")] <- NULL
-  prepare_ors_params(params, profile, n)
+  params <- lapply(match.call()[-1], eval)
+  params[c("src", "profile")] <- NULL
+  params <- prepare_ors_params(params, src, profile) %||% list()
+  structure(
+    params,
+    class = "ors_params",
+    profile = profile,
+    n = nrow(src)
+  )
 }
 
+
+assert_ors_params <- function(params, src, profile) {
+  if (is.null(params)) return()
+
+  if (!inherits(params, "ors_params")) {
+    abort(c(
+      paste(
+        "Argument {.code params} must be an object of",
+        "class {.cls ors_params} or NULL."
+      ),
+      "i" = "You can create a parameter object using {.fn ors_params}."
+    ), class = "ors_params_assert")
+  }
+
+  given_profile <- attr(params, "profile")
+  given_segments <- attr(params, "n")
+  same_profile <- identical(given_profile, profile)
+  same_segments <- identical(given_segments, nrow(src))
+  if (!same_profile || !same_segments) {
+    msg <- "Argument {.code params} must be built from the same input data as `src`"
+    add <- c(
+      "Given profile: {.val {given_profile}} - actual profile: {.val {profile}}",
+      "Given segments: {.val {given_segments}} - actual profile: {.val {nrow(src)}}"
+    )
+    names(add) <- c("*", "*")
+    add <- add[c(!same_profile, !same_segments)]
+    abort(c(msg, add), class = "ors_params_assert_incompatible")
+  }
+}
 
 
 #' Formats ORS options, checks if they're valid and constructs a list that
 #' can be used to create an http query
 #' @noRd
-prepare_ors_params <- function(params, profile, n = NULL) {
-  params %||% return()
-  params <- format_ors_params(params, profile, n)
-  check_ors_params(params)
-  construct_ors_params(params)
+prepare_ors_params <- function(params, src, profile, endpoint = NULL) {
+  params %empty% return()
+  validate_param_names(params, endpoint)
+  prepare_ors_params_impl(params, profile = profile, n = nrow(src))
 }
 
 
-format_ors_params <- function(params, profile, n) {
-  validate_param_names(params)
-  info <- param_info()
-  pnames <- names(params)
-  params <- lapply(
-    pnames,
-    params = params,
-    info = info,
-    profile = profile,
-    n = n,
-    param_recurse
-  )
-  names(params) <- pnames
+prepare_ors_params_impl <- function(params, profile, n) {
+  for (p in names(params)) {
+    val <- params[[p]]
+    param_check_profile(profile, p)
+    switch(
+      p,
+      allow_unsuitable = param_check_flag(val, param = p),
+      alternative_routes = param_check_alternative_routes(val, profile, param = p),
+      avoid_features = param_check_match(val, param = p),
+      avoid_borders = param_check_match(val, param = p),
+      avoid_countries = param_check_vector(val, c("integer", "double"), param = p),
+      avoid_polygons = param_check_poly(val, param = p),
+      attributes = param_check_true_or_match(val, param = p),
+      bearings = param_check_bearings(val, n = n, param = p),
+      continue_straight = param_check_flag(val, param = p),
+      elevation = param_check_flag(val, param = p),
+      extra_info = param_check_true_or_match(val, param = p),
+      geometry_simplify = param_check_flag(val, param = p),
+      id = param_check_string(val, param = p),
+      instructions = param_check_flag(val, param = p),
+      instructions_format = param_check_match(val, param = p),
+      language = param_check_match(val, param = p),
+      maneuvers = param_check_flag(val, param = p),
+      maximum_speed = param_check_number(val, min = 80, param = p),
+      preference = param_check_match(val, param = p),
+      radiuses = param_check_radiuses(val, n = n, param = p),
+      restrictions = param_check_restrictions(val, profile, param = p),
+      round_trip = param_check_round_trip(val, profile, param = p),
+      roundabout_exits = param_check_flag(val, param = p),
+      skip_segments = param_check_number(
+        val,
+        whole = TRUE,
+        multiple = TRUE,
+        min = 1,
+        max = n,
+        param = p
+      ),
+      suppress_warnings = param_check_flag(val, param = p),
+      surface_quality_known = param_check_flag(val, param = p),
+      vehicle_type = param_check_match(val, param = p),
+      weightings = param_check_weightings(val, profile, param = p),
+      consider_unknown_parameter(p)
+    )
+
+    # format special parameters
+    if (p %in% c("avoid_countries", "avoid_features", "vehicle_type")) {
+      params[[p]] <- box(val)
+    }
+
+    if (identical(p, "avoid_polygons")) {
+      params[[p]] <- sf_to_geojson(val)
+    }
+
+    if (identical(p, "bearings")) {
+      params[[p]] <- unname(apply(
+        as.matrix(val),
+        MARGIN = 1,
+        function(x) drop_na(unname(c(x))),
+        simplify = FALSE
+      ))
+    }
+
+    if (p %in% c("extra_info", "attributes") && isTRUE(params[[p]])) {
+      params[[p]] <- param_lists[[p]]
+    }
+  }
+
+  # create nested parameters
+  params$options$round_trip <- params$round_trip
+  params$options$profile_params$weightings <- params$weightings
+  params$options$profile_params$restrictions <- params$restrictions
+  params[c("round_trip", "weightings", "restrictions")] <- NULL
+
   params
 }
 
 
-param_recurse <- function(name, params, info, profile, n) {
-  val <- params[[name]]
-
-  if (is_list(val)) {
-    info <- info[info$parent %in% name, ]
-    param <- lapply(names(val), param_recurse, val, info, profile, n)
-    names(param) <- names(val)
-    param
-  } else {
-    parent <- unique(info$parent)
-    info <- info[info$name %in% name, ]
-
-    if (!nrow(info)) {
-      msg <- paste(
-        "Parameter {.val {name}} does not",
-        "belong to {.val {unique(parent)}}."
-      )
-      abort(msg, class = "param_invalid_child_error")
-    }
-
-    args <- list(x = val, profile = profile, n = n)
-    do.call(param_prepare, c(args, as.list(info)))
-  }
-}
-
-
-#' Format and check ORS vector parameters
-#' @noRd
-param_prepare <- function(x,
-                          name,
-                          n,
-                          profile,
-                          type,
-                          box,
-                          scalar,
-                          lim,
-                          match,
-                          allowed,
-                          ...) {
-  checks <- c("type", "profile", "length", "lim", "match", "poly")
-  names(checks) <- checks
-
-  checks <- vswitch(
-    checks,
-    FUN.VALUE = logical(1),
-    USE.NAMES = TRUE,
-    type = param_check_type(x, type),
-    profile = param_check_profile(profile, allowed),
-    length = param_check_length(x, name, scalar, n),
-    lim = param_check_lim(x, name, lim, n),
-    match = param_check_match(x, name, match, profile, allowed),
-    poly = param_check_poly(x, name)
+param_check_restrictions <- function(x, profile, param) {
+  subparams <- c(
+    "length", "width", "height", "axleload", "weight", "hazmat",
+    "surface_type", "track_type", "smoothness_type", "maximum_sloped_kerb",
+    "maximum_incline", "maximum_width"
   )
+  param_check_named(x, subparams, param)
 
-  if (all(checks)) {
-    x <- param_format_poly(x, name)
-    x <- param_format_matrix(x, name)
-    x <- param_format_boxed(x, box)
-  }
-
-  attr(x, "check") <- param_verify(checks, name)
-  x
-}
-
-
-param_check_type <- function(x, type) {
-  switch(
-    type,
-    logical = all(is_true_or_false(x, flag = FALSE)),
-    double = is.double(x),
-    integer = is_integerish(x),
-    character = is.character(x),
-    TRUE
-  )
-}
-
-
-param_check_profile <- function(profile, allowed) {
-  startsWith(profile, allowed %NA% profile)
-}
-
-
-param_check_length <- function(x, name, scalar, n) {
-  if (identical(name, "radiuses")) {
-    any(length(x) == c(1, n))
-  } else if (identical(name, "bearings")) {
-    x <- as.matrix(x)
-    identical(nrow(x), as.integer(n)) && isTRUE(ncol(x) %in% c(1, 2))
-  } else {
-    cmp_fun <- ifelse(isTRUE(scalar), `==`, `>=`)
-    cmp_fun(length(x), 1)
+  for (p in names(x)) {
+    val <- x[[p]]
+    param_check_profile(profile, param)
+    switch(
+      p,
+      length = param_check_number(val, min = 0, param = p),
+      width = param_check_number(val, min = 0, param = p),
+      height = param_check_number(val, min = 0, param = p),
+      axleload = param_check_number(val, min = 0, param = p),
+      weight = param_check_number(val, min = 0, param = p),
+      hazmat = param_check_flag(val, param = p),
+      surface_type = param_check_string(val, param = p),
+      track_type = param_check_match(val, param = p),
+      smoothness_type = param_check_match(val, param = p),
+      maximum_sloped_kerb = param_check_number(val, min = 0, param = p),
+      maximum_incline = param_check_number(
+        val,
+        whole = TRUE,
+        min = 0,
+        max = 100,
+        param = p
+      ),
+      minimum_width = param_check_number(val, min = 0, param = p),
+      consider_unknown_parameter(p)
+    )
   }
 }
 
 
-param_check_lim <- function(x, name, lim, n) {
-  if (!lim) return(TRUE)
-  param_match_lim(name, x, n)
-}
+param_check_weightings <- function(x, profile, param) {
+  subparams <- c("green", "quiet", "shadow", "steepness_difficulty")
+  param_check_named(x, subparams, param)
 
-
-param_check_match <- function(x, name, match, profile, allowed) {
-  if (!match) return(TRUE)
-
-  #if (identical(name, "extra_info") && !isTRUE(x)) {
-  #  allowed <- startsWith(profile, param_extra_info_allowed(x))
-  #  x[!allowed] <- NA
-  #}
-
-  identical(x, param_match_arg(name, x))
-}
-
-
-param_check_poly <- function(x, name) {
-  if (identical(name, "avoid_polygons")) {
-    is_sf(x) && all(sf::st_is(x, c("POLYGON", "MULTIPOLYGON")))
-  } else {
-    TRUE
+  for (p in names(x)) {
+    val <- x[[p]]
+    param_check_profile(profile, param)
+    switch(
+      p,
+      green = param_check_number(val, min = 0, max = 1, param = p),
+      quiet = param_check_number(val, min = 0, max = 1, param = p),
+      shadow = param_check_number(val, min = 0, max = 1, param = p),
+      steepness_difficulty = param_check_match(val, param = p),
+      consider_unknown_parameter(p)
+    )
   }
 }
 
 
-param_format_boxed <- function(x, box) {
-  if (box) list(x)
-  x
-}
+param_check_round_trip <- function(x, profile, param) {
+  subparams <- c("length", "points", "seed")
+  param_check_named(x, subparams, param)
 
-
-param_format_poly <- function(x, name) {
-  if (identical(name, "avoid_polygons")) {
-    x <- sf_to_geojson(x)
+  for (p in names(x)) {
+    val <- x[[p]]
+    param_check_profile(profile, param)
+    switch(
+      p,
+      length = param_check_number(val, param = p),
+      points = param_check_number(val, whole = TRUE, min = 1, param = p),
+      seed = param_check_number(val, whole = TRUE, min = 1),
+      consider_unknown_parameter(p)
+    )
   }
-  x
+
 }
 
 
-param_format_matrix <- function(x, name) {
-  if (identical(name, "bearings")) {
-    x <- unname(apply(
-      as.matrix(x),
-      MARGIN = 1,
-      function(x) drop_na(unname(c(x))),
-      simplify = FALSE
+param_check_alternative_routes <- function(x, profile, param) {
+  subparams <- c("share_factor", "target_count", "weight_factor")
+  param_check_named(x, subparams, param)
+
+  for (p in names(x)) {
+    val <- x[[p]]
+    param_check_profile(profile, param)
+    switch(
+      p,
+      share_factor = param_check_number(val, min = 0, max = 1, param = p),
+      target_count = param_check_number(val, whole = TRUE, min = 1, param = p),
+      weight_factor = param_check_number(val, min = 0, param = p),
+      consider_unknown_parameter(p)
+    )
+  }
+}
+
+
+param_check_bearings <- function(x, n, param) {
+  x_fmt <- as.matrix(x)
+  cond <- identical(nrow(x), as.integer(n)) && isTRUE(ncol(x) %in% c(1, 2))
+  if (cond) {
+    cli::cli_abort(c(
+      "Parameter {.field {param}} must be a two-column matrix or a numeric vector.",
+      "i" = "Got {x} instead."
     ))
   }
-  x
+
+  x_fmt <- stats::na.omit(x_fmt)
+  if (any(x_fmt > 360 | x_fmt < 0)) {
+    abort(paste(
+      "Parameter {.field {param}} must consist only of values",
+      "between 0 and 360 (or NA)."
+    ))
+  }
 }
 
 
-param_verify <- function(check, name) {
-  warn <- names(check)[which(!check)]
-  all_ok <- all(check)
+param_check_radiuses <- function(x, n, param) {
+  param_check_number(x, multiple = TRUE, whole = TRUE, min = -1, param = param)
 
-  if (!all_ok) {
-    vswitch(
-      warn,
-      type = "invalid type",
-      profile = "requires a different profile",
-      length =  "invalid length",
-      lim = "exceeds defined value limits",
-      match = paste0(
-        "undefined values",
-        if (identical(name, "extra_info")) " (possibly wrong profile)"
+  cond <- any(length(x) == c(1, n))
+  if (!cond) {
+    cli::cli_abort(c(
+      paste(
+        "Parameter {.field {param}} must be either contain a single value or as",
+        "many values as there are segments."
       ),
-      poly = "invalid sf object"
+      "i" = "Got {length(x)} values and {n} segments instead."
+    ))
+  }
+}
+
+
+param_check_poly <- function(x, param) {
+  cond <- is_sf(x) && all(sf::st_is(x, c("POLYGON", "MULTIPOLYGON")))
+  if (!cond) {
+    cli::cli_abort(paste(
+      "Parameter {.field {param}} must be an sf object consisting of only",
+      "POLYGONs or MULTIPOLYGONs."
+    ))
+  }
+}
+
+
+param_check_profile <- function(profile, param) {
+  required <- switch(
+    param,
+    allow_unsuitable = "wheelchair",
+    avoid_borders = "driving",
+    avoid_countries = "driving",
+    axleload = "driving-hgv",
+    bearings = "cycling",
+    green = "foot",
+    hazmat = "driving-hgv",
+    height = "driving-hgv",
+    length = "driving-hgv",
+    maximum_incline = "wheelchair",
+    maximum_sloped_kerb = "wheelchair",
+    minimum_width = "wheelchair",
+    quiet = "foot",
+    shadow = "foot",
+    smoothness_type = "wheelchair",
+    surface_quality_known = "wheelchair",
+    surface_type = "wheelchair",
+    track_type = "wheelchair",
+    vehicle_type = "driving-hgv",
+    weight = "driving-hgv",
+    width = "driving-hgv",
+    profile
+  )
+
+  if (!startsWith(profile, required)) {
+    cli::cli_abort(
+      "Parameter {.field {param}} requires routing profile of type {.val {required}}.",
+      "i" = "Got profile {.val {profile}} instead."
     )
   }
 }
 
 
-validate_param_names <- function(params) {
-  params_ok <- names(params) %in% param_info()$name
-  if (!all(params_ok)) {
-    abort(
-      "Unknown ORS option{?s} {.var {names(params[!params_ok])}}.",
-      class = "param_unknown_error"
+param_check_string <- function(x, param) {
+  param_check_length(x, length = 1, param)
+  param_check_vector(x, ptype = "character", param = param)
+}
+
+
+param_check_true_or_match <- function(x, param) {
+  if (!isTRUE(x)) {
+    param_check_match(x, param = param)
+  }
+}
+
+
+param_check_flag <- function(x, param) {
+  param_check_length(x, length = 1, param)
+  param_check_vector(x, ptype = "logical", param = param)
+}
+
+
+param_check_vector <- function(x, ptype, param) {
+  cond <- typeof(x) %in% ptype && !any(is.na(x))
+  if (!cond) {
+    cli::cli_abort(
+      "Parameter {.field {param}} must be of type {ptype}.",
+      "i" = "Got {typeof(x)} instead."
     )
   }
+}
 
+
+param_check_length <- function(x, length, param) {
+  cond <- length(x) == length
+  if (!cond) {
+    cli::cli_abort(
+      "Parameter {.field {param}} must be of length {length}, not {length(x)}"
+    )
+  }
+}
+
+
+param_check_match <- function(x, match = NULL, multiple = TRUE, param) {
+  match <- match %||% param_lists[[param]]
+  param_check_vector(x, "character", param)
+
+  if (!multiple) {
+    param_check_length(x, length = 1, param = param)
+  }
+
+  cond <- x %in% match
+  if (!all(cond)) {
+    faulty <- names(x)[!cond]
+    cli::cli_abort(c(
+      "Parameter {.field {param}} must contain any of the following values: {.val {match}}.",
+      "i" = "{.val {faulty}} {?is/are} not {?a/} valid value{?s}."
+    ))
+  }
+}
+
+
+param_check_number <- function(x,
+                               whole = FALSE,
+                               multiple = FALSE,
+                               min = -Inf,
+                               max = Inf,
+                               param) {
+  cond <- is_number(x, multiple = multiple)
+  if (whole) {
+    cond <- cond && is_integerish(x)
+  }
+
+  if (!cond) {
+    fmt <- ifelse(whole, "whole number", "single number")
+    cli::cli_abort(sprintf("Parameter {.field {.field {param}}} must be a %s.", fmt))
+  }
+
+  cond <- all(x >= min)
+  if (!cond) {
+    cli::cli_abort("Parameter {.field {param}} must be greater than or equal to {min}.")
+  }
+
+  cond <- all(x <= max)
+  if (!cond) {
+    cli::cli_abort("Parameter {.field {param}} must be less than or equal to {max}.")
+  }
+}
+
+
+param_check_named <- function(x, names, param) {
+  cond <- names(x) %in% names
+  if (!all(cond)) {
+    faulty <- names(x)[!cond]
+    cli::cli_abort(c(
+      "Parameter {.field {param}} can contain names {.val {names}}",
+      "i" = "{.val {faulty}} {?is/are} not {?a/} valid parameter{?s} for {.field {param}}."
+    ))
+  }
+}
+
+
+validate_param_names <- function(params, endpoint) {
   params_dup <- duplicated(names(params))
   if (any(params_dup)) {
     abort(
@@ -532,222 +706,64 @@ validate_param_names <- function(params) {
       class = "param_duplicated_error"
     )
   }
-}
 
-
-check_ors_params <- function(params) {
-  checks <- drop_null(lapply(flatten_list(params), attr, "check"))
-
-  if (length(checks)) {
-    reasons <- vapply(checks, paste, character(1), collapse = ", ")
-    names(checks) <- gsub(
-      ".",
-      sprintf(" %s ", cli::symbol$arrow_right),
-      names(checks),
-      fixed = TRUE
-    )
-    bad_params <- paste(
-      cli::col_yellow(cli::symbol$bullet),
-      sprintf("{cli::col_yellow('%s')}:", names(checks)),
-      reasons
-    )
-    n_bad <- length(bad_params)
-    names(bad_params) <- rep(" ", n_bad)
-
-    msg <- paste(
-      "The following {cli::qty(n_bad)} parameter{?s}",
-      "{?is/are} invalid and need{?s/} to be revised:"
-    )
-    abort(c(msg, bad_params), class = "param_invalid_error")
-  }
-}
-
-
-construct_ors_object <- function(obj, name, params, info) {
-  parent <- info$parent[info$name %in% name]
-  if (!is.na(parent)) {
-    obj <- list(obj)
-    names(obj) <- name
-    construct_ors_object(obj, parent, params, info)
-  } else {
-    params[[name]] <- obj
-    params
-  }
-}
-
-
-#' Constructs an ORS options list that is ready to be sent in a http request
-#' @noRd
-construct_ors_params <- function(params) {
-  pnames <- names(params)
-  info <- param_info()
-  param_list <- list()
-
-  for (name in pnames) {
-    param_list <- construct_ors_object(params[[name]], name, param_list, info)
-  }
-
-  class(param_list) <- "ors_params"
-  param_list
-}
-
-
-#' Specifies which routing profile is allowed for a given extra_info value.
-#' @noRd
-param_extra_info_allowed <- function(name) {
-  vswitch(
-    name,
-    tollways = "driving",
-    osmid = "wheelchair",
-    roadaccessrestrictions = "driving",
-    countryinfo = "driving",
-    green = "foot",
-    noise = "foot",
-    shadow = "foot",
-    ""
-  )
-}
-
-
-#' Parameter info
-#' @description
-#' Get information on the checks and preparations performed by
-#' \code{\link{ors_params}} for additional ORS parameters.
-#'
-#' @returns A dataframe or tibble with the following columns:
-#' \describe{
-#'  \item{\code{name}}{Name of the parameter}
-#'  \item{\code{parent}}{Parent object of the parameter if it is nested, NA otherwise}
-#'  \item{\code{match}}{Does the parameter have a predefined list of values?}
-#'  \item{\code{scalar}}{Should the parameter be length-1?}
-#'  \item{\code{type}}{R type of the parameter value}
-#'  \item{\code{lim}}{Is parameter subject to numerical limits?}
-#'  \item{\code{allowed}}{Which profiles are required to use the parameter?}
-#'  \item{\code{poly}}{Should the parameter be formatted as a polygon?}
-#'  \item{\code{box}}{Does the parameter need boxing before POSTing?}
-#'  \item{\code{inspect}}{Is the parameter available for ors_inspect?}
-#'  \item{\code{pariwise}}{Is the parameter available for ors_pairwise?}
-#'  \item{\code{accessibility}}{Is the parameter available for ors_accessibility?}
-#' }
-#'
-#' @export
-param_info <- function() {
-  # constructive::construct(dplyr::arrange(
-  #   param_info(),
-  #   match(parent, c(
-  #     NA, "options", "profile_params", "restrictions", "weightings",
-  #     "round_trip", "alternative_routes"
-  #   ))
-  # ), constructive::opts_atomic(compress = FALSE))
-  as_data_frame(data.frame(
-    name = c(
-      "options", "bearings", "alternative_routes", "geometry_simplify",
-      "continue_straight", "preference", "radiuses", "maximum_speed", "attributes",
-      "extra_info", "elevation", "skip_segments", "roundabout_exits", "maneuvers",
-      "suppress_warnings", "id", "instructions", "instructions_format", "language",
-      "profile_params", "avoid_borders", "avoid_countries", "avoid_features",
-      "avoid_polygons", "round_trip", "vehicle_type", "restrictions", "weightings",
-      "allow_unsuitable", "surface_quality_known", "length", "width", "height",
-      "axleload", "weight", "hazmat", "surface_type", "track_type",
-      "smoothness_type", "maximum_sloped_kerb", "maximum_incline", "minimum_width",
-      "steepness_difficulty", "green", "quiet", "shadow", "length", "points",
-      "seed", "target_count", "weight_factor", "share_factor"
-    ),
-    parent = c(
-      NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,
-      "options", "options", "options", "options", "options", "options", "options",
-      "profile_params", "profile_params", "profile_params", "profile_params",
-      "restrictions", "restrictions", "restrictions", "restrictions",
-      "restrictions", "restrictions", "restrictions", "restrictions",
-      "restrictions", "restrictions", "restrictions", "restrictions", "weightings",
-      "weightings", "weightings", "weightings", "round_trip", "round_trip",
-      "round_trip", "alternative_routes", "alternative_routes",
-      "alternative_routes"
-    ),
-    match = c(
-      FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, TRUE,
-      TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,
-      TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE,
-      FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
-    ),
-    scalar = c(
-      NA, NA, NA, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE,
-      FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, NA, TRUE, FALSE,
-      FALSE, NA, NA, TRUE, NA, NA, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE
-    ),
-    type = c(
-      NA, "double", NA, "logical", "logical", "character", "integer", "double",
-      "character", NA, "logical", "integer", "logical", "logical",
-      "logical", "character", "logical", "character", "character", NA, "character",
-      "double", "character", NA, NA, "character", NA, NA, "logical", "logical",
-      "double", "double", "double", "double", "double", "logical", "character",
-      "character", "character", "double", "integer", "double", "integer", "double",
-      "double", "double", "double", "integer", "integer", "integer", "double",
-      "double"
-    ),
-    lim = c(
-      FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE,
-      FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE,
-      FALSE, FALSE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, FALSE, TRUE, TRUE, TRUE
-    ),
-    allowed = c(
-      NA, "cycling", NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,
-      NA, NA, "driving", "driving", NA, NA, NA, "driving-hgv", NA, NA, "wheelchair",
-      "wheelchair", "driving-hgv", "driving-hgv", "driving-hgv", "driving-hgv",
-      "driving-hgv", "driving-hgv", "wheelchair", "wheelchair", "wheelchair",
-      "wheelchair", "wheelchair", "wheelchair", "cycling", "foot", "foot", "foot",
-      NA, NA, NA, NA, NA, NA
-    ),
-    box = c(
-      FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE,
-      FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
-    ),
+  supported_params <- switch(
+    endpoint %||% "",
     inspect = c(
-      TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE
+      "bearings", "alternative_routes", "geometry_simplify",
+      "continue_straight", "preference", "radiuses", "maximum_speed",
+      "attributes", "extra_info", "elevation", "skip_segments",
+      "roundabout_exits", "maneuvers", "suppress_warnings", "id",
+      "instructions", "instructions_format", "language",
+      "avoid_borders", "avoid_countries", "avoid_features", "avoid_polygons",
+      "round_trip", "vehicle_type", "restrictions", "weightings",
+      "allow_unsuitable", "surface_quality_known"
     ),
     pairwise = c(
-      TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE,
-      TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE
+      "bearings", "geometry_simplify", "continue_straight",
+      "preference", "radiuses", "maximum_speed", "attributes", "extra_info",
+      "elevation", "skip_segments", "suppress_warnings",
+      "avoid_borders", "avoid_countries", "avoid_features", "avoid_polygons",
+      "vehicle_type", "restrictions", "weightings", "allow_unsuitable",
+      "surface_quality_known"
     ),
     accessibility = c(
-      TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE,
-      FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE
+      "id", "avoid_borders", "avoid_countries", "avoid_features",
+      "avoid_polygons", "vehicle_type", "restrictions", "weightings",
+      "allow_unsuitable", "surface_quality_known"
+    ),
+    return()
+  )
+
+  params_compatible <- names(params) %in% supported_params
+  if (!all(params_compatible)) {
+    abort(
+      paste(
+        "The following parameters are incompatible with `ors_{endpoint}`:",
+        "{.val {names(params)[params_compatible]}}"
+      ),
+      class = "param_incompatible_error"
     )
-  ))
+  }
 }
 
 
-param_match_arg <- function(name, values) {
-  table <- param_lists[[name]]
-  table[match(values, table, nomatch = 0)]
+consider_unknown_parameter <- function(param) {
+  if (isFALSE(getOption("rors_allow_unknown_params", FALSE))) {
+    abort(c(
+      "Unknown ORS parameter {.var {.field {param}}}.",
+      "i" = paste(
+        "If you need to pass unknown parameters, you can set",
+        "{.code options(rors_allow_unknown_params = TRUE)}."
+      )
+    ), class = "param_unknown_error")
+  }
 }
 
 
 param_lists <- list(
   avoid_borders = c("all", "controlled", "none"),
+  avoid_features = c("highways", "tollways", "ferries"),
   preference = c("fastest", "shortest", "recommended"),
   attributes = c("avgspeed", "detourfactor", "percentage"),
   extra_info = c(
@@ -765,7 +781,7 @@ param_lists <- list(
     "horrible", "very_horrible", "impassable"
   ),
   steepness_difficulty = 0:3,
-  language_format = c("text", "html"),
+  instructions_format = c("text", "html"),
   language = c(
     "de", "de-de", "en", "en-us", "eo", "eo-eo", "es", "es-es", "fr", "fr-fr",
     "gr", "gr-gr", "he", "he-il", "hu", "hu-hu", "id", "id-id", "it", "it-it",
@@ -774,49 +790,3 @@ param_lists <- list(
     "cs", "cs-cz"
   )
 )
-
-
-param_match_lim <- function(name, value, n) {
-  lims <- switch(
-    name,
-    radiuses = c(-1, Inf),
-    maximum_speed = c(80, Inf),
-    avoid_countries = c(1, 236),
-    length = c(0, Inf),
-    width = c(0, Inf),
-    height = c(0, Inf),
-    axleload = c(0, Inf),
-    weight = c(0, Inf),
-    maximum_sloped_kerb = c(0, Inf),
-    maximum_incline = c(0, 100),
-    minimum_width = c(0, Inf),
-    green = c(0, 1),
-    quiet = c(0, 1),
-    shadow = c(0, 1),
-    points = c(1, Inf),
-    target_count = c(0, Inf),
-    weight_factor = c(0, Inf),
-    share_factor = c(0, Inf),
-    skip_segments = c(1, n %||% 0),
-    c(-Inf, Inf)
-  )
-
-  all(value >= lims[1]) && all(value <= lims[2])
-}
-
-
-#' Country code table
-#' @description
-#' Information about ORS countries and their associated country codes.
-#' Useful for the \code{avoid_countries} parameter in \code{\link{ors_params}}.
-#'
-#' @returns A dataframe or tibble with the following columns:
-#' \describe{
-#'  \item{\code{country_id}}{Country codes used by ORS}
-#'  \item{\code{name}}{English name of the country}
-#' }
-#'
-#' @export
-country_info <- function() {
-  info_table("country_list")
-}

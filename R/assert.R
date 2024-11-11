@@ -23,8 +23,9 @@ is_integerish <- function(x, null = FALSE, string = TRUE) {
     ifelse(null, is.null(x), FALSE)
 }
 
-is_number <- function(x, null = FALSE) {
-  is.numeric(x) && !is.na(x) && length(x) == 1 ||
+is_number <- function(x, multiple = FALSE, null = FALSE) {
+  only_one <- if (!multiple) length(x) == 1 else TRUE
+  is.numeric(x) && all(!is.na(x)) && only_one ||
     ifelse(null, is.null(x), FALSE)
 }
 
@@ -43,10 +44,8 @@ is_sf <- function(x, sfc = TRUE) {
 #' @param types geometry types
 #' @param exclusive specifies whether all geometry types in `types` must be
 #' present in `x` or if `x` must only contain at least one of these types.
-#' @param strict specifies whether all geometries must be of type `type` or if
-#' only some geometries need to be of this type.
 #' @noRd
-is_geometry_type <- function(x, types, exclusive = TRUE, strict = TRUE) {
+is_geometry_type <- function(x, types, exclusive = TRUE) {
   gtypes <- sf::st_geometry_type(x)
   uni_gtypes <- unique(gtypes)
 
@@ -54,10 +53,6 @@ is_geometry_type <- function(x, types, exclusive = TRUE, strict = TRUE) {
     is_type <- all(types %in% uni_gtypes)
   } else {
     is_type <- any(types %in% uni_gtypes)
-  }
-
-  if (strict) {
-    is_type <- is_type && all(gtypes %in% types)
   }
 
   is_type
