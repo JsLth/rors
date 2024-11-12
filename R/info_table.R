@@ -8,11 +8,11 @@
 #'
 #' @param type The type of extra info to get information about. Must be one of
 #' \code{"steepness"}, \code{"surface"}, \code{"waycategory"}, \code{"waytype"},
-#' \code{"trail_difficulty"}, \code{"road_access_restrictions"}, or
-#' \code{"country_list"}.
+#' \code{"traildifficulty"}, \code{"roadaccessrestrictions"}, or
+#' \code{"countryinfo"}.
 #'
 #' @returns A tibble containing two two three columns containing the internal
-#' code and a human-readable label.
+#' code, a human-readable label and, if applicable, additional details.
 #'
 #' @export
 #'
@@ -23,18 +23,18 @@ info_table <- function(type) {
   switch(
     type,
     steepness = tibble::tibble(
-      value = -5:5,
-      encoding = c(
+      levels = -5:5,
+      labels = c(
         ">=16% decline", "10% - <16% decline", "7% - <10% decline",
         "4% - <7% decline", "1% - <4% decline", "0% - <1% incline",
         "1% - <4% incline", "4% - <7% incline", "7% - <10% incline",
         "10% - <16% incline", ">=16% incline"
       ),
     ),
-
+    
     surface = tibble::tibble(
-      value = 0:18,
-      name = c(
+      levels = 0:18,
+      labels = c(
         "Unknown", "Paved", "Unpaved", "Asphalt", "Concrete", "Cobblestone", "Metal",
         "Wood", "Compacted Gravel", "Fine Gravel", "Gravel", "Dirt", "Ground", "Ice",
         "Paving Stones", "Sand", "Woodchips", "Grass", "Grass Paver"
@@ -48,19 +48,19 @@ info_table <- function(type) {
         "sand", NA, "grass", "grass_paver"
       ),
     ),
-
+    
     waycategory = tibble::tibble(
-      value = c(0L, 1L, 2L, 4L, 8L, 16L),
-      name = c("No category", "Highway", "Tollways", "Steps", "Ferry", "Ford"),
+      levels = c(0L, 1L, 2L, 4L, 8L, 16L),
+      labels = c("No category", "Highway", "Tollways", "Steps", "Ferry", "Ford"),
       tags = c(
         NA, "highway=motorway, highway=motorway_link", "toll*=yes", "highway=steps",
         "route=shuttle_train, route=ferry", "ford=yes"
       ),
     ),
-
-    waytype = tibble::tibble(
-      value = 0:10,
-      name = c(
+    
+    waytypes = tibble::tibble(
+      levels = 0:10,
+      labels = c(
         "Unknown", "State Road", "Road", "Street", "Path", "Track", "Cycleway",
         "Footway", "Steps", "Ferry", "Construction"
       ),
@@ -72,31 +72,29 @@ info_table <- function(type) {
         "construction"
       ),
     ),
-
-    trail_difficulty = tibble::tibble(
-      value = 0:7,
-      foot = c(
-        "no tag", "sac_scale=hiking", "sac_scale=mountain_hiking",
-        "sac_scale=demanding_mountain_hiking", "sac_scale=alpine_hiking",
-        "sac_scale=demanding_alpine_hiking", "sac_scale=difficult_alpine_hiking", NA
-      ),
-      cycling = c(
-        "no tag", "mtb:scale=0", "mtb:scale=1", "mtb:scale=2", "mtb:scale=3",
-        "mtb:scale=4", "mtb:scale=5", "mtb:scale=6"
-      ),
+    
+    traildifficulty = data.frame(
+      levels = c(7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6),
+      labels = c(
+        "mtb:scale=6", "mtb:scale=5", "mtb:scale=4", "mtb:scale=3", "mtb:scale=2",
+        "mtb:scale=1", "mtb:scale=0", "no tag", "sac_scale=hiking",
+        "sac_scale=mountain_hiking", "sac_scale=demanding_mountain_hiking",
+        "sac_scale=alpine_hiking", "sac_scale=demanding_alpine_hiking",
+        "sac_scale=difficult_alpine_hiking"
+      )
     ),
-
-    road_access_restrictions = tibble::tibble(
-      value = c(0L, 1L, 2L, 4L, 8L, 16L, 32L),
-      encoding = c(
+    
+    roadaccessrestrictions = tibble::tibble(
+      levels = c(0L, 1L, 2L, 4L, 8L, 16L, 32L),
+      labels = c(
         "None (there are no restrictions)", "No", "Customers", "Destination",
         "Delivery", "Private", "Permissive"
       ),
     ),
-
-    country_list = tibble::tibble(
-      country_id = 1:236,
-      name = c(
+    
+    countryinfo = tibble::tibble(
+      levels = 1:236,
+      labels = c(
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla",
         "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
         "Azerbaijan", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium",

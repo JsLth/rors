@@ -26,36 +26,56 @@ tables <- map(
 ) |>
   setNames(table_names)
 
-colnames(tables$steepness) <- tolower(colnames(tables$steepness))
-colnames(tables$surface) <- c("value", "name", "tags")
-colnames(tables$waycategory) <- c("value", "name", "tags")
-colnames(tables$waytype) <- c("value", "name", "tags")
-colnames(tables$`trail-difficulty`) <- c("value", "foot", "cycling")
-colnames(tables$`road-access-restrictions`) <- tolower(colnames(tables$`road-access-restrictions`))
-tables$`country-list` <- tables$`country-list` |>
+table_names <- c(
+  "steepness", "surface", "waycategory", "waytypes", "traildifficulty",
+  "roadaccessrestrictions", "countryinfo"
+)
+names(tables) <- table_names
+
+colnames(tables$steepness) <- c("levels", "labels")
+colnames(tables$surface) <- c("levels", "labels", "tags")
+colnames(tables$waycategory) <- c("levels", "labels", "tags")
+colnames(tables$waytypes) <- c("levels", "labels", "tags")
+colnames(tables$traildifficulty) <- c("levels", "foot", "cycling")
+colnames(tables$roadaccessrestrictions) <- c("levels", "labels")
+
+# if english country name is missing, merge with orginal name
+tables$countryinfo <- tables$countryinfo |>
   mutate(
     `name:en` = ifelse(!nzchar(`name:en`), NA, `name:en`),
     name = coalesce(`name:en`, name)
   ) |>
-  select(-`name:en`)
+  select(-`name:en`, levels = country_id, labels = name)
+
+cycle_labels <- rev(setdiff(tables$traildifficulty$cycling, "no tag"))
+cycle_levels <- rev(abs(tables$traildifficulty$levels * -1)[seq(2, length(cycle_labels) + 1)])
+
+tables$traildifficulty <- na.omit(data.frame(
+  levels = c(cycle_levels, tables$traildifficulty$levels),
+  labels = c(cycle_labels, tables$traildifficulty$foot)
+))
+attr(tables$traildifficulty, "na.action") <- NULL
 
 code <- vapply(table_names, FUN.VALUE = character(1), function(x) {
   code <- construct(tables[[x]])$code
-  nm <- gsub("\\-", "_", x)
-  paste0(nm, " = ", paste(code, collapse = "\n"), ",\n")
+  paste0(x, " = ", paste(code, collapse = "\n"), ",\n")
 }) |>
   paste(collapse = "\n")
 
 code <- paste(paste0("    ", strsplit(code, "\n")[[1]]), collapse = "\n")
 
+roc <- readLines("R/info_table.R")
+roc <- roc[startsWith(roc, "#'")]
+
 code <- paste0(
+  paste(roc, collapse = "\n"), "\n",
   "info_table <- function(type) {\n",
   "  switch(\n",
   "    type,\n",
   code,
   "\n    NULL\n",
   "  )\n",
-  "}"
+  "}", "\n"
 )
 
-cat(code, file = "R/info_tables.R")
+cat(code, file = "R/info_table.R")
