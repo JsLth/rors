@@ -34,10 +34,11 @@ Whether to convert the output to an \code{\link[sfnetworks]{sfnetwork}}.}
 
 \item{instance}{\code{[ors_instance]}
 
-Object of an OpenRouteService instance that should be used for route
-computations. It is recommended to use \code{\link{ors_instance}}
-to set an instance globally. This argument should only be used if activating
-an instance globally is not feasible.}
+OpenRouteService instance object created using \code{\link{ors_instance}}.
+It is recommended to use \code{\link{ors_instance}} to set an instance
+globally. This argument should be used if activating an instance
+globally is not feasible or if subsequent requests using different instances
+are sent.}
 
 \item{...}{Additional arguments passed to the export API.}
 }

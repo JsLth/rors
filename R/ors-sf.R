@@ -16,7 +16,7 @@ ors_multiple_linestrings <- function(res, alt = 1L) {
   iterator <- seq_len(nrow(coordinates) - 1L)
   linestrings <- lapply(iterator, function(wp) {
     rows <- seq(wp, wp + 1L)
-    segment <- coordinates[rows, ]
+    segment <- as.matrix(coordinates[rows, ])
     sf::st_linestring(segment)
   })
   geometry <- sf::st_sfc(linestrings, crs = 4326L)

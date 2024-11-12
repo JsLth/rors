@@ -109,10 +109,11 @@ Defaults to 100x100.}
 
 \item{instance}{\code{[ors_instance]}
 
-Object of an OpenRouteService instance that should be used for route
-computations. It is recommended to use \code{\link{ors_instance}}
-to set an instance globally. This argument should only be used if activating
-an instance globally is not feasible.}
+OpenRouteService instance object created using \code{\link{ors_instance}}.
+It is recommended to use \code{\link{ors_instance}} to set an instance
+globally. This argument should be used if activating an instance
+globally is not feasible or if subsequent requests using different instances
+are sent.}
 
 \item{...}{Additional arguments passed to the ORS API. This includes all
 options that modify the routing results. For details on each argument,
@@ -124,7 +125,9 @@ Reasonable arguments include \code{avoid_borders}, \code{avoid_countries},
 \code{avoid_features}, \code{avoid_polygons}, profile parameters, and
 \code{vehicle_type}.}
 
-\item{params}{List of additional arguments passed to the ORS API. See
+\item{params}{\code{[ors_params]}
+
+List of additional arguments passed to the ORS API. See
 \code{\link{ors_params}} for details. If the same two arguments are passed
 through \code{...} and \code{params}, the dot arguments take priority. Note
 that the object passed through this argument needs to be built using the

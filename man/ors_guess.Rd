@@ -44,10 +44,11 @@ Defaults to \code{\link[sf]{st_convex_hull}}. Other useful functions are
 
 \item{instance}{\code{[ors_instance]}
 
-Object of an OpenRouteService instance that should be used for route
-computations. It is recommended to use \code{\link{ors_instance}}
-to set an instance globally. This argument should only be used if activating
-an instance globally is not feasible.}
+OpenRouteService instance object created using \code{\link{ors_instance}}.
+It is recommended to use \code{\link{ors_instance}} to set an instance
+globally. This argument should be used if activating an instance
+globally is not feasible or if subsequent requests using different instances
+are sent.}
 
 \item{...}{Further arguments passed to \code{poly_fun}}
 }

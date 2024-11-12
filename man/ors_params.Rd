@@ -60,21 +60,20 @@ row. Bearings default to 100 if not specified. Only available for
 
 \item{alternative_routes}{\code{[list]}
 
-List of options for generating alternative routes. Can be one of the
-following options:
-
-\describe{
-\item{\code{target_count}}{Number of alternatives that should be computed.}
-\item{\code{weight_factor}}{Multiplier that specifies by what factor an
-alternative routes is allowed to diverge from the optimal route.
-Defaults to 1.4.}
-\item{\code{share_factor}}{Multiplier that specificies the fraction an
-alternative route is allowed to share with the optimal route. Defaults
-to 0.6.}
-}
-
-Because this parameter changes the output format, it is only available
-in \code{ors_inspect}.}
+Named list that specifies options for alternative routes and accepts up to
+three parameters. \code{target_count} is the maximum number of routes to
+compute (including the recommended route). The output can contain less routes
+than specified if no other alternatives can be computed from the \code{src}
+coordinates. \code{share_factor} denotes the maximum share of identical paths
+between routes. \code{weight_factor} is the maximum factor that a route can
+deviate (i.e. be longer) from the original route. If specified, \code{src}
+must contain exactly two coordinate pairs for which alternative routes
+should be computed. If any alternatives can be computed given the specified
+parameters, the alternative routes are added to the output by binding the
+additional rows. In this case, a new column \code{alt} is added that informs
+about the route type (\code{"recommended"} denotes the optimal route,
+additional alternatives are termed \code{"alt1", "alt2", ...}). If
+\code{NULL}, no alternative routes are computed.}
 
 \item{geometry_simplify}{\code{[logical]}
 
@@ -193,18 +192,13 @@ avoid. Must have CRS \code{EPSG:4326}.}
 
 \item{round_trip}{\code{[list]}
 
-List of options for generating round trips. Can include the following
-options:
-
-\describe{
-\item{\code{length}}{Target length of the round trip (in m)}
-\item{\code{points}}{Number of points to create the round trip}
-\item{\code{seed}}{RNG seed to control randomness in the direction of the
-round trip}
-}
-
-Because this parameter changes the output format, it is only available
-in \code{ors_inspect}.}
+Named list that specifies options for round trips and accepts up to three
+parameters. \code{length} is the approximate length of the round trip.
+\code{points} denotes the number of route points from which to derive a
+round trip (the higher the rounder). \code{seed} controls the randomisation
+of the route direction. If specified, \code{src} must contain a single
+coordinate pair from which a round trip is to be generated. If \code{NULL},
+no round trip is computed.}
 
 \item{vehicle_type}{\code{[character]}
 

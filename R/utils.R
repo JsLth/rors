@@ -154,12 +154,30 @@ regex_match <- function(text, pattern, ...) {
 }
 
 
-#' Creates a count table of x
+#' Extracts the mode of a vector. If multiple modes, extracts the first one.
 #' @noRd
-count <- function(x) {
-  df <- stats::aggregate(x, list(x), length)
-  names(df) <- c("level", "count")
-  df[order(df$count, decreasing = TRUE), ]
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+
+#' Base implementation of dplyr::bind_rows that allows setting a column
+#' to idenfity the bound dataframes
+#' @noRd
+bind_rows <- function(..., .id = NULL) {
+  dots <- unbox(list(...))
+  out <- rbind_list(dots)
+  if (!is.null(.id)) {
+    names <- names(dots)
+    nrows <- vapply(dots, nrow, integer(1))
+    ids <- rep(names, times = nrows)
+    ids <- data.frame(ids)
+    names(ids) <- .id
+    out <- cbind(ids, out)
+  }
+
+  as_data_frame(out)
 }
 
 
@@ -291,6 +309,16 @@ decode_base2 <- function(code) {
 box <- function(x) {
   if (length(x) == 1 && is.atomic(x)) {
     x <- list(x)
+  }
+  x
+}
+
+
+#' Turns a single-element list to a vector
+#' @noRd
+unbox <- function(x) {
+  if (length(x) == 1 && is.recursive(x)) {
+    x <- x[[1]]
   }
   x
 }

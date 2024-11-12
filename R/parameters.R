@@ -24,24 +24,6 @@
 #' row. Bearings default to 100 if not specified. Only available for
 #' \code{cycling-*} profiles.
 #'
-#' @param alternative_routes \code{[list]}
-#'
-#' List of options for generating alternative routes. Can be one of the
-#' following options:
-#'
-#' \describe{
-#'  \item{\code{target_count}}{Number of alternatives that should be computed.}
-#'  \item{\code{weight_factor}}{Multiplier that specifies by what factor an
-#'  alternative routes is allowed to diverge from the optimal route.
-#'  Defaults to 1.4.}
-#'  \item{\code{share_factor}}{Multiplier that specificies the fraction an
-#'  alternative route is allowed to share with the optimal route. Defaults
-#'  to 0.6.}
-#' }
-#'
-#' Because this parameter changes the output format, it is only available
-#' in \code{ors_inspect}.
-#'
 #' @param geometry_simplify \code{[logical]}
 #'
 #' Whether to simplify the route geometry. Only possible if
@@ -157,21 +139,6 @@
 #' \code{sf} object containing polygons or multipolygons that describe areas to
 #' avoid. Must have CRS \code{EPSG:4326}.
 #'
-#' @param round_trip \code{[list]}
-#'
-#' List of options for generating round trips. Can include the following
-#' options:
-#'
-#' \describe{
-#'  \item{\code{length}}{Target length of the round trip (in m)}
-#'  \item{\code{points}}{Number of points to create the round trip}
-#'  \item{\code{seed}}{RNG seed to control randomness in the direction of the
-#'  round trip}
-#' }
-#'
-#' Because this parameter changes the output format, it is only available
-#' in \code{ors_inspect}.
-#'
 #' @param vehicle_type \code{[character]}
 #'
 #' If \code{profile} is \code{"driving-hgv"}, specifies the vehicle type.
@@ -246,6 +213,7 @@
 #' @param ... Reserved for further expansion. If a dot argument is used,
 #' an error is thrown.
 #' @inheritParams ors_pairwise
+#' @inheritParams ors_inspect
 #'
 #' @details
 #' This function performs some basic validation checks. If a check fails,

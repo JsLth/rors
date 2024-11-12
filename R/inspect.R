@@ -17,13 +17,16 @@
 #'
 #' Level of route aggregation. Must be one of \code{waypoint}, \code{step} or
 #' \code{segment}. See details.
-#' @param attributes \code{[list]}
+#' @param attributes \code{[list]}/\code{TRUE}
 #'
 #' List of attributes that summarize route characteristics.
 #' This includes three values: \code{avgspeed} states the average vehicle speed
 #' along the route, \code{detourfactor} indicates how much the route deviates
 #' from a straight line. \code{percentage} shows the share of a segment compared
-#' to the entire route. If \code{TRUE}, all values are included.
+#' to the entire route. If \code{level %in% c("waypoint", "step")}, these
+#' summaries are added as object attributes. If \code{level == "segment"}, they
+#' are appended to the output dataframe. If \code{TRUE}, all values are
+#' included.
 #' @param elevation \code{[logical]}
 #'
 #' If \code{TRUE}, elevation data is included in the output.
@@ -37,14 +40,18 @@
 #'
 #' Named list that specifies options for alternative routes and accepts up to
 #' three parameters. \code{target_count} is the maximum number of routes to
-#' compute (including the recommended route). Must be an integer between 1 and 3
-#' and defaults to 1. The output can contain less routes than specified if no
-#' other alternatives can be computed from the \code{src} coordinates.
-#' \code{share_factor} denotes the maximum share of identical paths between
-#' routes. \code{weight_factor} is the maximum factor that a route can deviate
-#' (i.e. be longer) from the original route. If specified, and
-#' \code{target_count} is larger than 1, the output is wrapped in a list of up
-#' to three dataframes. If \code{NULL}, no alternative routes are computed.
+#' compute (including the recommended route). The output can contain less routes
+#' than specified if no other alternatives can be computed from the \code{src}
+#' coordinates. \code{share_factor} denotes the maximum share of identical paths
+#' between routes. \code{weight_factor} is the maximum factor that a route can
+#' deviate (i.e. be longer) from the original route. If specified, \code{src}
+#' must contain exactly two coordinate pairs for which alternative routes
+#' should be computed. If any alternatives can be computed given the specified
+#' parameters, the alternative routes are added to the output by binding the
+#' additional rows. In this case, a new column \code{alt} is added that informs
+#' about the route type (\code{"recommended"} denotes the optimal route,
+#' additional alternatives are termed \code{"alt1", "alt2", ...}). If
+#' \code{NULL}, no alternative routes are computed.
 #' @param round_trip \code{[list]}
 #'
 #' Named list that specifies options for round trips and accepts up to three
@@ -54,7 +61,7 @@
 #' of the route direction. If specified, \code{src} must contain a single
 #' coordinate pair from which a round trip is to be generated. If \code{NULL},
 #' no round trip is computed.
-#' @param extra_info \code{[character]}/\code{[TRUE]}
+#' @param extra_info \code{[character]}/\code{TRUE}
 #'
 #' List of keywords that add extra information regarding each
 #' linestring segment of the output. If \code{TRUE}, all values are included.
@@ -64,7 +71,7 @@
 #' How to format the output. If \code{"string"}, returns the entire JSON
 #' response string. If \code{"list"}, returns a parsed JSON list. If
 #' \code{"tidy"}, performs lots of data preparation to shape the response into a
-#' tibble.
+#' rectangular shape. Defaults to \code{"tidy"}.
 #' @param elev_as_z \code{[logical]}
 #'
 #' If \code{TRUE}, elevation data is stored as z-values in the
@@ -74,8 +81,8 @@
 #' @returns Returns an sf dataframe containing detailed sections of all routes
 #' between the coordinates specified in \code{src}, aggregated according to
 #' the level of aggregation stated in \code{level}. If \code{alternative_routes}
-#' is specified, returns a list of sf dataframes instead with each element
-#' containing a route alternative.
+#' is specified and more than one route can be computed, adds a column
+#' \code{alt} to the output that informs about the type of route alternative.
 #'
 #' @details OpenRouteService distinguishes between three
 #' types of route aggregation: Segments, steps and waypoints. A \strong{segment}
@@ -85,42 +92,73 @@
 #' on a route.
 #'
 #' Depending on the chosen level of aggregation, the output has to be adjusted
-#' through interpolation and aggregation. For all levels below \code{"segment"},
-#' ORS attributes are stored as R attributes and are not included in the
-#' dataframe. For \code{"waypoint"}, distances and durations are derived from the
-#' geometry lengths and do not take into account elevation (due to restrictions
-#' in the s2 package). Extra information (using the \code{extra_info} argument)
-#' and street names do not perfectly overlap with steps and segments. In these
-#' cases, the value with the highest overlap is adopted causing some information
-#' loss. Navigation information is dropped on \code{"segment"} level. In order
-#' to establish this structure, \code{ors_inspect} depends on the
-#' \code{navigation} parameter and forces it to be \code{TRUE}. When
-#' \code{navigation} is \code{FALSE}, ORS omits steps -- and hence also waypoints
-#' -- from the response.
+#' through interpolation and aggregation. Generally, \code{ors_inspect}
+#' extracts information at the lowest level (waypoint) and then aggregates up.
+#'
+#' \describe{
+#'  \item{If \code{level == "waypoint"}}{Extra information, elevation and
+#'  geometries are natively available at the waypoint level. Other data must be
+#'  interpolated or recycled. In particular, navigation information is recycled
+#'  from the step level. Distances are estimated based on the geometry length.
+#'  Durations are estimated based on the proportion of waypoint-level distances
+#'  to the route-level distance. From experience, estimated distances are rather
+#'  accurate while estimated durations and average speeds can deviate
+#'  considerably from the original information. Due to the estimation method
+#'  durations do not take into account elevation or road suitability.
+#'  Navigation information and street names do not perfectly overlap with
+#'  steps and segments. In these cases, the value with the highest overlap
+#'  is adopted causing some information loss. Information about the
+#'  corresponding step and segment index is attached to the output.}
+#'
+#'  \item{If \code{level == "step"}}{Navigation information and summary metrics
+#'  (distances, durations, average speed) are natively available at the step
+#'  level. Other data must be aggregated. Geometries are combined using
+#'  \code{\link[sf]{st_combine}}. Metric values are averaged using the mean.
+#'  Qualitative data is aggregated using the statistical mode, if multiple
+#'  unique values are found. Information about the corresponding segment index
+#'  is attached to the output.}
+#'
+#'  \item{If \code{level == "segment"}}{Attribute information (including
+#'  average speed) is natively available at the segment level. For waypoints
+#'  and steps, attributes are stored as an R attribute. For segments, this
+#'  information is attached to the output dataframe. For consistency, the
+#'  \code{avgspeed} attribute is always extracted and added to the output
+#'  Segments are aggregated using the same procedure as described above for
+#'  steps. Navigation information is always dropped as it is mostly meaningless
+#'  at an aggregation level this high.}
+#' }
 #'
 #' Extra information can be requested as additional context for each waypoint on
-#' a route. Possible values include:
-#' \describe{
-#'  \item{steepness}{Ordered factor describing how steep a part of a route is.}
-#'  \item{suitability}{Ordinal numeric describing how suitable a part of a
-#'                     route is (1 - unsuitable; 10 - suitable).}
-#'  \item{surface}{Unordered factor describing the surface material covering a
-#'                 part of a route.}
-#'  \item{waycategory}{Unordered factor describing special parts of a route.}
-#'  \item{waytype}{Unordered factor containing different types of roads.}
-#'  \item{tollways}{For \code{driving-*} profiles, specifies whether a part of a
+#' a route. Not all values are guaranteed to be available for all profiles.
+#' If an extra info is not available, its column is added to the output and
+#' filled with \code{NA}. Possible values include:
+#'
+#' \itemize{
+#'  \item{\strong{steepness}: Ordered factor describing how steep a part of a
+#'  route is.}
+#'  \item{\strong{suitability}: Ordinal numeric describing how suitable a part
+#'  of a route is (1 - unsuitable; 10 - suitable).}
+#'  \item{\strong{surface}: Unordered factor describing the surface material
+#'  covering a part of a route.}
+#'  \item{\strong{waycategory}: Unordered factor describing special parts of
+#'  a route.}
+#'  \item{\strong{waytype}: Unordered factor containing different types of
+#'  roads.}
+#'  \item{\strong{tollways}: For \code{driving-*} profiles, specifies whether
+#'  a part of a
 #'                  route is a tollway.}
-#'  \item{traildifficulty}{For walking and driving profiles, specifies the OSM
-#'                         trail difficulty.}
-#'  \item{osmid}{For the wheelchair profile, contains the OSM IDs of used ways.}
-#'  \item{roadaccessrestrictions}{Unordered factor describing road access
-#'                                restriction.}
-#'  \item{countryinfo}{Nominal numeric containing country codes of a part of a
-#'                     route.}
-#'  \item{green}{For walking profiles, describes the amount of green on a route
-#'               (1 - little; 10 - much).}
-#'  \item{noise}{For walking profiles, describes the amount of noise on a route
-#'               (1 - little; 10 - much).}
+#'  \item{\strong{traildifficulty}: For walking and driving profiles, specifies
+#'  the OSM trail difficulty.}
+#'  \item{\strong{osmid}: For the wheelchair profile, contains the OSM IDs of
+#'  used ways.}
+#'  \item{\strong{roadaccessrestrictions}: Unordered factor describing road
+#'  access restriction.}
+#'  \item{\strong{countryinfo}: Nominal numeric containing country codes of a
+#'  part of a route.}
+#'  \item{\strong{green}: For walking profiles, describes the amount of green
+#'  on a route (1 - little; 10 - much).}
+#'  \item{\strong{noise}: For walking profiles, describes the amount of noise
+#'  on a route (1 - little; 10 - much).}
 #' }
 #'
 #' @seealso \code{\link{ors_pairwise}},
@@ -129,7 +167,10 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \dontshow{httptest2::start_vignette("ors_inspect")}
+#' # An instance must be mounted to run `ors_inspect`.
+#' ors_instance(server = "pub")
+#'
 #' # By default, only information about places, distances, durations,
 #' # and elevations are returned
 #' ors_inspect(pharma, "driving-car")
@@ -148,31 +189,29 @@
 #' # By default, `ors_inspect` partitions routes using the smallest possible
 #' # division, i.e. waypoints. This comes at the cost of making some
 #' # assumptions and interpolations. See details. To make partitions at
-#' # a higher level
-#' insp_elev <- ors_inspect(pharma, "driving-car", )
+#' # a higher level, you can use the `level` argument.
+#' ors_inspect(pharma, level = "step")
+#' ors_inspect(pharma, level = "segment")
 #'
-#' # Inspection of route summary attributes
-#' insp_attr <- ors_inspect(
-#'   sample_source,
-#'   sample_dest,
-#'   profile,
-#'   attributes = "detourfactor"
-#' )
-#' attr(insp_attr, "detourfactor")
+#' # If `attributes` are set, they are stored as actual R attributes.
+#' # These attributes are general summaries that apply over the entire route.
+#' insp <- ors_inspect(pharma, attributes = "detourfactor")
+#' attr(insp, "detourfactor")
 #'
-#' # Altering the route by passing further arguments
-#' insp_opts <- ors_inspect(
-#'   sample_source,
-#'   sample_dest,
-#'   profile,
-#'   continue_straight = TRUE,
-#'   preference = "shortest",
-#'   maximum_speed = 80
-#' )
+#' # By default, responses are tidied up and formatted in a workable dataframe.
+#' # If you want to decide for yourself how to digest the retrieved data, you
+#' # can choose to return the routes in an unformatted manner.
+#' str(ors_inspect(pharma, as = "list"), max.level = 3)
 #'
-#' # Summarizing route specifics
-#' route_summary <- summary(insp_adv)
-#' }
+#' # To create a round trip, only one point can be passed as `src`. This point
+#' # is used as a basis to create a trip going from and back to the point.
+#' ors_inspect(pharma[1, ], round_trip = list(length = 1000, points = 20))
+#'
+#' # By default, only the optimal computed route is returned. To include
+#' # possible alternatives as well, you can use `alternative_routes`.
+#' # The following code computes 2 alternative routes where routes can use
+#' # a maximum of 60% overlapping ways.
+#' ors_inspect(pharma, alternative_routes = list(target_count = 3, share_factor = 0.6))
 ors_inspect <- function(src,
                         profile = NULL,
                         level = c("waypoint", "step", "segment"),
@@ -182,7 +221,7 @@ ors_inspect <- function(src,
                         navigation = FALSE,
                         alternative_routes = NULL,
                         round_trip = NULL,
-                        as = c("tidy", "list", "string"), # to-do: revise tidy approach
+                        as = c("tidy", "list", "string"),
                         elev_as_z = FALSE,
                         instance = NULL,
                         ...,
@@ -222,6 +261,20 @@ ors_inspect <- function(src,
   new_params$instructions <- TRUE # instructions are needed for response formatting
   params <- modify_list(params, new_params)
 
+  if (!is.null(params$options$round_trip)) {
+    assert_that(
+      nrow(src) == 1,
+      add = "Round trips require exactly one point."
+    )
+  } else if (!is.null(params$alternative_routes)) {
+    assert_that(
+      nrow(src) == 2,
+      add = "To compute alternative routes, no more than one segment can be requested."
+    )
+  } else {
+    assert_that(nrow(src) >= 2)
+  }
+
   res <- call_ors_directions(
     src = src,
     profile = profile,
@@ -230,7 +283,7 @@ ors_inspect <- function(src,
     params = params,
     url = url,
     token = needs_token(instance$token),
-    parse = as != "raw"
+    parse = as != "string"
   )
 
   if (as %in% c("list", "tidy")) {
@@ -251,9 +304,9 @@ ors_inspect <- function(src,
       elev_as_z = elev_as_z,
       params = params
     )
+    class(res) <- c("ors_route", class(res))
   }
 
-  class(res) <- c("ors_route", class(res))
   res
 }
 
@@ -375,29 +428,16 @@ plot_section <- function(x,
   y_range[1] <- y_range[1] * scale_elevation
 
   ids <- seq(1, n)
-  zip_x <- unlist(Map(
-    FUN = c,
-    xmin1 = seg$xstart,
-    xmax1 = seg$xend,
-    xmax2 = seg$xend,
-    xmin2 = seg$xstart
-  ))
+  zip_x_args <- list(seg$xstart, seg$xend, seg$xend, seg$xstart)
+  zip_x <- unlist(.mapply(c, dots = zip_x_args, NULL))
 
-  zip_y <- unlist(Map(
-    FUN = c,
-    ymin1 = rep(y_range[1], n),
-    ymin2 = rep(y_range[1], n),
-    ymax1 = seg$yend,
-    ymay2 = seg$ystart
-  ))
+  zip_y_args <- list(rep(y_range[1], n), rep(y_range[1], n), seg$yend, seg$ystart)
+  zip_y <- unlist(Map(c, dots = zip_y_args, NULL))
 
   poly <- data.frame(x = zip_x, y = zip_y, id = rep(ids, each = 4))
 
   val <- lapply(seq_along(val), function(i) if (is.na(val[i])) val[i - 1] else val[i])
-  val <- data.frame(
-    value = unlist(val),
-    id = ids
-  )
+  val <- data.frame(value = unlist(val), id = ids)
 
   poly <- merge(poly, val, by = "id")
 

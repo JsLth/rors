@@ -38,15 +38,12 @@ reference:
       - ORSWar
       - ors_profile
 
-  - title: Main endpoints
+  - title: ORS endpoints
     contents:
       - ors_inspect
       - ors_pairwise
       - ors_accessibility
       - ors_matrix
-
-  - title: Peripheral endpoints
-    contents:
       - ors_snap
       - ors_export
       - ors_guess
@@ -54,8 +51,7 @@ reference:
   - title: Parameters
     contents:
       - ors_params
-      - param_info
-      - country_info
+      - info_table
 
   - title: Utility functions
     contents:
@@ -65,6 +61,7 @@ reference:
       - get_instance
       - last_ors_conditions
       - plot_section
+      - get_ors_geometry
 
   - title: Data
     contents:

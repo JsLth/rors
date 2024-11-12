@@ -1,17 +1,14 @@
 tidy_route <- function(res, ...) {
   alt <- get_ors_alternatives(res)
-  rlist <- lapply(seq_len(alt), tidy_alternative, res = res, ...)
+  routes <- lapply(seq_len(alt), tidy_alternative, res = res, ...)
 
-  if (length(rlist) > 1) {
-    names(rlist) <- c(
-      "recommended",
-      paste("alternative", seq_len(alt - 1L), sep = "_")
-    )
+  if (length(routes) > 1) {
+    alt_names <- c("recommended", paste("alt", seq_len(alt - 1L)))
+    names(routes) <- alt_names
+    bind_rows(routes, .id = "alt")
   } else {
-    rlist <- rlist[[1]]
+    routes[[1]]
   }
-
-  rlist
 }
 
 
@@ -25,8 +22,12 @@ tidy_alternative <- function(alt,
   # get waypoints from steps for each segment
   route <- get_ors_waypoints(res, alt)
 
-  if (level == "segment") {
+  # instructions are not meaningful at the highest aggregation level
+  # avgspeed should always be included at segment level because it's always
+  # better than estimating
+  if (level == "segment" || !navigation) {
     route[c("type", "instruction", "exit_number")] <- NULL
+    params$attributes <- union(params$attributes, "avgspeed")
   }
 
   # combine waypoints with geometry
@@ -44,28 +45,28 @@ tidy_alternative <- function(alt,
 
   # derive waypoint metrics from geometry
   if (level == "waypoint") {
-    # get distances by measuring geometry length
-    distances <- calculate_distances(route)
+    # distances and durations are included in the response but only at
+    # a segment and step level. to derive these values at a waypoint level,
+    # measure the length of the linestring geometry
+    route$distance <- estimate_distances(route)
+    # ... and then estimate durations by calculating the percentage of
+    # measured distances from the aggregated distances
     # then derive durations by computing percentage of measured distances from
     # aggregated distances
-    durations <- calculate_durations(route, distances)
-    route[c("distance", "duration")] <- data.frame(distances, durations)
+    route$duration <- estimate_durations(route, route$distance)
   }
-  route$avgspeed <- calculate_avgspeed(route$distance, route$duration)
+  route$avgspeed <- estimate_avgspeed(route$distance, route$duration)
 
   # extract attributes
-  params$attributes <- c(
+  attribs <- c(
     if (elevation) c("ascent", "descent"),
     if (level == "segment") c("distance", "duration"),
     params$attributes
   )
-  attrib <- get_ors_attributes(res, which = params$attributes, alt = alt)
+  attrib <- get_ors_attributes(res, which = attribs, alt = alt)
 
   # extract and format extra info
-  extra_info <- lapply(
-    params$extra_info,
-    function(x) format_extra_info(res, x, alt)
-  )
+  extra_info <- lapply(params$extra_info, format_extra_info, res, alt)
   extra_info <- do.call(cbind.data.frame, extra_info)
   names(extra_info) <- params$extra_info
   if (ncol(extra_info)) {
@@ -74,12 +75,16 @@ tidy_alternative <- function(alt,
 
   # aggregate in case level is not "waypoint"
   if (level != "waypoint") {
+    sidx <- 2
+
+    # some columns are already covered by attributes at the segment level
     if (level == "segment") {
       route[names(attrib)] <- NA
+      sidx <- 3
     }
 
     route <- by(
-      route[3L:ncol(route)],
+      route[sidx:ncol(route)],
       INDICES = route[[level]],
       FUN = aggregate_route,
       level = level,
@@ -95,48 +100,109 @@ tidy_alternative <- function(alt,
 }
 
 
-aggregate_route <- function(route_section, level, attrib) {
-  vals <- lapply(names(route_section), function(x) {
-    if (inherits(route_section[[x]], "sfc")) {
-      return(sf::st_combine(route_section[x]))
+aggregate_route <- function(route, level, attrib) {
+  vals <- lapply(seq_along(route), function(i) {
+    col <- names(route)[i]
+    val <- route[[i]]
+
+    if (inherits(val, "sfc")) {
+      return(sf::st_combine(val))
     }
-    if (x %in% "elevation") {
-      return(mean(route_section[[x]]))
+
+    # distances and durations are constant on a step level and native
+    # on a segment level -> only take mean of elevation
+    if (col %in% "elevation") {
+      return(mean(val))
     }
-    if (level == "segment" && x %in% names(attrib)) {
-      i <- get("i", envir = parent.frame(4))
-      return(as.numeric(attrib[[x]][i]))
+
+    if (level == "segment" && col %in% names(attrib)) {
+      return(as.numeric(attrib[[col]][i]))
     }
-    o <- unique(route_section[[x]])
-    if (length(o) > 1) {
-      return(count(route_section[[x]])[1, 1])
+
+    uval <- unique(val)
+    if (length(uval) == 1) {
+      return(uval)
     }
-    o
+
+    Mode(val)
   })
-  stats::setNames(do.call(cbind.data.frame, vals), names(route_section))
+  vals <- do.call(cbind.data.frame, vals)
+  names(vals) <- names(route)
+  vals
 }
 
+
+estimate_distances <- function(waypoints) {
+  round(sf::st_length(waypoints), 2)
+}
+
+
+estimate_avgspeed <- function(distances, durations) {
+  speeds <- distances / durations
+  round(speeds * 3.6, 2L)
+}
+
+
+estimate_durations <- function(waypoints, distances) {
+  wp_distances <- waypoints$distance
+  wp_durations <- waypoints$duration
+  wp <- as.numeric(row.names(waypoints))
+  percentages <- distances / wp_distances
+  durations <- wp_durations * percentages
+  round(durations, 2L)
+}
+
+
+#' Retrieves extra info from the response and performs some sort of linear
+#' referencing to retrieve an extra info value for each waypoint. Also assigns
+#' labels to each code. If no extra info is available, returns NA.
+#' @param res response list
+#' @param info_type the type of extra info to format, e.g. steepness
+#' @param alt index of route alternative; usually, this is just 1.
+#' @noRd
+format_extra_info <- function(info_type, res, alt = 1) {
+  if (identical(info_type, "waytype")) info_type <- "waytypes"
+  last_waypoint <- last(get_ors_waypoints_range(res, alt = alt))
+  extras <- get_ors_extras(res, which = info_type, alt = alt)
+
+  if (length(extras)) {
+    # get a vector of the number of waypoints per step
+    start <- extras[, 1L]
+    n_waypoints <- diff(c(start, last_waypoint))
+
+    # create a list where each element is a step containing waypoints
+    # then replace all waypoints with their matching extra info codes
+    values <- .mapply(rep, dots = list(extras[, 3], n_waypoints), NULL)
+    values <- unlist(values)
+
+    # replace info codes with human-readable labels
+    fill_extra_info(values, info_type)
+  } else {
+    rep(NA, last_waypoint)
+  }
+}
 
 
 #' Replace response values with more informative ones
 #' @param values Object from the response list
 #' @param info_type Type of information to be replaced
 #' @noRd
-fill_extra_info <- function(codes, info_type, profile) {
-  fill_table <- fill_table()
-  tab <- fill_table[fill_table$name %in% info_type, ]
-
+fill_extra_info <- function(codes, info_type) {
   # convert 0/1 to logical
   if (info_type %in% "tollways") {
     codes <- as.logical(codes)
   }
 
-  # convert characters to (un)ordered factors
-  if (nrow(tab)) {
-    profile <- eval(str2lang(tab$profile))
-    fct_fun <- ifelse(tab$ordinal, ordered, factor)
+  tab <- info_table(info_type)
 
-    if (tab$base2) {
+  # convert characters to (un)ordered factors
+  if (!is.null(tab)) {
+    ordinal <- info_type %in% c("steepness", "traildifficulty")
+    base2 <- info_type %in% c("waycategory", "roadaccessrestrictions")
+    fct_fun <- ifelse(ordinal, ordered, factor)
+
+    # replace base2 encoded values with their labels
+    if (base2) {
       cats <- vapply(codes, function(code) {
         decodes <- decode_base2(code)
         cats <- lapply(decodes, function(d) {
@@ -153,130 +219,11 @@ fill_extra_info <- function(codes, info_type, profile) {
 }
 
 
-fill_table <- function() {
-  tab <- list(
-    name = c(
-      "steepness", "surface", "waycategory", "waytypes", "traildifficulty",
-      "roadaccessrestrictions", "countryinfo"
-    ),
-    levels = list(
-      -5:5, 0:18, c(0, 1, 2, 4, 8, 16, 32, 64, 128), 0:10, -7:6,
-      c(0, 1, 2, 4, 8, 16, 32), 1:236
-    ),
-    labels = list(
-      c(
-        ">16% decline", "12-15% decline", "7-11% decline", "4-6% decline",
-        "1-3% decline", "0% incline", "1-3% incline", "4-6% incline", "7-11% incline",
-        "12-15% incline", ">16% incline"
-      ),
-      c(
-        "Unknown", "Paved", "Unpaved", "Asphalt", "Concrete", "Cobblestone", "Metal",
-        "Wood", "Compacted Gravel", "Fine Gravel", "Gravel", "Dirt", "Ground", "Ice",
-        "Paving Stones", "Sand", "Woodchips", "Grass", "Grass Paver"
-      ),
-      c(
-        "No category", "Highway", "Steps", "Unpaved Road", "Ferry", "Track", "Tunnel",
-        "Paved Road", "Ford"
-      ),
-      c(
-        "Unknown", "State Road", "Road", "Street", "Path", "Track", "Cycleway",
-        "Footway", "Steps", "Ferry", "Construction"
-      ),
-      c(
-        "mtb:scale=6", "mtb:scale=5", "mtb:scale=4", "mtb:scale=3", "mtb:scale=2",
-        "mtb:scale=1", "mtb:scale=0", "No Tag", "sac_scale=hiking",
-        "sac_scale=mountain_hiking", "sac_scale=demanding_mountain_hiking",
-        "sac_scale=alpine_hiking", "sac_scale=demanding_alpine_hiking",
-        "sac_scale=difficult_alpine_hiking"
-      ),
-      c("None", "No", "Customers", "Destination", "Delivery", "Private", "Permissive"),
-      info_table("country_list")$name
-    ),
-    profile = rep(c(NA, "profile", NA), c(4L, 1L, 2L)),
-    ordinal = c(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE),
-    base2 = c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE)
-  )
-
-  class(tab) <- "data.frame"
-  attr(tab, "row.names") <- 1:7
-  tab
-}
-
-
-calculate_distances <- function(waypoints) {
-  round(sf::st_length(waypoints), 2)
-}
-
-
-calculate_avgspeed <- function(distances, durations) {
-  speeds <- distances / durations
-  round(speeds * 3.6, 2L)
-}
-
-
-calculate_durations <- function(waypoints, distances) {
-  wp_distances <- waypoints$distance
-  wp_durations <- waypoints$duration
-  wp <- as.numeric(row.names(waypoints))
-  percentages <- distances / wp_distances
-  durations <- wp_durations * percentages
-  round(durations, 2L)
-}
-
-
-get_waypoint_index <- function(from, to, waypoints, by_waypoint) {
-  if (isFALSE(by_waypoint)) {
-    from_index <- match(from + 1L, waypoints[[1L]])
-    to_index <- match(to + 1L, waypoints[[2L]])
-    seq(from_index, to_index)
-  }
-}
-
-
-format_extra_info <- function(res, info_type, alt = 1L) {
-  if (identical(info_type, "waytype")) info_type <- "waytypes"
-  last_waypoint <- utils::tail(get_ors_waypoints_range(res, alt = alt), 1L)
-  matrix <- get_ors_extras(res, which = info_type, alt = alt)
-
-  if (length(matrix)) {
-    start <- matrix[, 1L]
-    end <- matrix[, 2L]
-
-    iterator <- data.frame(
-      V1 = seq(1L, last_waypoint),
-      V2 = seq(1L, last_waypoint) + 1L
-    )
-
-    indices <- Map(
-      f = get_waypoint_index,
-      start,
-      end,
-      MoreArgs = list(waypoints = iterator, by_waypoint = FALSE)
-    )
-
-    values <- lapply(
-      seq(1, length(indices)),
-      function(seg) rep(matrix[seg, 3L], length(indices[[seg]]))
-    )
-    values <- unlist(values)
-
-    profile <- res$metadata$query$profile
-    fill_extra_info(values, info_type, profile)
-  } else {
-    rep(NA, last_waypoint)
-  }
-}
-
-
 reorder_route_columns <- function(waypoints) {
-  order_columns <- c(
-    "name", "distance", "duration", "avgspeed", "elevation", "type",
-    "instruction", "exit_number", "steepness", "suitability", "surface",
-    "waycategory",  "waytype", "traildifficulty", "green", "noise",
-    "detourfactor", "percentage", "geometry"
-  )
-  order_columns <- intersect(unique(order_columns), names(waypoints))
-  waypoints[order_columns]
+  order_cols <- c("name", "distance", "duration", "avgspeed", "elevation")
+  other_cols <- setdiff(names(waypoints), order_cols)
+  other_cols <- setdiff(other_cols, "geometry")
+  waypoints[c(order_cols, other_cols, "geometry")]
 }
 
 
