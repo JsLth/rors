@@ -275,6 +275,12 @@ ors_inspect <- function(src,
     assert_that(nrow(src) >= 2)
   }
 
+  # avgspeed should always be included at segment level because it's always
+  # better than estimating
+  if (level == "segment") {
+    params$attributes <- union(params$attributes, "avgspeed")
+  }
+
   res <- call_ors_directions(
     src = src,
     profile = profile,

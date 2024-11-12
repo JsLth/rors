@@ -23,11 +23,8 @@ tidy_alternative <- function(alt,
   route <- get_ors_waypoints(res, alt)
 
   # instructions are not meaningful at the highest aggregation level
-  # avgspeed should always be included at segment level because it's always
-  # better than estimating
   if (level == "segment" || !navigation) {
     route[c("type", "instruction", "exit_number")] <- NULL
-    params$attributes <- union(params$attributes, "avgspeed")
   }
 
   # combine waypoints with geometry
@@ -220,7 +217,10 @@ fill_extra_info <- function(codes, info_type) {
 
 
 reorder_route_columns <- function(waypoints) {
-  order_cols <- c("name", "distance", "duration", "avgspeed", "elevation")
+  order_cols <- c("name", "distance", "duration", "avgspeed")
+  if ("elevation" %in% names(waypoints)) {
+    order_cols <- c(order_cols, "elevation")
+  }
   other_cols <- setdiff(names(waypoints), order_cols)
   other_cols <- setdiff(other_cols, "geometry")
   waypoints[c(order_cols, other_cols, "geometry")]
