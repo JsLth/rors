@@ -11,6 +11,9 @@ plot_section(
   elev = "elevation",
   palette = NULL,
   scale_elevation = TRUE,
+  smooth = FALSE,
+  power = 1.5,
+  span = 0.3,
   size = 1.5,
   xlab = dist,
   ylab = elev,
@@ -32,7 +35,9 @@ feature. Preferably, this is a result of \code{ors_inspect}, but other
 
 \item{dist, elev, feat}{\code{[character]}
 
-Column names of the distance, elevation and feature values inside \code{x}.}
+Column names of the distance, elevation and feature values inside \code{x}.
+If \code{x} was computed using \code{elev_as_z = FALSE}, the elevation
+data is derived from the Z variable.}
 
 \item{palette}{\code{[character]}
 
@@ -46,6 +51,26 @@ Color palette to be used for plotting. Passed on to
 Whether to scale the elevation axis based on the lowest elevation. If
 \code{FALSE}, the y-axis is not scaled and fixed at sea level. Defaults to
 \code{TRUE}.}
+
+\item{smooth}{\code{[logical]}
+
+Whether to smooth the elevation profile and the value
+gradient. If \code{TRUE}, smoothes the elevation profile by first
+interpolating the segment breaks and then fitting a LOESS model to
+the elevation profile to create a more seamless figure. Interpolation is
+performed using \code{\link{approx}} and LOESS smoothing using
+\code{\link{loess}}.}
+
+\item{power}{\code{[numeric]}
+
+Factor by which to multiply the number of segment breaks.
+A higher number equals a smoother blending of segments. A value of 1
+indicates no interpolation (because \eqn{n \cdot 1 = 1}). Defaults to 1.5.}
+
+\item{span}{\code{[numeric]}
+
+Degree of LOESS smoothing. See \code{\link{loess}} for details.
+A higher number equals rounder edges.}
 
 \item{size}{\code{[numeric]}
 

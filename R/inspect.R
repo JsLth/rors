@@ -23,7 +23,7 @@
 #' This includes three values: \code{avgspeed} states the average vehicle speed
 #' along the route, \code{detourfactor} indicates how much the route deviates
 #' from a straight line. \code{percentage} shows the share of a segment compared
-#' to the entire route. If \code{level %in% c("waypoint", "step")}, these
+#' to the entire route. If \code{level \%in\% c("waypoint", "step")}, these
 #' summaries are added as object attributes. If \code{level == "segment"}, they
 #' are appended to the output dataframe. If \code{TRUE}, all values are
 #' included.
@@ -76,7 +76,9 @@
 #'
 #' If \code{TRUE}, elevation data is stored as z-values in the
 #' geometry of the output \code{sf} dataframe. If \code{FALSE}, elevation is
-#' stored as a distinct dataframe column. Ignored if \code{elevation = FALSE}.
+#' stored as a distinct dataframe column. The z-value of a geometry can store
+#' more detailed information even at higher aggregation levels. Ignored if
+#' \code{elevation = FALSE}.
 #' @inheritParams ors_pairwise
 #' @returns Returns an sf dataframe containing detailed sections of all routes
 #' between the coordinates specified in \code{src}, aggregated according to
@@ -205,13 +207,15 @@
 #'
 #' # To create a round trip, only one point can be passed as `src`. This point
 #' # is used as a basis to create a trip going from and back to the point.
-#' ors_inspect(pharma[1, ], round_trip = list(length = 1000, points = 20))
+#' rt_opts <- list(length = 1000, points = 20)
+#' ors_inspect(pharma[1, ], round_trip = rt_opts)
 #'
 #' # By default, only the optimal computed route is returned. To include
 #' # possible alternatives as well, you can use `alternative_routes`.
 #' # The following code computes 2 alternative routes where routes can use
 #' # a maximum of 60% overlapping ways.
-#' ors_inspect(pharma, alternative_routes = list(target_count = 3, share_factor = 0.6))
+#' alt_opts <- list(target_count = 3, share_factor = 0.6)
+#' ors_inspect(pharma[1:2], alternative_routes = alt_opts)
 ors_inspect <- function(src,
                         profile = NULL,
                         level = c("waypoint", "step", "segment"),
@@ -325,17 +329,19 @@ ors_inspect <- function(src,
 #' the elevation. The area below the elevation profile can be used to plot an
 #' additional feature.
 #'
-#' @param x \code{[sf]}
+#' @param x \code{[data.frame]}
 #'
-#' An \code{sf} data.frame describing segments of a linestring. The data.frame
+#' A data.frame describing segments of a route. The data.frame
 #' is expected to have multiple rows (representing the segments) and at least
-#' three columns, \code{"elevation"}, \code{"distance"} and an additional
-#' feature. Preferably, this is a result of \code{ors_inspect}, but other
+#' three columns describing the elevation, distance, and an additional feature
+#' to visualize. Preferably, this is a result of \code{ors_inspect}, but other
 #' \code{sf} data.frames might work as well.
 #'
 #' @param dist,elev,feat \code{[character]}
 #'
 #' Column names of the distance, elevation and feature values inside \code{x}.
+#' If \code{x} was computed using \code{elev_as_z = FALSE}, the elevation
+#' data is derived from the Z variable.
 #' @param palette \code{[character]}
 #'
 #' Color palette to be used for plotting. Passed on to
@@ -347,6 +353,23 @@ ors_inspect <- function(src,
 #' Whether to scale the elevation axis based on the lowest elevation. If
 #' \code{FALSE}, the y-axis is not scaled and fixed at sea level. Defaults to
 #' \code{TRUE}.
+#' @param smooth \code{[logical]}
+#'
+#' Whether to smooth the elevation profile and the value
+#' gradient. If \code{TRUE}, smoothes the elevation profile by first
+#' interpolating the segment breaks and then fitting a LOESS model to
+#' the elevation profile to create a more seamless figure. Interpolation is
+#' performed using \code{\link{approx}} and LOESS smoothing using
+#' \code{\link{loess}}.
+#' @param power \code{[numeric]}
+#'
+#' Factor by which to multiply the number of segment breaks.
+#' A higher number equals a smoother blending of segments. A value of 1
+#' indicates no interpolation (because \eqn{n \cdot 1 = 1}). Defaults to 1.5.
+#' @param span \code{[numeric]}
+#'
+#' Degree of LOESS smoothing. See \code{\link{loess}} for details.
+#' A higher number equals rounder edges.
 #' @param size \code{[numeric]}
 #'
 #' Size of the line plot. Defaults to \code{1.5}.
@@ -387,6 +410,9 @@ plot_section <- function(x,
                          elev = "elevation",
                          palette = NULL,
                          scale_elevation = TRUE,
+                         smooth = FALSE,
+                         power = 1.5,
+                         span = 0.3,
                          size = 1.5,
                          xlab = dist,
                          ylab = elev,
@@ -396,33 +422,57 @@ plot_section <- function(x,
                          caption = NULL,
                          ...) {
   if (!loadable("ggplot2")) {
-    cli::cli_abort(
+    abort(
       "The {.pkg ggplot2} package is necessary to create cross-sections.",
-      class = "ors_loadable_error"
+      class = "loadable_error"
     )
   }
+
+  assert_that(inherits(x, "data.frame"), nrow(x) > 1)
 
   distance <- if (dist %in% names(x)) {
     x[[dist]]
   } else {
-    cli::cli_abort("No distance data found in {.var x}.")
+    abort("No distance data found in {.var x}.")
   }
 
   elevation <- if (elev %in% names(x)) {
     x[[elev]]
   } else if (is_sf(x)) {
-    sf::st_geometry(x)[, 3]
+    coords <- sf::st_coordinates(x)
+    tapply(coords[, "Z"], list(coords[, "L2"]), FUN = mean)
   } else {
-    cli::cli_abort("No elevation data found in {.var x}.")
+    abort("No elevation data found in {.var x}.")
   }
 
   val <- if (feat %in% names(x)) {
     x[[feat]]
   } else {
-    cli::cli_abort("No feature data found in {.var x}.")
+    abort("No feature data found in {.var x}.")
   }
 
+  # interpolate missing values
+  val <- replace_na_with_last(val)
+
+  # sort such that distances are ascending
+  idx_order <- order(distance)
+  distance <- distance[idx_order]
+  elevation <- elevation[idx_order]
+
+  # remove duplicated distances
+  dupl <- duplicated(distance)
+  distance <- distance[!dupl]
+  elevation <- elevation[!dupl]
+
   n <- nrow(x)
+  if (smooth) {
+    n <- round(n * power)
+    start <- approx(distance, elevation, n = n)
+    model <- loess(y ~ x, data = start, span = span)
+    distance <- start$x
+    elevation <- model$fitted
+    val <- approx(val, n = n)$y
+  }
 
   seg <- data.frame(
     xstart = cumsum(c(0, distance[-(n - 1)])),
@@ -430,7 +480,8 @@ plot_section <- function(x,
     ystart = elevation,
     yend = c(elevation[-1], utils::tail(elevation, 1))
   )
-  y_range <- range(elevation) * c(0.9, 1.1)
+
+  y_range <- range(seg$ystart) * c(0.9, 1.1)
   y_range[1] <- y_range[1] * scale_elevation
 
   ids <- seq(1, n)
@@ -438,32 +489,23 @@ plot_section <- function(x,
   zip_x <- unlist(.mapply(c, dots = zip_x_args, NULL))
 
   zip_y_args <- list(rep(y_range[1], n), rep(y_range[1], n), seg$yend, seg$ystart)
-  zip_y <- unlist(Map(c, dots = zip_y_args, NULL))
+  zip_y <- unlist(.mapply(c, dots = zip_y_args, NULL))
 
-  poly <- data.frame(x = zip_x, y = zip_y, id = rep(ids, each = 4))
-
-  val <- lapply(seq_along(val), function(i) if (is.na(val[i])) val[i - 1] else val[i])
-  val <- data.frame(value = unlist(val), id = ids)
-
-  poly <- merge(poly, val, by = "id")
+  poly <- data.frame(x = zip_x, y = zip_y, group = rep(ids, each = 4))
+  val <- data.frame(fill = unlist(val), group = ids)
+  poly <- merge(poly, val, by = "group")
 
   p <- ggplot2::ggplot() +
     ggplot2::geom_segment(
       data = seg,
-      mapping = do.call(
-        ggplot2::aes,
-        lapply(list(x = "xstart", y = "ystart", xend = "xend", yend = "yend"), as.name)
-      ),
+      mapping = ggplot2::aes(x = xstart, y = ystart, xend = xend, yend = yend),
       size = 1.5,
       lineend = "round",
       na.rm = TRUE
     ) +
     ggplot2::geom_polygon(
       data = poly,
-      mapping = do.call(
-        ggplot2::aes,
-        lapply(list(x = "x", y = "y", group = "id", fill = "value"), as.name)
-      ),
+      mapping = ggplot2::aes(x, y, group = group, fill = fill),
       na.rm = TRUE
     ) +
     ggplot2::scale_x_continuous(expand = c(0, 0)) +
@@ -477,7 +519,7 @@ plot_section <- function(x,
     ) +
     ggplot2::theme_bw()
 
-  if (is.factor(val$value)) {
+  if (is.factor(val$fill)) {
     if (is.null(palette)) {
       p <- p + ggplot2::scale_fill_viridis_d(option = "E", name = feat)
     } else {

@@ -45,6 +45,17 @@ For details on all profiles, refer to the
 Level of route aggregation. Must be one of \code{waypoint}, \code{step} or
 \code{segment}. See details.}
 
+\item{attributes}{\code{[list]}/\code{TRUE}
+
+List of attributes that summarize route characteristics.
+This includes three values: \code{avgspeed} states the average vehicle speed
+along the route, \code{detourfactor} indicates how much the route deviates
+from a straight line. \code{percentage} shows the share of a segment compared
+to the entire route. If \code{level \%in\% c("waypoint", "step")}, these
+summaries are added as object attributes. If \code{level == "segment"}, they
+are appended to the output dataframe. If \code{TRUE}, all values are
+included.}
+
 \item{extra_info}{\code{[character]}/\code{TRUE}
 
 List of keywords that add extra information regarding each
@@ -99,7 +110,9 @@ rectangular shape. Defaults to \code{"tidy"}.}
 
 If \code{TRUE}, elevation data is stored as z-values in the
 geometry of the output \code{sf} dataframe. If \code{FALSE}, elevation is
-stored as a distinct dataframe column. Ignored if \code{elevation = FALSE}.}
+stored as a distinct dataframe column. The z-value of a geometry can store
+more detailed information even at higher aggregation levels. Ignored if
+\code{elevation = FALSE}.}
 
 \item{instance}{\code{[ors_instance]}
 
@@ -257,13 +270,15 @@ str(ors_inspect(pharma, as = "list"), max.level = 3)
 
 # To create a round trip, only one point can be passed as `src`. This point
 # is used as a basis to create a trip going from and back to the point.
-ors_inspect(pharma[1, ], round_trip = list(length = 1000, points = 20))
+rt_opts <- list(length = 1000, points = 20)
+ors_inspect(pharma[1, ], round_trip = rt_opts)
 
 # By default, only the optimal computed route is returned. To include
 # possible alternatives as well, you can use `alternative_routes`.
 # The following code computes 2 alternative routes where routes can use
 # a maximum of 60\% overlapping ways.
-ors_inspect(pharma, alternative_routes = list(target_count = 3, share_factor = 0.6))
+alt_opts <- list(target_count = 3, share_factor = 0.6)
+ors_inspect(pharma[1:2], alternative_routes = alt_opts)
 }
 \seealso{
 \code{\link{ors_pairwise}},

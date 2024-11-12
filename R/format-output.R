@@ -81,16 +81,17 @@ tidy_alternative <- function(alt,
     }
 
     route <- by(
-      route[sidx:ncol(route)],
+      route,
       INDICES = route[[level]],
       FUN = aggregate_route,
       level = level,
       attrib = attrib
     )
     route <- do.call(rbind.data.frame, route)
+    route <- route[sidx:length(route)]
   }
 
-  # reorder columns
+  # ensure that most important information is at the front
   route <- reorder_route_columns(route)
 
   sf::st_as_sf(data_frame(route))
@@ -98,22 +99,23 @@ tidy_alternative <- function(alt,
 
 
 aggregate_route <- function(route, level, attrib) {
-  vals <- lapply(seq_along(route), function(i) {
-    col <- names(route)[i]
-    val <- route[[i]]
+  idx <- route[[level]][1]
+  cols <- setdiff(names(route), level)
+  vals <- lapply(names(route), function(col) {
+    val <- route[[col]]
 
     if (inherits(val, "sfc")) {
       return(sf::st_combine(val))
     }
 
-    # distances and durations are constant on a step level and native
-    # on a segment level -> only take mean of elevation
-    if (col %in% "elevation") {
-      return(mean(val))
+    if (level == "segment" && col %in% names(attrib)) {
+      return(as.numeric(attrib[[col]][idx]))
     }
 
-    if (level == "segment" && col %in% names(attrib)) {
-      return(as.numeric(attrib[[col]][i]))
+    # distances and durations are constant on a step level and native
+    # on a segment level -> only take mean of elevation
+    if (is.numeric(val)) {
+      return(mean(val))
     }
 
     uval <- unique(val)
@@ -123,14 +125,14 @@ aggregate_route <- function(route, level, attrib) {
 
     Mode(val)
   })
-  vals <- do.call(cbind.data.frame, vals)
   names(vals) <- names(route)
+  vals <- do.call(cbind.data.frame, vals)
   vals
 }
 
 
 estimate_distances <- function(waypoints) {
-  round(sf::st_length(waypoints), 2)
+  round(as.numeric(sf::st_length(waypoints)), 2)
 }
 
 

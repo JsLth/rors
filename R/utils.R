@@ -162,6 +162,12 @@ Mode <- function(x) {
 }
 
 
+# https://stackoverflow.com/questions/7735647/replacing-nas-with-latest-non-na-value
+replace_na_with_last <- function(x, a = !is.na(x)) {
+  x[which(a)[c(1, 1:sum(a))][cumsum(a) + 1]]
+}
+
+
 #' Base implementation of dplyr::bind_rows that allows setting a column
 #' to idenfity the bound dataframes
 #' @noRd
