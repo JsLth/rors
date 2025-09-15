@@ -4,7 +4,12 @@
 \alias{ors_instance}
 \title{OpenRouteService instance}
 \usage{
-ors_instance(dir = ".", server = NULL, type = c("docker", "jar", "war"), ...)
+ors_instance(
+  dir = tempdir(),
+  server = NULL,
+  type = c("docker", "jar", "war"),
+  ...
+)
 }
 \arguments{
 \item{dir}{\code{[character]}

@@ -14,7 +14,32 @@ OpenRouteService.
 ors <- ors_instance(dir = "~", type = "docker")
 ors <- ors_instance(dir = "~", type = "jar")
 ors <- ors_instance(dir = "~", type = "war")
-}
+
+# retrieve an extract
+ors$set_extract("Slovenia")
+
+# replace car profile with walking profile
+ors$add_profiles("walking")
+ors$rm_profiles("car")
+
+# add custom bike profile
+bike <- ors_profile(
+  "bike-regular",
+  template = FALSE,
+  encoder_options = list(turn_costs = FALSE)
+)
+ors$add_profiles(bike)
+
+# set port
+ors$set_port(8081) # set specific port
+ors$set_port() # ... or a random one
+
+# set memory
+ors$set_memory(max = 8000) # set specific memory
+ors$set_memory() # ... or estimate the required memory
+
+# increase number of allowed isochrone locations
+ors$set_endpoints(isochrones = list(maximum_locations = 150))}
 }
 \section{Super class}{
 \code{\link[rors:ORSInstance]{rors::ORSInstance}} -> \code{ORSLocal}
@@ -116,7 +141,7 @@ Download and set an OpenStreetMap extract for use in ORS. Wrapper for
 \if{html}{\out{<div class="r">}}\preformatted{ORSLocal$set_extract(
   place,
   provider = "geofabrik",
-  timeout = NULL,
+  timeout = 6000,
   file = NULL,
   do_use = TRUE,
   ...

@@ -10,7 +10,36 @@
 #' ors <- ors_instance(dir = "~", type = "docker")
 #' ors <- ors_instance(dir = "~", type = "jar")
 #' ors <- ors_instance(dir = "~", type = "war")
-#' }
+#'
+#' # retrieve an extract
+#' ors$set_extract("Slovenia")
+#'
+#' # replace car profile with walking profile
+#' ors$add_profiles("walking")
+#' ors$rm_profiles("car")
+#'
+#' # add custom bike profile
+#' bike <- ors_profile(
+#'   "bike-regular",
+#'   template = FALSE,
+#'   encoder_options = list(turn_costs = FALSE)
+#' )
+#' ors$add_profiles(bike)
+#'
+#' # set name
+#' ors$set_name("ors-project") # set specific name
+#' ors$set_name() # ... or generate a random one
+#'
+#' # set port
+#' ors$set_port(8081) # set specific port
+#' ors$set_port() # ... or a random one
+#'
+#' # set memory
+#' ors$set_memory(max = 8000) # set specific memory
+#' ors$set_memory() # ... or estimate the required memory
+#'
+#' # increase number of allowed isochrone locations
+#' ors$set_endpoints(isochrones = list(maximum_locations = 150))}
 ORSLocal <- R6Class(
   classname = "ORSLocal",
   inherit = ORSInstance,

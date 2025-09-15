@@ -25,12 +25,12 @@ plot_section(
 )
 }
 \arguments{
-\item{x}{\code{[sf]}
+\item{x}{\code{[data.frame]}
 
-An \code{sf} data.frame describing segments of a linestring. The data.frame
+A data.frame describing segments of a route. The data.frame
 is expected to have multiple rows (representing the segments) and at least
-three columns, \code{"elevation"}, \code{"distance"} and an additional
-feature. Preferably, this is a result of \code{ors_inspect}, but other
+three columns describing the elevation, distance, and an additional feature
+to visualize. Preferably, this is a result of \code{ors_inspect}, but other
 \code{sf} data.frames might work as well.}
 
 \item{dist, elev, feat}{\code{[character]}
