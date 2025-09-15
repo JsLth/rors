@@ -21,6 +21,8 @@ ORSInstance <- R6Class(
     get_status = function() {
       if (self$is_ready()) {
         ors_status(self$get_url())
+      } else {
+        FALSE
       }
     },
 
