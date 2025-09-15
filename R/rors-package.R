@@ -57,4 +57,4 @@
 ## usethis namespace: end
 NULL
 
-ORS_VERSION <- "8.1.3"
+ORS_VERSION <- "9.3.1"
