@@ -112,7 +112,7 @@ ORSLocal <- R6Class(
     #' \code{\link[osmextract:oe_get]{oe_get()}}.
     set_extract = function(place,
                            provider = "geofabrik",
-                           timeout = NULL,
+                           timeout = 6000,
                            file = NULL,
                            do_use = TRUE,
                            ...) {
