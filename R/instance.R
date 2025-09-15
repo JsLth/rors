@@ -169,7 +169,7 @@ ORSInstance <- R6Class(
 #' # `dir` argument.
 #' ors_instance(server = "https://127.0.0.1:8001/")
 #' }
-ors_instance <- function(dir = ".",
+ors_instance <- function(dir = tempdir(),
                          server = NULL,
                          type = c("docker", "jar", "war"),
                          ...) {
