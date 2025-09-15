@@ -27,6 +27,7 @@ get_extract <- function(self,
   }
 
   match <- match[[provider]]
+  match <- match[which.min(adist("Germany", match$name))[1], ]
   file_name <- basename(match$pbf)
   file_size <- round(match$pbf_file_size / 1048576)
 
@@ -70,7 +71,11 @@ get_extract <- function(self,
     req <- httr2::req_method(req, "GET")
     req <- httr2::req_timeout(req, timeout %||% getOption("timeout"))
     if (verbose) req <- httr2::req_progress(req)
-    httr2::req_perform(req, path = file.path(data_dir, basename(path)))
+    down_path <- file.path(data_dir, basename(path))
+    tryCatch(
+      httr2::req_perform(req, path = down_path),
+      function(e) unlink(down_path)
+    )
   }
 
   # If the size is over 6 GB in size, give out a warning
